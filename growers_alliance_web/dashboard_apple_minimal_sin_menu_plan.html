@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>Cannabicultor IA — Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Lora:ital,wght@0,400;0,600;1,400;1,600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --white:#fff;
+  --bg:#f5f7f4;
+  --bg2:#eef1ec;
+  --card:#ffffff;
+  --forest:#1a5c32;
+  --forest2:#2a7a44;
+  --pale:#e6f0ea;
+  --pale2:#d0e8d8;
+  --sage:#5d8068;
+  --text:#151515;
+  --muted:#6f746f;
+  --soft:#9aa09a;
+  --border:rgba(0,0,0,.075);
+  --border2:rgba(0,0,0,.12);
+  --amber:#b5811d;
+  --amber-bg:#fff8e8;
+  --red:#b94b42;
+  --shadow:0 1px 2px rgba(0,0,0,.04),0 10px 35px rgba(0,0,0,.06);
+  --shadow2:0 18px 70px rgba(0,0,0,.08);
+  --r:22px;
+}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;-webkit-font-smoothing:antialiased}
+body{overflow:hidden}
+button,input,textarea{font-family:inherit}
+button{cursor:pointer}
+
+/* APP */
+.app{height:100vh;max-width:1280px;margin:0 auto;display:grid;grid-template-columns:260px 1fr;background:var(--bg)}
+.sidebar{background:rgba(255,255,255,.82);backdrop-filter:blur(24px);border-right:1px solid var(--border);padding:24px 18px;display:flex;flex-direction:column;gap:22px;overflow-y:auto}
+.brand{display:flex;align-items:center;gap:12px;text-decoration:none;color:var(--text);padding:4px 4px 16px}
+.brand img{width:38px;height:38px;border-radius:12px;object-fit:contain;box-shadow:0 5px 18px rgba(26,92,50,.12)}
+.brand-title{font-size:14px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;line-height:1.1}
+.brand-sub{font-size:10px;color:var(--muted);letter-spacing:.12em;text-transform:uppercase;margin-top:3px}
+.side-section{display:flex;flex-direction:column;gap:8px}
+.side-label{font-size:10px;color:var(--soft);font-weight:700;text-transform:uppercase;letter-spacing:.12em;padding:0 10px 4px}
+.nav-btn,.plan-btn{display:flex;align-items:center;gap:10px;width:100%;border:0;background:transparent;color:var(--muted);font-size:14px;font-weight:500;padding:11px 12px;border-radius:14px;text-align:left;transition:all .18s}
+.nav-btn:hover,.plan-btn:hover{background:rgba(26,92,50,.06);color:var(--forest)}
+.nav-btn.active,.plan-btn.active{background:var(--pale);color:var(--forest)}
+.ico{width:22px;height:22px;border-radius:8px;background:rgba(26,92,50,.08);display:inline-flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0}
+.plan-card{margin-top:auto;background:linear-gradient(180deg,#ffffff,#f7faf6);border:1px solid var(--border);border-radius:20px;padding:16px;box-shadow:var(--shadow)}
+.plan-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.plan-name{font-size:12px;color:var(--muted);font-weight:600}
+.plan-pill{font-size:11px;color:var(--forest);background:var(--pale);border:1px solid var(--pale2);padding:4px 9px;border-radius:999px;font-weight:700}
+.plan-current{font-size:22px;font-weight:700;letter-spacing:-.04em}
+.plan-note{font-size:12px;color:var(--muted);line-height:1.5;margin-top:6px}
+
+/* MAIN */
+.main{height:100vh;overflow:auto;padding:22px 28px 110px}
+.topbar{position:sticky;top:0;z-index:20;background:rgba(245,247,244,.82);backdrop-filter:blur(24px);border-bottom:1px solid rgba(0,0,0,.04);margin:-22px -28px 24px;padding:16px 28px;display:flex;align-items:center;justify-content:space-between;gap:16px}
+.mobile-brand{display:none;align-items:center;gap:10px}
+.mobile-brand img{width:34px;height:34px;border-radius:11px}
+.page-kicker{font-size:11px;font-weight:700;letter-spacing:.12em;color:var(--forest);text-transform:uppercase;margin-bottom:5px}
+.page-title{font-family:Lora,Georgia,serif;font-size:34px;line-height:1.05;letter-spacing:-.04em;font-weight:600}
+.page-title em{color:var(--forest);font-style:italic;font-weight:400}
+.top-actions{display:flex;align-items:center;gap:10px}
+.status{display:flex;align-items:center;gap:8px;border:1px solid var(--pale2);background:#fff;border-radius:999px;padding:8px 12px;color:var(--forest);font-size:13px;font-weight:600;box-shadow:0 1px 2px rgba(0,0,0,.03)}
+.dot{width:8px;height:8px;border-radius:50%;background:#34c759;box-shadow:0 0 0 5px rgba(52,199,89,.12)}
+.btn{border:1px solid var(--border);background:#fff;color:var(--text);border-radius:999px;padding:10px 15px;font-size:13px;font-weight:600;box-shadow:0 1px 2px rgba(0,0,0,.03);transition:all .18s;text-decoration:none;display:inline-flex;align-items:center;gap:8px}
+.btn:hover{transform:translateY(-1px);box-shadow:var(--shadow)}
+.btn.primary{background:var(--forest);color:#fff;border-color:var(--forest)}
+.btn.primary:hover{background:var(--forest2)}
+.btn.ghost{background:transparent;box-shadow:none}
+
+/* HERO */
+.hero{display:grid;grid-template-columns:1.2fr .8fr;gap:18px;margin-bottom:18px}
+.panel{background:var(--card);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden}
+.overview{padding:24px}
+.cult-head{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:22px}
+.cult-name{font-size:24px;font-weight:700;letter-spacing:-.04em;margin-bottom:5px}
+.cult-meta{display:flex;flex-wrap:wrap;gap:8px;font-size:13px;color:var(--muted)}
+.meta-chip{background:var(--bg);border:1px solid var(--border);border-radius:999px;padding:5px 9px}
+.health-card{background:linear-gradient(135deg,var(--pale),#fff);border:1px solid var(--pale2);border-radius:20px;padding:18px;display:grid;grid-template-columns:120px 1fr;gap:20px;align-items:center}
+.ring{width:116px;height:116px;border-radius:50%;background:conic-gradient(var(--forest) 0 84%,#dfe7df 84% 100%);display:flex;align-items:center;justify-content:center;position:relative;box-shadow:inset 0 0 0 1px rgba(0,0,0,.03)}
+.ring::after{content:'';position:absolute;inset:11px;background:#fff;border-radius:50%;box-shadow:inset 0 0 0 1px var(--border)}
+.ring-inner{position:relative;z-index:1;text-align:center}
+.ring-val{font-size:26px;font-weight:700;letter-spacing:-.04em;color:var(--forest)}
+.ring-label{font-size:10px;color:var(--muted);font-weight:700;letter-spacing:.08em;text-transform:uppercase}
+.health-title{font-size:19px;font-weight:700;letter-spacing:-.03em;margin-bottom:7px}
+.health-text{font-size:14px;color:var(--muted);line-height:1.6;margin-bottom:14px}
+.health-list{display:flex;gap:10px;flex-wrap:wrap}
+.check{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--forest);font-weight:600;background:#fff;border:1px solid var(--pale2);border-radius:999px;padding:6px 10px}
+.ai-summary{padding:24px;display:flex;flex-direction:column;min-height:100%}
+.ai-summary h3{font-size:16px;font-weight:700;margin-bottom:8px;letter-spacing:-.02em}
+.ai-summary p{font-size:14px;color:var(--muted);line-height:1.7}
+.alert-soft{margin-top:auto;background:var(--amber-bg);border:1px solid rgba(181,129,29,.22);border-radius:18px;padding:16px;display:flex;gap:12px;align-items:flex-start}
+.alert-ico{width:34px;height:34px;border-radius:12px;background:#fff;display:flex;align-items:center;justify-content:center;color:var(--amber);font-size:18px;flex-shrink:0;border:1px solid rgba(181,129,29,.15)}
+.alert-soft strong{display:block;color:#6c4b0c;font-size:14px;margin-bottom:4px}
+.alert-soft span{font-size:13px;color:#7a6333;line-height:1.5}
+
+/* METRICS */
+.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px}
+.metric{padding:18px;background:#fff;border:1px solid var(--border);border-radius:20px;box-shadow:var(--shadow);min-height:142px;display:flex;flex-direction:column}
+.metric-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+.metric-label{font-size:12px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.08em}
+.metric-ico{width:34px;height:34px;border-radius:13px;background:var(--pale);display:flex;align-items:center;justify-content:center}
+.metric-value{font-size:34px;font-weight:700;letter-spacing:-.06em;line-height:1;margin-bottom:7px}
+.metric-value small{font-size:15px;color:var(--muted);letter-spacing:-.02em}
+.metric-meta{font-size:12px;color:var(--muted);line-height:1.45;margin-bottom:auto}
+.ok{margin-top:13px;font-size:12px;color:var(--forest);font-weight:700;display:flex;align-items:center;gap:6px}
+.ok::before{content:'';width:7px;height:7px;border-radius:50%;background:#34c759}
+.progress{height:5px;background:#e7ebe6;border-radius:999px;overflow:hidden;margin-top:12px}
+.progress span{display:block;height:100%;background:var(--forest);border-radius:999px}
+
+/* SECONDARY LAYOUT */
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:18px}
+.section-head{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:20px 20px 0}
+.section-title{font-size:18px;font-weight:700;letter-spacing:-.03em}
+.section-sub{font-size:13px;color:var(--muted);margin-top:3px}
+.card-body{padding:20px}
+.chart{height:230px;background:linear-gradient(180deg,#fbfcfb,#f6f8f5);border:1px solid var(--border);border-radius:18px;padding:16px;position:relative;overflow:hidden}
+.chart-grid{position:absolute;inset:16px;background-image:linear-gradient(rgba(0,0,0,.045) 1px,transparent 1px),linear-gradient(90deg,rgba(0,0,0,.045) 1px,transparent 1px);background-size:100% 25%,25% 100%;opacity:.7}
+.chart svg{position:relative;z-index:1;width:100%;height:100%}
+.history{display:flex;flex-direction:column;gap:10px}
+.history-item{display:flex;gap:12px;align-items:flex-start;padding:14px;border:1px solid var(--border);border-radius:16px;background:#fff}
+.history-date{font-size:11px;color:var(--soft);font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px}
+.history-title{font-size:14px;font-weight:700;margin-bottom:3px}
+.history-text{font-size:13px;color:var(--muted);line-height:1.45}
+.history-badge{margin-left:auto;color:var(--forest);background:var(--pale);border:1px solid var(--pale2);border-radius:999px;padding:4px 8px;font-size:11px;font-weight:700;white-space:nowrap}
+.detail-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.detail{background:#fff;border:1px solid var(--border);border-radius:18px;padding:16px}
+.detail-label{font-size:11px;color:var(--soft);font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:9px}
+.detail-main{font-size:18px;font-weight:700;letter-spacing:-.03em;margin-bottom:4px}
+.detail-sub{font-size:12px;color:var(--muted);line-height:1.45}
+
+/* CHAT */
+.chat-launch{position:fixed;left:calc(50% + 130px);bottom:24px;transform:translateX(-50%);z-index:80;width:min(720px,calc(100vw - 36px));background:#fff;border:1px solid var(--border);border-radius:999px;box-shadow:0 18px 60px rgba(0,0,0,.12);padding:8px;display:flex;align-items:center;gap:10px}
+.chat-preview{flex:1;border:0;background:transparent;padding:0 12px;color:var(--muted);font-size:14px;text-align:left}
+.chat-cta{border:0;background:var(--forest);color:#fff;border-radius:999px;padding:13px 20px;font-size:14px;font-weight:700;white-space:nowrap}
+.chat-panel{position:fixed;right:28px;bottom:28px;width:420px;height:min(720px,calc(100vh - 56px));background:#fff;border:1px solid var(--border);border-radius:28px;box-shadow:0 30px 90px rgba(0,0,0,.22);z-index:200;display:none;overflow:hidden}
+.chat-panel.open{display:flex;flex-direction:column}
+.chat-head{padding:18px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:12px;background:#fff}
+.chat-title{display:flex;align-items:center;gap:10px;font-weight:700}
+.chat-title .ico{background:var(--forest);color:#fff}
+.close{border:0;background:var(--bg);border-radius:999px;width:34px;height:34px;font-size:18px;color:var(--muted)}
+.msgs{flex:1;overflow:auto;padding:18px;display:flex;flex-direction:column;gap:12px;background:#fbfcfb}
+.msg{display:flex;gap:9px;align-items:flex-start}
+.msg.user{justify-content:flex-end}
+.avatar{width:30px;height:30px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0}
+.avatar.ai{background:var(--pale);color:var(--forest)}
+.avatar.user{background:#e8eef5;color:#2f5a84}
+.bubble{max-width:82%;padding:12px 14px;border-radius:18px;font-size:14px;line-height:1.6;border:1px solid var(--border);background:#fff}
+.msg.user .bubble{background:var(--forest);color:#fff;border-color:var(--forest);border-bottom-right-radius:6px}
+.msg.ai .bubble{border-bottom-left-radius:6px}
+.input-area{padding:14px;border-top:1px solid var(--border);background:#fff}
+.input-row{display:flex;gap:8px}
+#chatInput{flex:1;border:1px solid var(--border);background:var(--bg);border-radius:999px;padding:13px 16px;font-size:14px;outline:none}
+#chatInput:focus{border-color:var(--forest)}
+.send{border:0;background:var(--forest);color:#fff;border-radius:999px;padding:0 18px;font-weight:700}
+.send:disabled{opacity:.45;cursor:not-allowed}
+.chat-note{font-size:11px;color:var(--soft);text-align:center;margin-top:8px}
+
+/* RESPONSIVE */
+@media(max-width:980px){
+  .app{grid-template-columns:1fr}
+  .sidebar{display:none}
+  .main{padding:16px 16px 120px}
+  .topbar{margin:-16px -16px 20px;padding:12px 16px}
+  .mobile-brand{display:flex}
+  .hero,.grid2{grid-template-columns:1fr}
+  .metrics{grid-template-columns:repeat(2,1fr)}
+  .detail-grid{grid-template-columns:repeat(2,1fr)}
+  .chat-launch{left:50%;width:calc(100vw - 28px)}
+  .page-title{font-size:26px}
+  .status,.top-actions .btn.ghost{display:none}
+}
+@media(max-width:560px){
+  body{overflow:hidden}
+  .topbar{align-items:flex-start}
+  .mobile-brand strong{font-size:13px}
+  .hero{gap:12px}
+  .health-card{grid-template-columns:1fr;text-align:center}
+  .ring{margin:0 auto}
+  .health-list{justify-content:center}
+  .metrics{grid-template-columns:1fr}
+  .detail-grid{grid-template-columns:1fr}
+  .grid2{gap:12px}
+  .panel,.metric{border-radius:18px}
+  .cult-head{flex-direction:column}
+  .chat-panel{inset:0;width:100%;height:100%;border-radius:0;border:0}
+  .chat-launch{bottom:14px}
+  .chat-preview{display:none}
+}
+</style>
+</head>
+<body>
+
+<div class="app">
+  <aside class="sidebar">
+    <a class="brand" href="https://cannabicultor.com">
+      <img src="assets/icono_cannabicultor.png" alt="Cannabicultor IA">
+      <div>
+        <div class="brand-title">Cannabicultor IA</div>
+        <div class="brand-sub">Growers Alliance</div>
+      </div>
+    </a>
+
+    <div class="side-section">
+      <div class="side-label">Dashboard</div>
+      <button class="nav-btn active"><span class="ico">⌘</span>Resumen</button>
+      <button class="nav-btn"><span class="ico">🌱</span>Mi cultivo</button>
+      <button class="nav-btn"><span class="ico">📈</span>Historial</button>
+      <button class="nav-btn"><span class="ico">⚠️</span>Alertas</button>
+      <button class="nav-btn"><span class="ico">🧬</span>Genética</button>
+    </div>
+
+    <div class="plan-card">
+      <div class="plan-top">
+        <span class="plan-name">Tu plan</span>
+        <span class="plan-pill" id="planPill">Libre</span>
+      </div>
+      <div class="plan-current" id="planTitle">Libre</div>
+      <div class="plan-note" id="planNote">2 consultas diarias. Vista básica del cultivo.</div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <div class="mobile-brand">
+        <img src="assets/icono_cannabicultor.png" alt="">
+        <div>
+          <strong>Cannabicultor IA</strong><br>
+          <span style="font-size:11px;color:var(--muted)">Growers Alliance</span>
+        </div>
+      </div>
+      <div>
+        <div class="page-kicker">Dashboard privado</div>
+        <h1 class="page-title">Tu cultivo, <em>en una sola vista</em></h1>
+      </div>
+      <div class="top-actions">
+        <div class="status"><span class="dot"></span>IA monitorizando</div>
+        <a class="btn ghost" href="https://cannabicultor.com">Volver</a>
+        <button class="btn primary" onclick="openChat()">Hablar con IA</button>
+      </div>
+    </div>
+
+    <section class="hero">
+      <div class="panel overview">
+        <div class="cult-head">
+          <div>
+            <div class="cult-name">Gorilla Glue Auto</div>
+            <div class="cult-meta">
+              <span class="meta-chip">Semana 4 · Floración</span>
+              <span class="meta-chip">Día 26 / 63</span>
+              <span class="meta-chip">Interior</span>
+              <span class="meta-chip">Coco</span>
+            </div>
+          </div>
+          <button class="btn">Editar cultivo</button>
+        </div>
+
+        <div class="health-card">
+          <div class="ring">
+            <div class="ring-inner">
+              <div class="ring-val">84%</div>
+              <div class="ring-label">Estable</div>
+            </div>
+          </div>
+          <div>
+            <div class="health-title">Estado general óptimo</div>
+            <div class="health-text">
+              Los parámetros clave están dentro del rango esperado. La IA detecta una posible desviación de magnesio si el patrón actual continúa.
+            </div>
+            <div class="health-list">
+              <span class="check">Temperatura estable</span>
+              <span class="check">Humedad correcta</span>
+              <span class="check">Fase activa</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel ai-summary">
+        <h3>Recomendación de la IA</h3>
+        <p>
+          Mantén el riego actual y revisa la respuesta de las hojas bajas durante los próximos 3–5 días.
+          Evita corregir demasiado rápido si el crecimiento general sigue estable.
+        </p>
+        <div class="alert-soft">
+          <div class="alert-ico">⚠️</div>
+          <div>
+            <strong>Posible déficit de Mg</strong>
+            <span>Riesgo leve basado en historial, fase y sustrato. Revisa pH y EC antes de añadir correcciones.</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="metrics">
+      <div class="metric">
+        <div class="metric-top"><div class="metric-label">Temperatura</div><div class="metric-ico">🌡️</div></div>
+        <div class="metric-value">24<small> °C</small></div>
+        <div class="metric-meta">Rango ideal 20–26 °C</div>
+        <div class="ok">Óptima</div>
+      </div>
+
+      <div class="metric">
+        <div class="metric-top"><div class="metric-label">Humedad</div><div class="metric-ico">💧</div></div>
+        <div class="metric-value">58<small> %</small></div>
+        <div class="metric-meta">Rango ideal 45–60 %</div>
+        <div class="ok">Óptima</div>
+      </div>
+
+      <div class="metric">
+        <div class="metric-top"><div class="metric-label">Fotoperiodo</div><div class="metric-ico">💡</div></div>
+        <div class="metric-value">18<small> h</small></div>
+        <div class="metric-meta">18 h luz / 6 h oscuridad</div>
+        <div class="ok">Activo</div>
+      </div>
+
+      <div class="metric">
+        <div class="metric-top"><div class="metric-label">Fase</div><div class="metric-ico">🌿</div></div>
+        <div class="metric-value">S4<small> Floración</small></div>
+        <div class="metric-meta">Día 26 de 63</div>
+        <div class="progress"><span style="width:41%"></span></div>
+        <div class="ok">41% completado</div>
+      </div>
+    </section>
+
+    <section class="grid2">
+      <div class="panel">
+        <div class="section-head">
+          <div>
+            <div class="section-title">Parámetros del día</div>
+            <div class="section-sub">Temperatura y humedad estimadas</div>
+          </div>
+          <button class="btn">Compartir</button>
+        </div>
+        <div class="card-body">
+          <div class="chart">
+            <div class="chart-grid"></div>
+            <svg viewBox="0 0 600 220" preserveAspectRatio="none" aria-hidden="true">
+              <polyline points="0,118 55,104 110,126 165,92 220,110 275,82 330,130 385,96 440,116 495,78 550,98 600,86"
+                fill="none" stroke="#1a5c32" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+              <polyline points="0,74 55,90 110,82 165,102 220,76 275,98 330,84 385,106 440,92 495,112 550,96 600,108"
+                fill="none" stroke="#7ea28a" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" opacity=".8"/>
+              <circle cx="495" cy="78" r="6" fill="#1a5c32"/>
+              <circle cx="600" cy="86" r="6" fill="#1a5c32"/>
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="section-head">
+          <div>
+            <div class="section-title">Historial de recomendaciones</div>
+            <div class="section-sub">Acciones recientes aplicadas</div>
+          </div>
+        </div>
+        <div class="card-body history">
+          <div class="history-item">
+            <div>
+              <div class="history-date">Ayer · Día 25</div>
+              <div class="history-title">Ajusta pH a 5.8–6.0</div>
+              <div class="history-text">Recomendación basada en sustrato coco y fase actual.</div>
+            </div>
+            <div class="history-badge">Aplicada</div>
+          </div>
+          <div class="history-item">
+            <div>
+              <div class="history-date">Hace 3 días · Día 23</div>
+              <div class="history-title">Observa posible Mg</div>
+              <div class="history-text">Patrón leve en hojas bajas. No sobreactuar sin confirmar.</div>
+            </div>
+            <div class="history-badge">En curso</div>
+          </div>
+          <div class="history-item">
+            <div>
+              <div class="history-date">Hace 6 días · Día 20</div>
+              <div class="history-title">Mantén temperatura nocturna</div>
+              <div class="history-text">Evita saltos bruscos para reducir estrés.</div>
+            </div>
+            <div class="history-badge">Aplicada</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="section-head">
+        <div>
+          <div class="section-title">Detalles del cultivo</div>
+          <div class="section-sub">Datos base para personalizar cada respuesta</div>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="detail-grid">
+          <div class="detail">
+            <div class="detail-label">Sustrato</div>
+            <div class="detail-main">Coco</div>
+            <div class="detail-sub">pH 6.0 · EC 1.4</div>
+          </div>
+          <div class="detail">
+            <div class="detail-label">Genética</div>
+            <div class="detail-main">Gorilla Glue Auto</div>
+            <div class="detail-sub">Autofloreciente · Interior</div>
+          </div>
+          <div class="detail">
+            <div class="detail-label">Último riego</div>
+            <div class="detail-main">Hace 2 días</div>
+            <div class="detail-sub">500 ml · pH 6.0</div>
+          </div>
+          <div class="detail">
+            <div class="detail-label">Próximo riego</div>
+            <div class="detail-main">Mañana</div>
+            <div class="detail-sub">Según consumo y clima</div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<div class="chat-launch" onclick="openChat()">
+  <div class="chat-preview">Pregunta a la IA sobre tu cultivo actual…</div>
+  <button class="chat-cta">Hablar con IA</button>
+</div>
+
+<div class="chat-panel" id="chatPanel">
+  <div class="chat-head">
+    <div class="chat-title"><span class="ico">IA</span> Cannabicultor IA</div>
+    <button class="close" onclick="closeChat()">×</button>
+  </div>
+  <div class="msgs" id="msgs"></div>
+  <div class="input-area">
+    <div class="input-row">
+      <input id="chatInput" placeholder="Escribe tu consulta…" onkeydown="if(event.key==='Enter')sendMsg()">
+      <button class="send" id="sendBtn" onclick="sendMsg()">Enviar</button>
+    </div>
+    <div class="chat-note" id="chatNote">Plan Libre · 2 consultas diarias disponibles</div>
+  </div>
+</div>
+
+<script>
+const S={
+  plan:'libre',
+  msgs:[],
+  preguntas:0,
+  cultivo:{
+    variedad:'Gorilla Glue Auto',
+    semana:4,
+    dia:26,
+    total:63,
+    fase:'Floración',
+    sustrato:'Coco',
+    temp:24,
+    hum:58,
+    luz:18,
+    ph:6.0,
+    ec:1.4,
+    uriego:'Hace 2 días',
+    priego:'Mañana',
+    alerta:'Posible déficit de Magnesio en 3–5 días según historial de cultivos'
+  }
+};
+
+const LIM={libre:2,semilla:5,cultivador:999,maestro:999};
+
+const planCopy={
+  libre:{name:'Libre',note:'2 consultas diarias. Vista básica del cultivo.'},
+  semilla:{name:'Semilla',note:'5 consultas diarias y memoria IA básica.'},
+  cultivador:{name:'Cultivador',note:'Consultas ilimitadas, alertas y calendario completo.'},
+  maestro:{name:'Maestro',note:'Prioridad, historial completo y funciones avanzadas.'}
+};
+
+function updateChatNote(){
+  const lim=LIM[S.plan];
+  const left=lim>=999?'consultas ilimitadas':`${Math.max(0,lim-S.preguntas)} consultas disponibles`;
+  document.getElementById('chatNote').textContent=`Plan ${planCopy[S.plan].name} · ${left}`;
+}
+
+function openChat(){
+  document.getElementById('chatPanel').classList.add('open');
+  if(!document.getElementById('msgs').children.length){
+    addMsg('ai','Hola Ernie. Estoy listo para ayudarte con tu Gorilla Glue Auto en semana 4 de floración. Puedes preguntarme por riego, pH, EC, humedad, luz o síntomas.');
+  }
+  setTimeout(()=>document.getElementById('chatInput').focus(),80);
+}
+function closeChat(){document.getElementById('chatPanel').classList.remove('open')}
+
+function addMsg(who,text){
+  const wrap=document.createElement('div');
+  wrap.className='msg '+(who==='user'?'user':'ai');
+  if(who==='ai'){
+    wrap.innerHTML=`<div class="avatar ai">IA</div><div class="bubble">${escapeHtml(text).replace(/\n/g,'<br>')}</div>`;
+  }else{
+    wrap.innerHTML=`<div class="bubble">${escapeHtml(text).replace(/\n/g,'<br>')}</div><div class="avatar user">TÚ</div>`;
+  }
+  document.getElementById('msgs').appendChild(wrap);
+  document.getElementById('msgs').scrollTop=document.getElementById('msgs').scrollHeight;
+}
+
+function escapeHtml(str){
+  return String(str).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
+}
+
+async function sendMsg(){
+  const input=document.getElementById('chatInput');
+  const btn=document.getElementById('sendBtn');
+  const text=input.value.trim();
+  if(!text)return;
+
+  if(S.preguntas>=LIM[S.plan]){
+    addMsg('ai','Has llegado al límite diario del Plan Libre. Con el Plan Semilla tienes 5 consultas diarias y memoria IA básica.');
+    return;
+  }
+
+  addMsg('user',text);
+  input.value='';
+  S.preguntas++;
+  updateChatNote();
+
+  const perfil={
+    proyecto:'Cannabicultor IA / Growers Alliance',
+    plan:S.plan,
+    cultivo:S.cultivo
+  };
+
+  const messages=[...S.msgs,{role:'user',content:text}];
+  S.msgs=messages;
+
+  btn.disabled=true;
+  addTyping();
+
+  try{
+    const res=await fetch('https://growers-alliance-ai.enriquedorta.workers.dev',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({messages,perfil})
+    });
+
+    let data=await res.json().catch(()=>({}));
+    removeTyping();
+
+    const reply=data.reply || data.content || data.message || 'He recibido tu consulta, pero no he podido interpretar la respuesta del servidor.';
+    S.msgs.push({role:'assistant',content:reply});
+    addMsg('ai',reply);
+  }catch(e){
+    removeTyping();
+    addMsg('ai','Error de conexión con la IA. Revisa el Worker de Cloudflare o la conexión del navegador.');
+  }finally{
+    btn.disabled=false;
+    input.focus();
+  }
+}
+
+function addTyping(){
+  const wrap=document.createElement('div');
+  wrap.className='msg ai';
+  wrap.id='typing';
+  wrap.innerHTML=`<div class="avatar ai">IA</div><div class="bubble"><span style="color:var(--muted)">Analizando tu cultivo…</span></div>`;
+  document.getElementById('msgs').appendChild(wrap);
+  document.getElementById('msgs').scrollTop=document.getElementById('msgs').scrollHeight;
+}
+function removeTyping(){
+  const t=document.getElementById('typing');
+  if(t)t.remove();
+}
+
+updateChatNote();
+</script>
+</body>
+</html>

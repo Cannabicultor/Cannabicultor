@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cannabicultor IA — La inteligencia artificial del cannabis</title>
+<meta name="description" content="La IA con la base de datos más grande de conocimientos y experiencias del cannabis. Aprende de tu cultivo, recuerda tu setup y te guía paso a paso.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Lora:ital,wght@0,400;0,600;1,400;1,600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+:root{
+  --white:#ffffff;
+  --bg:#f5f7f4;
+  --bg2:#eef1ec;
+  --forest:#1a5c32;
+  --forest-light:#2a7a44;
+  --forest-pale:#e6f0ea;
+  --forest-pale2:#d0e8d8;
+  --sage:#4a7a5a;
+  --text:#1a1a1a;
+  --text2:#444;
+  --text3:#777;
+  --text4:#aaa;
+  --border:rgba(0,0,0,0.07);
+  --border2:rgba(0,0,0,0.12);
+  --shadow:0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.06);
+  --shadow2:0 2px 8px rgba(0,0,0,0.08), 0 16px 40px rgba(0,0,0,0.08);
+  --W:1160px;
+  --R:16px;
+}
+body{font-family:'Inter',sans-serif;background:var(--white);color:var(--text);overflow-x:hidden;-webkit-font-smoothing:antialiased}
+
+/* ── NAV ── */
+nav{position:fixed;top:0;left:0;right:0;z-index:500;background:rgba(255,255,255,0.88);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-bottom:1px solid var(--border)}
+.ni{max-width:var(--W);margin:0 auto;padding:0 40px;height:62px;display:flex;align-items:center;justify-content:space-between}
+.nl{display:flex;align-items:center;gap:10px;text-decoration:none}
+.nl img{height:32px;width:auto}
+.nl-brand{font-size:14px;font-weight:600;color:var(--text);letter-spacing:-0.01em}
+.nl-brand span{font-weight:400;color:var(--text3)}
+.nav-links{display:flex;gap:28px}
+.nav-links a{font-size:13px;color:var(--text2);text-decoration:none;transition:color .15s}
+.nav-links a:hover{color:var(--forest)}
+.nc{background:var(--forest);color:#fff;border:none;padding:9px 22px;border-radius:24px;font-size:13px;font-weight:500;cursor:pointer;transition:all .2s;letter-spacing:-0.01em}
+.nc:hover{background:var(--forest-light);transform:translateY(-1px)}
+
+/* ── HERO ── */
+.hero{min-height:100vh;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:140px 40px 80px;background:var(--white);position:relative;overflow:hidden}
+.hero-bg{position:absolute;inset:0;background:radial-gradient(ellipse 120% 80% at 50% 110%, var(--forest-pale) 0%, transparent 60%);pointer-events:none}
+.hero-eyebrow{font-size:11px;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;color:var(--forest);margin-bottom:20px;opacity:0;animation:fadeUp .7s .1s forwards;display:flex;align-items:center;gap:10px}
+.hero-eyebrow::before,.hero-eyebrow::after{content:'';width:32px;height:1px;background:var(--forest);opacity:.4}
+.hero-icon{height:72px;width:auto;margin:0 auto 24px;opacity:0;animation:fadeUp .7s .05s forwards;filter:drop-shadow(0 4px 16px rgba(26,92,50,.2))}
+.hero-h1{font-family:'Inter',sans-serif;font-size:clamp(36px,5.5vw,72px);font-weight:600;letter-spacing:-0.04em;line-height:1.05;max-width:800px;margin:0 auto 16px;opacity:0;animation:fadeUp .8s .2s forwards;color:var(--text)}
+.hero-h1 em{font-family:'Lora',serif;font-style:italic;color:var(--forest);font-weight:400}
+.hero-sub{font-size:clamp(15px,1.6vw,18px);color:var(--text3);line-height:1.7;max-width:520px;margin:0 auto 40px;font-weight:400;opacity:0;animation:fadeUp .8s .35s forwards}
+.hero-badge{display:inline-flex;align-items:center;gap:8px;background:var(--forest-pale);border:1px solid var(--forest-pale2);padding:6px 16px;border-radius:24px;font-size:12px;color:var(--forest);font-weight:500;margin-bottom:28px;opacity:0;animation:fadeUp .7s .28s forwards}
+.hero-badge-dot{width:6px;height:6px;border-radius:50%;background:var(--forest);animation:pulse 2s infinite}
+.hero-cta{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;opacity:0;animation:fadeUp .8s .45s forwards;margin-bottom:72px}
+.btn-primary{background:var(--forest);color:#fff;border:none;padding:15px 32px;border-radius:32px;font-size:15px;font-weight:500;cursor:pointer;transition:all .22s;letter-spacing:-0.01em}
+.btn-primary:hover{background:var(--forest-light);transform:translateY(-2px);box-shadow:0 8px 24px rgba(26,92,50,.25)}
+.btn-secondary{background:transparent;color:var(--forest);border:1.5px solid rgba(26,92,50,.25);padding:15px 32px;border-radius:32px;font-size:15px;font-weight:500;cursor:pointer;transition:all .22s}
+.btn-secondary:hover{border-color:var(--forest);background:var(--forest-pale)}
+.hero-stats{display:flex;gap:56px;justify-content:center;flex-wrap:wrap;opacity:0;animation:fadeUp .8s .6s forwards}
+.stat{text-align:center}
+.stat-num{font-size:36px;font-weight:300;color:var(--text);letter-spacing:-0.04em;line-height:1}
+.stat-num strong{font-weight:600;color:var(--forest)}
+.stat-label{font-size:11px;color:var(--text4);margin-top:4px;letter-spacing:0.02em}
+
+/* ── HERO SCREENSHOT ── */
+.hero-screen-wrap{width:100%;max-width:900px;margin:56px auto 0;opacity:0;animation:fadeUp .9s .5s forwards;position:relative}
+.hero-screen{background:var(--white);border-radius:20px;box-shadow:var(--shadow2), 0 0 0 1px var(--border);overflow:hidden}
+.screen-bar{background:#f8f8f6;padding:12px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px}
+.dot{width:10px;height:10px;border-radius:50%}
+.screen-url{font-size:11px;color:var(--text4);margin-left:10px;background:rgba(0,0,0,.04);padding:3px 12px;border-radius:6px}
+.screen-body{padding:20px;display:grid;grid-template-columns:200px 1fr;gap:0}
+.screen-sidebar{border-right:1px solid var(--border);padding-right:16px;display:flex;flex-direction:column;gap:4px}
+.screen-nav-item{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;font-size:12px;color:var(--text3);cursor:pointer}
+.screen-nav-item.active{background:var(--forest-pale);color:var(--forest);font-weight:500}
+.screen-nav-icon{width:14px;height:14px;border-radius:3px;background:currentColor;opacity:.4}
+.screen-main{padding-left:20px}
+.screen-plant-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.screen-plant-name{font-size:15px;font-weight:600;color:var(--text);letter-spacing:-0.01em}
+.screen-plant-meta{font-size:11px;color:var(--text4);margin-top:2px}
+.screen-badge{background:var(--forest-pale);color:var(--forest);font-size:10px;font-weight:500;padding:3px 10px;border-radius:12px}
+.screen-metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px}
+.screen-metric{background:var(--bg);border-radius:10px;padding:12px}
+.screen-metric-label{font-size:10px;color:var(--text4);margin-bottom:4px}
+.screen-metric-val{font-size:22px;font-weight:500;color:var(--text);letter-spacing:-0.03em;line-height:1}
+.screen-metric-val span{font-size:12px;font-weight:400;color:var(--text3)}
+.screen-metric-ok{font-size:10px;color:var(--forest);margin-top:4px;display:flex;align-items:center;gap:4px}
+.screen-metric-ok::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--forest);display:inline-block}
+.screen-alert{background:#fff9ec;border:1px solid rgba(180,140,40,.2);border-radius:10px;padding:12px 14px;display:flex;gap:10px;align-items:flex-start}
+.screen-alert-icon{font-size:14px;flex-shrink:0}
+.screen-alert-text{font-size:11px;color:#7a6020;line-height:1.5}
+.screen-alert-text strong{color:#5a4010}
+
+/* ── DIVIDER ── */
+.dv{height:1px;background:var(--border);margin:0}
+
+/* ── SECTION BASE ── */
+.sec{padding:100px 0}
+.si{max-width:var(--W);margin:0 auto;padding:0 40px}
+.section-eyebrow{font-size:11px;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;color:var(--forest);margin-bottom:14px;display:flex;align-items:center;gap:10px}
+.section-eyebrow::before{content:'';width:24px;height:1px;background:var(--forest);opacity:.5}
+.section-title{font-size:clamp(26px,3.2vw,44px);font-weight:600;letter-spacing:-0.03em;line-height:1.12;margin-bottom:14px;color:var(--text)}
+.section-title em{font-family:'Lora',serif;font-style:italic;color:var(--forest);font-weight:400}
+.section-sub{font-size:15px;color:var(--text3);line-height:1.7;max-width:480px;margin-bottom:52px;font-weight:400}
+
+/* ── CHAT DEMO ── */
+.chat-bg{background:var(--bg)}
+.chat-wrap{max-width:680px}
+.chat-window{background:var(--white);border-radius:var(--R);box-shadow:var(--shadow);border:1px solid var(--border);overflow:hidden}
+.chat-header{background:var(--white);border-bottom:1px solid var(--border);padding:14px 20px;display:flex;align-items:center;justify-content:space-between}
+.chat-header-left{display:flex;align-items:center;gap:10px}
+.chat-status-dot{width:8px;height:8px;border-radius:50%;background:#34c759;animation:pulse 2s infinite}
+.chat-header-text{font-size:13px;color:var(--text2);font-weight:500}
+.chat-header-plan{font-size:11px;color:var(--forest);background:var(--forest-pale);padding:3px 10px;border-radius:12px;font-weight:500}
+.chat-messages{padding:20px;display:flex;flex-direction:column;gap:16px}
+.msg{display:flex;gap:10px;align-items:flex-start}
+.avatar{width:32px;height:32px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600}
+.avatar-user{background:var(--bg2);color:var(--text3);border:1px solid var(--border2)}
+.avatar-ai{background:var(--forest);color:#fff}
+.bubble{padding:12px 16px;border-radius:14px;font-size:14px;line-height:1.7;max-width:520px}
+.bubble-user{background:var(--bg);color:var(--text);border-radius:14px 14px 4px 14px}
+.bubble-ai{background:var(--white);border:1px solid var(--border);color:var(--text);border-radius:4px 14px 14px 14px}
+.bubble-ai-tag{font-size:10px;font-weight:600;color:var(--forest);letter-spacing:0.04em;text-transform:uppercase;margin-bottom:8px}
+.bubble-ai strong{color:var(--forest)}
+
+/* ── DASHBOARD ── */
+.dashboard-wrap{background:var(--white);border-radius:var(--R);box-shadow:var(--shadow2);border:1px solid var(--border);overflow:hidden}
+.dashboard-header{background:var(--bg);border-bottom:1px solid var(--border);padding:14px 20px;display:flex;align-items:center;justify-content:space-between}
+.dashboard-plant{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text2)}
+.dashboard-plant strong{font-weight:600;color:var(--text)}
+.dashboard-live{font-size:11px;color:var(--forest);display:flex;align-items:center;gap:6px;font-weight:500}
+.dashboard-live::before{content:'';width:6px;height:6px;border-radius:50%;background:#34c759;animation:pulse 2s infinite;display:inline-block}
+.dashboard-grid{padding:20px;display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.dashboard-card{background:var(--bg);border-radius:12px;padding:16px;border:1px solid transparent;transition:border-color .2s}
+.dashboard-card:hover{border-color:var(--forest-pale2)}
+.dashboard-card.alert{background:#fffbec;border-color:rgba(180,140,40,.18)}
+.card-label{font-size:10px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;color:var(--text4);margin-bottom:10px}
+.card-value{font-size:26px;font-weight:500;color:var(--text);letter-spacing:-0.03em;line-height:1;margin-bottom:4px}
+.card-value span{font-size:14px;font-weight:400;color:var(--text3)}
+.card-meta{font-size:11px;color:var(--text4);margin-bottom:8px;line-height:1.4}
+.card-ok{font-size:11px;font-weight:500;display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:10px}
+.card-ok.green{background:var(--forest-pale);color:var(--forest)}
+.card-ok.amber{background:#fff0d0;color:#7a5a10}
+.card-ok.orange{background:#fff0e0;color:#8a4010}
+.card-progress{height:4px;background:rgba(0,0,0,.06);border-radius:2px;overflow:hidden;margin:8px 0 4px}
+.card-progress-fill{height:100%;background:var(--forest);border-radius:2px}
+.gauge{position:relative;width:64px;height:64px;margin:4px 0 8px}
+.gauge svg{width:100%;height:100%;transform:rotate(-90deg)}
+.gauge-val{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:600;color:var(--text);letter-spacing:-0.02em}
+.light-icon{width:48px;height:48px;background:var(--forest-pale);border-radius:10px;display:flex;align-items:center;justify-content:center;margin:4px 0 8px;font-size:20px}
+.alert-row{display:flex;gap:8px;align-items:flex-start;margin-top:4px}
+.alert-text{font-size:11px;color:#7a5a10;line-height:1.5}
+.dashboard-row2{padding:0 20px 20px;display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+
+/* ── HOW IT WORKS ── */
+.how-bg{background:var(--bg)}
+.steps{display:grid;grid-template-columns:repeat(4,1fr);gap:2px;margin-top:48px;background:var(--border)}
+.step{background:var(--white);padding:36px 28px;position:relative}
+.step-num{font-size:11px;font-weight:600;color:var(--forest);letter-spacing:0.08em;margin-bottom:20px;opacity:.7}
+.step-icon{width:40px;height:40px;background:var(--forest-pale);border-radius:10px;display:flex;align-items:center;justify-content:center;margin-bottom:16px;font-size:18px}
+.step-title{font-size:15px;font-weight:600;color:var(--text);letter-spacing:-0.01em;margin-bottom:8px}
+.step-desc{font-size:13px;color:var(--text3);line-height:1.7}
+
+/* ── PLANS ── */
+.plans-bg{background:var(--bg)}
+.plans-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:48px}
+.plan-card{background:var(--white);border-radius:var(--R);border:1px solid var(--border);padding:28px 24px;position:relative;transition:all .2s}
+.plan-card:hover{box-shadow:var(--shadow);transform:translateY(-2px)}
+.plan-card.featured{border-color:var(--forest);box-shadow:0 0 0 1px var(--forest), var(--shadow)}
+.plan-badge{position:absolute;top:-1px;left:50%;transform:translateX(-50%);background:var(--forest);color:#fff;font-size:10px;font-weight:600;padding:4px 14px;border-radius:0 0 10px 10px;letter-spacing:0.04em;white-space:nowrap}
+.plan-name{font-size:12px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--forest);margin-bottom:12px}
+.plan-price{font-size:48px;font-weight:300;color:var(--text);letter-spacing:-0.05em;line-height:1;margin-bottom:4px}
+.plan-price sup{font-size:20px;font-weight:500;vertical-align:super}
+.plan-price span{font-size:14px;font-weight:400;color:var(--text4)}
+.plan-tagline{font-size:12px;font-weight:600;color:var(--text2);margin:18px 0 6px;letter-spacing:-0.01em}
+.plan-desc{font-size:12px;color:var(--text3);line-height:1.6;border-left:2px solid var(--forest-pale2);padding-left:10px;margin-bottom:20px}
+.plan-features{list-style:none;display:flex;flex-direction:column;gap:8px;margin-bottom:24px}
+.plan-features li{font-size:12px;color:var(--text2);display:flex;gap:8px;align-items:flex-start;line-height:1.5}
+.plan-features li::before{content:'✓';color:var(--forest);font-weight:600;flex-shrink:0}
+.plan-features li.off{color:var(--text4)}
+.plan-features li.off::before{content:'—';color:var(--text4)}
+.plan-btn{width:100%;padding:12px;border-radius:10px;font-size:13px;font-weight:500;cursor:pointer;transition:all .2s;border:1.5px solid var(--border2);background:transparent;color:var(--text2);letter-spacing:-0.01em}
+.plan-btn:hover{border-color:var(--forest);color:var(--forest)}
+.plan-btn.featured-btn{background:var(--forest);color:#fff;border-color:var(--forest)}
+.plan-btn.featured-btn:hover{background:var(--forest-light)}
+
+/* ── FOUNDER ── */
+.founder-bg{background:var(--white)}
+.founder-grid{display:grid;grid-template-columns:280px 1fr;gap:72px;align-items:center}
+.founder-logo{width:100%;aspect-ratio:1;display:flex;align-items:center;justify-content:center;background:var(--bg);border-radius:20px;overflow:hidden}
+.founder-logo img{width:70%;height:70%;object-fit:contain}
+.founder-name{font-size:32px;font-weight:600;color:var(--text);letter-spacing:-0.03em;margin-bottom:4px}
+.founder-subtitle{font-size:12px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;color:var(--forest);margin-bottom:24px}
+.founder-body{font-size:14px;color:var(--text3);line-height:1.9}
+.founder-body strong{color:var(--text2);font-weight:500}
+.founder-tags{display:flex;gap:8px;flex-wrap:wrap;margin-top:24px}
+.founder-tag{font-size:12px;color:var(--text3);background:var(--bg);border:1px solid var(--border2);padding:5px 14px;border-radius:8px}
+
+/* ── FORM ── */
+.form-bg{background:var(--bg)}
+.form-wrap{max-width:560px}
+.form-row{display:flex;gap:0;margin-top:28px}
+.form-input{flex:1;background:var(--white);border:1.5px solid var(--border2);border-right:none;padding:14px 18px;font-family:'Inter',sans-serif;font-size:14px;color:var(--text);outline:none;border-radius:12px 0 0 12px;transition:border-color .2s}
+.form-input::placeholder{color:var(--text4)}
+.form-input:focus{border-color:var(--forest)}
+.form-submit{background:var(--forest);color:#fff;border:none;padding:14px 28px;font-family:'Inter',sans-serif;font-weight:600;font-size:13px;cursor:pointer;transition:all .2s;white-space:nowrap;border-radius:0 12px 12px 0}
+.form-submit:hover{background:var(--forest-light)}
+.form-note{font-size:11px;color:var(--text4);margin-top:12px;line-height:1.6}
+.form-ok{display:none;margin-top:16px;background:var(--forest-pale);border:1px solid var(--forest-pale2);padding:16px 20px;border-radius:12px;font-size:13px;color:var(--forest);line-height:1.6}
+
+/* ── LEGAL / FOOTER ── */
+.legal-band{padding:28px 0;background:var(--bg);border-top:1px solid var(--border)}
+.legal-band p{font-size:11px;color:var(--text4);line-height:1.8;text-align:center;max-width:760px;margin:0 auto}
+.legal-band strong{color:var(--text3)}
+footer{padding:32px 0;background:var(--white);border-top:1px solid var(--border)}
+.footer-inner{max-width:var(--W);margin:0 auto;padding:0 40px;display:flex;justify-content:space-between;align-items:center;gap:24px;flex-wrap:wrap}
+.footer-left{display:flex;align-items:center;gap:10px}
+.footer-left img{height:36px;width:auto;object-fit:contain}
+.footer-brand{font-size:13px;font-weight:500;color:var(--text2)}
+.footer-note{font-size:11px;color:var(--text4);line-height:1.6;max-width:440px;text-align:right}
+
+/* ── ANIMATIONS ── */
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.reveal{opacity:0;transform:translateY(24px);transition:opacity .65s ease,transform .65s ease}
+.reveal.on{opacity:1;transform:translateY(0)}
+
+/* ── RESPONSIVE ── */
+@media(max-width:1024px){
+  .plans-grid{grid-template-columns:repeat(2,1fr)}
+  .steps{grid-template-columns:repeat(2,1fr)}
+  .dashboard-grid,.dashboard-row2{grid-template-columns:repeat(2,1fr)}
+  .founder-grid{grid-template-columns:1fr;gap:40px}
+  .founder-logo{max-width:220px}
+  .screen-body{grid-template-columns:1fr}
+  .screen-sidebar{display:none}
+  .screen-metrics{grid-template-columns:repeat(3,1fr)}
+}
+@media(max-width:768px){
+  .ni,.si,.footer-inner,.legal-band .si{padding-left:20px;padding-right:20px}
+  nav .nav-links{display:none}
+  .hero{padding:110px 20px 60px}
+  .hero-stats{gap:28px}
+  .plans-grid{grid-template-columns:1fr}
+  .steps{grid-template-columns:1fr}
+  .dashboard-grid,.dashboard-row2{grid-template-columns:repeat(2,1fr)}
+  .form-row{flex-direction:column}
+  .form-input{border-right:1.5px solid var(--border2);border-bottom:none;border-radius:12px 12px 0 0}
+  .form-submit{border-radius:0 0 12px 12px;padding:14px}
+  .footer-note{text-align:left}
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="ni">
+    <a href="#" class="nl">
+      <img src="assets/icono_cannabicultor.png" alt="Cannabicultor IA">
+      <div class="nl-brand">Cannabicultor IA <span>/ Growers Alliance</span></div>
+    </a>
+    <div class="nav-links">
+      <a href="#demo">Funciones</a>
+      <a href="#como-funciona">Cómo funciona</a>
+      <a href="#planes">Planes</a>
+      <a href="#growers">Growers Alliance</a>
+    </div>
+    <button class="nc" onclick="window.location.href='/register.html'">Solicitar acceso</button>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-bg"></div>
+  <img src="assets/icono_cannabicultor.png" alt="" class="hero-icon">
+  <div class="hero-eyebrow">Alianza Global de Cannabicultores</div>
+  <h1 class="hero-h1">La IA que recuerda<br><em>tu cultivo</em></h1>
+  <div class="hero-badge"><span class="hero-badge-dot"></span>Sistema de IA activo · Acceso fundador abierto</div>
+  <p class="hero-sub">Aprende de tu setup, recuerda tu historial y te guía paso a paso. La base de conocimiento más completa sobre cultivo avanzado.</p>
+  <div class="hero-cta">
+    <button class="btn-primary" onclick="window.location.href='/register.html'">Reservar plaza fundador</button>
+    <button class="btn-secondary" onclick="document.getElementById('como-funciona').scrollIntoView({behavior:'smooth'})">Ver cómo funciona</button>
+  </div>
+  <div class="hero-stats">
+    <div class="stat"><div class="stat-num"><strong>+150</strong></div><div class="stat-label">Años de experiencia combinada</div></div>
+    <div class="stat"><div class="stat-num"><strong>24/7</strong></div><div class="stat-label">Asistencia IA</div></div>
+    <div class="stat"><div class="stat-num"><strong>100%</strong></div><div class="stat-label">Basado en evidencia</div></div>
+    <div class="stat"><div class="stat-num"><strong>4</strong></div><div class="stat-label">Continentes</div></div>
+  </div>
+
+  <!-- Hero screenshot -->
+  <div class="hero-screen-wrap">
+    <div class="hero-screen">
+      <div class="screen-bar">
+        <div class="dot" style="background:#ff5f57"></div>
+        <div class="dot" style="background:#febc2e"></div>
+        <div class="dot" style="background:#28c840"></div>
+        <span class="screen-url">cannabicultor.com/dashboard</span>
+      </div>
+      <div class="screen-body">
+        <div class="screen-sidebar">
+          <div class="screen-nav-item active">📊 Resumen</div>
+          <div class="screen-nav-item">🌱 Mi cultivo</div>
+          <div class="screen-nav-item">📋 Historial</div>
+          <div class="screen-nav-item">🧠 Diagnóstico IA</div>
+          <div class="screen-nav-item">🧬 Genética</div>
+          <div class="screen-nav-item">⚠️ Alertas</div>
+        </div>
+        <div class="screen-main">
+          <div class="screen-plant-header">
+            <div>
+              <div class="screen-plant-name">Gorilla Glue Auto</div>
+              <div class="screen-plant-meta">Semilla · Floración · Día 38 · Interior</div>
+            </div>
+            <span class="screen-badge">Activo</span>
+          </div>
+          <div class="screen-metrics">
+            <div class="screen-metric">
+              <div class="screen-metric-label">Temperatura</div>
+              <div class="screen-metric-val">24<span>°C</span></div>
+              <div class="screen-metric-ok">Óptima</div>
+            </div>
+            <div class="screen-metric">
+              <div class="screen-metric-label">Humedad</div>
+              <div class="screen-metric-val">58<span>%</span></div>
+              <div class="screen-metric-ok">Óptima</div>
+            </div>
+            <div class="screen-metric">
+              <div class="screen-metric-label">Fotoperiodo</div>
+              <div class="screen-metric-val">18<span>h</span></div>
+              <div class="screen-metric-ok">Óptima</div>
+            </div>
+          </div>
+          <div class="screen-alert">
+            <span class="screen-alert-icon">⚠️</span>
+            <div class="screen-alert-text"><strong>Alerta IA:</strong> Posible déficit de Mg en 3–5 días basado en tu historial. Ver recomendación →</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="dv"></div>
+
+<!-- CHAT DEMO -->
+<section class="sec chat-bg reveal" id="demo">
+  <div class="si">
+    <div class="section-eyebrow">Demo en vivo</div>
+    <h2 class="section-title">La IA que <em>recuerda</em> tu cultivo</h2>
+    <p class="section-sub">No repites el contexto en cada consulta. El sistema sabe quién eres, qué cultivas y cómo lo haces.</p>
+    <div class="chat-wrap">
+      <div class="chat-window">
+        <div class="chat-header">
+          <div class="chat-header-left">
+            <div class="chat-status-dot"></div>
+            <span class="chat-header-text">cannabicultor.com · Memoria activa</span>
+          </div>
+          <span class="chat-header-plan">Plan Cultivador</span>
+        </div>
+        <div class="chat-messages">
+          <div class="msg">
+            <div class="avatar avatar-user">TÚ</div>
+            <div class="bubble bubble-user">Mis hojas están amarilleando desde la semana pasada. ¿Qué puede ser?</div>
+          </div>
+          <div class="msg">
+            <div class="avatar avatar-ai">IA</div>
+            <div class="bubble bubble-ai">
+              <div class="bubble-ai-tag">Cannabicultor IA · Diagnóstico personalizado</div>
+              Dado que cultivas en coco con LED 600W en semana 4 de floración con tu Gorilla Glue Auto, el amarillamiento en hojas bajas es <strong>déficit de magnesio</strong>.<br><br>
+              Con tu nutrición actual, añade 1g/L de sulfato de magnesio. Ajusta pH a 5.8–6.0. En 5–7 días verás estabilización.<br><br>
+              <span style="font-size:12px;color:var(--text4)">Recuerdo que en tu cultivo anterior tuviste el mismo problema en semana 5.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="dv"></div>
+
+<!-- DASHBOARD -->
+<section class="sec reveal">
+  <div class="si">
+    <div class="section-eyebrow">Panel de control</div>
+    <h2 class="section-title">Tu cultivo <em>día a día</em></h2>
+    <p class="section-sub">Registra los parámetros de tu cultivo. La IA analiza tu historial y te avisa antes de que haya un problema.</p>
+    <div class="dashboard-wrap">
+      <div class="dashboard-header">
+        <div class="dashboard-plant"><strong>Mi cultivo</strong> · Gorilla Glue Auto · Semana 4 Floración · Día 26/63</div>
+        <div class="dashboard-live">En vivo</div>
+      </div>
+      <div class="dashboard-grid">
+        <div class="dashboard-card">
+          <div class="card-label">Iluminación</div>
+          <div class="light-icon">💡</div>
+          <div class="card-value" style="font-size:18px">600W LED</div>
+          <div class="card-meta">18h luz · 6h oscuridad</div>
+          <span class="card-ok green">Óptimo</span>
+        </div>
+        <div class="dashboard-card">
+          <div class="card-label">Temperatura</div>
+          <div class="gauge">
+            <svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="26" fill="none" stroke="rgba(0,0,0,.06)" stroke-width="5"/><circle cx="32" cy="32" r="26" fill="none" stroke="#1a5c32" stroke-width="5" stroke-dasharray="117 163" stroke-dashoffset="40" stroke-linecap="round"/></svg>
+            <div class="gauge-val">24°</div>
+          </div>
+          <div class="card-meta">Rango ideal: 20–26°C</div>
+          <span class="card-ok green">Óptimo</span>
+        </div>
+        <div class="dashboard-card">
+          <div class="card-label">Humedad</div>
+          <div class="gauge">
+            <svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="26" fill="none" stroke="rgba(0,0,0,.06)" stroke-width="5"/><circle cx="32" cy="32" r="26" fill="none" stroke="#1a5c32" stroke-width="5" stroke-dasharray="97 163" stroke-dashoffset="40" stroke-linecap="round"/></svg>
+            <div class="gauge-val">58%</div>
+          </div>
+          <div class="card-meta">Rango ideal: 45–60%</div>
+          <span class="card-ok green">Óptimo</span>
+        </div>
+        <div class="dashboard-card">
+          <div class="card-label">Fase de cultivo</div>
+          <div class="card-value" style="font-size:36px;font-weight:300;color:var(--forest);margin:8px 0 2px">S4</div>
+          <div class="card-meta">Floración · Día 26 / 63</div>
+          <div class="card-progress"><div class="card-progress-fill" style="width:41%"></div></div>
+          <div style="font-size:10px;color:var(--text4)">41% completado</div>
+        </div>
+      </div>
+      <div class="dashboard-row2">
+        <div class="dashboard-card">
+          <div class="card-label">Último riego</div>
+          <div class="card-value" style="font-size:18px;font-weight:500;margin-top:4px">Hace 2 días</div>
+          <div class="card-meta">500ml · pH 6.0 · EC 1.4</div>
+        </div>
+        <div class="dashboard-card">
+          <div class="card-label">Próximo riego</div>
+          <div class="card-value" style="font-size:18px;font-weight:500;color:var(--forest);margin-top:4px">Mañana</div>
+          <div class="card-meta">Recomendado por IA según coco</div>
+        </div>
+        <div class="dashboard-card">
+          <div class="card-label">Genética</div>
+          <div class="card-value" style="font-size:16px;font-weight:500;margin-top:4px">Gorilla Glue Auto</div>
+          <div class="card-meta">FastBuds · Interior · Coco</div>
+        </div>
+        <div class="dashboard-card alert">
+          <div class="card-label">Alerta IA</div>
+          <div class="alert-row">
+            <span>⚠️</span>
+            <div class="alert-text">Posible déficit de Mg en 3–5 días basado en tu historial</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="dv"></div>
+
+<!-- HOW IT WORKS -->
+<section class="sec how-bg reveal" id="como-funciona">
+  <div class="si">
+    <div class="section-eyebrow">Proceso</div>
+    <h2 class="section-title">Cómo <em>funciona</em></h2>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">01</div>
+        <div class="step-icon">🔐</div>
+        <div class="step-title">Regístrate y verifica tu edad</div>
+        <p class="step-desc">Acceso responsable. Solo mayores de 18. Confirmación por email en menos de 2 minutos.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">02</div>
+        <div class="step-icon">🧠</div>
+        <div class="step-title">La IA aprende de tu cultivo</div>
+        <p class="step-desc">Completas tu perfil una sola vez. El sistema recuerda espacio, luz, sustrato y genética.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">03</div>
+        <div class="step-icon">💬</div>
+        <div class="step-title">Consultas con contexto real</div>
+        <p class="step-desc">La IA ya sabe quién eres. Respuestas precisas y personalizadas desde el primer mensaje.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">04</div>
+        <div class="step-icon">🌱</div>
+        <div class="step-title">Recibe genéticas de la Alianza</div>
+        <p class="step-desc">Cada mes, los socios reciben semillas exclusivas del banco genético de la Alianza. Cultiva, comparte y aprende junto a la comunidad.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="dv"></div>
+
+<!-- PLANS -->
+<section class="sec plans-bg reveal" id="planes">
+  <div class="si">
+    <div class="section-eyebrow">Planes</div>
+    <h2 class="section-title">Elige tu nivel de <em>inteligencia</em></h2>
+    <p class="section-sub">La diferencia no es solo el precio. Es cuánto sabe la IA de ti.</p>
+    <div class="plans-grid">
+      <div class="plan-card">
+        <div class="plan-name">Libre</div>
+        <div class="plan-price">0<sup>€</sup> <span>/mes</span></div>
+        <div class="plan-tagline">Memoria IA</div>
+        <div class="plan-desc">Cargas el contexto de tu cultivo manualmente en cada sesión.</div>
+        <ul class="plan-features">
+          <li>2 preguntas al día</li>
+          <li>Calendario básico</li>
+          <li class="off">Memoria de tu setup</li>
+          <li class="off">Comunidad privada</li>
+          <li class="off">Historial de cultivos</li>
+        </ul>
+        <button class="plan-btn" onclick="window.location.href='/register.html'">Solicitar acceso</button>
+      </div>
+      <div class="plan-card">
+        <div class="plan-name">Semilla</div>
+        <div class="plan-price"><sup>€</sup>9 <span>/mes</span></div>
+        <div class="plan-tagline">Memoria IA básica</div>
+        <div class="plan-desc">La IA recuerda tu tipo de cultivo, espacio e iluminación.</div>
+        <ul class="plan-features">
+          <li>5 preguntas al día</li>
+          <li>Calendario personalizado</li>
+          <li>Memoria: cultivo, espacio, luz</li>
+          <li>Solo lectura comunidad</li>
+          <li class="off">Historial de cultivos</li>
+        </ul>
+        <button class="plan-btn" onclick="window.location.href='/register.html'">Solicitar acceso</button>
+      </div>
+      <div class="plan-card featured">
+        <div class="plan-badge">Más popular</div>
+        <div class="plan-name">Cultivador</div>
+        <div class="plan-price"><sup>€</sup>19 <span>/mes</span></div>
+        <div class="plan-tagline">Memoria IA completa</div>
+        <div class="plan-desc">La IA conoce tu setup completo: sustrato, nutrientes, genética y legislación de tu país.</div>
+        <ul class="plan-features">
+          <li>Chat ilimitado</li>
+          <li>Calendario completo con alertas</li>
+          <li>Memoria total del cultivo</li>
+          <li>Comunidad completa</li>
+          <li>Últimos 3 cultivos</li>
+        </ul>
+        <button class="plan-btn featured-btn" onclick="window.location.href='/register.html'">Solicitar acceso</button>
+      </div>
+      <div class="plan-card">
+        <div class="plan-name">Maestro</div>
+        <div class="plan-price"><sup>€</sup>47 <span>/mes</span></div>
+        <div class="plan-tagline">Memoria IA + Aprendizaje</div>
+        <div class="plan-desc">Historial completo, anticipa problemas y adapta todo a tus preferencias.</div>
+        <ul class="plan-features">
+          <li>Todo lo del plan Cultivador</li>
+          <li>10 semillas cada trimestre</li>
+          <li>Sesión mensual en directo</li>
+          <li>Historial completo</li>
+          <li>Alertas legales por país</li>
+        </ul>
+        <button class="plan-btn" onclick="window.location.href='/register.html'">Solicitar acceso</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="dv"></div>
+
+<!-- FOUNDER / GROWERS ALLIANCE -->
+<section class="sec founder-bg reveal" id="growers">
+  <div class="si">
+    <div class="section-eyebrow">Quién hay detrás</div>
+    <div class="founder-grid">
+      <div style="display:flex;align-items:center;justify-content:center;">
+        <img src="assets/logo_publico_4.png" alt="Growers Alliance" style="width:300px;height:auto;mix-blend-mode:multiply;filter:drop-shadow(0 4px 32px rgba(0,0,0,0.15));">
+      </div>
+      <div>
+        <div class="founder-name">Growers Alliance</div>
+        <div class="founder-subtitle">Referentes de la industria del cultivo a nivel mundial</div>
+        <p class="founder-body">
+          Growers Alliance no es el proyecto de una persona. Es la unión de un grupo selecto de profesionales con décadas de experiencia real en la industria del cultivo avanzado — <strong>fundadores de bancos de semillas de referencia internacional, impulsores de los primeros cannabis clubs en Europa, desarrolladores de negocios cannábicos en cuatro continentes y expertos en legislación, genética y tecnología aplicada al cultivo</strong>.<br><br>
+          Juntos representamos más de 150 años de experiencia acumulada. Hemos cometido todos los errores posibles, navegado los marcos legales más complejos del mundo y construido algunas de las comunidades más respetadas de la historia reciente.<br><br>
+          Ahora, ese mismo conocimiento está en tus manos: <strong>alimentando una IA con toda nuestra experiencia combinada</strong>. La mayor base de conocimiento sobre cultivo avanzado jamás construida, potenciada con inteligencia artificial moderna.
+        </p>
+        <div class="founder-tags">
+          <span class="founder-tag">🇪🇸 España</span>
+          <span class="founder-tag">🇺🇸 Estados Unidos</span>
+          <span class="founder-tag">🌎 América del Sur</span>
+          <span class="founder-tag">🇹🇭 Tailandia</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="dv"></div>
+
+<!-- FORM REGISTRO -->
+<section class="sec form-bg reveal" id="registro">
+  <div class="si">
+    <div class="form-wrap">
+      <div class="section-eyebrow">Acceso fundador</div>
+      <h2 class="section-title">Empieza hoy.<br><em>Sin compromiso.</em></h2>
+      <p class="section-sub">Regístrate gratis. Accede al asistente. Mejora tu próximo cultivo.</p>
+      <form id="brevo-form" action="https://2be62a37.sibforms.com/serve/MUIFAOvvF6I8c6ATmZcUbkCOXV_lPKnv6GK1UiArk5wMBJS_eJefhQJo7cRVdMQ_31UnrpgA6wW4sDnHemlKn2v0913aScQQzgccjSkwrdbNkv8QnFqfxzWNTEFVrB0LMori3rK9_rj_wbKlTBK4k65blw_XoKfJcd7jEyOuWDeMe-LC8wtLcnFq9vhw0lupfO8JQhqlMdCmsCPc3g==" method="post">
+        <div class="form-row">
+          <input type="email" name="EMAIL" class="form-input" id="email-input" placeholder="tu@email.com" required>
+          <input type="hidden" name="email_address_check" value="">
+          <input type="hidden" name="locale" value="es">
+          <button type="submit" class="form-submit" id="submit-btn">Reservar plaza fundador</button>
+        </div>
+      </form>
+      <p class="form-note">Solo para mayores de 18 años. Sin spam. Cancela cuando quieras. Datos protegidos bajo RGPD.</p>
+      <div class="form-ok" id="form-ok">✓ Bienvenido a Growers Alliance. Revisa tu email y confirma tu suscripción para acceder al dashboard.<br><span style="font-size:11px;opacity:.7">Si no lo ves en 5 minutos, revisa la carpeta de spam.</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- LEGAL -->
+<div class="legal-band">
+  <div style="max-width:var(--W);margin:0 auto;padding:0 40px">
+    <p><strong>Información importante:</strong> Los contenidos, recursos, genéticas y servicios ofrecidos por Growers Alliance tienen carácter orientativo e informativo. El acceso a determinados contenidos, genéticas o servicios puede variar según el país, la legislación local aplicable y la disponibilidad en cada momento. Growers Alliance no sustituye el asesoramiento legal, médico ni profesional. El usuario es responsable de conocer y cumplir la normativa vigente en su país. Solo para mayores de 18 años.</p>
+  </div>
+</div>
+
+<footer>
+  <div class="footer-inner">
+    <div class="footer-left">
+      <img src="assets/icono_cannabicultor.png" alt="Cannabicultor IA">
+      <span class="footer-brand">Cannabicultor IA</span>
+    </div>
+    <p class="footer-note">Solo para mayores de 18 años. El cultivo de cannabis está regulado. Consulta la legislación vigente en tu país. Este servicio tiene fines educativos y de asesoramiento responsable.</p>
+  </div>
+</footer>
+
+<script>
+const obs = new IntersectionObserver(e => {
+  e.forEach(x => { if (x.isIntersecting) { x.target.classList.add('on'); obs.unobserve(x.target); } });
+}, { threshold: 0.08 });
+document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+
+document.getElementById('brevo-form').addEventListener('submit', function(e) {
+  const email = document.getElementById('email-input').value;
+  const inp = document.getElementById('email-input');
+  if (!email || !email.includes('@')) {
+    e.preventDefault();
+    inp.style.borderColor = '#e53e3e';
+    inp.placeholder = 'Introduce un email válido';
+    return;
+  }
+  document.getElementById('submit-btn').textContent = 'Enviando...';
+});
+</script>
+</body>
+</html>
