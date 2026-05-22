@@ -443,8 +443,14 @@ button{cursor:pointer}
 </div>
 
 <script>
+// Guard de sesión: sin JWT, fuera al login
+const JWT=localStorage.getItem('ga_jwt');
+if(!JWT){
+  window.location.replace('/login.html');
+}
+
 const S={
-  plan:'libre',
+  plan:localStorage.getItem('ga_nivel')||'libre',
   msgs:[],
   preguntas:0,
   cultivo:{
@@ -536,9 +542,16 @@ async function sendMsg(){
   try{
     const res=await fetch('https://growers-alliance-ai.enriquedorta.workers.dev',{
       method:'POST',
-      headers:{'Content-Type':'application/json'},
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+JWT},
       body:JSON.stringify({messages,perfil})
     });
+
+    if(res.status===401){
+      removeTyping();
+      ['ga_jwt','ga_email','ga_nivel','ga_test_passed'].forEach(k=>localStorage.removeItem(k));
+      window.location.replace('/login.html');
+      return;
+    }
 
     let data=await res.json().catch(()=>({}));
     removeTyping();

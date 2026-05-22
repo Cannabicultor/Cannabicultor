@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Inicia sesión — Cannabicultor IA</title>
+<meta name="description" content="Accede a tu cuenta de Cannabicultor IA.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Lora:ital,wght@0,400;0,600;1,400;1,600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --white:#ffffff;
+  --bg:#f5f7f4;
+  --bg2:#eef1ec;
+  --forest:#1a5c32;
+  --forest-light:#2a7a44;
+  --forest-pale:#e6f0ea;
+  --forest-pale2:#d0e8d8;
+  --text:#1a1a1a;
+  --text2:#444;
+  --text3:#777;
+  --text4:#aaa;
+  --border:rgba(0,0,0,0.07);
+  --border2:rgba(0,0,0,0.12);
+  --danger:#c0392b;
+  --danger-bg:#fdecea;
+  --shadow:0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.06);
+  --shadow2:0 2px 8px rgba(0,0,0,0.08), 0 16px 40px rgba(0,0,0,0.08);
+  --W:1160px;
+}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased;min-height:100vh;display:flex;flex-direction:column}
+a{color:var(--forest);text-decoration:none}
+a:hover{text-decoration:underline}
+
+nav{position:fixed;top:0;left:0;right:0;z-index:500;background:rgba(255,255,255,0.88);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-bottom:1px solid var(--border)}
+.ni{max-width:var(--W);margin:0 auto;padding:0 40px;height:62px;display:flex;align-items:center;justify-content:space-between}
+.nl{display:flex;align-items:center;gap:10px;text-decoration:none}
+.nl img{height:32px;width:auto}
+.nl-brand{font-size:14px;font-weight:600;color:var(--text);letter-spacing:-0.01em}
+.nl-brand span{font-weight:400;color:var(--text3)}
+.nav-back{font-size:13px;color:var(--text2)}
+.nav-back:hover{color:var(--forest);text-decoration:none}
+
+main{flex:1;display:flex;align-items:center;justify-content:center;padding:120px 20px 60px;position:relative;overflow:hidden}
+.bg-glow{position:absolute;inset:0;background:radial-gradient(ellipse 120% 80% at 50% 110%, var(--forest-pale) 0%, transparent 60%);pointer-events:none}
+
+.card{position:relative;width:100%;max-width:440px;background:var(--white);border-radius:24px;border:1px solid var(--border);box-shadow:var(--shadow2);padding:40px 36px}
+.card-head{text-align:center;margin-bottom:30px}
+.eyebrow{font-size:11px;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;color:var(--forest);margin-bottom:12px}
+.title{font-family:'Inter',sans-serif;font-size:30px;font-weight:600;letter-spacing:-0.03em;line-height:1.15;color:var(--text);margin-bottom:8px}
+.title em{font-family:'Lora',serif;font-style:italic;color:var(--forest);font-weight:400}
+.subtitle{font-size:14px;color:var(--text3);line-height:1.6}
+
+.field{margin-bottom:18px}
+.label-row{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px}
+.label{display:block;font-size:12px;font-weight:500;color:var(--text2);letter-spacing:-0.01em}
+.label-link{font-size:11px;color:var(--forest)}
+.input{width:100%;background:var(--white);border:1.5px solid var(--border2);padding:13px 16px;font-family:'Inter',sans-serif;font-size:14px;color:var(--text);outline:none;border-radius:12px;transition:border-color .15s}
+.input::placeholder{color:var(--text4)}
+.input:focus{border-color:var(--forest)}
+.input.error{border-color:var(--danger)}
+
+.btn{width:100%;background:var(--forest);color:#fff;border:none;padding:15px 24px;border-radius:32px;font-family:'Inter',sans-serif;font-size:15px;font-weight:500;cursor:pointer;transition:all .22s;letter-spacing:-0.01em;margin-top:12px}
+.btn:hover:not(:disabled){background:var(--forest-light);transform:translateY(-1px);box-shadow:0 8px 24px rgba(26,92,50,.25)}
+.btn:disabled{opacity:.55;cursor:not-allowed}
+
+.alert{padding:12px 16px;border-radius:12px;font-size:13px;line-height:1.5;margin-bottom:18px;display:none}
+.alert.show{display:block}
+.alert.error{background:var(--danger-bg);border:1px solid rgba(192,57,43,.2);color:var(--danger)}
+.alert.success{background:var(--forest-pale);border:1px solid var(--forest-pale2);color:var(--forest)}
+
+.divider{display:flex;align-items:center;gap:12px;margin:24px 0 16px;color:var(--text4);font-size:11px;letter-spacing:0.08em;text-transform:uppercase}
+.divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--border)}
+.switch{text-align:center;font-size:13px;color:var(--text3)}
+.switch a{font-weight:500}
+
+footer{padding:24px 20px 32px;background:transparent;text-align:center}
+.foot-links{display:flex;flex-wrap:wrap;justify-content:center;gap:18px;font-size:11px;color:var(--text4);margin-bottom:10px}
+.foot-links a{color:var(--text3)}
+.foot-note{font-size:11px;color:var(--text4);line-height:1.6;max-width:520px;margin:0 auto}
+
+@media(max-width:560px){
+  .ni{padding:0 20px}
+  .nl-brand span{display:none}
+  main{padding:90px 16px 40px}
+  .card{padding:32px 24px;border-radius:20px}
+  .title{font-size:26px}
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="ni">
+    <a href="/" class="nl">
+      <img src="assets/icono_cannabicultor.png" alt="Cannabicultor IA">
+      <div class="nl-brand">Cannabicultor IA <span>/ Growers Alliance</span></div>
+    </a>
+    <a href="/" class="nav-back">← Volver</a>
+  </div>
+</nav>
+
+<main>
+  <div class="bg-glow"></div>
+  <div class="card">
+    <div class="card-head">
+      <div class="eyebrow">Bienvenido de vuelta</div>
+      <h1 class="title">Inicia <em>sesión</em></h1>
+      <p class="subtitle">Accede a tu cultivo y a tu IA personalizada.</p>
+    </div>
+
+    <div id="alert" class="alert"></div>
+
+    <form id="login-form" novalidate>
+      <div class="field">
+        <label class="label" for="email">Email</label>
+        <input class="input" type="email" id="email" name="email" placeholder="tu@email.com" autocomplete="email" required>
+      </div>
+
+      <div class="field">
+        <div class="label-row">
+          <label class="label" for="password">Contraseña</label>
+          <a class="label-link" href="mailto:alianzacannabicultores@gmail.com?subject=Recuperar%20contrase%C3%B1a">¿Olvidaste?</a>
+        </div>
+        <input class="input" type="password" id="password" name="password" placeholder="Tu contraseña" autocomplete="current-password" required>
+      </div>
+
+      <button class="btn" type="submit" id="submit-btn">Entrar</button>
+    </form>
+
+    <div class="divider">o</div>
+    <p class="switch">¿Aún no tienes cuenta? <a href="/register.html">Crear cuenta →</a></p>
+  </div>
+</main>
+
+<footer>
+  <div class="foot-links">
+    <a href="/aviso-legal.html">Aviso legal</a>
+    <a href="/privacidad.html">Privacidad</a>
+    <a href="/cookies.html">Cookies</a>
+    <a href="/terminos.html">Términos</a>
+    <a href="/contratacion.html">Contratación</a>
+  </div>
+  <p class="foot-note">Solo para mayores de 18 años. Datos protegidos bajo RGPD.</p>
+</footer>
+
+<script>
+const API='https://growers-alliance-ai.enriquedorta.workers.dev';
+
+const form=document.getElementById('login-form');
+const alertBox=document.getElementById('alert');
+const btn=document.getElementById('submit-btn');
+const emailInput=document.getElementById('email');
+const pwInput=document.getElementById('password');
+
+function showAlert(msg,type){
+  alertBox.textContent=msg;
+  alertBox.className='alert show '+type;
+}
+function hideAlert(){alertBox.className='alert'}
+
+[emailInput,pwInput].forEach(el=>{
+  el.addEventListener('input',()=>{el.classList.remove('error');hideAlert();});
+});
+
+// Si ya hay sesión activa, salta directo al dashboard
+if(localStorage.getItem('ga_jwt')){
+  window.location.href='/dashboard.html';
+}
+
+form.addEventListener('submit',async(e)=>{
+  e.preventDefault();
+  hideAlert();
+
+  const email=emailInput.value.trim();
+  const password=pwInput.value;
+
+  if(!email||!email.includes('@')){
+    emailInput.classList.add('error');
+    showAlert('Introduce un email válido.','error');
+    return;
+  }
+  if(!password){
+    pwInput.classList.add('error');
+    showAlert('Introduce tu contraseña.','error');
+    return;
+  }
+
+  btn.disabled=true;
+  btn.textContent='Entrando…';
+
+  try{
+    const res=await fetch(API+'/auth/login',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({email,password})
+    });
+    const data=await res.json().catch(()=>({}));
+
+    if(!res.ok){
+      const msg=data.error||data.message||(res.status===401?'Email o contraseña incorrectos.':'No se pudo iniciar sesión. Inténtalo de nuevo.');
+      showAlert(msg,'error');
+      btn.disabled=false;
+      btn.textContent='Entrar';
+      return;
+    }
+
+    const token=data.token||data.jwt||data.access_token;
+    if(!token){
+      showAlert('El servidor no devolvió un token. Contacta con soporte.','error');
+      btn.disabled=false;
+      btn.textContent='Entrar';
+      return;
+    }
+
+    localStorage.setItem('ga_jwt',token);
+    localStorage.setItem('ga_email',email);
+    localStorage.setItem('ga_nivel',data.nivel||data.plan||(data.user&&(data.user.nivel||data.user.plan))||'libre');
+    localStorage.setItem('ga_test_passed','true');
+
+    showAlert('Sesión iniciada. Cargando dashboard…','success');
+    setTimeout(()=>{window.location.href='/dashboard.html'},500);
+  }catch(err){
+    showAlert('Error de conexión. Revisa tu red e inténtalo de nuevo.','error');
+    btn.disabled=false;
+    btn.textContent='Entrar';
+  }
+});
+</script>
+</body>
+</html>
