@@ -167,7 +167,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:500;background:rgba(255,255,255,
 
 /* ── PLANS ── */
 .plans-bg{background:var(--bg)}
-.plans-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:48px}
+.plans-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-top:48px}
 .plan-card{background:var(--white);border-radius:var(--R);border:1px solid var(--border);padding:28px 24px;position:relative;transition:all .2s}
 .plan-card:hover{box-shadow:var(--shadow);transform:translateY(-2px)}
 .plan-card.featured{border-color:var(--forest);box-shadow:0 0 0 1px var(--forest), var(--shadow)}
@@ -506,7 +506,7 @@ footer{padding:32px 0;background:var(--white);border-top:1px solid var(--border)
       <div class="plan-card">
         <div class="plan-name">Libre</div>
         <div class="plan-price">0<sup>€</sup> <span>/mes</span></div>
-        <div class="plan-tagline">Memoria IA</div>
+        <div class="plan-tagline">Acceso básico</div>
         <div class="plan-desc">Cargas el contexto de tu cultivo manualmente en cada sesión.</div>
         <ul class="plan-features">
           <li>2 preguntas al día</li>
@@ -518,10 +518,11 @@ footer{padding:32px 0;background:var(--white);border-top:1px solid var(--border)
         <button class="plan-btn" onclick="window.location.href='/register.html'">Solicitar acceso</button>
       </div>
       <div class="plan-card">
+        <div class="plan-badge">Fundador</div>
         <div class="plan-name">Semilla</div>
-        <div class="plan-price"><sup>€</sup>9 <span>/mes</span></div>
+        <div class="plan-price">0<sup>€</sup> <span>/mes</span></div>
         <div class="plan-tagline">Memoria IA básica</div>
-        <div class="plan-desc">La IA recuerda tu tipo de cultivo, espacio e iluminación.</div>
+        <div class="plan-desc">Precio fundador. La IA recuerda tu tipo de cultivo, espacio e iluminación.</div>
         <ul class="plan-features">
           <li>5 preguntas al día</li>
           <li>Calendario personalizado</li>
@@ -534,7 +535,7 @@ footer{padding:32px 0;background:var(--white);border-top:1px solid var(--border)
       <div class="plan-card featured">
         <div class="plan-badge">Más popular</div>
         <div class="plan-name">Cultivador</div>
-        <div class="plan-price"><sup>€</sup>19 <span>/mes</span></div>
+        <div class="plan-price"><sup>€</sup>9 <span>/mes</span></div>
         <div class="plan-tagline">Memoria IA completa</div>
         <div class="plan-desc">La IA conoce tu setup completo: sustrato, nutrientes, genética y legislación de tu país.</div>
         <ul class="plan-features">
@@ -547,8 +548,8 @@ footer{padding:32px 0;background:var(--white);border-top:1px solid var(--border)
         <button class="plan-btn featured-btn" onclick="window.location.href='/register.html'">Solicitar acceso</button>
       </div>
       <div class="plan-card">
-        <div class="plan-name">Maestro</div>
-        <div class="plan-price"><sup>€</sup>47 <span>/mes</span></div>
+        <div class="plan-name">Master</div>
+        <div class="plan-price"><sup>€</sup>19 <span>/mes</span></div>
         <div class="plan-tagline">Memoria IA + Aprendizaje</div>
         <div class="plan-desc">Historial completo, anticipa problemas y adapta todo a tus preferencias.</div>
         <ul class="plan-features">
@@ -557,6 +558,20 @@ footer{padding:32px 0;background:var(--white);border-top:1px solid var(--border)
           <li>Sesión mensual en directo</li>
           <li>Historial completo</li>
           <li>Alertas legales por país</li>
+        </ul>
+        <button class="plan-btn" onclick="window.location.href='/register.html'">Solicitar acceso</button>
+      </div>
+      <div class="plan-card">
+        <div class="plan-name">Genetista</div>
+        <div class="plan-price"><sup>€</sup>47 <span>/mes</span></div>
+        <div class="plan-tagline">Acceso VIP</div>
+        <div class="plan-desc">Lo más alto: genéticas premium, clones elite y sesiones privadas con el equipo.</div>
+        <ul class="plan-features">
+          <li>Todo lo del plan Master</li>
+          <li>5 semillas premium + 1 clon elite/mes</li>
+          <li>Sesión privada mensual</li>
+          <li>Acceso VIP a eventos y betas</li>
+          <li>20% descuento almacén</li>
         </ul>
         <button class="plan-btn" onclick="window.location.href='/register.html'">Solicitar acceso</button>
       </div>
