@@ -234,6 +234,15 @@ form.addEventListener('submit',async(e)=>{
       return;
     }
 
+    // Alta en Brevo en paralelo (no bloquea el flujo de registro)
+    fetch(API+'/brevo-contact',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({email,attributes:{PLAN:'LIBRE'}})
+    }).then(r=>{
+      if(!r.ok)console.error('Brevo contact failed:',r.status);
+    }).catch(err=>console.error('Brevo contact error:',err));
+
     const token=data.token||data.jwt||data.access_token;
     if(token){
       localStorage.setItem('ga_jwt',token);
