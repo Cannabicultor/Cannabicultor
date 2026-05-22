@@ -1,0 +1,5 @@
+---
+deployment:
+  tasks:
+    - export DEPLOYPATH=/home3/c4nn4bicultor/public_html
+    - /bin/cp -r ~/cannabicultor-repo/. $DEPLOYPATH/
