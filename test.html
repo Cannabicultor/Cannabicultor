@@ -1,0 +1,3015 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>Test de Acceso — Cannabicultor IA</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Lora:ital,wght@0,400;0,600;1,400;1,600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --white:#fff;
+  --bg:#f5f7f4;
+  --bg2:#eef1ec;
+  --card:#ffffff;
+  --forest:#1a5c32;
+  --forest2:#2a7a44;
+  --pale:#e6f0ea;
+  --pale2:#d0e8d8;
+  --sage:#5d8068;
+  --text:#151515;
+  --muted:#6f746f;
+  --soft:#9aa09a;
+  --border:rgba(0,0,0,.075);
+  --border2:rgba(0,0,0,.12);
+  --amber:#b5811d;
+  --amber-bg:#fff8e8;
+  --red:#b94b42;
+  --red-bg:#fdf0ef;
+  --shadow:0 1px 2px rgba(0,0,0,.04),0 10px 35px rgba(0,0,0,.06);
+  --shadow2:0 18px 70px rgba(0,0,0,.08);
+  --r:22px;
+}
+html,body{min-height:100%;background:var(--bg);color:var(--text);font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;-webkit-font-smoothing:antialiased}
+button,input{font-family:inherit;cursor:pointer}
+
+/* LAYOUT */
+.page{min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:40px 20px 60px}
+
+/* HEADER */
+.header{width:100%;max-width:680px;display:flex;align-items:center;justify-content:space-between;margin-bottom:40px}
+.brand{display:flex;align-items:center;gap:12px;text-decoration:none;color:var(--text)}
+.brand img{width:38px;height:38px;border-radius:12px;object-fit:contain;box-shadow:0 5px 18px rgba(26,92,50,.12)}
+.brand-title{font-size:14px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;line-height:1.1}
+.brand-sub{font-size:10px;color:var(--muted);letter-spacing:.12em;text-transform:uppercase;margin-top:2px}
+.attempt-badge{font-size:12px;color:var(--muted);background:var(--bg2);border:1px solid var(--border2);border-radius:999px;padding:6px 14px;font-weight:600}
+
+/* PROGRESS BAR */
+.progress-wrap{width:100%;max-width:680px;margin-bottom:32px}
+.progress-info{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.progress-label{font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+.progress-count{font-size:13px;font-weight:700;color:var(--forest)}
+.progress-bar{height:6px;background:var(--pale2);border-radius:999px;overflow:hidden}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--forest),var(--forest2));border-radius:999px;transition:width .4s ease}
+
+/* CATEGORY PILL */
+.category-pill{display:inline-flex;align-items:center;gap:7px;background:var(--pale);border:1px solid var(--pale2);border-radius:999px;padding:6px 14px;font-size:12px;font-weight:700;color:var(--forest);margin-bottom:16px;text-transform:uppercase;letter-spacing:.08em}
+
+/* CARD */
+.card{width:100%;max-width:680px;background:var(--card);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden;animation:fadeUp .35s ease}
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+
+.card-body{padding:32px}
+.question-num{font-size:11px;font-weight:700;color:var(--soft);text-transform:uppercase;letter-spacing:.12em;margin-bottom:12px}
+.question-text{font-family:Lora,Georgia,serif;font-size:22px;line-height:1.45;font-weight:600;letter-spacing:-.02em;margin-bottom:28px;color:var(--text)}
+
+/* OPTIONS */
+.options{display:flex;flex-direction:column;gap:10px}
+.option{display:flex;align-items:center;gap:14px;padding:16px 18px;border:1.5px solid var(--border2);border-radius:16px;background:#fff;text-align:left;transition:all .18s;font-size:15px;color:var(--text);font-weight:500}
+.option:hover:not(:disabled){border-color:var(--forest);background:var(--pale);transform:translateX(3px)}
+.option.selected{border-color:var(--forest);background:var(--pale);color:var(--forest)}
+.option.correct{border-color:#34c759;background:#f0fdf4;color:#1a6b30}
+.option.wrong{border-color:var(--red);background:var(--red-bg);color:var(--red)}
+.option:disabled{cursor:default}
+.option-letter{width:30px;height:30px;border-radius:10px;background:var(--bg2);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;color:var(--muted);transition:all .18s}
+.option.selected .option-letter{background:var(--forest);color:#fff}
+.option.correct .option-letter{background:#34c759;color:#fff}
+.option.wrong .option-letter{background:var(--red);color:#fff}
+
+/* FEEDBACK */
+.feedback{margin-top:20px;padding:16px 18px;border-radius:16px;font-size:14px;line-height:1.6;display:none}
+.feedback.show{display:block}
+.feedback.correct-fb{background:#f0fdf4;border:1px solid rgba(52,199,89,.3);color:#1a6b30}
+.feedback.wrong-fb{background:var(--red-bg);border:1px solid rgba(185,75,66,.2);color:#8b2e28}
+.feedback strong{display:block;margin-bottom:4px;font-size:15px}
+
+/* NAV */
+.card-footer{padding:20px 32px 28px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:12px}
+.btn{border:1px solid var(--border);background:#fff;color:var(--text);border-radius:999px;padding:12px 20px;font-size:14px;font-weight:600;box-shadow:0 1px 2px rgba(0,0,0,.03);transition:all .18s;display:inline-flex;align-items:center;gap:8px}
+.btn:hover{transform:translateY(-1px);box-shadow:var(--shadow)}
+.btn.primary{background:var(--forest);color:#fff;border-color:var(--forest)}
+.btn.primary:hover{background:var(--forest2)}
+.btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
+.score-mini{font-size:13px;color:var(--muted);font-weight:600}
+
+/* SCREENS */
+.screen{width:100%;max-width:680px;display:none}
+.screen.active{display:block}
+
+/* INTRO */
+.intro-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--shadow);padding:40px;text-align:center}
+.intro-icon{font-size:48px;margin-bottom:20px}
+.intro-kicker{font-size:11px;font-weight:700;letter-spacing:.14em;color:var(--forest);text-transform:uppercase;margin-bottom:12px}
+.intro-title{font-family:Lora,Georgia,serif;font-size:30px;font-weight:600;letter-spacing:-.04em;line-height:1.2;margin-bottom:16px}
+.intro-title em{color:var(--forest);font-style:italic;font-weight:400}
+.intro-text{font-size:15px;color:var(--muted);line-height:1.7;margin-bottom:28px;max-width:480px;margin-left:auto;margin-right:auto}
+.intro-rules{display:flex;flex-direction:column;gap:10px;margin-bottom:32px;text-align:left;max-width:420px;margin-left:auto;margin-right:auto}
+.rule{display:flex;align-items:flex-start;gap:12px;font-size:14px;color:var(--muted);line-height:1.5}
+.rule-ico{width:28px;height:28px;border-radius:10px;background:var(--pale);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:14px}
+
+/* RESULT */
+.result-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--shadow2);padding:48px 40px;text-align:center}
+.result-ring{width:140px;height:140px;border-radius:50%;margin:0 auto 28px;display:flex;align-items:center;justify-content:center;position:relative}
+.result-ring-bg{position:absolute;inset:0;border-radius:50%}
+.result-ring-inner{position:relative;z-index:1}
+.result-score{font-size:44px;font-weight:700;letter-spacing:-.06em;line-height:1}
+.result-label{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;margin-top:4px;opacity:.7}
+.result-title{font-family:Lora,Georgia,serif;font-size:28px;font-weight:600;letter-spacing:-.04em;line-height:1.2;margin-bottom:12px}
+.result-text{font-size:15px;color:var(--muted);line-height:1.7;margin-bottom:32px;max-width:460px;margin-left:auto;margin-right:auto}
+.result-actions{display:flex;flex-direction:column;gap:12px;max-width:360px;margin:0 auto}
+.result-actions .btn{justify-content:center;padding:16px 24px;font-size:15px}
+.result-divider{font-size:12px;color:var(--soft);font-weight:600;text-transform:uppercase;letter-spacing:.1em;margin:4px 0}
+
+/* CHOICE SCREEN (90%+) */
+.choice-cards{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:24px}
+.choice-card{background:#fff;border:1.5px solid var(--border2);border-radius:20px;padding:24px;text-align:center;cursor:pointer;transition:all .22s}
+.choice-card:hover{border-color:var(--forest);transform:translateY(-3px);box-shadow:var(--shadow)}
+.choice-card.featured{border-color:var(--pale2);background:linear-gradient(180deg,#fff,#f7faf6)}
+.choice-emoji{font-size:32px;margin-bottom:12px}
+.choice-name{font-size:16px;font-weight:700;letter-spacing:-.02em;margin-bottom:6px}
+.choice-desc{font-size:13px;color:var(--muted);line-height:1.5;margin-bottom:12px}
+.choice-price{font-size:22px;font-weight:700;color:var(--forest);letter-spacing:-.04em}
+.choice-sub{font-size:11px;color:var(--soft);margin-top:3px}
+.badge-plazas{display:inline-block;background:var(--amber-bg);border:1px solid rgba(181,129,29,.25);color:var(--amber);font-size:11px;font-weight:700;padding:4px 10px;border-radius:999px;margin-top:8px}
+
+/* TIMER */
+.timer-wrap{width:100%;max-width:680px;margin-bottom:16px;display:none}
+.timer-bar-bg{height:5px;background:rgba(0,0,0,.08);border-radius:999px;overflow:hidden}
+.timer-bar-fill{height:100%;border-radius:999px;transition:width 1s linear;width:100%}
+.timer-bar-fill.urgent{background:var(--red)}
+.timer-bar-fill.warning{background:var(--amber)}
+.timer-bar-fill.ok{background:var(--forest)}
+.timer-text{font-size:12px;font-weight:700;text-align:right;margin-bottom:6px;letter-spacing:.04em}
+.timer-text.urgent{color:var(--red)}
+.timer-text.warning{color:var(--amber)}
+.timer-text.ok{color:var(--forest)}
+
+/* INTRO HERO — pantalla de desafío */
+.intro-hero{width:100%;max-width:680px;border-radius:var(--r);overflow:hidden;box-shadow:0 30px 90px rgba(0,0,0,.35);animation:fadeUp .5s ease}
+.intro-hero-img{position:relative;min-height:400px;background:url('assets/challenge.jpg') center/cover no-repeat;display:flex;flex-direction:column;justify-content:flex-end}
+.intro-hero-overlay{position:absolute;inset:0;background:linear-gradient(to top,rgba(5,12,7,0.98) 0%,rgba(5,12,7,0.75) 45%,rgba(5,12,7,0.45) 100%)}
+.intro-hero-content{position:relative;z-index:1;padding:44px 40px 36px}
+.intro-kicker-dark{font-size:11px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:#4caf75;margin-bottom:16px}
+.intro-title-dark{font-family:Lora,Georgia,serif;font-size:38px;font-weight:600;line-height:1.15;letter-spacing:-.04em;color:#fff;margin-bottom:12px}.intro-title-dark em{color:#fff;font-style:italic;font-weight:600;position:relative;display:inline-block}.intro-title-dark em::after{content:"";position:absolute;bottom:-4px;left:0;right:0;height:4px;background:linear-gradient(90deg,#4caf75,#2a7a44);border-radius:999px}
+.intro-title-dark em{color:#4caf75;font-style:italic;font-weight:400}
+.intro-sub-dark{font-size:16px;color:rgba(255,255,255,.85);line-height:1.6;margin-bottom:32px;max-width:460px;text-shadow:0 1px 8px rgba(0,0,0,.6)}
+.intro-stats{display:flex;gap:28px;margin-bottom:36px;flex-wrap:wrap}
+.intro-stat{text-align:left}
+.intro-stat-val{font-size:28px;font-weight:700;color:#fff;letter-spacing:-.04em;line-height:1;text-shadow:0 2px 12px rgba(0,0,0,.5)}
+.intro-stat-label{font-size:11px;color:rgba(255,255,255,.7);text-transform:uppercase;letter-spacing:.1em;margin-top:4px;font-weight:600}
+.intro-rules-dark{display:flex;flex-direction:column;gap:8px;margin-bottom:36px;background:rgba(0,0,0,.45);border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:16px 18px;backdrop-filter:blur(8px)}
+.rule-dark{display:flex;align-items:center;gap:12px;font-size:14px;color:rgba(255,255,255,.9);line-height:1.4}
+.rule-dark strong{color:#4caf75;font-weight:700}
+.rule-ico-dark{width:30px;height:30px;border-radius:9px;background:rgba(76,175,117,.15);border:1px solid rgba(76,175,117,.25);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+.btn-challenge{display:inline-flex;align-items:center;gap:10px;background:#1a5c32;color:#fff;border:0;border-radius:999px;padding:18px 36px;font-size:17px;font-weight:700;letter-spacing:-.01em;box-shadow:0 8px 32px rgba(26,92,50,.5);transition:all .22s;cursor:pointer}
+.btn-challenge:hover{background:#2a7a44;transform:translateY(-2px);box-shadow:0 14px 42px rgba(26,92,50,.55)}
+.intro-hero-bottom{background:#080e09;padding:24px 40px;border-top:1px solid rgba(255,255,255,.06)}
+.intro-warning{display:flex;align-items:center;gap:12px;font-size:13px;color:rgba(255,255,255,.35);line-height:1.5}
+.intro-warning strong{color:rgba(255,255,255,.6)}
+
+/* LOADING */
+.loading{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px;gap:16px}
+.spinner{width:36px;height:36px;border:3px solid var(--pale2);border-top-color:var(--forest);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading p{font-size:14px;color:var(--muted);font-weight:500}
+
+@media(max-width:600px){
+  .page{padding:24px 16px 48px}
+  .card-body{padding:24px 20px}
+  .card-footer{padding:16px 20px 24px;flex-direction:column}
+  .card-footer .btn{width:100%;justify-content:center}
+  .intro-card,.result-card{padding:32px 24px}
+  .intro-title,.result-title{font-size:24px}
+  .question-text{font-size:19px}
+  .choice-cards{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<div class="page">
+
+  <!-- HEADER -->
+  <div class="header">
+    <a class="brand" href="https://cannabicultor.com">
+      <img src="assets/icono_cannabicultor.png" alt="Cannabicultor IA">
+      <div>
+        <div class="brand-title">Cannabicultor IA</div>
+        <div class="brand-sub">Growers Alliance</div>
+      </div>
+    </a>
+    <div class="attempt-badge" id="attemptBadge">Intento 1 de 3</div>
+  </div>
+
+  <!-- PROGRESS -->
+  <div class="progress-wrap" id="progressWrap" style="display:none">
+    <div class="progress-info">
+      <span class="progress-label">Progreso del test</span>
+      <span class="progress-count" id="progressCount">1 / 20</span>
+    </div>
+    <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:5%"></div></div>
+  </div>
+
+  <!-- SCREEN: INTRO -->
+  <div class="screen active" id="screenIntro">
+    <div class="intro-hero">
+      <div class="intro-hero-img">
+        <div class="intro-hero-overlay"></div>
+        <div class="intro-hero-content">
+          <div class="intro-kicker-dark">Growers Alliance · Acceso por mérito</div>
+          <h1 class="intro-title-dark">Llevas años cultivando.<br><em>Ahora demuéstralo — y conviértete en Fundador.</em></h1>
+          <p class="intro-sub-dark">Esta comunidad no es para todo el mundo. Es para los que saben lo que hacen. Para entrar, primero tienes que ganártelo.</p>
+          <div class="intro-stats">
+            <div class="intro-stat"><div class="intro-stat-val">20</div><div class="intro-stat-label">Preguntas</div></div>
+            <div class="intro-stat"><div class="intro-stat-val">60s</div><div class="intro-stat-label">Por pregunta</div></div>
+            <div class="intro-stat"><div class="intro-stat-val">70%</div><div class="intro-stat-label">Mínimo</div></div>
+            <div class="intro-stat"><div class="intro-stat-val" id="intentosRestStat">3</div><div class="intro-stat-label">Intentos</div></div>
+          </div>
+          <div class="intro-rules-dark">
+            <div class="rule-dark"><div class="rule-ico-dark">🎯</div><span><strong>70%+</strong> acceso Semilla · <strong>90%+</strong> nivel Cultivador o plaza Fundador gratis</span></div>
+            <div class="rule-dark"><div class="rule-ico-dark">⏱️</div><span><strong>60 segundos</strong> por pregunta. Tiempo agotado = respuesta incorrecta.</span></div>
+            <div class="rule-dark"><div class="rule-ico-dark">🔄</div><span><strong>3 intentos</strong> máximos. Cada ronda las preguntas son más difíciles.</span></div>
+            <div class="rule-dark"><div class="rule-ico-dark">🌱</div><span>Solo quedan <strong>500 plazas Fundador</strong> gratuitas de por vida.</span></div>
+          </div>
+          <button class="btn-challenge" onclick="startTest()">Aceptar el desafío →</button>
+        </div>
+      </div>
+      <div class="intro-hero-bottom">
+        <div class="intro-warning">
+          <span>⚠️</span>
+          <span>Sin Google. Sin trampa. Solo tú y lo que has aprendido cultivando. <strong>¿Estás listo?</strong></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TIMER -->
+  <div class="timer-wrap" id="timerWrap">
+    <div class="timer-text ok" id="timerText">60s</div>
+    <div class="timer-bar-bg"><div class="timer-bar-fill ok" id="timerFill" style="width:100%"></div></div>
+  </div>
+
+  <!-- SCREEN: TEST -->
+  <div class="screen" id="screenTest">
+    <div style="margin-bottom:14px" id="categoryWrap">
+      <span class="category-pill" id="categoryPill">🌱 Categoría</span>
+    </div>
+    <div class="card">
+      <div class="card-body">
+        <div class="question-num" id="questionNum">Pregunta 1 de 20</div>
+        <div class="question-text" id="questionText">Cargando pregunta…</div>
+        <div class="options" id="optionsContainer"></div>
+        <div class="feedback" id="feedback"></div>
+      </div>
+      <div class="card-footer">
+        <div class="score-mini" id="scoreMini">Correctas: 0 | Incorrectas: 0</div>
+        <button class="btn primary" id="nextBtn" onclick="nextQuestion()" disabled>Siguiente →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCREEN: RESULTADO APROBADO SEMILLA -->
+  <div class="screen" id="screenPass">
+    <div class="result-card">
+      <div class="result-ring" id="passRing">
+        <div class="result-ring-bg" id="passRingBg"></div>
+        <div class="result-ring-inner">
+          <div class="result-score" id="passScore">--</div>
+          <div class="result-label">Resultado</div>
+        </div>
+      </div>
+      <div class="intro-kicker" style="margin-bottom:12px">✅ Test superado</div>
+      <h2 class="result-title" id="passTitle">Bienvenido, Cannabicultor</h2>
+      <p class="result-text" id="passText">Has demostrado tu conocimiento. Ya puedes acceder a la comunidad.</p>
+      <div class="result-actions">
+        <button class="btn primary" onclick="goToDashboard()">Entrar al Dashboard →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCREEN: ELECCIÓN 90%+ -->
+  <div class="screen" id="screenChoice">
+    <div class="result-card">
+      <div class="intro-icon">🔥</div>
+      <div class="intro-kicker" style="margin-bottom:12px">Nivel élite detectado</div>
+      <h2 class="result-title">Eres un Cultivador de <em>verdad</em></h2>
+      <p class="result-text">Has obtenido <strong id="eliteScore">--</strong> en el test. Eso te da acceso a dos opciones exclusivas. Elige cómo quieres entrar.</p>
+      <div class="choice-cards">
+        <div class="choice-card featured" onclick="choosePlan('semilla')">
+          <div class="choice-emoji">🌱</div>
+          <div class="choice-name">Plaza Fundador</div>
+          <div class="choice-desc">Acceso gratuito de por vida como miembro fundador de la Alianza</div>
+          <div class="choice-price">Gratis</div>
+          <div class="choice-sub">Para siempre</div>
+          <div class="badge-plazas" id="plazasLeft">⚡ 500 plazas fundador</div>
+        </div>
+        <div class="choice-card" onclick="choosePlan('cultivador')">
+          <div class="choice-emoji">🌿</div>
+          <div class="choice-name">Cultivador</div>
+          <div class="choice-desc">Acceso inmediato a todas las funciones avanzadas de la plataforma</div>
+          <div class="choice-price">9€<small style="font-size:14px;color:var(--muted)">/mes</small></div>
+          <div class="choice-sub">Precio fundador bloqueado</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCREEN: FALLADO -->
+  <div class="screen" id="screenFail">
+    <div class="result-card">
+      <div class="result-ring">
+        <div class="result-ring-bg" style="background:conic-gradient(var(--red) 0 var(--pct,50%),#f0e0df var(--pct,50%) 100%)"></div>
+        <div class="result-ring-inner">
+          <div class="result-score" style="color:var(--red)" id="failScore">--</div>
+          <div class="result-label">Resultado</div>
+        </div>
+      </div>
+      <div class="intro-kicker" style="margin-bottom:12px;color:var(--red)">No superado</div>
+      <h2 class="result-title" id="failTitle">Sigue cultivando tu conocimiento</h2>
+      <p class="result-text" id="failText">No has alcanzado el 70% mínimo. Repasa los conceptos y vuelve a intentarlo.</p>
+      <div class="result-actions">
+        <button class="btn primary" id="retryBtn" onclick="retryTest()">Intentar de nuevo</button>
+        <div class="result-divider" id="retryDivider">o</div>
+        <button class="btn" id="freeAccessBtn" onclick="goFreeAccess()" style="display:none">Acceder como Nivel Libre</button>
+        <div id="noMoreAttempts" style="display:none;font-size:14px;color:var(--muted);line-height:1.6">Has agotado los 3 intentos. Puedes acceder con funciones limitadas o contactar con nosotros.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCREEN: LOADING -->
+  <div class="screen" id="screenLoading">
+    <div class="card">
+      <div class="loading">
+        <div class="spinner"></div>
+        <p id="loadingMsg">Evaluando tus respuestas…</p>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /page -->
+
+<script>
+// ─── BANCO DE PREGUNTAS ─────────────────────────────────────────────────────
+const BANCO = [
+  {
+    "id": "FT-001",
+    "cat": "Fotoperiodo",
+    "ico": "☀️",
+    "nivel": 1,
+    "pregunta": "¿Cuántas horas de oscuridad continua necesita generalmente una planta de cannabis para iniciar la floración?",
+    "opciones": [
+      "6 horas",
+      "8 horas",
+      "12 horas",
+      "18 horas"
+    ],
+    "correcta": 2,
+    "explicacion": "La mayoría de variedades fotoperiodo requieren un mínimo de 12 horas de oscuridad ininterrumpida para que el fitocromo detecte el cambio estacional y active la floración."
+  },
+  {
+    "id": "FT-002",
+    "cat": "Fotoperiodo",
+    "ico": "☀️",
+    "nivel": 1,
+    "pregunta": "¿Qué ciclo de luz se usa habitualmente en la fase de crecimiento (vegetativo) en cultivo indoor?",
+    "opciones": [
+      "12/12",
+      "16/8",
+      "18/6",
+      "20/4"
+    ],
+    "correcta": 2,
+    "explicacion": "El ciclo 18 horas de luz / 6 de oscuridad es el estándar en vegetativo: maximiza el crecimiento manteniendo la planta en estado vegetativo sin inducir floración."
+  },
+  {
+    "id": "FT-003",
+    "cat": "Fotoperiodo",
+    "ico": "☀️",
+    "nivel": 1,
+    "pregunta": "¿Qué ciclo de luz/oscuridad se usa para inducir la floración en variedades fotoperiodo?",
+    "opciones": [
+      "18/6",
+      "20/4",
+      "12/12",
+      "14/10"
+    ],
+    "correcta": 2,
+    "explicacion": "El ciclo 12/12 replica el equinoccio otoñal. Con 12 horas de oscuridad continua el cannabis fotoperiodo recibe la señal hormonal para comenzar a florecer."
+  },
+  {
+    "id": "FT-004",
+    "cat": "Fotoperiodo",
+    "ico": "☀️",
+    "nivel": 1,
+    "pregunta": "¿Cómo se llama la molécula vegetal responsable de detectar los cambios en el fotoperiodo?",
+    "opciones": [
+      "Clorofila",
+      "Fitocromo",
+      "Auxina",
+      "Criptocromos"
+    ],
+    "correcta": 1,
+    "explicacion": "El fitocromo es el fotorreceptor que existe en dos formas (Pr y Pfr) y actúa como reloj biológico que mide la duración de la noche, desencadenando la transición vegetativo-floración."
+  },
+  {
+    "id": "FT-005",
+    "cat": "Fotoperiodo",
+    "ico": "☀️",
+    "nivel": 1,
+    "pregunta": "¿Qué ocurre si interrumpes la oscuridad con un flash de luz durante la fase de floración?",
+    "opciones": [
+      "La planta florece más rápido",
+      "No ocurre nada relevante",
+      "Puede revertir a vegetativo o provocar hermafroditismo",
+      "Aumenta la producción de resina"
+    ],
+    "correcta": 2,
+    "explicacion": "La interrupción lumínica durante la noche (light leak) reinicia el contador de oscuridad del fitocromo. Si es frecuente puede causar re-vegetación o estrés que derive en hermafroditismo."
+  },
+  {
+    "id": "FT-006",
+    "cat": "Fotoperiodo",
+    "ico": "☀️",
+    "nivel": 2,
+    "pregunta": "En exterior en España (Madrid, latitud ~40°N), ¿en qué mes aproximado comienzan a florecer de forma natural las variedades fotoperiodo?",
+    "opciones": [
+      "Junio",
+      "Julio",
+      "Agosto",
+      "Octubre"
+    ],
+    "correcta": 2,
+    "explicacion": "A latitud 40°N, los días empiezan a acortarse tras el solsticio de junio. Las plantas detectan las 12h de oscuridad necesarias aproximadamente a finales de julio-agosto, iniciando floración visible en agosto."
+  },
+  {
+    "id": "FT-007",
+    "cat": "Fotoperiodo",
+    "ico": "☀️",
+    "nivel": 2,
+    "pregunta": "¿Qué técnica consiste en dar 24-36h de oscuridad continua antes de cambiar el ciclo a 12/12?",
+    "opciones": [
+      "Screen of Green (SCROG)",
+      "Dark period pre-floración",
+      "Lollipopping",
+      "Flush final"
+    ],
+    "correcta": 1,
+    "explicacion": "El 'dark period' o periodo oscuro pre-floración acelera la transición al fotoperiodo 12/12 al saturar los fitocromos en su forma Pr (noche), reduciendo los días que tarda en aparecer la floración."
+  },
+  {
+    "id": "FT-008",
+    "cat": "Fotoperiodo",
+    "ico": "☀️",
+    "nivel": 2,
+    "pregunta": "¿Cuál es la diferencia fundamental entre variedades fotoperiodo y autoflorecientes respecto a la luz?",
+    "opciones": [
+      "Las autoflorecientes necesitan más luz total",
+      "Las fotoperiodo florecen según horas de luz, las autoflorecientes según edad",
+      "Las autoflorecientes son más sensibles a la luz azul",
+      "No hay diferencia real, florecen igual"
+    ],
+    "correcta": 1,
+    "explicacion": "Las variedades fotoperiodo dependen del estímulo lumínico (horas de oscuridad) para florecer. Las autoflorecientes tienen un gen (gen ruderalis) que activa la floración por edad, independientemente del ciclo de luz."
+  },
+  {
+    "id": "FT-009",
+    "cat": "Fotoperiodo",
+    "ico": "☀️",
+    "nivel": 2,
+    "pregunta": "¿Qué es el 'light stress' o estrés lumínico por fotoperiodo incorrecto?",
+    "opciones": [
+      "Quemaduras por exceso de luz directa",
+      "Alteraciones en el ciclo que generan respuestas anormales como re-vegetación o hermafroditismo",
+      "Deficiencia de clorofila por luz insuficiente",
+      "Daño en raíces por calor de los focos"
+    ],
+    "correcta": 1,
+    "explicacion": "El estrés por fotoperiodo incorrecto ocurre cuando la planta recibe señales lumínicas contradictorias (ej. light leaks, ciclos irregulares), pudiendo causar re-vegetación, nanismo o producción de flores masculinas en plantas femeninas."
+  },
+  {
+    "id": "FT-010",
+    "cat": "Fotoperiodo",
+    "ico": "☀️",
+    "nivel": 2,
+    "pregunta": "¿Qué longitud de onda lumínica es la más influyente en la respuesta del fitocromo?",
+    "opciones": [
+      "Luz azul (450-495nm)",
+      "Luz verde (520-560nm)",
+      "Luz roja y rojo lejano (660-730nm)",
+      "Luz ultravioleta (280-400nm)"
+    ],
+    "correcta": 2,
+    "explicacion": "El fitocromo absorbe principalmente en la zona del rojo (660nm activa Pfr) y rojo lejano (730nm activa Pr). El ratio Pfr/Pr al final del periodo de oscuridad es lo que determina la respuesta floral."
+  },
+  {
+    "id": "FT-011",
+    "cat": "Fotoperiodo",
+    "ico": "☀️",
+    "nivel": 2,
+    "pregunta": "¿Cuántos luxes mínimos de luz pueden interrumpir la oscuridad y afectar el fotoperiodo?",
+    "opciones": [
+      "Más de 5.000 luxes",
+      "Más de 1.000 luxes",
+      "Menos de 50 luxes pueden ser suficientes para interferir",
+      "Solo la luz directa solar afecta"
+    ],
+    "correcta": 2,
+    "explicacion": "El cannabis es extremadamente sensible a la interrupción lumínica durante la noche. Niveles de tan solo 2-10 µmol/m²/s (equivalente a poca luz ambiente) pueden ser suficientes para resetear el fitocromo y afectar la floración."
+  },
+  {
+    "id": "FT-012",
+    "cat": "Fotoperiodo",
+    "ico": "☀️",
+    "nivel": 2,
+    "pregunta": "¿Qué ciclo de luz permite mantener plantas madre (clones) en estado vegetativo indefinidamente?",
+    "opciones": [
+      "14/10",
+      "18/6 o superior",
+      "12/12",
+      "16/8 exactamente"
+    ],
+    "correcta": 1,
+    "explicacion": "Con 18h de luz o más, las plantas fotoperiodo no reciben suficientes horas de oscuridad para iniciar la floración. Las plantas madre se mantienen en vegetativo con 18/6, aunque algunos cultivadores usan 20/4 o incluso 24/0."
+  },
+  {
+    "id": "FT-013",
+    "cat": "Fotoperiodo",
+    "ico": "☀️",
+    "nivel": 3,
+    "pregunta": "¿Qué es el 'photoperiodism' cuantitativo frente al cualitativo en cannabis?",
+    "opciones": [
+      "El cuantitativo florece solo si supera un umbral exacto de horas oscuras; el cualitativo florece mejor pero no es obligatorio",
+      "El cuantitativo mide la cantidad de luz total, el cualitativo la calidad espectral",
+      "Son términos sin relevancia práctica para el cultivador",
+      "El cualitativo necesita oscuridad total, el cuantitativo no"
+    ],
+    "correcta": 0,
+    "explicacion": "En fotoperiodismo cuantitativo (mayoría del cannabis), la planta SOLO florece si supera un umbral crítico de horas oscuras. En el cualitativo, la floración mejora con más horas de oscuridad pero puede ocurrir sin alcanzar un umbral fijo."
+  },
+  {
+    "id": "FT-014",
+    "cat": "Fotoperiodo",
+    "ico": "☀️",
+    "nivel": 3,
+    "pregunta": "¿Qué técnica avanzada consiste en dar 2 ciclos cortos de luz en 24h para acelerar el metabolismo sin cambiar el fotoperiodo?",
+    "opciones": [
+      "Sea of Green (SOG)",
+      "Light deprivation",
+      "Ciclo 6/2 repetido (Supercropping lumínico)",
+      "Flowering boost protocol"
+    ],
+    "correcta": 2,
+    "explicacion": "El ciclo 6h luz / 2h oscuridad repetido 3 veces en 24h mantiene la planta en vegetativo (nunca alcanza 12h de oscuridad seguidas) pero con 18h totales de luz. Algunos estudios sugieren mayor eficiencia fotosintética y ahorro energético."
+  },
+  {
+    "id": "FT-015",
+    "cat": "Fotoperiodo",
+    "ico": "☀️",
+    "nivel": 3,
+    "pregunta": "¿Cómo afecta la temperatura nocturna al fotoperiodo y a la respuesta floral del cannabis?",
+    "opciones": [
+      "No tiene ninguna relación con el fotoperiodo",
+      "Temperaturas nocturnas altas pueden enmascarar la señal del fitocromo y retrasar la floración",
+      "El frío nocturno activa directamente la floración sin necesitar oscuridad",
+      "Las temperaturas solo afectan al crecimiento, no a la señal lumínica"
+    ],
+    "correcta": 1,
+    "explicacion": "La termoperiodismo interactúa con el fotoperiodo. Temperaturas nocturnas elevadas (>28°C) pueden interferir con la conversión Pfr→Pr del fitocromo durante la oscuridad, retrasando o debilitando la señal de floración."
+  },
+  {
+    "id": "FT-016",
+    "cat": "Fotoperiodo",
+    "ico": "☀️",
+    "nivel": 3,
+    "pregunta": "¿Qué es el 'light deprivation' o 'dep' en cultivo outdoor?",
+    "opciones": [
+      "Cultivar sin luz artificial en interior",
+      "Cubrir las plantas con lonas para simular oscuridad artificial y forzar floración anticipada en exterior",
+      "Técnica de poda que elimina hojas para dar más luz al interior",
+      "Sistema de riego que se activa solo de noche"
+    ],
+    "correcta": 1,
+    "explicacion": "El 'light dep' consiste en cubrir el cultivo exterior con lonas opacas durante horas específicas para crear artificialmente el ciclo 12/12, permitiendo cosechar en verano (julio-agosto) antes de que el ciclo natural lo haría (octubre). Permite múltiples cosechas anuales."
+  },
+  {
+    "id": "FT-017",
+    "cat": "Fotoperiodo",
+    "ico": "☀️",
+    "nivel": 3,
+    "pregunta": "¿Qué fenómeno ocurre cuando una variedad de día corto recibe más de 24 horas de luz continua al inicio de su vida?",
+    "opciones": [
+      "Floración inmediata por saturación lumínica",
+      "Crecimiento más lento pero más robusto",
+      "En 24/0 la planta permanece en vegetativo; algunas variedades sensibles muestran signos de estrés pero no florecen",
+      "Muerte celular por fotoinhibición"
+    ],
+    "correcta": 2,
+    "explicacion": "Con 24h de luz continua (24/0), las variedades fotoperiodo nunca alcanzan el umbral de oscuridad necesario para florecer. Permanecen en vegetativo, aunque algunas genéticas sativas son sensibles y pueden mostrar estrés oxidativo por falta total de oscuridad."
+  },
+  {
+    "id": "FT-018",
+    "cat": "Fotoperiodo",
+    "ico": "☀️",
+    "nivel": 3,
+    "pregunta": "¿Cómo influye la latitud geográfica en la estrategia de cultivo outdoor para variedades fotoperiodo?",
+    "opciones": [
+      "La latitud no afecta, solo importa la altitud",
+      "A mayor latitud norte, los días de verano son más largos y el momento de floración natural se retrasa más",
+      "A mayor latitud, las plantas florecen antes porque hay más frío",
+      "Solo afecta a la temperatura, no al fotoperiodo"
+    ],
+    "correcta": 1,
+    "explicacion": "A latitudes más altas (ej. 55°N en norte de Europa vs 35°N en sur de España), el verano tiene más horas de luz diurna. Esto retrasa el momento en que los días se acortan hasta 12h de oscuridad, lo que puede hacer que ciertas genéticas no terminen la floración antes de las heladas otoñales."
+  },
+  {
+    "id": "FT-019",
+    "cat": "Fotoperiodo",
+    "ico": "☀️",
+    "nivel": 3,
+    "pregunta": "¿Qué es la 're-vegetación' y en qué casos puede ser una técnica deliberada?",
+    "opciones": [
+      "Plantar de nuevo tras una cosecha fallida",
+      "Devolver una planta florida al ciclo vegetativo para obtener más cosechas de la misma genética",
+      "Técnica de injerto para combinar genéticas",
+      "Proceso de recuperación tras una plaga severa"
+    ],
+    "correcta": 1,
+    "explicacion": "La re-vegetación (revegging) consiste en devolver a la planta al ciclo 18/6 tras la cosecha, dejando algunas hojas y cogollos pequeños. La planta vuelve al vegetativo y puede ser clonada o cosechada de nuevo. Útil para preservar genéticas únicas sin mantener madre separada."
+  },
+  {
+    "id": "FT-020",
+    "cat": "Fotoperiodo",
+    "ico": "☀️",
+    "nivel": 3,
+    "pregunta": "¿Por qué algunas variedades 'Sativa' puras requieren más de 13-14 horas de oscuridad para florecer correctamente?",
+    "opciones": [
+      "Porque las sativas son más resistentes a enfermedades",
+      "Porque son originarias de latitudes ecuatoriales donde la oscuridad nocturna apenas supera las 11-12 horas, y han adaptado un umbral de floración diferente",
+      "Porque las sativas tienen más clorofila y necesitan más luz para compensar",
+      "No es cierto, todas las variedades florecen igual con 12 horas de oscuridad"
+    ],
+    "correcta": 1,
+    "explicacion": "Las sativas puras de origen ecuatorial (Colombia, Tailandia, Africa) evolucionaron en latitudes donde la variación día/noche es mínima (~12/12 todo el año). Estas plantas tienen umbrales de floración adaptados a oscuridades de 11-12h, lo que en latitudes medias significa que florecen más tarde y tardan más semanas en completar la floración."
+  },
+  {
+    "id": "NT-001",
+    "cat": "Nutricion",
+    "ico": "📋",
+    "nivel": 1,
+    "pregunta": "¿Cuáles son los tres macronutrientes primarios esenciales para el cannabis?",
+    "opciones": [
+      "Calcio, Magnesio y Azufre",
+      "Nitrógeno, Fósforo y Potasio (N-P-K)",
+      "Hierro, Zinc y Manganeso",
+      "Boro, Cobre y Molibdeno"
+    ],
+    "correcta": 1,
+    "explicacion": "N (Nitrógeno), P (Fósforo) y K (Potasio) son los macronutrientes primarios. Aparecen en ese orden en todos los fertilizantes (ej. 20-10-15 significa 20%N, 10%P, 15%K). Todo lo demás son secundarios o micronutrientes."
+  },
+  {
+    "id": "NT-002",
+    "cat": "Nutricion",
+    "ico": "📋",
+    "nivel": 1,
+    "pregunta": "¿Qué nutriente es el más demandado durante la fase de crecimiento vegetativo?",
+    "opciones": [
+      "Potasio (K)",
+      "Fósforo (P)",
+      "Nitrógeno (N)",
+      "Calcio (Ca)"
+    ],
+    "correcta": 2,
+    "explicacion": "El Nitrógeno es el componente principal de la clorofila y las proteínas estructurales. En vegetativo, la planta construye masa foliar y tallos, procesos que demandan grandes cantidades de N."
+  },
+  {
+    "id": "NT-003",
+    "cat": "Nutricion",
+    "ico": "📋",
+    "nivel": 1,
+    "pregunta": "¿Qué aspecto visual indica una deficiencia de Nitrógeno en cannabis?",
+    "opciones": [
+      "Manchas marrones en los bordes de las hojas",
+      "Amarillamiento generalizado empezando por las hojas más viejas (inferiores)",
+      "Hojas rizadas hacia arriba con color verde oscuro",
+      "Manchas amarillas entre las nervaduras de hojas jóvenes"
+    ],
+    "correcta": 1,
+    "explicacion": "El N es un nutriente móvil: cuando escasea, la planta lo redistribuye desde las hojas viejas hacia los tejidos nuevos. Por eso el amarillamiento empieza en las hojas más bajas y viejas, ascendiendo progresivamente."
+  },
+  {
+    "id": "NT-004",
+    "cat": "Nutricion",
+    "ico": "📋",
+    "nivel": 1,
+    "pregunta": "¿Para qué fase se recomienda aumentar el Fósforo y el Potasio en la nutrición?",
+    "opciones": [
+      "Germinación",
+      "Crecimiento vegetativo",
+      "Floración y desarrollo de cogollos",
+      "Enraizamiento de esquejes"
+    ],
+    "correcta": 2,
+    "explicacion": "En floración, la planta reduce su demanda de N y aumenta la de P (formación de flores y semillas) y K (calidad, densidad y resistencia del cogollo). Los fertilizantes 'bloom' reflejan esta ratio: bajo N, alto P y K."
+  },
+  {
+    "id": "NT-005",
+    "cat": "Nutricion",
+    "ico": "📋",
+    "nivel": 1,
+    "pregunta": "¿Qué es el 'flushing' o lavado de raíces y cuándo se realiza habitualmente?",
+    "opciones": [
+      "Regar con fertilizantes concentrados para el empuje final",
+      "Regar únicamente con agua sin nutrientes en los últimos días antes de la cosecha",
+      "Técnica de limpieza del sustrato entre cultivos",
+      "Proceso de eliminación de plagas mediante riego"
+    ],
+    "correcta": 1,
+    "explicacion": "El flushing consiste en regar solo con agua (sin nutrientes) durante los últimos 7-14 días de cultivo. El objetivo es que la planta consuma las sales minerales acumuladas en sus tejidos, mejorando teóricamente el sabor y la calidad del producto final."
+  },
+  {
+    "id": "NT-006",
+    "cat": "Nutricion",
+    "ico": "📋",
+    "nivel": 2,
+    "pregunta": "¿Qué diferencia hay entre un fertilizante orgánico y uno mineral en términos de disponibilidad para la planta?",
+    "opciones": [
+      "Los orgánicos actúan más rápido porque son naturales",
+      "Los minerales actúan más rápido (disponibles de inmediato); los orgánicos necesitan degradación microbiana previa",
+      "No hay diferencia práctica en velocidad de absorción",
+      "Los orgánicos se absorben por las hojas, los minerales solo por raíz"
+    ],
+    "correcta": 1,
+    "explicacion": "Los fertilizantes minerales (sales solubles) están en forma iónica directamente asimilable. Los orgánicos deben ser descompuestos por microorganismos del suelo antes de que la planta pueda absorberlos, lo que los hace más lentos pero sostenidos en el tiempo."
+  },
+  {
+    "id": "NT-007",
+    "cat": "Nutricion",
+    "ico": "📋",
+    "nivel": 2,
+    "pregunta": "¿Qué es una deficiencia 'inducida' o 'de bloqueo' y cómo difiere de una deficiencia real?",
+    "opciones": [
+      "Es cuando la planta genera toxinas que bloquean sus propios nutrientes",
+      "El nutriente está presente en el sustrato pero el pH incorrecto impide su absorción por la raíz",
+      "Es una deficiencia causada por exceso de riego",
+      "Solo ocurre en cultivos hidropónicos"
+    ],
+    "correcta": 1,
+    "explicacion": "Una deficiencia inducida ocurre cuando el nutriente existe en el medio pero el pH está fuera del rango óptimo de absorción, bloqueando su entrada en la raíz. Solución: corregir el pH antes de añadir más fertilizante, o estarás echando nutrientes que la planta no puede usar."
+  },
+  {
+    "id": "NT-008",
+    "cat": "Nutricion",
+    "ico": "📋",
+    "nivel": 2,
+    "pregunta": "¿Qué síntomas visuales indican una deficiencia de Magnesio?",
+    "opciones": [
+      "Hojas superiores pequeñas con bordes quemados",
+      "Clorosis internervial (amarillamiento entre nervios verdes) en hojas medias y viejas",
+      "Tallos morados y hojas enrolladas",
+      "Manchas necróticas marrones en el centro de las hojas"
+    ],
+    "correcta": 1,
+    "explicacion": "El Magnesio es el átomo central de la clorofila y es móvil. Su deficiencia produce clorosis internervial característica: los nervios permanecen verdes mientras el tejido entre ellos amarillea. Empieza en hojas viejas y avanza hacia las jóvenes."
+  },
+  {
+    "id": "NT-009",
+    "cat": "Nutricion",
+    "ico": "📋",
+    "nivel": 2,
+    "pregunta": "¿Cuál es la función principal del Calcio en la planta de cannabis?",
+    "opciones": [
+      "Activar la fotosíntesis en condiciones de baja luz",
+      "Fortalecer las paredes celulares y regular el transporte de otros nutrientes",
+      "Estimular la producción de terpenos",
+      "Regular la apertura y cierre de estomas"
+    ],
+    "correcta": 1,
+    "explicacion": "El Calcio es estructural: forma pectato cálcico en las paredes celulares dándoles rigidez, y actúa como segundo mensajero en señalización celular. Su deficiencia afecta primero a los tejidos nuevos (hojas jóvenes y puntas de crecimiento) porque es inmóvil en la planta."
+  },
+  {
+    "id": "NT-010",
+    "cat": "Nutricion",
+    "ico": "📋",
+    "nivel": 2,
+    "pregunta": "¿Qué ocurre cuando hay un exceso de Nitrógeno en la fase de floración?",
+    "opciones": [
+      "Los cogollos crecen más grandes y densos",
+      "Las hojas se ponen verde oscuro y la floración se ralentiza; puede empeorar el sabor final",
+      "La planta desarrolla más tricomas para protegerse",
+      "No tiene efectos negativos si el pH es correcto"
+    ],
+    "correcta": 1,
+    "explicacion": "El exceso de N en floración ('nitrogen toxicity') produce hojas verde oscuro brillante con puntas curvadas hacia abajo ('claw'). Más importante: inhibe la síntesis de carbohidratos destinados al cogollo, reduce la densidad floral y puede dejar sabores vegetales/amargos en el producto seco."
+  },
+  {
+    "id": "NT-011",
+    "cat": "Nutricion",
+    "ico": "📋",
+    "nivel": 2,
+    "pregunta": "¿Qué es la 'nutrición foliar' y en qué situaciones es más útil?",
+    "opciones": [
+      "Regar el sustrato con nutrientes en polvo directamente",
+      "Aplicar solución nutritiva diluida en spray sobre las hojas para absorción directa",
+      "Técnica de fertiirrigación por goteo",
+      "Añadir nutrientes al agua de riego en concentración alta"
+    ],
+    "correcta": 1,
+    "explicacion": "La nutrición foliar (foliar feeding) consiste en pulverizar solución nutritiva muy diluida sobre el follaje. Es útil para corregir deficiencias rápidamente (la absorción es directa sin pasar por el sistema radicular) y en situaciones de raíz dañada o pH inestable."
+  },
+  {
+    "id": "NT-012",
+    "cat": "Nutricion",
+    "ico": "📋",
+    "nivel": 2,
+    "pregunta": "¿Qué tipo de interacción nutricional puede provocar un exceso de Potasio?",
+    "opciones": [
+      "Aumenta la disponibilidad de Hierro",
+      "Puede bloquear la absorción de Calcio, Magnesio y otros cationes",
+      "Favorece la absorción de Fósforo",
+      "No interactúa con otros nutrientes"
+    ],
+    "correcta": 1,
+    "explicacion": "Los cationes compiten por los mismos sitios de absorción en la raíz. Un exceso de K+ puede desplazar al Ca²⁺ y Mg²⁺, generando deficiencias de estos nutrientes aunque estén presentes en el medio. Es un ejemplo clásico de antagonismo iónico."
+  },
+  {
+    "id": "NT-013",
+    "cat": "Nutricion",
+    "ico": "📋",
+    "nivel": 3,
+    "pregunta": "¿Qué es la relación C:N (carbono:nitrógeno) y cómo afecta al cultivo en sustrato orgánico?",
+    "opciones": [
+      "Es la proporción de CO2 absorbido por unidad de N disponible",
+      "Es la ratio de carbono y nitrógeno en el sustrato; una C:N alta indica materia orgánica poco descompuesta que puede inmovilizar N disponible para la planta",
+      "Mide la eficiencia fotosintética en función del nitrógeno foliar",
+      "Solo es relevante en sistemas hidropónicos"
+    ],
+    "correcta": 1,
+    "explicacion": "Una C:N alta (>30:1) en enmiendas orgánicas (ej. paja, serrín) significa que los microorganismos consumen N del suelo para degradar ese carbono, compitiendo con la planta. Materiales con C:N baja (<20:1) como estiércol o compost maduro liberan N neto al suelo."
+  },
+  {
+    "id": "NT-014",
+    "cat": "Nutricion",
+    "ico": "📋",
+    "nivel": 3,
+    "pregunta": "¿Qué función cumple el Silicio (Si) en el cultivo de cannabis aunque no sea un nutriente esencial?",
+    "opciones": [
+      "Activa enzimas fotosintéticas clave",
+      "Refuerza las paredes celulares, mejora resistencia a plagas, hongos y estrés abiótico",
+      "Regula la producción hormonal de auxinas",
+      "El silicio no tiene ningún efecto demostrado en cannabis"
+    ],
+    "correcta": 1,
+    "explicacion": "Aunque no es esencial, el Si se deposita en las paredes celulares creando una capa física que dificulta la penetración de hongos (oídio, botrytis) e insectos. Además mejora la tolerancia al calor, sequía y toxicidad por metales pesados. Evidencia creciente en estudios de cannabis."
+  },
+  {
+    "id": "NT-015",
+    "cat": "Nutricion",
+    "ico": "📋",
+    "nivel": 3,
+    "pregunta": "¿Qué es la 'living soil' o tierra viva y cuál es su ventaja nutricional principal?",
+    "opciones": [
+      "Sustrato con pH ajustado automáticamente mediante sensores",
+      "Mezcla de sustrato con microbioma activo (bacterias, hongos, fauna) que mineraliza materia orgánica y provee nutrientes de forma autorregulada",
+      "Tierra con alto contenido en perlita para mejorar el drenaje",
+      "Técnica de cultivo hidropónico con sustrato inerte"
+    ],
+    "correcta": 1,
+    "explicacion": "La 'living soil' replica el ecosistema natural del suelo: micorrizas, bacterias fijadoras de N, fauna descomponedora (lombrices, colémbolos) crean un ciclo de nutrientes autorregulado. La planta 'negocia' con los microorganismos qué nutrientes necesita, reduciendo o eliminando la necesidad de fertilizantes externos."
+  },
+  {
+    "id": "NT-016",
+    "cat": "Nutricion",
+    "ico": "📋",
+    "nivel": 3,
+    "pregunta": "¿Cómo afecta la temperatura del sustrato a la absorción de nutrientes, especialmente Fósforo?",
+    "opciones": [
+      "Las temperaturas altas siempre mejoran la absorción de todos los nutrientes",
+      "Por debajo de 15°C la absorción de Fósforo se reduce drásticamente porque inhibe el metabolismo radicular y la actividad microbiana",
+      "La temperatura del sustrato no influye en la absorción de nutrientes",
+      "El frío solo afecta a micronutrientes, no al N-P-K"
+    ],
+    "correcta": 1,
+    "explicacion": "La absorción de P es especialmente sensible a la temperatura. Por debajo de 15°C, los canales proteicos de la membrana radicular se vuelven menos eficientes y la actividad microbiana cae, reduciendo la mineralización. Esto explica las deficiencias de P con coloración morada en cultivos de exterior en otoño o primavera fría."
+  },
+  {
+    "id": "NT-017",
+    "cat": "Nutricion",
+    "ico": "📋",
+    "nivel": 3,
+    "pregunta": "¿Qué son los 'aminoácidos' aplicados como fertilizante y cuál es su mecanismo de acción?",
+    "opciones": [
+      "Son proteínas animales que fertilizan el suelo al descomponerse",
+      "Aminoácidos de hidrólisis enzimática que la planta absorbe directamente sin sintetizarlos, ahorrando energía metabólica y mejorando estrés",
+      "Compuestos químicos que aumentan la CE del sustrato",
+      "Solo son útiles en hidroponia, no en tierra"
+    ],
+    "correcta": 1,
+    "explicacion": "Los fertilizantes de aminoácidos (obtenidos por hidrólisis enzimática de proteínas vegetales o animales) aportan bloques constructivos directamente asimilables. La planta ahorra la energía que necesitaría para sintetizarlos (20-30% del metabolismo energético), usándola en producción. Especialmente útil en situaciones de estrés."
+  },
+  {
+    "id": "NT-018",
+    "cat": "Nutricion",
+    "ico": "📋",
+    "nivel": 3,
+    "pregunta": "¿Qué papel juegan las micorrizas en la nutrición del cannabis y bajo qué condiciones no funcionan?",
+    "opciones": [
+      "Las micorrizas solo actúan en cultivos outdoor, no en indoor",
+      "Amplían la superficie de absorción radicular hasta 700 veces, mejorando acceso a P y agua; dejan de ser eficaces con alta concentración de P mineral en el sustrato",
+      "Producen hormonas de floración que aumentan la producción",
+      "Solo son relevantes en cultivos sin fertilizantes"
+    ],
+    "correcta": 1,
+    "explicacion": "Las micorrizas arbusculares forman hifas que extienden masivamente la red de absorción radicular. Sin embargo, cuando la concentración de Fósforo disponible en el medio es alta (fertirrigación mineral intensa), la planta 'desconecta' la simbiosis porque no la necesita. Por eso inocular micorrizas en cultivos con fertilizantes minerales intensivos tiene escaso efecto."
+  },
+  {
+    "id": "NT-019",
+    "cat": "Nutricion",
+    "ico": "📋",
+    "nivel": 3,
+    "pregunta": "¿Qué es el concepto de 'nutrición mínima viable' (minimum viable feeding) y cuándo es estratégicamente útil?",
+    "opciones": [
+      "Dar la dosis máxima de nutrientes desde el inicio para maximizar el crecimiento",
+      "Nutrir con la dosis más baja que mantenga la planta saludable, evitando acumulación de sales y estrés; especialmente útil en sustratos ya enriquecidos",
+      "Técnica para reducir costes eliminando fertilizantes en floración tardía",
+      "Protocolo de emergencia para plantas con toxicidad severa"
+    ],
+    "correcta": 1,
+    "explicacion": "La nutrición mínima viable parte del principio de que más fertilizante no es mejor. En sustratos pre-fertilizados (mantillo, tierra enriquecida), añadir dosis altas provoca acumulación de sales, lockout y estrés radicular. El cultivador avanzado lee la planta y da solo lo que necesita, preferiblemente menos de lo que el fabricante indica como dosis máxima."
+  },
+  {
+    "id": "PL-001",
+    "cat": "Plagas",
+    "ico": "🐛",
+    "nivel": 1,
+    "pregunta": "¿Qué plaga produce una tela fina similar a una telaraña en el envés de las hojas?",
+    "opciones": [
+      "Trips",
+      "Pulgón",
+      "Araña roja (Tetranychus urticae)",
+      "Mosca blanca"
+    ],
+    "correcta": 2,
+    "explicacion": "La araña roja (ácaro) produce una seda característica en el envés de las hojas donde vive en colonias. Es una señal clara de infestación avanzada. Las hojas presentan punteado amarillo ('stippling') por la perforación de células."
+  },
+  {
+    "id": "PL-002",
+    "cat": "Plagas",
+    "ico": "🐛",
+    "nivel": 1,
+    "pregunta": "¿Qué hongo es responsable del 'moho gris' o podredumbre del cogollo en cannabis?",
+    "opciones": [
+      "Fusarium oxysporum",
+      "Botrytis cinerea",
+      "Pythium ultimum",
+      "Powdery mildew (Erysiphe)"
+    ],
+    "correcta": 1,
+    "explicacion": "Botrytis cinerea es el agente del moho gris. Ataca preferentemente cogollos densos con alta humedad (>60% HR en floración). Produce un micelio gris pulverulento y destruye el tejido floral desde dentro hacia fuera, siendo devastadora en las últimas semanas."
+  },
+  {
+    "id": "PL-003",
+    "cat": "Plagas",
+    "ico": "🐛",
+    "nivel": 1,
+    "pregunta": "¿Cómo se llama el hongo que produce manchas blancas polvorientas sobre las hojas del cannabis?",
+    "opciones": [
+      "Botrytis",
+      "Fusarium",
+      "Oídio (Powdery Mildew)",
+      "Septoria"
+    ],
+    "correcta": 2,
+    "explicacion": "El oídio (Erysiphe cichoracearum o Golovinomyces) forma colonias blancas polvorientas en la superficie de hojas y tallos. Prospera con humedad relativa alta y poca ventilación. Es ectoparásito: no penetra profundamente pero reduce fotosíntesis y puede contaminar el producto final."
+  },
+  {
+    "id": "PL-004",
+    "cat": "Plagas",
+    "ico": "🐛",
+    "nivel": 1,
+    "pregunta": "¿Qué insecto chupador, de color verde o negro, se agrupa en colonias en los brotes tiernos y produce melaza?",
+    "opciones": [
+      "Araña roja",
+      "Trips",
+      "Pulgón (Áfido)",
+      "Cochinilla"
+    ],
+    "correcta": 2,
+    "explicacion": "Los pulgones (Aphididae) se agrupan en colonias en brotes apicales y envés de hojas. Succionan savia y excretan melaza (sustancia azucarada) que favorece el crecimiento de fumagina (hongo negro). Además pueden transmitir virus de planta a planta."
+  },
+  {
+    "id": "PL-005",
+    "cat": "Plagas",
+    "ico": "🐛",
+    "nivel": 1,
+    "pregunta": "¿Cuál es la condición ambiental más favorable para el desarrollo de la araña roja?",
+    "opciones": [
+      "Alta humedad y temperaturas frías",
+      "Ambiente seco, caluroso y con poca ventilación",
+      "Humedad alta con temperaturas medias",
+      "Oscuridad total durante el día"
+    ],
+    "correcta": 1,
+    "explicacion": "Tetranychus urticae se reproduce explosivamente en condiciones de baja humedad relativa (<40% HR) y temperaturas altas (25-35°C). En estas condiciones puede completar su ciclo vital en 5-7 días. Mantener HR entre 50-70% es una medida preventiva efectiva."
+  },
+  {
+    "id": "PL-006",
+    "cat": "Plagas",
+    "ico": "🐛",
+    "nivel": 2,
+    "pregunta": "¿Qué son los trips y qué daño específico producen en el cannabis?",
+    "opciones": [
+      "Hongos que atacan las raíces produciendo marchitez",
+      "Insectos que raspan la superficie foliar dejando marcas plateadas o bronceadas y transmiten virus",
+      "Ácaros que producen tela en el envés de las hojas",
+      "Larvas que devoran las raíces bajo el sustrato"
+    ],
+    "correcta": 1,
+    "explicacion": "Los trips (Thysanoptera) son insectos diminutos que raspan el tejido foliar con sus piezas bucales y succionan el contenido celular. Dejan marcas plateadas o bronceadas características. Son vectores del TSWV (Tomato Spotted Wilt Virus) y otros virus que pueden devastar el cultivo."
+  },
+  {
+    "id": "PL-007",
+    "cat": "Plagas",
+    "ico": "🐛",
+    "nivel": 2,
+    "pregunta": "¿Qué es el control biológico y cuál es un ejemplo aplicado al cannabis contra araña roja?",
+    "opciones": [
+      "Usar pesticidas de origen biológico como el Bacillus thuringiensis",
+      "Introducir depredadores naturales como el ácaro Phytoseiulus persimilis para combatir Tetranychus urticae",
+      "Aplicar extractos de plantas con propiedades insecticidas",
+      "Colocar trampas adhesivas para capturar insectos voladores"
+    ],
+    "correcta": 1,
+    "explicacion": "Phytoseiulus persimilis es un ácaro depredador que se alimenta exclusivamente de araña roja (Tetranychus urticae). Se vende comercialmente y es altamente efectivo en condiciones de HR 60-80% y 20-28°C. Es el ejemplo más claro de biocontrol en cannabis indoor."
+  },
+  {
+    "id": "PL-008",
+    "cat": "Plagas",
+    "ico": "🐛",
+    "nivel": 2,
+    "pregunta": "¿Cuál es la diferencia entre un fungicida preventivo y uno curativo?",
+    "opciones": [
+      "Los preventivos son más tóxicos que los curativos",
+      "El preventivo crea una barrera antes de la infección; el curativo actúa sobre el hongo ya establecido en el tejido",
+      "No hay diferencia real, todos actúan igual",
+      "Los curativos solo funcionan en exterior"
+    ],
+    "correcta": 1,
+    "explicacion": "Los fungicidas de contacto (preventivos) como el azufre o el cobre forman una barrera física/química en la superficie que impide la germinación de esporas. Los sistémicos (curativos) son absorbidos por la planta y actúan sobre el hongo ya dentro del tejido. En cannabis se prefieren los preventivos por menor riesgo de residuos."
+  },
+  {
+    "id": "PL-009",
+    "cat": "Plagas",
+    "ico": "🐛",
+    "nivel": 2,
+    "pregunta": "¿Qué es el 'damping-off' y qué agentes lo causan?",
+    "opciones": [
+      "Marchitez repentina de plántulas causada por hongos del suelo como Pythium, Fusarium y Rhizoctonia",
+      "Decoloración foliar causada por deficiencia de hierro",
+      "Caída de hojas en floración por estrés hídrico",
+      "Enfermedad bacteriana que afecta los cogollos maduros"
+    ],
+    "correcta": 0,
+    "explicacion": "El damping-off es el colapso y muerte de plántulas jóvenes causado por hongos patógenos del suelo (Pythium, Fusarium, Rhizoctonia). El tallo se pudre a nivel del cuello de la raíz y la plántula cae. Favorecido por exceso de humedad, sustrato poco drenante y temperaturas bajas."
+  },
+  {
+    "id": "PL-010",
+    "cat": "Plagas",
+    "ico": "🐛",
+    "nivel": 2,
+    "pregunta": "¿Qué hongo afecta al sistema radicular produciendo marchitez repentina a pesar de un riego correcto?",
+    "opciones": [
+      "Botrytis cinerea",
+      "Oídio",
+      "Fusarium oxysporum",
+      "Alternaria"
+    ],
+    "correcta": 2,
+    "explicacion": "Fusarium oxysporum es un patógeno vascular: coloniza el xilema (tejido conductor de agua) bloqueando el transporte hídrico desde las raíces. La planta se marchita a pesar de haber agua disponible porque no puede transportarla. Las hojas amarillean asimétricamente y el tallo muestra coloración marrón internamente."
+  },
+  {
+    "id": "PL-011",
+    "cat": "Plagas",
+    "ico": "🐛",
+    "nivel": 2,
+    "pregunta": "¿Por qué no se recomienda aplicar pesticidas en spray durante la floración avanzada?",
+    "opciones": [
+      "Porque la planta absorbe menos pesticidas en floración",
+      "Porque los cogollos densos retienen residuos de pesticidas que son difíciles de eliminar y pueden ser perjudiciales al consumir",
+      "Porque los pesticidas inhiben la producción de resina",
+      "Solo aplica a pesticidas químicos, no a los orgánicos"
+    ],
+    "correcta": 1,
+    "explicacion": "Los cogollos en floración tienen una estructura densa y resinosa que atrapa cualquier producto aplicado en spray. A diferencia de las hojas, los cogollos no se lavan antes del consumo. Los residuos de pesticidas (incluso orgánicos) pueden persistir hasta la cosecha y ser inhalados o ingeridos, representando un riesgo real para la salud."
+  },
+  {
+    "id": "PL-012",
+    "cat": "Plagas",
+    "ico": "🐛",
+    "nivel": 2,
+    "pregunta": "¿Cuál es la función de las trampas adhesivas amarillas y azules en el cultivo?",
+    "opciones": [
+      "Las amarillas atraen mosca blanca y pulgón alado; las azules atraen trips",
+      "Ambas colores atraen los mismos insectos por igual",
+      "Las azules son para hongos, las amarillas para insectos",
+      "Solo sirven para monitoreo en exterior"
+    ],
+    "correcta": 0,
+    "explicacion": "El color amarillo atrae a insectos como mosca blanca, pulgón alado, minadores y fungus gnats. El azul es especialmente atractivo para trips (Frankliniella). Usar ambas en el cultivo permite monitorear la presencia de diferentes plagas de forma temprana antes de que la infestación sea grave."
+  },
+  {
+    "id": "PL-013",
+    "cat": "Plagas",
+    "ico": "🐛",
+    "nivel": 3,
+    "pregunta": "¿Qué es el Bacillus thuringiensis var. israelensis (Bti) y contra qué plaga específica es efectivo en cannabis?",
+    "opciones": [
+      "Bacteria que combate araña roja mediante toxinas específicas",
+      "Cepa bacteriana que produce toxinas letales para larvas de fungus gnats (Bradysia spp.) al regar el sustrato",
+      "Hongo entomopatógeno contra trips y mosca blanca",
+      "Producto para eliminar oídio en aplicación foliar"
+    ],
+    "correcta": 1,
+    "explicacion": "Bacillus thuringiensis var. israelensis produce proteínas Cry que se activan en el intestino alcalino de larvas de dípteros. Aplicado como riego, mata las larvas de fungus gnats (mosquito del sustrato) que dañan raíces. No afecta a plantas, otros insectos o humanos. Una de las herramientas biológicas más eficaces en cannabis indoor."
+  },
+  {
+    "id": "PL-014",
+    "cat": "Plagas",
+    "ico": "🐛",
+    "nivel": 3,
+    "pregunta": "¿Qué es la resistencia adquirida a pesticidas (RAP) y cómo se previene en un programa de control de plagas?",
+    "opciones": [
+      "Resistencia que desarrolla el cultivador a los olores de los pesticidas",
+      "Adaptación genética de la plaga a un pesticida por exposición repetida; se previene rotando productos con diferentes mecanismos de acción (MoA)",
+      "Pérdida de eficacia del pesticida por almacenamiento incorrecto",
+      "Fenómeno que solo ocurre con pesticidas químicos, no con los biológicos"
+    ],
+    "correcta": 1,
+    "explicacion": "La RAP ocurre cuando individuos con genes de resistencia sobreviven y se reproducen tras exposición al pesticida. En pocas generaciones (los ácaros pueden tener 20+ generaciones/año) la población se vuelve resistente. La rotación de pesticidas con distintos modos de acción (ej. alternando abamectina con azadiractina con aceite de nim) es la estrategia clave para evitarlo."
+  },
+  {
+    "id": "PL-015",
+    "cat": "Plagas",
+    "ico": "🐛",
+    "nivel": 3,
+    "pregunta": "¿Qué es Beauveria bassiana y cómo actúa contra insectos plaga?",
+    "opciones": [
+      "Ácaro depredador que se alimenta de araña roja",
+      "Hongo entomopatógeno que germina sobre la cutícula del insecto, penetra en su interior y lo mata desde dentro",
+      "Bacteria que produce endotoxinas insecticidas en el suelo",
+      "Extracto vegetal con propiedades repelentes"
+    ],
+    "correcta": 1,
+    "explicacion": "Beauveria bassiana es un hongo entomopatógeno: sus conidios se adhieren a la cutícula del insecto, germinan, penetran mecánicamente y con enzimas, y colonizan el hemocele (cavidad corporal). El insecto muere en 3-7 días y el hongo esporula sobre el cadáver infectando a más individuos. Efectivo contra trips, mosca blanca, pulgón y ácaros."
+  },
+  {
+    "id": "PL-016",
+    "cat": "Plagas",
+    "ico": "🐛",
+    "nivel": 3,
+    "pregunta": "¿Qué es el IPM (Integrated Pest Management) y cuáles son sus niveles de intervención en orden correcto?",
+    "opciones": [
+      "Sistema de control exclusivamente químico con rotación de pesticidas",
+      "Manejo Integrado de Plagas: prevención → monitoreo → control biológico → control cultural → control químico como último recurso",
+      "Protocolo de cuarentena para material vegetal importado",
+      "Programa de fertilización que refuerza las defensas naturales de la planta"
+    ],
+    "correcta": 1,
+    "explicacion": "El IPM es un enfoque sistémico que prioriza intervenciones por orden de impacto ambiental: primero prevención (higiene, condiciones ambientales óptimas), luego monitoreo constante, después biocontrol, luego medidas culturales (eliminar material infectado) y solo como último recurso el control químico. Reduce resistencias y residuos."
+  },
+  {
+    "id": "PL-017",
+    "cat": "Plagas",
+    "ico": "🐛",
+    "nivel": 3,
+    "pregunta": "¿Por qué el aceite de nim (azadiractina) es más efectivo como preventivo que como curativo?",
+    "opciones": [
+      "Porque la azadiractina se degrada rápido y no llega a matar insectos adultos establecidos",
+      "Porque actúa principalmente como regulador del crecimiento insectil (IGR), interrumpiendo la muda y reproducción de estadios inmaduros, pero tiene poco efecto en adultos ya establecidos",
+      "Porque solo funciona en exterior con luz solar directa",
+      "Porque las plantas lo metabolizan antes de que actúe sobre los insectos"
+    ],
+    "correcta": 1,
+    "explicacion": "La azadiractina (principio activo del nim) mimetiza a la ecdisona, hormona que regula la muda en insectos. Impide que las larvas y ninfas completen su desarrollo, los adultos dejan de reproducirse y los huevos no eclosionan. Sin embargo, los adultos ya establecidos siguen viviendo y dañando. Por eso es mucho más eficaz como preventivo o al inicio de la infestación."
+  },
+  {
+    "id": "PL-018",
+    "cat": "Plagas",
+    "ico": "🐛",
+    "nivel": 3,
+    "pregunta": "¿Cómo se puede detectar una infestación de fusarium en raíz antes de que la planta muestre síntomas visibles en el follaje?",
+    "opciones": [
+      "Midiendo el pH del sustrato que aumenta notablemente",
+      "Observando decoloración marrón-rojiza al cortar el tallo a nivel del cuello de la raíz, y revisando las raíces en busca de pudrición con olor característico",
+      "Mediante la aparición de manchas blancas en el sustrato",
+      "No es posible detectarlo antes de que aparezcan síntomas foliares"
+    ],
+    "correcta": 1,
+    "explicacion": "Fusarium coloniza el xilema y produce pigmentos marrones/rojizos visibles al hacer un corte transversal del tallo. Las raíces afectadas muestran pudrición marrón con olor fétido. Esta detección temprana permite aislar plantas antes de que el hongo se propague por el sustrato o el agua de riego a otras plantas del cultivo."
+  },
+  {
+    "id": "PL-019",
+    "cat": "Plagas",
+    "ico": "🐛",
+    "nivel": 3,
+    "pregunta": "¿Qué son los 'fungus gnats' (Bradysia spp.) y por qué son especialmente problemáticos más allá del daño directo de sus larvas?",
+    "opciones": [
+      "Son moscas adultas que transmiten botrytis al posarse en los cogollos",
+      "Sus larvas dañan raíces creando heridas de entrada para patógenos como Fusarium y Pythium, amplificando el daño indirecto muy por encima del daño directo",
+      "Son vectores exclusivos de virus foliares en cannabis outdoor",
+      "Solo son problemáticos en sistemas hidropónicos"
+    ],
+    "correcta": 1,
+    "explicacion": "Los adultos de fungus gnat son molestos pero no dañan directamente. El problema real son las larvas: al alimentarse de raíces finas y materia orgánica del sustrato, crean microheridas que son puerta de entrada perfecta para Fusarium, Pythium y otras enfermedades radiculares. Un cultivo con fungus gnats tiene altísimo riesgo de desarrollar enfermedades de raíz secundarias."
+  },
+  {
+    "id": "GN-001",
+    "cat": "Genetica",
+    "ico": "📋",
+    "nivel": 1,
+    "pregunta": "¿Cuáles son las tres subespecies principales de Cannabis reconocidas tradicionalmente?",
+    "opciones": [
+      "Cannabis sativa, Cannabis indica y Cannabis ruderalis",
+      "Cannabis sativa, Cannabis americana y Cannabis africana",
+      "Cannabis indica, Cannabis kush y Cannabis haze",
+      "Cannabis sativa, Cannabis hybrid y Cannabis auto"
+    ],
+    "correcta": 0,
+    "explicacion": "Las tres subespecies clásicas son Cannabis sativa (originaria de latitudes tropicales, plantas altas y alargadas), Cannabis indica (originaria de Asia Central, plantas compactas y resinosas) y Cannabis ruderalis (zonas frías de Europa del Este y Asia, planta pequeña con floración automática)."
+  },
+  {
+    "id": "GN-002",
+    "cat": "Genetica",
+    "ico": "📋",
+    "nivel": 1,
+    "pregunta": "¿Qué es un clon en el contexto del cultivo de cannabis?",
+    "opciones": [
+      "Una semilla de alta genética producida en laboratorio",
+      "Un esqueje enraizado que es genéticamente idéntico a la planta madre",
+      "Una variedad híbrida de primera generación",
+      "Una planta producida mediante polinización controlada"
+    ],
+    "correcta": 1,
+    "explicacion": "Un clon es un esqueje (corte de tallo con nodos) extraído de una planta madre y enraizado. Al ser reproducción vegetativa (asexual), el clon es genéticamente idéntico a la madre. Permite perpetuar características exactas: mismo perfil de cannabinoides, terpenos, tiempo de floración y morfología."
+  },
+  {
+    "id": "GN-003",
+    "cat": "Genetica",
+    "ico": "📋",
+    "nivel": 1,
+    "pregunta": "¿Qué diferencia fenotípica general distingue una planta de morfología 'indica' de una de morfología 'sativa'?",
+    "opciones": [
+      "Las indica producen más semillas que las sativa",
+      "Las indica son compactas, con hojas anchas y floración corta; las sativa son altas, con hojas estrechas y floración larga",
+      "Las sativa siempre tienen mayor contenido en THC",
+      "Las indica solo crecen en exterior, las sativa solo en interior"
+    ],
+    "correcta": 1,
+    "explicacion": "La morfología indica clásica: porte bajo y compacto, hojas anchas (7-9 folíolos anchos), internodos cortos y floración de 7-9 semanas. La sativa clásica: porte alto, hojas estrechas y largas, internodos largos y floración de 10-16 semanas. En la práctica moderna, casi todas las variedades son híbridos de ambas."
+  },
+  {
+    "id": "GN-004",
+    "cat": "Genetica",
+    "ico": "📋",
+    "nivel": 1,
+    "pregunta": "¿Qué son las semillas feminizadas?",
+    "opciones": [
+      "Semillas que solo producen plantas macho",
+      "Semillas tratadas genéticamente para producir plantas hembra en más del 99% de los casos",
+      "Semillas obtenidas de cruce entre dos plantas hembra",
+      "Semillas de variedades autoflorecientes"
+    ],
+    "correcta": 1,
+    "explicacion": "Las semillas feminizadas se producen induciendo estrés en plantas hembra (mediante colodión de plata, STS o rodelización) para que produzcan polen masculino sin cromosoma Y. Al autopolinizarse o polinizar otras hembras, la descendencia carece de cromosoma Y, produciendo plantas hembra en >99% de los casos."
+  },
+  {
+    "id": "GN-005",
+    "cat": "Genetica",
+    "ico": "📋",
+    "nivel": 1,
+    "pregunta": "¿Qué es el hermafroditismo en cannabis y cuál es su causa más común?",
+    "opciones": [
+      "Planta que produce solo flores masculinas; causado por exceso de luz",
+      "Planta que produce flores tanto masculinas como femeninas; causado por estrés genético o ambiental",
+      "Variedad que cambia de sexo según la temperatura",
+      "Condición exclusiva de variedades autoflorecientes"
+    ],
+    "correcta": 1,
+    "explicacion": "El hermafroditismo ocurre cuando una planta hembra desarrolla estructuras masculinas (nanners o sacos de polen). Puede ser genético (variedad propensa) o inducido por estrés (interrupciones lumínicas, calor extremo, daño físico, floración demasiado prolongada). El riesgo es la polinización accidental del cultivo."
+  },
+  {
+    "id": "GN-006",
+    "cat": "Genetica",
+    "ico": "📋",
+    "nivel": 2,
+    "pregunta": "¿Qué es la F1 en genética de cannabis y por qué sus plantas suelen ser tan uniformes?",
+    "opciones": [
+      "Primera generación de una variedad autofloreciente",
+      "Primera generación filial obtenida del cruce de dos líneas puras (IBL); exhibe vigor híbrido y alta uniformidad fenotípica",
+      "Variedad con más del 50% de genética indica",
+      "Acrónimo de 'Feminized First', semillas feminizadas de primera calidad"
+    ],
+    "correcta": 1,
+    "explicacion": "F1 es la primera generación filial: el cruce directo de dos líneas consanguíneas estables (IBL). Al ser ambos parentales genéticamente uniformes, todos los descendientes F1 reciben el mismo alelo de cada parental, resultando en plantas muy homogéneas y con vigor híbrido (heterosis). Es el estándar en semillas comerciales de calidad."
+  },
+  {
+    "id": "GN-007",
+    "cat": "Genetica",
+    "ico": "📋",
+    "nivel": 2,
+    "pregunta": "¿Qué problema presenta plantar semillas F2 (segunda generación) para un cultivador que busca consistencia?",
+    "opciones": [
+      "Las F2 son menos potentes que las F1",
+      "Las F2 muestran alta segregación fenotípica: plantas muy diferentes entre sí en porte, tiempo de floración y producción",
+      "Las F2 solo producen plantas macho",
+      "Las F2 no germinan con la misma tasa que las F1"
+    ],
+    "correcta": 1,
+    "explicacion": "Al cruzar dos F1 entre sí para obtener F2, los alelos se recombinan siguiendo las leyes de Mendel. El resultado es alta variabilidad genética: en un mismo lote de semillas F2 pueden aparecer fenotipos muy distintos (altos, bajos, floración corta o larga, distinto perfil). Es interesante para búsqueda de fenotipos pero no para cultivo comercial consistente."
+  },
+  {
+    "id": "GN-008",
+    "cat": "Genetica",
+    "ico": "📋",
+    "nivel": 2,
+    "pregunta": "¿Qué es el 'fenotipado' o 'pheno hunting' y por qué es relevante para el cultivador?",
+    "opciones": [
+      "Proceso de análisis químico de cannabinoides en laboratorio",
+      "Germinar múltiples semillas de una misma variedad para identificar y seleccionar el individuo con las características más deseables",
+      "Técnica de clonación masiva para producción comercial",
+      "Método para estabilizar una línea genética mediante consanguinidad"
+    ],
+    "correcta": 1,
+    "explicacion": "El pheno hunting consiste en germinar un número elevado de semillas (10, 20, 50+) de la misma variedad para encontrar el fenotipo excepcional entre la variabilidad natural. Una vez encontrado el 'keeper' (fenotipo seleccionado), se convierte en planta madre para clonar indefinidamente. Es la base de la mayoría de genéticas icónicas del mercado."
+  },
+  {
+    "id": "GN-009",
+    "cat": "Genetica",
+    "ico": "📋",
+    "nivel": 2,
+    "pregunta": "¿Qué es una variedad IBL (Inbred Line) y qué ventaja ofrece?",
+    "opciones": [
+      "Híbrido de primera generación entre dos especies distintas",
+      "Línea consanguínea estabilizada mediante autopolinizaciones repetidas; produce descendencia muy uniforme y predecible",
+      "Variedad con genes modificados para resistencia a plagas",
+      "Acrónimo de 'Indoor Bred Line', variedad desarrollada exclusivamente para interior"
+    ],
+    "correcta": 1,
+    "explicacion": "Una IBL es el resultado de múltiples generaciones de autopolinización o cruce entre hermanos, lo que hace que los alelos se vuelvan cada vez más homocigotos. El resultado es una línea estable que produce plantas muy similares entre sí generación tras generación. Son la base para crear buenos F1 comerciales."
+  },
+  {
+    "id": "GN-010",
+    "cat": "Genetica",
+    "ico": "📋",
+    "nivel": 2,
+    "pregunta": "¿Qué son los cannabinoides y cuáles son los dos más estudiados actualmente?",
+    "opciones": [
+      "Terpenos responsables del aroma; los más estudiados son el mirceno y el limoneno",
+      "Compuestos químicos producidos en los tricomas del cannabis; los más estudiados son el THC (delta-9-tetrahidrocannabinol) y el CBD (cannabidiol)",
+      "Pigmentos foliares que determinan el color de la planta",
+      "Hormonas vegetales que regulan el crecimiento"
+    ],
+    "correcta": 1,
+    "explicacion": "Los cannabinoides son metabolitos secundarios producidos en las glándulas de los tricomas. El THC es el principal compuesto psicoactivo; el CBD es no psicoactivo y tiene múltiples aplicaciones terapéuticas estudiadas. Actualmente se conocen más de 100 cannabinoides distintos en el cannabis (CBG, CBN, CBC, THCV, etc.)."
+  },
+  {
+    "id": "GN-011",
+    "cat": "Genetica",
+    "ico": "📋",
+    "nivel": 2,
+    "pregunta": "¿Qué es la 'estabilidad genética' de una variedad y cómo afecta al cultivador práctico?",
+    "opciones": [
+      "Capacidad de la planta de resistir enfermedades sin perder potencia",
+      "Grado de homogeneidad entre plantas de la misma variedad; alta estabilidad significa plantas predecibles en porte, floración y producción",
+      "Tiempo máximo que una semilla conserva su viabilidad",
+      "Resistencia genética al hermafroditismo inducido por estrés"
+    ],
+    "correcta": 1,
+    "explicacion": "Una variedad estable produce plantas muy similares entre sí en cada lote de semillas. Para el cultivador esto se traduce en predictibilidad: mismo tiempo de floración, mismo porte (crucial para gestión del espacio), misma producción y mismo perfil de cannabinoides. La inestabilidad genera sorpresas, muchas veces indeseadas."
+  },
+  {
+    "id": "GN-012",
+    "cat": "Genetica",
+    "ico": "📋",
+    "nivel": 2,
+    "pregunta": "¿Cómo se producen las semillas autoflorecientes y qué papel juega Cannabis ruderalis?",
+    "opciones": [
+      "Mediante modificación genética en laboratorio para eliminar la dependencia al fotoperiodo",
+      "Cruzando variedades fotoperiodo con Cannabis ruderalis, que porta el gen de floración automática independiente del fotoperiodo",
+      "Aplicando tratamientos hormonales a semillas convencionales",
+      "Seleccionando plantas que florecen antes en condiciones de estrés hídrico"
+    ],
+    "correcta": 1,
+    "explicacion": "Cannabis ruderalis evolucionó en latitudes extremas (Siberia, Europa del Este) donde las variaciones de fotoperiodo son poco fiables. Desarrolló floración automática por edad. Al cruzar ruderalis con sativas o indicas de alta calidad, los criadores transfieren el gen de floración automática a variedades con mejor producción y potencia."
+  },
+  {
+    "id": "GN-013",
+    "cat": "Genetica",
+    "ico": "📋",
+    "nivel": 3,
+    "pregunta": "¿Qué es la heterosis o vigor híbrido y por qué F1 lo expresa más que las generaciones posteriores?",
+    "opciones": [
+      "Aumento de THC en variedades híbridas por combinación de terpenos",
+      "Fenómeno por el que los híbridos F1 superan a ambos parentales en vigor, producción y adaptabilidad; se diluye en F2+ por recombinación y aumento de homocigosidad",
+      "Resistencia natural a plagas que aparece en cruces entre especies distintas",
+      "Mayor velocidad de germinación en semillas de primera generación"
+    ],
+    "correcta": 1,
+    "explicacion": "La heterosis ocurre cuando dos líneas consanguíneas (con alta homocigosidad) se cruzan: el F1 es completamente heterocigoto, lo que complementa alelos recesivos deletéreos y activa vías metabólicas múltiples. Esto se expresa en mayor vigor vegetativo, más producción y mejor adaptabilidad. En F2 la recombinación reduce la heterocigosidad y con ella el vigor."
+  },
+  {
+    "id": "GN-014",
+    "cat": "Genetica",
+    "ico": "📋",
+    "nivel": 3,
+    "pregunta": "¿Qué es el 'backcross' (BX) y para qué se utiliza en la creación de variedades?",
+    "opciones": [
+      "Cruce entre dos variedades desconocidas para generar variabilidad",
+      "Cruzar un híbrido con uno de sus parentales originales para recuperar y fijar las características de ese parental mientras se mantiene un rasgo específico del híbrido",
+      "Técnica de polinización inversa donde el macho actúa como receptor",
+      "Proceso de reversión de una planta hembra a macho mediante estrés"
+    ],
+    "correcta": 1,
+    "explicacion": "El backcross se usa para 'introgresión': transferir un gen o rasgo específico (ej. alta producción de CBD, resistencia a botrytis) de una variedad donante a una variedad receptora de calidad, retrocruzo a esta última para recuperar su genoma base. Tras 3-4 backcrosses (BX1, BX2, BX3...) se recupera ~87-94% del genoma del parental recurrente."
+  },
+  {
+    "id": "GN-015",
+    "cat": "Genetica",
+    "ico": "📋",
+    "nivel": 3,
+    "pregunta": "¿Qué es el 'efecto entourage' y qué evidencia científica existe actualmente sobre él?",
+    "opciones": [
+      "Teoría completamente demostrada que prueba que el cannabis completo siempre es más efectivo que el THC puro",
+      "Hipótesis que propone que cannabinoides y terpenos interactúan sinérgicamente modulando sus efectos; hay evidencia in vitro y en modelos animales pero los estudios clínicos en humanos son aún limitados",
+      "Fenómeno genético donde variedades mezcladas producen más terpenos",
+      "Efecto psicológico placebo del consumo grupal de cannabis"
+    ],
+    "correcta": 1,
+    "explicacion": "El efecto entourage (Mechoulam y Ben-Shabat, 1998) propone que los componentes del cannabis actúan sinérgicamente: terpenos como el mirceno, limoneno o linalool modulan la permeabilidad de la barrera hematoencefálica y la actividad del sistema endocannabinoide. Hay evidencia preclínica sólida, pero los ensayos clínicos controlados en humanos son escasos. Un cultivador responsable no debe presentarlo como hecho absoluto."
+  },
+  {
+    "id": "GN-016",
+    "cat": "Genetica",
+    "ico": "📋",
+    "nivel": 3,
+    "pregunta": "¿Qué es la 'rodelización' y cuáles son sus limitaciones como método de feminización?",
+    "opciones": [
+      "Técnica de injerto entre variedades para transferir características genéticas",
+      "Método de feminización que aprovecha el hermafroditismo tardío de plantas hembra sometidas a estrés para obtener polen femenino; produce semillas feminizadas pero con mayor riesgo de inestabilidad genética",
+      "Proceso de estabilización genética mediante autopolinización repetida",
+      "Aplicación de ácido giberélico para revertir el sexo de la planta"
+    ],
+    "correcta": 1,
+    "explicacion": "La rodelización explota la tendencia natural del cannabis a desarrollar flores masculinas al final de la floración si no es polinizado (mecanismo de supervivencia). El polen obtenido carece de cromosoma Y, produciendo semillas feminizadas. La limitación es que selecciona plantas con tendencia al hermafroditismo, que puede transmitirse a la descendencia. El STS (tiosulfato de plata) es más fiable y produce menos inestabilidad."
+  },
+  {
+    "id": "GN-017",
+    "cat": "Genetica",
+    "ico": "📋",
+    "nivel": 3,
+    "pregunta": "¿Qué información proporciona un análisis de terpenos y por qué es relevante más allá del aroma?",
+    "opciones": [
+      "Solo informa del aroma y sabor; no tiene implicaciones terapéuticas demostradas",
+      "Identifica el perfil completo de terpenos que, junto a los cannabinoides, define el efecto específico de la variedad y puede tener implicaciones antiinflamatorias, ansiolíticas o sedantes según terpenos dominantes",
+      "Determina exclusivamente el contenido en THC y CBD",
+      "Solo es relevante para la industria alimentaria y cosmética"
+    ],
+    "correcta": 1,
+    "explicacion": "El análisis de terpenos va más allá del aroma: el mirceno tiene efecto sedante y potencia la absorción de THC; el limoneno muestra propiedades ansiolíticas; el linalool es sedante y antiespasmódico; el beta-cariofileno activa receptores CB2 con potencial antiinflamatorio. Conocer el perfil completo permite al cultivador y consumidor hacer elecciones más informadas."
+  },
+  {
+    "id": "GN-018",
+    "cat": "Genetica",
+    "ico": "📋",
+    "nivel": 3,
+    "pregunta": "¿Qué es la epigenética en el contexto del cannabis y cómo puede afectar a la expresión fenotípica sin cambiar el ADN?",
+    "opciones": [
+      "Modificaciones permanentes del ADN producidas por mutágenos ambientales",
+      "Cambios en la expresión génica causados por factores ambientales (temperatura, luz, estrés) mediante mecanismos como metilación del ADN o modificación de histonas, sin alterar la secuencia genética",
+      "Proceso de selección natural que ocurre en pocas generaciones",
+      "Variaciones genéticas espontáneas que aparecen en cultivos in vitro"
+    ],
+    "correcta": 1,
+    "explicacion": "La epigenética explica por qué dos clones genéticamente idénticos pueden expresar fenotipos distintos según las condiciones de cultivo. El estrés térmico, hídrico o lumínico puede activar o silenciar genes mediante metilación del ADN, afectando producción de cannabinoides, resistencia a enfermedades y morfología. Esto también explica por qué los clones de múltiples generaciones pueden 'degradarse' fenotípicamente."
+  },
+  {
+    "id": "GN-019",
+    "cat": "Genetica",
+    "ico": "📋",
+    "nivel": 3,
+    "pregunta": "¿Qué implicación tiene para el cultivador saber que el THC y el CBD son sintetizados a partir del mismo precursor (CBGA) y que compiten por la misma vía enzimática?",
+    "opciones": [
+      "Ninguna implicación práctica; los niveles de THC y CBD son independientes entre sí",
+      "Que en la mayoría de variedades, alta producción de THC implica baja de CBD y viceversa, siendo difícil obtener altos niveles de ambos sin selección genética específica",
+      "Que añadiendo precursores como el CBGA externamente se puede aumentar la producción de ambos simultáneamente",
+      "Que el CBD se convierte en THC con la maduración, por lo que cosechar antes da más CBD"
+    ],
+    "correcta": 1,
+    "explicacion": "El CBGA (ácido cannabigerólico) es el precursor universal. La enzima THCA sintasa lo convierte en THCA; la CBDA sintasa lo convierte en CBDA. Ambas enzimas compiten por el mismo sustrato: una variedad con alta expresión de THCA sintasa producirá mucho THC y poco CBD. Obtener variedades 1:1 THC:CBD requiere selección de plantas que expresen ambas enzimas en equilibrio, lo que genéticamente es poco estable."
+  },
+  {
+    "id": "ST-001",
+    "cat": "Sustrato",
+    "ico": "🪴",
+    "nivel": 1,
+    "pregunta": "¿Cuál es la función principal del sustrato en el cultivo de cannabis?",
+    "opciones": [
+      "Aportar únicamente nutrientes a la planta",
+      "Anclar la raíz, retener agua y nutrientes, y permitir el intercambio gaseoso en la zona radicular",
+      "Regular el pH del agua de riego automáticamente",
+      "Proteger las raíces de plagas del suelo"
+    ],
+    "correcta": 1,
+    "explicacion": "El sustrato cumple tres funciones esenciales simultáneamente: soporte físico (ancla la planta), retención hídrica y nutricional (almacena agua y nutrientes disponibles para la raíz) e intercambio gaseoso (las raíces necesitan oxígeno para respirar; un sustrato compactado o encharcado asfixia las raíces)."
+  },
+  {
+    "id": "ST-002",
+    "cat": "Sustrato",
+    "ico": "🪴",
+    "nivel": 1,
+    "pregunta": "¿Qué es la perlita y para qué se añade al sustrato?",
+    "opciones": [
+      "Mineral orgánico que aporta nitrógeno al sustrato",
+      "Roca volcánica expandida que mejora el drenaje y la aireación del sustrato sin aportar nutrientes",
+      "Fertilizante de liberación lenta en formato granular",
+      "Sustrato inerte usado exclusivamente en hidroponía"
+    ],
+    "correcta": 1,
+    "explicacion": "La perlita es vidrio volcánico expandido por calor. Es inerte (no aporta nutrientes ni altera el pH), muy porosa y ligera. Añadida al sustrato en proporciones del 20-30% mejora el drenaje, evita la compactación y aumenta el contenido de oxígeno en la zona radicular, reduciendo el riesgo de encharcamiento y Pythium."
+  },
+  {
+    "id": "ST-003",
+    "cat": "Sustrato",
+    "ico": "🪴",
+    "nivel": 1,
+    "pregunta": "¿Qué indica que un sustrato tiene buena capacidad de drenaje?",
+    "opciones": [
+      "Que retiene toda el agua de riego sin dejar escurrir nada",
+      "Que el agua fluye libremente sin encharcarse y hay un 20-30% de escorrentía tras el riego",
+      "Que su color es muy oscuro y compacto",
+      "Que tiene alto contenido en arcilla"
+    ],
+    "correcta": 1,
+    "explicacion": "Un buen drenaje se verifica cuando el agua escurre por los agujeros del fondo del contenedor pocos minutos después del riego. El drenaje del 20-30% del volumen regado indica que el sustrato está hidratado pero no saturado, manteniendo espacio para el aire que las raíces necesitan."
+  },
+  {
+    "id": "ST-004",
+    "cat": "Sustrato",
+    "ico": "🪴",
+    "nivel": 1,
+    "pregunta": "¿Qué es la fibra de coco como sustrato y cuál es su principal ventaja frente a la tierra?",
+    "opciones": [
+      "Es un sustrato orgánico que aporta muchos nutrientes por sí solo",
+      "Es un sustrato inerte derivado de la cáscara del coco, con excelente retención hídrica y aireación, que permite control total de la nutrición",
+      "Solo sirve como mejorador de tierra, no como sustrato principal",
+      "Es idéntica a la turba en propiedades y comportamiento"
+    ],
+    "correcta": 1,
+    "explicacion": "El coco (coir) es prácticamente inerte en nutrientes, lo que permite al cultivador controlar exactamente qué y cuánto recibe la planta. Tiene una relación agua/aire excepcional: retiene humedad bien pero mantiene buena porosidad. Su pH natural ronda 5.8-6.2 y tiene alta CIC (capacidad de intercambio catiónico), especialmente para calcio y magnesio."
+  },
+  {
+    "id": "ST-005",
+    "cat": "Sustrato",
+    "ico": "🪴",
+    "nivel": 1,
+    "pregunta": "¿Qué tamaño de maceta es generalmente adecuado para una planta de cannabis en floración indoor de ciclo normal?",
+    "opciones": [
+      "1-2 litros",
+      "3-5 litros",
+      "11-15 litros",
+      "30-50 litros"
+    ],
+    "correcta": 2,
+    "explicacion": "Para una planta de tamaño medio en indoor (60-100cm de altura en floración), los contenedores de 11-15 litros son el estándar. Macetas más pequeñas limitan el desarrollo radicular y requieren riegos más frecuentes; más grandes ralentizan el secado del sustrato y pueden provocar encharcamiento entre riegos. En outdoor las plantas pueden requerir 20-50L o más."
+  },
+  {
+    "id": "ST-006",
+    "cat": "Sustrato",
+    "ico": "🪴",
+    "nivel": 2,
+    "pregunta": "¿Qué es la Capacidad de Intercambio Catiónico (CIC) del sustrato y por qué importa?",
+    "opciones": [
+      "Medida de la velocidad a la que el sustrato absorbe agua",
+      "Capacidad del sustrato de retener cationes (Ca²⁺, Mg²⁺, K⁺, NH4⁺) en sus partículas y cederlos a la raíz; sustratos con alta CIC retienen más nutrientes y reducen el riesgo de lavado",
+      "Ratio entre carbono y nitrógeno del sustrato orgánico",
+      "Medida de la acidez potencial del sustrato"
+    ],
+    "correcta": 1,
+    "explicacion": "La CIC mide cuántos cationes puede retener el sustrato en sus sitios de intercambio (arcillas, materia orgánica, coco). Un sustrato con alta CIC actúa como 'banco' de nutrientes: los retiene para que no se laven con el riego y los cede gradualmente a la raíz. La turba y el coco tienen CIC media-alta; la perlita y la arena tienen CIC casi nula."
+  },
+  {
+    "id": "ST-007",
+    "cat": "Sustrato",
+    "ico": "🪴",
+    "nivel": 2,
+    "pregunta": "¿Cuál es la diferencia práctica entre turba rubia y turba negra como componentes de sustrato?",
+    "opciones": [
+      "Solo difieren en el color; sus propiedades son idénticas",
+      "La turba rubia es menos descompuesta, más ácida (pH 3.5-4.5) y con mejor aireación; la negra está más mineralizada, tiene pH más alto y mayor densidad",
+      "La turba negra es mejor para semillas y la rubia para plantas adultas",
+      "La turba rubia es orgánica y la negra es un sustrato mineral"
+    ],
+    "correcta": 1,
+    "explicacion": "La turba rubia (Sphagnum joven) tiene estructura más esponjosa, mayor aireación y pH muy ácido (necesita encalado para llevarse a 6.0). La turba negra está más descompuesta, es más densa, retiene más agua y tiene pH menos ácido. Los sustratos comerciales mezclan ambas para equilibrar aireación y retención hídrica."
+  },
+  {
+    "id": "ST-008",
+    "cat": "Sustrato",
+    "ico": "🪴",
+    "nivel": 2,
+    "pregunta": "¿Qué es la vermiculita y en qué se diferencia de la perlita en su uso en sustratos?",
+    "opciones": [
+      "Son el mismo mineral con distinto nombre comercial",
+      "La vermiculita retiene más agua y nutrientes (mayor CIC) pero aporta menos aireación que la perlita; se usa más en semilleros y para aumentar retención hídrica",
+      "La vermiculita mejora el drenaje igual que la perlita pero es más barata",
+      "La vermiculita solo se usa en hidroponía, la perlita solo en tierra"
+    ],
+    "correcta": 1,
+    "explicacion": "Vermiculita es silicato laminado expandido: retiene agua y tiene CIC significativa (puede retener cationes). Perlita es vidrio volcánico: drena y airea pero casi no retiene agua ni nutrientes. En la práctica: perlita para mejorar aireación/drenaje en sustratos que tienden a encharcarse; vermiculita para aumentar retención hídrica en sustratos demasiado drenantes o en semilleros."
+  },
+  {
+    "id": "ST-009",
+    "cat": "Sustrato",
+    "ico": "🪴",
+    "nivel": 2,
+    "pregunta": "¿Por qué el exceso de materia orgánica sin descomponer en el sustrato puede ser problemático?",
+    "opciones": [
+      "Porque hace el sustrato demasiado ligero y las plantas no se anclan bien",
+      "Porque los microorganismos que la descomponen compiten por el nitrógeno disponible, pueden generar calor y crear condiciones favorables para patógenos y fungus gnats",
+      "Porque aumenta el pH del sustrato por encima de 8.0",
+      "Porque la materia orgánica sin descomponer bloquea el drenaje completamente"
+    ],
+    "correcta": 1,
+    "explicacion": "La materia orgánica fresca o poco descompuesta atrae fauna descomponedora (fungus gnats), genera calor durante la descomposición microbiana que puede dañar raíces y provoca inmovilización temporal de nitrógeno (los microbios lo consumen para descomponer el carbono). El compost maduro o humus de lombriz son alternativas estables y seguras."
+  },
+  {
+    "id": "ST-010",
+    "cat": "Sustrato",
+    "ico": "🪴",
+    "nivel": 2,
+    "pregunta": "¿Qué es el 'air pruning' y qué tipo de contenedor lo aprovecha?",
+    "opciones": [
+      "Técnica de poda aérea que mejora la ventilación del cultivo",
+      "Proceso por el que las raíces que alcanzan el aire se deshidratan y mueren, estimulando la ramificación radicular; se aprovecha en macetas de tela (fabric pots)",
+      "Sistema de aireación forzada del sustrato mediante bombas",
+      "Método de esterilización del sustrato con aire caliente"
+    ],
+    "correcta": 1,
+    "explicacion": "En macetas de tela (fabric pots), las raíces crecen hacia los lados y cuando alcanzan la pared permeable se exponen al aire, se deshidratan y mueren en su punta. Esto estimula la proliferación de raíces laterales secundarias, creando un sistema radicular más ramificado y eficiente que en macetas de plástico convencionales donde las raíces 'circulan' sin control."
+  },
+  {
+    "id": "ST-011",
+    "cat": "Sustrato",
+    "ico": "🪴",
+    "nivel": 2,
+    "pregunta": "¿Cómo se determina el momento óptimo para regar en sustrato tierra sin sensores?",
+    "opciones": [
+      "Regando siempre cada 48 horas independientemente del estado del sustrato",
+      "Levantando la maceta: cuando pesa notablemente menos que recién regada (ligera) es momento de regar; también se puede introducir el dedo 2-3cm para notar sequedad",
+      "Esperando a que las hojas muestren signos de marchitez leve",
+      "Midiendo la temperatura del sustrato con termómetro"
+    ],
+    "correcta": 1,
+    "explicacion": "El método del peso es el más fiable sin tecnología: una maceta recién regada pesa significativamente más que una lista para regar. Con práctica, el cultivador aprende el peso 'seco' y 'húmedo' de cada maceta. El test del dedo (insertar 2-3cm y notar si hay humedad) complementa esta técnica. Esperar a ver marchitez es demasiado tarde y genera estrés hídrico."
+  },
+  {
+    "id": "ST-012",
+    "cat": "Sustrato",
+    "ico": "🪴",
+    "nivel": 2,
+    "pregunta": "¿Qué ventaja principal ofrece el cultivo en hidroponía frente al cultivo en tierra en términos de sustrato?",
+    "opciones": [
+      "La hidroponía no requiere ningún tipo de sustrato",
+      "Elimina las variables del sustrato sólido: el cultivador controla exactamente qué nutrientes recibe la planta en cada momento, acelerando el crecimiento hasta un 30-50% en condiciones óptimas",
+      "Las plantas hidropónicas son más resistentes a plagas automáticamente",
+      "La hidroponía permite cultivar sin control de pH"
+    ],
+    "correcta": 1,
+    "explicacion": "En hidroponía (NFT, DWC, aeroponia) las raíces acceden directamente a la solución nutritiva sin la variable del sustrato sólido. El control es total pero la responsabilidad también: cualquier error en pH o nutrientes afecta inmediatamente a la planta sin el efecto tampón que ofrece la tierra. El crecimiento puede ser 30-50% más rápido que en tierra."
+  },
+  {
+    "id": "ST-013",
+    "cat": "Sustrato",
+    "ico": "🪴",
+    "nivel": 3,
+    "pregunta": "¿Qué es la 'zona de saturación' o 'zona muerta' en la base de un contenedor y cómo afecta al cultivo?",
+    "opciones": [
+      "Área sin nutrientes donde las raíces no pueden crecer",
+      "Capa de sustrato en la base del contenedor que permanece saturada de agua por capilaridad independientemente del drenaje; reduce el volumen útil de sustrato oxigenado",
+      "Zona donde se acumulan sales minerales por evaporación",
+      "Espacio entre las paredes del contenedor y el cepellón radicular"
+    ],
+    "correcta": 1,
+    "explicacion": "La zona de saturación (perched water table) es inevitable en contenedores: el agua queda retenida por tensión superficial en la base independientemente de cuántos agujeros de drenaje haya. Su altura depende de la granulometría del sustrato (más fina = zona más alta). Esto explica por qué elevar la maceta, usar sustrato con partículas más gruesas en la base o usar macetas altas y estrechas mejora la oxigenación radicular."
+  },
+  {
+    "id": "ST-014",
+    "cat": "Sustrato",
+    "ico": "🪴",
+    "nivel": 3,
+    "pregunta": "¿Por qué añadir una capa de grava o piedras en el fondo del contenedor NO mejora el drenaje, contrario a la creencia popular?",
+    "opciones": [
+      "Porque la grava retiene agua en sus poros internos",
+      "Porque la zona de saturación se forma en la interfaz entre materiales de diferente granulometría; la capa de grava eleva esa zona saturada hacia el sustrato fino superior, reduciendo el volumen útil",
+      "Porque la grava bloquea físicamente los agujeros de drenaje",
+      "No es cierto; la grava sí mejora el drenaje en todos los casos"
+    ],
+    "correcta": 1,
+    "explicacion": "Estudios de física de suelos demuestran que la zona de saturación se forma en la interfaz entre el sustrato fino y la grava, no en la base del contenedor. Al poner grava abajo, esa interfaz sube hasta justo encima de la grava, saturando más sustrato fino del que habría sin ella. La solución real es usar sustrato con buena granulometría uniforme o macetas de tela."
+  },
+  {
+    "id": "ST-015",
+    "cat": "Sustrato",
+    "ico": "🪴",
+    "nivel": 3,
+    "pregunta": "¿Qué es el 'buffer' del sustrato y cómo influye en la gestión del pH y los nutrientes?",
+    "opciones": [
+      "Capacidad del sustrato de drenar el exceso de agua rápidamente",
+      "Capacidad del sustrato de resistir cambios bruscos de pH gracias a su CIC y composición química; sustratos con mayor buffer son más tolerantes a errores de pH en el agua de riego",
+      "Contenido en materia orgánica que alimenta a los microorganismos",
+      "Espacio de aire disponible en el sustrato para las raíces"
+    ],
+    "correcta": 1,
+    "explicacion": "El poder tampón (buffer) del sustrato es su capacidad de neutralizar cambios de pH. Una tierra rica en materia orgánica y arcillas tiene alto buffer: aunque el agua de riego llegue a pH 5.5 o 7.0, el sustrato amortigua esa variación manteniendo el pH rizosférico más estable. El coco y la perlita tienen bajo buffer, lo que requiere mayor precisión en el pH del agua de riego."
+  },
+  {
+    "id": "ST-016",
+    "cat": "Sustrato",
+    "ico": "🪴",
+    "nivel": 3,
+    "pregunta": "¿Qué es el 'supersoil' y cuáles son sus ingredientes funcionales clave?",
+    "opciones": [
+      "Sustrato mineral de alta pureza para cultivo hidropónico avanzado",
+      "Mezcla de tierra enriquecida con enmiendas orgánicas de liberación lenta (harina de huesos, sangre seca, guano, kelp, azufre, cal dolomítica) que permite cultivar sin fertilizantes líquidos añadiendo solo agua",
+      "Sustrato comercial premium de marca específica disponible en tiendas",
+      "Tierra viva con micorrizas activadas industrialmente"
+    ],
+    "correcta": 1,
+    "explicacion": "El supersoil (popularizado por Subcool) es una tierra enriquecida con enmiendas orgánicas de liberación lenta que se 'cocina' durante 30-60 días antes de usar. Los ingredientes clave son: harina de huesos (P), sangre seca (N), guano de murciélago (P y micronutrientes), kelp (K y hormonas), cal dolomítica (Ca/Mg y pH), azufre (pH y fungicida), perlita (drenaje) y micorrizas. La idea es que la actividad microbiana mineralice continuamente estos ingredientes."
+  },
+  {
+    "id": "ST-017",
+    "cat": "Sustrato",
+    "ico": "🪴",
+    "nivel": 3,
+    "pregunta": "¿Cómo afecta el tamaño del contenedor al ciclo de secado del sustrato y al ritmo de crecimiento de la planta?",
+    "opciones": [
+      "Contenedores más grandes siempre producen más; no hay desventaja en usar macetas grandes desde el principio",
+      "Un contenedor demasiado grande para el tamaño de la planta tarda mucho en secarse entre riegos, aumentando el riesgo de sobreriego, asfixia radicular y Pythium; el ciclo óptimo de secado es 2-3 días",
+      "El tamaño del contenedor no afecta al ciclo de secado si el sustrato tiene buena perlita",
+      "Las plantas crecen más rápido en contenedores pequeños porque las raíces están más comprimidas"
+    ],
+    "correcta": 1,
+    "explicacion": "El ciclo húmedo-seco del sustrato es fundamental para la salud radicular: el secado entre riegos fuerza a las raíces a crecer buscando agua (mayor masa radicular) y permite la entrada de oxígeno. Un contenedor de 20L para una plántula de 10cm puede tardar 7-10 días en secarse, creando condiciones anaeróbicas que favorecen Pythium. La regla práctica: el ciclo ideal de secado es 2-3 días para plantas en vegetativo activo."
+  },
+  {
+    "id": "ST-018",
+    "cat": "Sustrato",
+    "ico": "🪴",
+    "nivel": 3,
+    "pregunta": "¿Qué es la rizosfera y por qué es considerada el ecosistema más activo del suelo?",
+    "opciones": [
+      "El volumen total de sustrato dentro del contenedor",
+      "La zona de sustrato inmediatamente adyacente a las raíces (1-2mm), donde la actividad microbiana es 10-100 veces mayor que en el resto del sustrato, impulsada por exudados radiculares",
+      "La capa superficial del sustrato expuesta al aire",
+      "El sistema de drenaje natural que se forma en el fondo de la maceta"
+    ],
+    "correcta": 1,
+    "explicacion": "La rizosfera es la zona de influencia directa de la raíz: las raíces exudan azúcares, aminoácidos, ácidos orgánicos y señales moleculares que atraen y nutren a bacterias, hongos y fauna específica. Esta comunidad microbiana (microbioma rizosférico) a su vez solubiliza minerales, suprime patógenos y produce fitohormonas. Es literalmente una simbiosis dinámica que el cultivador que trabaja con living soil trata de optimizar."
+  },
+  {
+    "id": "ST-019",
+    "cat": "Sustrato",
+    "ico": "🪴",
+    "nivel": 3,
+    "pregunta": "¿Qué ventaja ofrece el cultivo en 'no-till' (sin laboreo) respecto al vaciado y rellenado de macetas entre cultivos?",
+    "opciones": [
+      "Es más barato porque elimina completamente la necesidad de sustrato",
+      "Preserva la estructura física del sustrato, el micelio fúngico y las redes microbianas que tardan semanas en establecerse, mejorando cada ciclo la calidad del suelo vivo",
+      "Evita completamente la aparición de plagas al no remover el sustrato",
+      "Permite reutilizar el sustrato sin ningún tipo de reposición de nutrientes"
+    ],
+    "correcta": 1,
+    "explicacion": "El sistema no-till replica la agricultura natural: en vez de vaciar y rellenar la maceta entre cultivos, se corta la planta a nivel del suelo (dejando raíces que se descomponen como materia orgánica), se reemplaza la capa superficial con compost fresco y se replanta directamente. El beneficio clave es la preservación de las redes de micelio y el microbioma establecido, que mejoran progresivamente con cada ciclo en lugar de empezar de cero."
+  },
+  {
+    "id": "PH-001",
+    "cat": "pH y EC",
+    "ico": "⚗️",
+    "nivel": 1,
+    "pregunta": "¿Qué mide el pH en el contexto del cultivo de cannabis?",
+    "opciones": [
+      "La concentración de nutrientes disueltos en el agua de riego",
+      "El grado de acidez o alcalinidad de una solución en escala de 0 a 14, donde 7 es neutro",
+      "La temperatura óptima del agua para el riego",
+      "La cantidad de oxígeno disuelto en la solución nutritiva"
+    ],
+    "correcta": 1,
+    "explicacion": "El pH (potencial de hidrógeno) mide la concentración de iones H⁺ en una solución. Escala logarítmica de 0 (muy ácido) a 14 (muy alcalino), siendo 7 el punto neutro. En cannabis, el pH del agua de riego determina qué nutrientes puede absorber la raíz: fuera del rango óptimo, los nutrientes se bloquean aunque estén presentes."
+  },
+  {
+    "id": "PH-002",
+    "cat": "pH y EC",
+    "ico": "⚗️",
+    "nivel": 1,
+    "pregunta": "¿Cuál es el rango de pH óptimo para el cultivo de cannabis en tierra?",
+    "opciones": [
+      "4.5 – 5.5",
+      "6.0 – 7.0",
+      "7.5 – 8.5",
+      "5.0 – 5.8"
+    ],
+    "correcta": 1,
+    "explicacion": "En tierra, el rango óptimo es 6.0-7.0, con el punto ideal alrededor de 6.2-6.5. En este rango, todos los macro y micronutrientes principales están disponibles para la absorción. Por debajo de 6.0 se bloquean Ca, Mg y P; por encima de 7.0 se bloquean Fe, Mn, Zn y otros micronutrientes."
+  },
+  {
+    "id": "PH-003",
+    "cat": "pH y EC",
+    "ico": "⚗️",
+    "nivel": 1,
+    "pregunta": "¿Cuál es el rango de pH óptimo para el cultivo de cannabis en coco o hidroponía?",
+    "opciones": [
+      "6.0 – 7.0",
+      "7.0 – 8.0",
+      "5.5 – 6.5",
+      "4.0 – 5.0"
+    ],
+    "correcta": 2,
+    "explicacion": "En medios inertes (coco, hidro), el rango óptimo es 5.5-6.5, ligeramente más ácido que en tierra. Sin el efecto tampón del sustrato orgánico, la planta depende completamente del pH de la solución nutritiva. En DWC algunos cultivadores trabajan entre 5.8-6.2 para maximizar la disponibilidad de todos los nutrientes."
+  },
+  {
+    "id": "PH-004",
+    "cat": "pH y EC",
+    "ico": "⚗️",
+    "nivel": 1,
+    "pregunta": "¿Qué mide la EC (Conductividad Eléctrica) en el cultivo de cannabis?",
+    "opciones": [
+      "La capacidad del sustrato de conducir electricidad estática",
+      "La concentración total de sales y nutrientes disueltos en el agua de riego o solución nutritiva",
+      "El pH combinado con la temperatura del agua",
+      "La cantidad de oxígeno disponible para las raíces"
+    ],
+    "correcta": 1,
+    "explicacion": "La EC (Electrical Conductivity) mide cuántas sales iónicas hay disueltas en el agua: a mayor EC, más iones (nutrientes) en solución. Se mide en mS/cm (milisiemens por centímetro). El agua pura tiene EC≈0; el agua del grifo suele tener 0.2-0.8 mS/cm; las soluciones nutritivas para cannabis varían entre 0.8-2.5 mS/cm según fase y variedad."
+  },
+  {
+    "id": "PH-005",
+    "cat": "pH y EC",
+    "ico": "⚗️",
+    "nivel": 1,
+    "pregunta": "¿Qué herramienta es la más precisa para medir el pH del agua de riego?",
+    "opciones": [
+      "Tiras reactivas de papel tornasol",
+      "Medidor digital de pH (pH-metro) calibrado",
+      "Test líquido de color con indicadores",
+      "Medidor de EC combinado sin calibración"
+    ],
+    "correcta": 1,
+    "explicacion": "El pH-metro digital calibrado es el método más preciso (±0.01-0.05 pH). Las tiras reactivas tienen margen de error de ±0.5-1.0 pH, inaceptable para gestión precisa. Los tests líquidos son mejores que las tiras pero siguen siendo menos precisos que el medidor digital. La calibración regular del pH-metro (con soluciones buffer 4.0 y 7.0) es fundamental para mantener su precisión."
+  },
+  {
+    "id": "PH-006",
+    "cat": "pH y EC",
+    "ico": "⚗️",
+    "nivel": 2,
+    "pregunta": "¿Qué es el 'pH del sustrato' o 'pH de la zona radicular' y cómo se mide correctamente?",
+    "opciones": [
+      "Es idéntico al pH del agua de riego introducida",
+      "Es el pH real que experimentan las raíces en el sustrato; se mide analizando el agua de escorrentía (la que sale por el drenaje) o haciendo una mezcla sustrato-agua 1:1",
+      "Solo puede medirse con equipos de laboratorio profesionales",
+      "No tiene relevancia práctica; solo importa el pH del agua de entrada"
+    ],
+    "correcta": 1,
+    "explicacion": "El pH del sustrato puede diferir significativamente del pH del agua de riego por la actividad microbiana, la degradación de materia orgánica y la excreción radicular de ácidos. La forma más práctica de monitorizarlo es medir el pH de la escorrentía (run-off): si entra 6.5 y sale 5.8, el sustrato está acidificándose. La diferencia entre entrada y salida indica la tendencia del sustrato."
+  },
+  {
+    "id": "PH-007",
+    "cat": "pH y EC",
+    "ico": "⚗️",
+    "nivel": 2,
+    "pregunta": "¿Qué rango de EC es generalmente adecuado para plantas en fase de floración activa?",
+    "opciones": [
+      "0.2 – 0.6 mS/cm",
+      "0.8 – 1.2 mS/cm",
+      "1.4 – 2.2 mS/cm",
+      "3.0 – 4.0 mS/cm"
+    ],
+    "correcta": 2,
+    "explicacion": "En floración activa (semanas 3-7 según variedad), la demanda nutricional es alta y las plantas toleran EC de 1.4-2.2 mS/cm. En las últimas semanas se reduce progresivamente para facilitar el flushing. Variedades sensibles pueden mostrar quemaduras de puntas (tip burn) por encima de 1.8 mS/cm. En vegetativo el rango es menor: 0.8-1.4 mS/cm."
+  },
+  {
+    "id": "PH-008",
+    "cat": "pH y EC",
+    "ico": "⚗️",
+    "nivel": 2,
+    "pregunta": "¿Qué indica una EC del run-off (escorrentía) muy superior a la EC del agua de entrada?",
+    "opciones": [
+      "Que la planta está absorbiendo demasiados nutrientes",
+      "Que hay acumulación de sales en el sustrato que no está siendo absorbida; puede indicar sobrenutrición o bloqueo por pH incorrecto",
+      "Que el sustrato tiene muy buena capacidad de intercambio catiónico",
+      "Que el agua de riego tiene poca EC y debe aumentarse"
+    ],
+    "correcta": 1,
+    "explicacion": "Si la EC de salida es muy superior a la de entrada (ej. entrada 1.5 / salida 3.0+), hay acumulación de sales en el sustrato. Esto puede ser por sobrenutrición crónica, bloqueo de nutrientes por pH incorrecto o riego insuficiente que no lava el exceso. Un lavado con agua a pH correcto y baja EC es el primer paso para corregirlo."
+  },
+  {
+    "id": "PH-009",
+    "cat": "pH y EC",
+    "ico": "⚗️",
+    "nivel": 2,
+    "pregunta": "¿Por qué es importante calibrar el pH-metro regularmente y cómo se hace?",
+    "opciones": [
+      "La calibración no es necesaria en pH-metros de calidad",
+      "El electrodo del pH-metro se deteriora con el uso y el tiempo; se calibra con soluciones buffer de pH conocido (4.0 y 7.0) para ajustar la lectura a valores reales",
+      "Se calibra midiendo el pH del agua del grifo y ajustando al valor local conocido",
+      "Solo necesita calibración si el medidor lleva más de un año sin usarse"
+    ],
+    "correcta": 1,
+    "explicacion": "El electrodo de vidrio del pH-metro se degrada gradualmente por uso, temperatura y exposición a soluciones. La calibración con soluciones buffer certificadas (pH 4.0 y 7.0) ajusta la respuesta eléctrica del electrodo a valores conocidos. Se recomienda calibrar antes de cada sesión de medición importante o al menos semanalmente en uso frecuente. El electrodo debe mantenerse húmedo en solución de conservación KCl."
+  },
+  {
+    "id": "PH-010",
+    "cat": "pH y EC",
+    "ico": "⚗️",
+    "nivel": 2,
+    "pregunta": "¿Qué efecto tiene el agua con alta EC de base (agua dura del grifo) en la nutrición del cannabis?",
+    "opciones": [
+      "Ninguno, la planta filtra automáticamente los minerales del agua",
+      "Reduce el margen disponible para añadir nutrientes antes de alcanzar niveles tóxicos, y el calcio y magnesio del agua pueden generar antagonismos con otros nutrientes",
+      "Mejora la nutrición porque ya contiene minerales beneficiosos",
+      "Solo es problemática en hidroponía, no en cultivo en tierra"
+    ],
+    "correcta": 1,
+    "explicacion": "El agua dura (EC 0.5-0.8+ mS/cm) ya consume parte del margen de EC antes de añadir fertilizantes. Si el objetivo es EC 1.5, solo quedan 0.7-1.0 mS/cm para nutrientes. Además, el exceso de calcio y bicarbonatos puede elevar el pH y crear antagonismos con Mg, K y micronutrientes. Muchos cultivadores de hidro y coco usan osmosis inversa para partir de agua con EC≈0."
+  },
+  {
+    "id": "PH-011",
+    "cat": "pH y EC",
+    "ico": "⚗️",
+    "nivel": 2,
+    "pregunta": "¿Qué producto se usa habitualmente para bajar el pH del agua de riego y cuál para subirlo?",
+    "opciones": [
+      "Para bajar: bicarbonato de sodio; para subir: vinagre",
+      "Para bajar: ácido fosfórico o ácido nítrico (pH-); para subir: hidróxido de potasio o hidróxido de calcio (pH+)",
+      "Para bajar: ácido cítrico; para subir: cal apagada",
+      "Para bajar: sulfato de magnesio; para subir: carbonato cálcico"
+    ],
+    "correcta": 1,
+    "explicacion": "Los reguladores de pH más usados en cannabis: pH- con ácido fosfórico (aporta P, común en floración) o ácido nítrico (aporta N, más usado en vegetativo); pH+ con hidróxido de potasio (aporta K) o hidróxido de calcio. El ácido cítrico funciona pero es biodegradable y puede elevar el pH al descomponerse. Siempre ajustar el pH DESPUÉS de añadir los nutrientes, nunca antes."
+  },
+  {
+    "id": "PH-012",
+    "cat": "pH y EC",
+    "ico": "⚗️",
+    "nivel": 2,
+    "pregunta": "¿Qué es el 'pH swing' o fluctuación de pH y por qué algunos cultivadores lo aplican deliberadamente?",
+    "opciones": [
+      "Error de medición causado por un pH-metro mal calibrado",
+      "Variación controlada del pH entre riegos (ej. alternar 5.8 y 6.3 en coco) para maximizar la disponibilidad de distintos nutrientes en diferentes momentos",
+      "Caída brusca del pH causada por acumulación de ácidos orgánicos",
+      "Técnica exclusiva de sistemas hidropónicos automatizados"
+    ],
+    "correcta": 1,
+    "explicacion": "El pH swing deliberado aprovecha que distintos nutrientes tienen picos de disponibilidad en diferentes valores de pH. Al alternar entre 5.8 y 6.3 (en coco/hidro), el cultivador garantiza que en algún momento del ciclo todos los nutrientes estén en su rango óptimo de absorción. Es una técnica intermedia-avanzada especialmente útil en coco con riegos frecuentes."
+  },
+  {
+    "id": "PH-013",
+    "cat": "pH y EC",
+    "ico": "⚗️",
+    "nivel": 3,
+    "pregunta": "¿Por qué la escala de pH es logarítmica y qué implicación práctica tiene esto para el cultivador?",
+    "opciones": [
+      "Es logarítmica por convención histórica sin implicaciones prácticas reales",
+      "Cada unidad de pH representa una diferencia de concentración de H⁺ 10 veces mayor; pH 5.0 es 10 veces más ácido que pH 6.0 y 100 veces más que pH 7.0, por lo que pequeñas variaciones tienen impacto desproporcionado",
+      "La escala logarítmica solo afecta a las mediciones en laboratorio, no al cultivo práctico",
+      "Significa que ajustar el pH es 10 veces más difícil cerca de los extremos de la escala"
+    ],
+    "correcta": 1,
+    "explicacion": "La naturaleza logarítmica del pH tiene implicaciones reales: pasar de pH 6.5 a 5.5 no es 'una unidad' de diferencia sino una concentración de H⁺ 10 veces mayor. Esto explica por qué un exceso de corrector de pH puede acidificar drásticamente la solución, y por qué los ajustes deben hacerse gota a gota, especialmente en soluciones con poco poder tampón como el agua de osmosis."
+  },
+  {
+    "id": "PH-014",
+    "cat": "pH y EC",
+    "ico": "⚗️",
+    "nivel": 3,
+    "pregunta": "¿Qué es la 'EC real' o 'EC de la solución en la rizosfera' y por qué puede diferir de la EC que mide el cultivador en el agua de riego?",
+    "opciones": [
+      "Es idéntica a la EC del agua de riego si el sustrato está bien gestionado",
+      "La planta absorbe agua más rápido que solutos, concentrando las sales en la rizosfera; la EC real en la raíz puede ser 1.5-2x superior a la EC del agua de entrada, especialmente con bajo volumen de riego",
+      "La EC de la rizosfera siempre es menor que la del agua de entrada por dilución",
+      "Solo es relevante en sistemas hidropónicos sin sustrato"
+    ],
+    "correcta": 1,
+    "explicacion": "Las raíces absorben agua (osmosis) más rápidamente que los iones minerales. Con el tiempo, los solutos se concentran alrededor de las raíces. En riegos con bajo volumen (sin drenaje), la EC rizosférica puede duplicar la EC del agua de entrada. Por esto, aplicar riegos con cierto porcentaje de drenaje (15-20%) es esencial para evitar que las sales se concentren peligrosamente en la zona radicular."
+  },
+  {
+    "id": "PH-015",
+    "cat": "pH y EC",
+    "ico": "⚗️",
+    "nivel": 3,
+    "pregunta": "¿Cómo afecta la temperatura del agua a la lectura del pH-metro y qué es la compensación automática de temperatura (ATC)?",
+    "opciones": [
+      "La temperatura no afecta a las lecturas de pH",
+      "La actividad de los iones H⁺ varía con la temperatura, alterando la lectura; la ATC corrige automáticamente esta variación para dar una lectura estándar referenciada a 25°C independientemente de la temperatura real del agua",
+      "El agua fría da lecturas de pH más altas; la ATC calienta el electrodo para normalizarlas",
+      "Solo afecta a mediciones por encima de 40°C"
+    ],
+    "correcta": 1,
+    "explicacion": "La actividad iónica y el potencial eléctrico del electrodo varían con la temperatura (efecto Nernst). Un agua a 15°C dará una lectura diferente que la misma agua a 25°C aunque el pH 'real' sea el mismo. Los pH-metros con ATC (Automatic Temperature Compensation) incorporan un sensor de temperatura y corrigen matemáticamente la lectura al estándar de 25°C. Esencial para mediciones precisas en cultivos donde la temperatura del agua varía."
+  },
+  {
+    "id": "PH-016",
+    "cat": "pH y EC",
+    "ico": "⚗️",
+    "nivel": 3,
+    "pregunta": "¿Qué relación existe entre la alcalinidad (bicarbonatos) del agua y el pH, y cómo gestionarla?",
+    "opciones": [
+      "La alcalinidad y el pH son la misma medida expresada de forma diferente",
+      "La alcalinidad (concentración de bicarbonatos HCO3⁻) es el poder tampón del agua: agua con alta alcalinidad resiste los cambios de pH y tiende a elevar el pH del sustrato con el tiempo; se gestiona con ácidos o agua de osmosis",
+      "El agua alcalina siempre tiene pH superior a 9.0",
+      "La alcalinidad solo afecta al cultivo en exterior"
+    ],
+    "correcta": 1,
+    "explicacion": "La alcalinidad (medida en ppm de CaCO3 o meq/L de HCO3⁻) es independiente del pH: un agua puede tener pH 7.2 pero alta alcalinidad (200+ ppm), lo que significa que resiste mucho los intentos de bajar el pH y eleva progresivamente el pH del sustrato. El agua de Madrid, por ejemplo, tiene alcalinidad moderada-alta. La solución definitiva es osmosis inversa + reacidificación controlada o acidificación crónica con ácidos seguros."
+  },
+  {
+    "id": "PH-017",
+    "cat": "pH y EC",
+    "ico": "⚗️",
+    "nivel": 3,
+    "pregunta": "¿Qué es el TDS (Total Dissolved Solids) y cómo se relaciona con la EC?",
+    "opciones": [
+      "TDS y EC son medidas completamente independientes sin relación matemática",
+      "TDS mide los sólidos totales disueltos en ppm; se calcula multiplicando la EC por un factor de conversión (generalmente 500 o 700 según el estándar NaCl o KCl); ambos miden la misma realidad con distintas unidades",
+      "TDS mide solo los nutrientes orgánicos; EC mide solo los minerales",
+      "TDS solo puede medirse en laboratorio, no con medidores portátiles"
+    ],
+    "correcta": 1,
+    "explicacion": "TDS (ppm) y EC (mS/cm) miden la misma concentración iónica con distintas unidades. La conversión depende del factor del medidor: factor 500 (estándar NaCl, común en EE.UU.) o factor 700 (estándar KCl, más usado en Europa). EC 1.0 mS/cm ≈ 500 ppm (factor 500) o ≈ 700 ppm (factor 700). Al comparar lecturas entre cultivadores, siempre verificar qué factor usa cada medidor para evitar confusiones."
+  },
+  {
+    "id": "PH-018",
+    "cat": "pH y EC",
+    "ico": "⚗️",
+    "nivel": 3,
+    "pregunta": "¿Por qué en sistemas hidropónicos recirculantes (como NFT o DWC) el pH tiende a subir durante el día y bajar durante la noche?",
+    "opciones": [
+      "La luz artificial calienta el agua elevando el pH; la oscuridad la enfría bajándolo",
+      "Durante la fotosíntesis activa las raíces absorben NO3⁻ (anión) y liberan OH⁻ elevando el pH; en la noche predomina la respiración, liberando CO2 que forma ácido carbónico y baja el pH",
+      "Los nutrientes se precipitan durante el día elevando el pH; se disuelven de noche",
+      "Es un efecto del temporizador de las bombas que altera la oxigenación"
+    ],
+    "correcta": 1,
+    "explicacion": "Es un fenómeno fisiológico real: cuando la planta fotosintiza activamente absorbe nitrato (NO3⁻) como fuente de nitrógeno. Para mantener la neutralidad eléctrica, excreta OH⁻ (iones hidroxilo) que elevan el pH. Por la noche, la respiración genera CO2 que reacciona con el agua formando H2CO3 (ácido carbónico), bajando el pH. Este ciclo diurno puede variar el pH 0.5-1.0 unidades en sistemas recirculantes y debe monitorizarse."
+  },
+  {
+    "id": "PH-019",
+    "cat": "pH y EC",
+    "ico": "⚗️",
+    "nivel": 3,
+    "pregunta": "¿Qué es la 'toxicidad por sales' en cannabis y qué parámetros la determinan más allá de la EC total?",
+    "opciones": [
+      "Es simplemente el resultado de una EC demasiado alta; solo depende del valor total de EC",
+      "La toxicidad depende de la EC total pero también del balance iónico específico: excesos de un ion concreto (ej. sodio, cloro) pueden ser tóxicos a EC moderada si están desproporcionados respecto a otros iones",
+      "Solo ocurre por encima de EC 5.0 mS/cm en cualquier solución equilibrada",
+      "La toxicidad por sales solo afecta a las raíces, nunca al tejido foliar"
+    ],
+    "correcta": 1,
+    "explicacion": "La toxicidad por sales no es solo cuestión de EC total: el balance iónico importa tanto como la concentración total. El sodio (Na⁺) y el cloro (Cl⁻), presentes en agua dura o fertilizantes de mala calidad, son tóxicos para el cannabis a concentraciones relativamente bajas incluso si la EC total parece aceptable. El análisis completo del agua (no solo pH y EC) es importante para detectar iones problemáticos específicos."
+  },
+  {
+    "id": "LG-001",
+    "cat": "Legislacion española",
+    "ico": "📋",
+    "nivel": 1,
+    "pregunta": "¿Qué ley regula en España las sanciones administrativas relacionadas con el consumo y tenencia de cannabis en espacios públicos?",
+    "opciones": [
+      "El Código Penal español",
+      "La Ley Orgánica 4/2015 de Protección de la Seguridad Ciudadana (Ley Mordaza)",
+      "La Ley General de Sanidad de 1986",
+      "El Real Decreto de Estupefacientes de 1977"
+    ],
+    "correcta": 1,
+    "explicacion": "La Ley Orgánica 4/2015 (conocida como 'Ley Mordaza') tipifica como infracción administrativa grave el consumo o tenencia de drogas en espacios públicos, con multas de 601 a 30.000€. No es materia penal sino administrativa, lo que significa que no genera antecedentes penales pero sí puede llevar a sanciones económicas significativas."
+  },
+  {
+    "id": "LG-002",
+    "cat": "Legislacion española",
+    "ico": "📋",
+    "nivel": 1,
+    "pregunta": "¿Es legal el autocultivo de cannabis para uso personal en España según el Código Penal?",
+    "opciones": [
+      "Sí, está expresamente permitido hasta 3 plantas por persona",
+      "No existe una ley que lo permita explícitamente; el Código Penal no penaliza el cultivo para consumo propio en la esfera privada, pero tampoco lo legaliza, creando una zona jurídica gris",
+      "Está completamente prohibido con penas de prisión para cualquier número de plantas",
+      "Es legal si las plantas están en el interior del domicilio y no superan 1 metro de altura"
+    ],
+    "correcta": 1,
+    "explicacion": "España se encuentra en una zona gris legal: el artículo 368 del Código Penal penaliza el cultivo para tráfico, pero la jurisprudencia del Tribunal Supremo ha establecido que el cultivo para consumo propio exclusivo en la esfera privada no es punible penalmente. Sin embargo, no existe ley que lo legalice expresamente, y la interpretación policial y judicial varía. La ausencia de prohibición penal no equivale a permiso."
+  },
+  {
+    "id": "LG-003",
+    "cat": "Legislacion española",
+    "ico": "📋",
+    "nivel": 1,
+    "pregunta": "¿Qué artículo del Código Penal español regula los delitos relacionados con el tráfico de drogas?",
+    "opciones": [
+      "Artículo 234",
+      "Artículo 368",
+      "Artículo 451",
+      "Artículo 127"
+    ],
+    "correcta": 1,
+    "explicacion": "El artículo 368 del Código Penal tipifica como delito los actos de cultivo, elaboración o tráfico de drogas que causen grave daño a la salud, o su promoción, favorecimiento o facilitación. Las penas van de 3 a 9 años de prisión para sustancias de mayor riesgo (heroína, cocaína) y de 1 a 3 años para las de menor riesgo, categoría en la que los tribunales han incluido el cannabis."
+  },
+  {
+    "id": "LG-004",
+    "cat": "Legislacion española",
+    "ico": "📋",
+    "nivel": 1,
+    "pregunta": "¿Qué son los clubes sociales de cannabis en España y cuál es su base legal?",
+    "opciones": [
+      "Establecimientos con licencia del Ministerio de Sanidad para vender cannabis medicinal",
+      "Asociaciones privadas sin ánimo de lucro que distribuyen cannabis entre socios adultos bajo el principio de consumo compartido en ámbito privado; no tienen reconocimiento legal explícito pero operan en un vacío legal tolerado en algunas comunidades",
+      "Locales con licencia municipal equivalente a un bar, con permiso para servir cannabis",
+      "Cooperativas agrícolas con autorización para cultivar cannabis industrial"
+    ],
+    "correcta": 1,
+    "explicacion": "Los clubes sociales de cannabis (CSC) operan como asociaciones civiles bajo el derecho de asociación. Su actividad se basa en la jurisprudencia del 'consumo compartido' entre adultos en ámbito privado y el cultivo colectivo para autoconsumo. No existe ley que los regule específicamente a nivel nacional, aunque el País Vasco intentó regularlos (ley anulada por el TC). Su situación varía según municipio y comunidad autónoma."
+  },
+  {
+    "id": "LG-005",
+    "cat": "Legislacion española",
+    "ico": "📋",
+    "nivel": 1,
+    "pregunta": "¿Cuál es la sanción administrativa por consumir cannabis en un espacio público en España?",
+    "opciones": [
+      "No existe sanción administrativa; solo es sancionable penalmente",
+      "Multa de 100 a 600€ por infracción leve",
+      "Multa de 601 a 30.000€ como infracción grave según la Ley de Seguridad Ciudadana",
+      "Arresto de 24-48 horas y multa de 50€"
+    ],
+    "correcta": 2,
+    "explicacion": "La Ley Orgánica 4/2015 clasifica el consumo de drogas en espacios públicos como infracción grave, con multa de 601 a 30.000€. En la práctica, las multas habituales para cannabis rondan los 600-1.000€, pero la ley permite importes mucho mayores. Existe la posibilidad de reducir o suspender la sanción acudiendo a tratamiento o programas de reducción de daños."
+  },
+  {
+    "id": "LG-006",
+    "cat": "Legislacion española",
+    "ico": "📋",
+    "nivel": 2,
+    "pregunta": "¿Qué establece la jurisprudencia del Tribunal Supremo español sobre el 'consumo compartido' de cannabis?",
+    "opciones": [
+      "El consumo compartido entre adultos es completamente legal en cualquier circunstancia",
+      "El Tribunal Supremo ha reconocido que el consumo compartido entre adultos en ámbito privado, sin ánimo de lucro y con cantidad acorde al consumo inmediato, no es punible penalmente, pero ha fijado requisitos estrictos",
+      "Cualquier forma de compartir cannabis es delito de tráfico, sin excepciones",
+      "El consumo compartido solo está permitido en el domicilio privado del propietario"
+    ],
+    "correcta": 1,
+    "explicacion": "El TS ha establecido doctrina sobre el consumo compartido exculpatorio: requiere que los consumidores sean adultos, habituales consumidores, en número reducido, en lugar cerrado, sin ánimo de lucro y con cantidad para consumo inmediato. Si falla cualquiera de estos requisitos, puede considerarse tráfico. Esta doctrina es la base jurídica de los clubes sociales de cannabis, aunque su aplicación no es uniforme."
+  },
+  {
+    "id": "LG-007",
+    "cat": "Legislacion española",
+    "ico": "📋",
+    "nivel": 2,
+    "pregunta": "¿Qué diferencia existe en el tratamiento penal entre cannabis (sustancia de menor riesgo) y heroína o cocaína (sustancia de mayor riesgo) según el Código Penal?",
+    "opciones": [
+      "No hay diferencia; todas las drogas tienen el mismo tratamiento penal",
+      "El cannabis se considera sustancia de menor riesgo: las penas por tráfico son de 1 a 3 años (vs 3-9 años para sustancias de mayor riesgo), y los umbrales de cantidad para presumir tráfico son diferentes",
+      "El cannabis está despenalizado completamente mientras las otras sustancias son delito grave",
+      "La diferencia solo afecta a la multa administrativa, no a las penas de prisión"
+    ],
+    "correcta": 1,
+    "explicacion": "El artículo 368 CP distingue entre sustancias que causan grave daño a la salud (mayor riesgo: opiáceos, cocaína, anfetaminas) con penas de 3-9 años, y las que no causan grave daño (menor riesgo: cannabis, según jurisprudencia consolidada) con penas de 1-3 años. Las circunstancias agravantes (cantidad de notoria importancia, pertenencia a organización, menores implicados) pueden duplicar las penas en ambos casos."
+  },
+  {
+    "id": "LG-008",
+    "cat": "Legislacion española",
+    "ico": "📋",
+    "nivel": 2,
+    "pregunta": "¿Qué es la 'cantidad de notoria importancia' en relación al cannabis y qué consecuencias penales tiene?",
+    "opciones": [
+      "Cualquier cantidad superior a 100 gramos",
+      "A partir de 2,5 kg de cannabis (según jurisprudencia del TS), se considera circunstancia agravante que puede elevar la pena hasta el doble del máximo ordinario",
+      "No existe este concepto para cannabis, solo para drogas duras",
+      "Es la cantidad mínima para que el cultivo sea considerado delito"
+    ],
+    "correcta": 1,
+    "explicacion": "El Tribunal Supremo fijó en 2,5 kg de cannabis la 'cantidad de notoria importancia' (Acuerdo del Pleno de la Sala 2ª). Por encima de este umbral, la pena ordinaria de 1-3 años puede incrementarse hasta en la mitad superior, llegando potencialmente a 4,5 años. Para resina de cannabis (hachís) el umbral es 750 gramos. Estas cifras no implican que por debajo sea legal, sino que son agravantes específicos."
+  },
+  {
+    "id": "LG-009",
+    "cat": "Legislacion española",
+    "ico": "📋",
+    "nivel": 2,
+    "pregunta": "¿Qué regulación existe en España para el cannabis con bajo contenido en THC (cannabis industrial o CBD)?",
+    "opciones": [
+      "Está completamente prohibido igual que el cannabis psicoactivo",
+      "El cultivo de variedades de cannabis con menos de 0,2% de THC está autorizado para usos industriales (fibra, semilla) con registro previo; los productos de CBD para consumo humano están en zona gris regulatoria",
+      "El CBD está aprobado como medicamento de venta libre en farmacias españolas",
+      "Solo está permitido para investigación en universidades públicas"
+    ],
+    "correcta": 1,
+    "explicacion": "España permite el cultivo de cáñamo industrial (variedades certificadas con <0,2% THC) bajo registro en el Ministerio de Agricultura para usos textiles, alimentarios e industriales. Los productos de CBD (aceites, flores) para consumo humano están en un limbo regulatorio: la AEMPS los clasifica como medicamentos si tienen efectos fisiológicos, y la EFSA ha restringido su venta como suplemento. La venta en tiendas de CBD opera en zona gris legal."
+  },
+  {
+    "id": "LG-010",
+    "cat": "Legislacion española",
+    "ico": "📋",
+    "nivel": 2,
+    "pregunta": "¿En qué consiste el programa de intercambio de jeringuillas y reducción de daños en España, y qué relación tiene con la política de drogas?",
+    "opciones": [
+      "Es un programa exclusivo para heroína sin relación con el cannabis",
+      "Forma parte del enfoque de salud pública de la política de drogas española: prioriza reducir daños sobre la penalización, incluyendo salas de consumo supervisado, programas de sustitución y atención sin juicio",
+      "Solo existe en Cataluña y el País Vasco",
+      "Fue eliminado en 2020 por considerarse contrario al marco penal de drogas"
+    ],
+    "correcta": 1,
+    "explicacion": "España tiene una tradición de políticas de reducción de daños: programas de intercambio de material, tratamientos de sustitución con metadona, y salas de consumo supervisado (como las de Bilbao y otras ciudades). Este enfoque de salud pública coexiste con el marco penal del art. 368 CP. La Plan Nacional sobre Drogas (PNSD) orienta las políticas hacia la prevención y reducción de daños, especialmente relevante para el debate sobre cannabis."
+  },
+  {
+    "id": "LG-011",
+    "cat": "Legislacion española",
+    "ico": "📋",
+    "nivel": 2,
+    "pregunta": "¿Puede un propietario de un inmueble ser responsable penalmente si un inquilino cultiva cannabis en su propiedad?",
+    "opciones": [
+      "Nunca; la responsabilidad es exclusiva del cultivador",
+      "Sí, si el propietario conoce el cultivo y obtiene beneficio económico (renta elevada) o facilita activamente la actividad, puede ser considerado cómplice o cooperador necesario",
+      "Solo si el propietario vive en el mismo inmueble",
+      "Solo aplica si el cultivo supera las 100 plantas"
+    ],
+    "correcta": 1,
+    "explicacion": "La jurisprudencia ha condenado a propietarios que, conociendo el uso ilícito del inmueble, percibían rentas elevadas o facilitaban materiales. La clave es el conocimiento y el beneficio. Un propietario que desconoce el cultivo no es responsable; quien cobra un alquiler desproporcionado a sabiendas del cultivo puede ser condenado como cooperador. Esto genera riesgo legal real para propietarios en determinadas circunstancias."
+  },
+  {
+    "id": "LG-012",
+    "cat": "Legislacion española",
+    "ico": "📋",
+    "nivel": 3,
+    "pregunta": "¿Qué estableció la sentencia del Tribunal Constitucional sobre la ley vasca de regulación de clubes de cannabis?",
+    "opciones": [
+      "La avaló completamente como competencia autonómica en materia de salud pública",
+      "La anuló por invadir competencias exclusivas del Estado en materia de legislación penal y de estupefacientes, estableciendo que las CCAA no pueden regular el cannabis al margen del marco estatal",
+      "La modificó para permitir solo el consumo pero no el cultivo colectivo",
+      "Estableció que cada municipio puede regular los clubes de forma independiente"
+    ],
+    "correcta": 1,
+    "explicacion": "El TC anuló la Ley vasca 1/2016 de atención integral de adicciones y drogodependencias en los artículos relativos a los clubes de cannabis, por invadir competencias estatales exclusivas (legislación penal, Código Penal, legislación sobre estupefacientes conforme a tratados internacionales). Este fallo estableció que ninguna CCAA puede regular el cannabis sin reforma del marco legal estatal y de los convenios internacionales que España ha suscrito."
+  },
+  {
+    "id": "LG-013",
+    "cat": "Legislacion española",
+    "ico": "📋",
+    "nivel": 3,
+    "pregunta": "¿Qué convenios internacionales condicionan la política de drogas española y limitan la posibilidad de legalizar el cannabis?",
+    "opciones": [
+      "Solo la normativa de la Unión Europea en materia de salud pública",
+      "Los tres convenios de la ONU: Convención Única de 1961, Convenio sobre Sustancias Psicotrópicas de 1971 y Convención contra el Tráfico Ilícito de 1988, que obligan a los estados firmantes a controlar y penalizar el cannabis",
+      "El Tratado de Schengen que regula el tráfico de sustancias entre países de la UE",
+      "No existen limitaciones internacionales; es una decisión soberana de cada estado"
+    ],
+    "correcta": 1,
+    "explicacion": "España es firmante de los tres convenios de la ONU sobre drogas que clasifican el cannabis en el Anexo I (sustancias con alto potencial de abuso y uso médico limitado) y obligan a los estados a criminalizar su producción y tráfico. Países como Uruguay, Canadá o los estados de EE.UU. que han legalizado lo han hecho en tensión o contradicción con estas obligaciones internacionales. España no puede legalizar sin denuncia de los tratados o reforma de los mismos."
+  },
+  {
+    "id": "LG-014",
+    "cat": "Legislacion española",
+    "ico": "📋",
+    "nivel": 3,
+    "pregunta": "¿Qué es el principio de 'intervención mínima' del Derecho Penal y cómo lo han aplicado los tribunales españoles al cannabis?",
+    "opciones": [
+      "Principio que establece que la policía debe usar la mínima fuerza en operaciones antidroga",
+      "Principio por el que el Derecho Penal solo debe intervenir cuando otros medios son insuficientes; los tribunales lo han aplicado para no penalizar el autocultivo para consumo propio exclusivo al considerar que no hay bien jurídico protegido que lesionar",
+      "Norma procesal que limita la duración de las investigaciones policiales en delitos de drogas",
+      "Criterio administrativo para graduar las multas de la Ley Mordaza"
+    ],
+    "correcta": 1,
+    "explicacion": "El principio de intervención mínima (ultima ratio) establece que el Derecho Penal es el último recurso. Aplicado al cannabis, el TS y las audiencias provinciales han argumentado que el autocultivo para consumo exclusivamente personal no lesiona ningún bien jurídico colectivo (salud pública) ya que el daño potencial es solo para el propio consumidor, que tiene autonomía personal. Esta es la base doctrinal para la no punición del autocultivo para autoconsumo, aunque con matices según el tribunal."
+  },
+  {
+    "id": "LG-015",
+    "cat": "Legislacion española",
+    "ico": "📋",
+    "nivel": 3,
+    "pregunta": "¿Cómo ha interpretado el Tribunal Supremo el concepto de 'ámbito privado' en relación al cultivo y consumo de cannabis?",
+    "opciones": [
+      "Cualquier lugar donde no haya testigos se considera ámbito privado",
+      "El ámbito privado requiere que la actividad quede completamente intramuros del domicilio o espacio privado, sin trascendencia pública ni puesta en riesgo de terceros; el cultivo en jardines visibles o terrazas puede no cumplir este requisito",
+      "El ámbito privado incluye cualquier espacio al que la policía no tenga acceso sin orden judicial",
+      "El TS no ha establecido doctrina sobre este concepto específico"
+    ],
+    "correcta": 1,
+    "explicacion": "La jurisprudencia exige que el autocultivo para consumo propio permanezca en la esfera estrictamente privada. Cultivos visibles desde la vía pública, en espacios comunes de comunidades de vecinos, o con difusión de aromas que afecten a terceros han sido considerados por algunos tribunales como salida del ámbito privado. La 'intradomiciliaridad' no es solo cuestión de que esté dentro de casa, sino de que no trascienda a terceros ni a la esfera pública."
+  },
+  {
+    "id": "LG-016",
+    "cat": "Legislacion española",
+    "ico": "📋",
+    "nivel": 3,
+    "pregunta": "¿Qué es el uso compasivo o uso médico del cannabis en España y cuál es su marco regulatorio actual?",
+    "opciones": [
+      "Está completamente liberalizado; los médicos pueden prescribir cualquier preparado de cannabis",
+      "Existe un marco de uso compasivo para medicamentos de cannabis aprobados (como Sativex para esclerosis múltiple); otros preparados magistrales pueden autorizarse caso a caso por la AEMPS, pero no hay regulación general de cannabis medicinal",
+      "El cannabis medicinal está completamente prohibido en España sin excepciones",
+      "Cualquier farmacia puede dispensar cannabis medicinal con receta de médico de familia"
+    ],
+    "correcta": 1,
+    "explicacion": "En España, Sativex (nabiximols) está aprobado para espasticidad en esclerosis múltiple y Epidyolex (cannabidiol) para epilepsias refractarias pediátricas. Otros preparados pueden acceder vía uso compasivo (art. 28 del RD 1015/2009) para pacientes concretos con autorización de la AEMPS. No existe regulación general de cannabis medicinal: el informe de la Subcomisión del Congreso (2023) recomendó su regulación pero aún no se ha trasladado a ley."
+  },
+  {
+    "id": "LG-017",
+    "cat": "Legislacion española",
+    "ico": "📋",
+    "nivel": 3,
+    "pregunta": "¿Cómo puede afectar legalmente la presencia de cannabis en sangre o saliva a un conductor en España aunque no esté bajo efectos evidentes?",
+    "opciones": [
+      "En España no se sanciona la conducción con cannabis si el conductor demuestra que no está bajo efectos",
+      "La Ley de Tráfico española establece tolerancia cero: la presencia de cualquier concentración detectable de THC o sus metabolitos en saliva es suficiente para sanción administrativa y potencialmente penal, independientemente del nivel de deterioro observable",
+      "Solo es sancionable si la concentración en sangre supera 5 ng/ml de THC",
+      "Las sanciones por cannabis al volante son exclusivamente administrativas, nunca penales"
+    ],
+    "correcta": 1,
+    "explicacion": "El artículo 379 del CP sanciona conducir bajo efectos de drogas, y el RD 1428/2003 (Reglamento General de Circulación) establece tolerancia cero para sustancias psicoactivas. A diferencia del alcohol (con umbral de 0,5 g/L), cualquier presencia detectable de cannabis en test de saliva puede suponer: multa de 1.000€, retirada de 6 puntos y potencial delito del 379 CP (hasta 1 año de prisión y retirada del carnet 1-4 años). El hecho de que el THC permanezca detectable días o semanas hace este escenario especialmente problemático para consumidores habituales."
+  },
+  {
+    "id": "LG-018",
+    "cat": "Legislacion española",
+    "ico": "📋",
+    "nivel": 3,
+    "pregunta": "¿Qué implicaciones tiene la reforma del delito de tráfico de drogas propuesta por varios grupos parlamentarios en España y cuál es el estado actual del debate legislativo?",
+    "opciones": [
+      "Ya se ha aprobado una ley de regulación del cannabis en España en 2024",
+      "Existen propuestas parlamentarias de distintos grupos para regular el cannabis (desde despenalización hasta regulación completa), pero a fecha de 2025 no se ha aprobado ninguna reforma sustancial del marco legal; el debate sigue activo con posiciones divergentes entre partidos",
+      "El Congreso ha votado en contra de cualquier reforma y el debate está cerrado hasta 2030",
+      "La reforma ya está aprobada pero pendiente de entrada en vigor en 2026"
+    ],
+    "correcta": 1,
+    "explicacion": "El debate sobre la regulación del cannabis en España es activo pero sin resolución legislativa concreta a fecha de 2025. Grupos como Más Madrid, ERC, Bildu o Sumar han presentado proposiciones de ley en distintas legislaturas. El PSOE y el PP mantienen posiciones más conservadoras. La Subcomisión para el estudio del cannabis del Congreso publicó recomendaciones en 2023. El marco legal sigue siendo el del Código Penal de 1995 con la jurisprudencia del TS como principal elemento moderador. El cultivador responsable debe seguir este debate y sus actualizaciones."
+  },
+  {
+    "id": "TC-001",
+    "cat": "Tecnicas de cultivo",
+    "ico": "📋",
+    "nivel": 1,
+    "pregunta": "¿En qué consiste la técnica de poda apical o 'topping'?",
+    "opciones": [
+      "Eliminar las hojas grandes del tercio inferior para mejorar la ventilación",
+      "Cortar el meristemo apical principal para romper la dominancia apical y estimular el desarrollo de dos tallos principales en lugar de uno",
+      "Doblar el tallo principal sin cortarlo para controlar la altura",
+      "Eliminar los brotes laterales para concentrar la energía en el cogollo central"
+    ],
+    "correcta": 1,
+    "explicacion": "El topping consiste en cortar la punta de crecimiento (meristemo apical) de la planta. Al eliminar la fuente de auxinas que suprime los brotes laterales (dominancia apical), los dos nodos inmediatamente inferiores se desarrollan como nuevos tallos principales. El resultado es una planta más ancha y con múltiples cogollos de tamaño similar en lugar de uno central dominante."
+  },
+  {
+    "id": "TC-002",
+    "cat": "Tecnicas de cultivo",
+    "ico": "📋",
+    "nivel": 1,
+    "pregunta": "¿Qué es el LST (Low Stress Training) y cuál es su objetivo principal?",
+    "opciones": [
+      "Técnica de poda agresiva que elimina el 50% del follaje",
+      "Método de entrenamiento que consiste en doblar y atar ramas para crear una estructura horizontal uniforme que maximice la exposición lumínica de todos los puntos de crecimiento",
+      "Sistema de riego por goteo de baja presión para evitar estrés hídrico",
+      "Técnica de endurecimiento de plántulas exponiéndolas gradualmente al exterior"
+    ],
+    "correcta": 1,
+    "explicacion": "El LST utiliza la capacidad del cannabis de redirigir el crecimiento: al doblar y atar ramas horizontalmente, se rompe la dominancia apical sin cortes y todos los puntos de crecimiento quedan a la misma altura bajo la luz. Genera estrés mínimo (de ahí 'low stress'), puede aplicarse desde etapas tempranas y es especialmente útil en autoflorecientes donde el tiempo es limitado."
+  },
+  {
+    "id": "TC-003",
+    "cat": "Tecnicas de cultivo",
+    "ico": "📋",
+    "nivel": 1,
+    "pregunta": "¿Qué es el Sea of Green (SOG) y para qué tipo de cultivo es más indicado?",
+    "opciones": [
+      "Técnica de entrenamiento con malla para maximizar cogollos en pocas plantas",
+      "Método que utiliza muchas plantas pequeñas en macetas reducidas, llevadas rápidamente a floración para producir un cogollo central grande por planta y maximizar el uso del espacio",
+      "Sistema hidropónico con nutrientes en solución verde por algas beneficiosas",
+      "Técnica de cultivo en exterior aprovechando la luz natural sin estructura"
+    ],
+    "correcta": 1,
+    "explicacion": "El SOG consiste en cultivar muchas plantas pequeñas (4-16 por m²) con mínimo tiempo vegetativo, pasando a 12/12 rápidamente. Cada planta produce principalmente un cogollo central grande. La idea es llenar el espacio con cogollos en lugar de con estructura vegetal. Es ideal con clones de una misma genética (plantas uniformes), optimiza el ciclo y es muy eficiente en producción por watt."
+  },
+  {
+    "id": "TC-004",
+    "cat": "Tecnicas de cultivo",
+    "ico": "📋",
+    "nivel": 1,
+    "pregunta": "¿Qué es el 'lollipopping' y cuándo se aplica?",
+    "opciones": [
+      "Técnica de injerto para unir dos plantas de distintas variedades",
+      "Eliminación de las ramas y hojas del tercio inferior de la planta al inicio de la floración para concentrar la energía en los cogollos superiores y mejorar la ventilación",
+      "Método de cosecha escalonada empezando por los cogollos inferiores",
+      "Técnica de enraizamiento de esquejes en forma de paleta"
+    ],
+    "correcta": 1,
+    "explicacion": "El lollipopping se realiza en el cambio a floración o en las primeras semanas: se eliminan todas las ramas pequeñas y hojas del tercio inferior que recibirán poca luz y producirán cogollos de baja calidad ('popcorn'). La planta concentra los recursos en los cogollos superiores bien iluminados. El resultado visual es una planta con tallo desnudo en la parte baja y cogollos en la parte superior, como una piruleta."
+  },
+  {
+    "id": "TC-005",
+    "cat": "Tecnicas de cultivo",
+    "ico": "📋",
+    "nivel": 1,
+    "pregunta": "¿Cómo se determina el momento óptimo de cosecha usando una lupa o microscopio?",
+    "opciones": [
+      "Observando el color de los pistilos: cuando el 90% son marrones es el momento óptimo",
+      "Observando el color de los tricomas: transparentes (inmaduro), lechosos/blancos (pico de THC), ámbar (degradación a CBN, efecto más sedante)",
+      "Midiendo el tamaño del cogollo con regla: cuando deja de crecer es momento de cosechar",
+      "Analizando el aroma: cuando el olor es máximo la planta está lista"
+    ],
+    "correcta": 1,
+    "explicacion": "El análisis de tricomas con lupa (60-100x) es el método más preciso: tricomas transparentes indican inmadurez (THC en formación); tricomas lechosos/opacos señalan el pico de THC; tricomas ámbar indican oxidación del THC a CBN (más sedante, efecto 'couchlock'). La mayoría de cultivadores cosecha con 70-90% lechosos y 10-30% ámbar según el efecto deseado. Los pistilos son orientativos pero menos precisos."
+  },
+  {
+    "id": "TC-006",
+    "cat": "Tecnicas de cultivo",
+    "ico": "📋",
+    "nivel": 2,
+    "pregunta": "¿Qué es el SCROG (Screen of Green) y en qué se diferencia del SOG?",
+    "opciones": [
+      "Son términos sinónimos para el mismo método de cultivo",
+      "El SCROG usa una malla horizontal para guiar el crecimiento de pocas plantas (1-4/m²) creando un dosel uniforme; el SOG usa muchas plantas pequeñas sin malla",
+      "El SCROG es para exterior y el SOG exclusivamente para indoor",
+      "El SCROG utiliza solo luz LED; el SOG funciona mejor con HPS"
+    ],
+    "correcta": 1,
+    "explicacion": "SCROG: pocas plantas + malla horizontal. Las ramas se van pasando por la malla durante el vegetativo hasta crear un dosel uniforme. Al pasar a floración, todos los puntos de crecimiento están a la misma altura recibiendo luz directa. SOG: muchas plantas + sin malla + ciclo vegetativo mínimo. El SCROG requiere más tiempo de preparación pero maximiza la producción por planta; el SOG maximiza la producción por ciclo."
+  },
+  {
+    "id": "TC-007",
+    "cat": "Tecnicas de cultivo",
+    "ico": "📋",
+    "nivel": 2,
+    "pregunta": "¿Qué es el 'supercropping' o HST (High Stress Training) y cuál es su mecanismo fisiológico?",
+    "opciones": [
+      "Técnica de poda que elimina el meristemo apical de todas las ramas secundarias",
+      "Técnica que consiste en doblar bruscamente las ramas hasta casi romperlas sin cortarlas; el tejido dañado forma un nudo de cicatrización que el cannabis interpreta como daño y responde produciendo más cannabinoides y aumentando el flujo de savia",
+      "Sistema de entrenamiento con luz ultravioleta para aumentar la producción de tricomas",
+      "Método de poda radical en floración para reiniciar el crecimiento vegetativo"
+    ],
+    "correcta": 1,
+    "explicacion": "El supercropping pellizca y dobla el tallo de la rama hasta que el tejido interno (médula) cede sin romper la epidermis. En el punto doblado se forma un nudo de cicatrización (knuckle) que actúa como 'bomba de savia', aumentando el flujo de nutrientes hacia los cogollos superiores. Además, el estrés físico activa respuestas de defensa que incluyen mayor producción de resina. Requiere experiencia para no romper la rama completamente."
+  },
+  {
+    "id": "TC-008",
+    "cat": "Tecnicas de cultivo",
+    "ico": "📋",
+    "nivel": 2,
+    "pregunta": "¿Qué es el proceso de curado del cannabis después del secado y por qué es fundamental para la calidad final?",
+    "opciones": [
+      "Proceso de prensado del material seco para formar bloques compactos",
+      "Almacenamiento del cannabis seco en recipientes herméticos (tarros de cristal) abriéndolos periódicamente para intercambio gaseoso; permite la degradación controlada de clorofila, el desarrollo de terpenos y la suavización del sabor",
+      "Aplicación de productos químicos para conservar el material durante más tiempo",
+      "El curado es opcional; solo afecta al aroma pero no a la potencia ni calidad"
+    ],
+    "correcta": 1,
+    "explicacion": "El curado en tarros (2-8 semanas mínimo) es fundamental: la humedad residual dentro del cogollo (HR 58-62%) permite que bacterias y enzimas degraden la clorofila (elimina el sabor vegetal/amargo), que los terpenos se desarrollen y estabilicen, y que la textura mejore. El 'burping' diario las primeras semanas libera CO2 y exceso de humedad. El cannabis curado correctamente puede mejorar significativamente respecto al recién seco."
+  },
+  {
+    "id": "TC-009",
+    "cat": "Tecnicas de cultivo",
+    "ico": "📋",
+    "nivel": 2,
+    "pregunta": "¿Qué es la técnica de 'monster cropping' o clonación en floración?",
+    "opciones": [
+      "Técnica de cultivo de plantas gigantes en macrocontenedores de más de 200 litros",
+      "Obtención de esquejes de plantas en floración (semanas 2-4) que al enraizar revierten al estado vegetativo produciendo plantas extremadamente ramificadas y productivas",
+      "Método de polinización controlada para producir semillas de alta calidad",
+      "Técnica de iluminación con ciclos modificados para acelerar el crecimiento vegetativo"
+    ],
+    "correcta": 1,
+    "explicacion": "El monster cropping (o re-vegging de clones en floración) aprovecha que los esquejes tomados en semanas 2-4 de floración, al enraizar bajo 18/6, deben revertir al estado vegetativo. Durante esta transición desarrollan una cantidad inusual de ramas y nodos, creando plantas extremadamente ramificadas. El resultado son plantas con estructura muy diferente a las cultivadas desde vegetativo normal, con potencial productivo alto pero requieren más tiempo."
+  },
+  {
+    "id": "TC-010",
+    "cat": "Tecnicas de cultivo",
+    "ico": "📋",
+    "nivel": 2,
+    "pregunta": "¿Cuál es el proceso correcto para enraizar un esqueje de cannabis?",
+    "opciones": [
+      "Cortar el esqueje y plantarlo directamente en maceta grande con tierra enriquecida",
+      "Cortar en diagonal bajo un nodo, eliminar hojas inferiores, aplicar hormona de enraizamiento, colocar en medio húmedo (lana de roca, coco, agua) con alta humedad ambiental (80-90% HR) y temperatura de 22-26°C hasta que aparezcan raíces",
+      "Sumergir el esqueje en agua durante 48h antes de plantarlo en sustrato",
+      "Enraizar bajo ciclo 12/12 para que la planta no entre en estrés"
+    ],
+    "correcta": 1,
+    "explicacion": "El protocolo estándar de clonación: corte diagonal limpio bajo un nodo (más superficie de absorción), eliminar hojas inferiores, cortar por la mitad las hojas restantes grandes (reducir transpiración), aplicar gel/polvo de hormona de enraizamiento (auxinas), colocar en medio con buena retención hídrica, y mantener HR 80-90% (cámara húmeda o propagador) a 24°C. Las raíces aparecen en 7-21 días según variedad y condiciones."
+  },
+  {
+    "id": "TC-011",
+    "cat": "Tecnicas de cultivo",
+    "ico": "📋",
+    "nivel": 2,
+    "pregunta": "¿Qué es el 'fimming' y en qué se diferencia del topping?",
+    "opciones": [
+      "Son técnicas idénticas con distinto nombre según el país",
+      "El fimming corta solo el 75% del meristemo apical (en lugar del 100% del topping), generando potencialmente 4 o más nuevas puntas de crecimiento en lugar de 2, con menor estrés para la planta",
+      "El fimming se aplica en floración, el topping solo en vegetativo",
+      "El fimming elimina las ramas laterales; el topping elimina la punta central"
+    ],
+    "correcta": 1,
+    "explicacion": "El fimming (acrónimo de 'Fuck I Missed') surgió de un topping mal ejecutado. Al cortar solo el 75-80% del meristemo apical, los tejidos restantes generan múltiples puntas de crecimiento (típicamente 4, a veces más). Produce menos estrés que el topping porque no elimina completamente el punto de crecimiento. La respuesta es menos predecible que el topping pero puede generar más ramas principales en una sola intervención."
+  },
+  {
+    "id": "TC-012",
+    "cat": "Tecnicas de cultivo",
+    "ico": "📋",
+    "nivel": 3,
+    "pregunta": "¿Qué es la deficiación (defoliation) estratégica en floración y qué evidencia hay sobre su efectividad?",
+    "opciones": [
+      "Técnica desaconsejada sin ninguna base científica demostrada",
+      "Eliminación selectiva de hojas grandes en semanas clave de floración (generalmente semana 3 y semana 6) para mejorar la penetración lumínica a cogollos inferiores y redirigir recursos; hay evidencia anecdótica fuerte y algunos estudios que muestran aumento de producción en variedades de estructura densa",
+      "Eliminación total del follaje para forzar a la planta a producir más resina como respuesta al estrés",
+      "Técnica que solo funciona con iluminación LED de espectro completo"
+    ],
+    "correcta": 1,
+    "explicacion": "La deficiación en floración es controvertida pero ampliamente practicada: eliminar hojas fan grandes en semana 3 y semana 6 de floración mejora la penetración lumínica al interior del dosel y reduce la competencia por fotoasimilados entre hojas y flores. La evidencia más sólida es anecdótica y en cultivos con iluminación potente y variedades densas. El riesgo es el estrés si se elimina demasiado follaje: regla práctica, nunca más del 20-30% del follaje en una sesión."
+  },
+  {
+    "id": "TC-013",
+    "cat": "Tecnicas de cultivo",
+    "ico": "📋",
+    "nivel": 3,
+    "pregunta": "¿Qué es el 'screen defoliation' o 'schwazzing' y en qué contexto se aplica?",
+    "opciones": [
+      "Técnica de SCROG donde se elimina la malla al inicio de la floración",
+      "Defoliación agresiva (hasta 80% del follaje) aplicada en dos momentos concretos: el día del cambio a 12/12 y en el día 20 de floración; desarrollada para cultivos comerciales con iluminación muy intensa donde la fotosíntesis está limitada por la penetración lumínica, no por la superficie foliar",
+      "Método de poda aplicado solo a variedades sativa de floración larga",
+      "Técnica de eliminación de tricomas dañados para mejorar la calidad del extracto"
+    ],
+    "correcta": 1,
+    "explicacion": "El schwazzing (de 'Three a Light', libro de Joshua Haupt) es defoliación masiva (hasta 80% de hojas fan) en dos momentos exactos del ciclo. La premisa es que en cultivos con iluminación muy intensa (>1000 µmol/m²/s), la planta tiene más capacidad fotosintética que la que puede usar con follaje denso, y eliminar ese 'exceso' foliar redirige recursos a producción floral. Contexto específico: cultivos comerciales con LEDs o HPS de muy alta potencia. Aplicado en cultivos de menor intensidad lumínica puede ser contraproducente."
+  },
+  {
+    "id": "TC-014",
+    "cat": "Tecnicas de cultivo",
+    "ico": "📋",
+    "nivel": 3,
+    "pregunta": "¿Qué es la aeroponia y qué ventaja fisiológica específica ofrece frente a la hidroponía convencional?",
+    "opciones": [
+      "Sistema de cultivo en tierra con aireación forzada mediante bombas",
+      "Sistema donde las raíces cuelgan en el aire y son pulverizadas con solución nutritiva en intervalos frecuentes; las raíces tienen acceso máximo al oxígeno entre pulverizaciones, acelerando la absorción y el crecimiento más que cualquier otro sistema",
+      "Técnica de cultivo al aire libre sin protección contra el viento",
+      "Variante del NFT donde la solución fluye en forma de niebla"
+    ],
+    "correcta": 1,
+    "explicacion": "En aeroponia, las raíces cuelgan suspendidas en una cámara oscura y reciben pulverizaciones de solución nutritiva cada 1-5 minutos. Entre pulverizaciones, las raíces están expuestas al aire con máxima oxigenación. Esto elimina el factor limitante de la mayoría de sistemas hidropónicos (oxígeno en la zona radicular) y produce los mayores rates de crecimiento documentados en cannabis: hasta 3-4x más rápido que tierra en condiciones óptimas, aunque requiere precisión técnica extrema."
+  },
+  {
+    "id": "TC-015",
+    "cat": "Tecnicas de cultivo",
+    "ico": "📋",
+    "nivel": 3,
+    "pregunta": "¿Qué es el 'STS' (thiosulfato de plata) y cómo se usa técnicamente para producir semillas feminizadas?",
+    "opciones": [
+      "Fertilizante de plata coloidal que mejora la producción de tricomas",
+      "Solución química que inhibe la acción del etileno en la planta; aplicada en spray sobre una planta hembra en los primeros días de floración, revierte parcialmente su sexo produciendo flores masculinas con polen XX (sin cromosoma Y) para feminizar otras plantas",
+      "Tratamiento postcosecha para preservar la potencia del cannabis durante el almacenamiento",
+      "Sistema de filtración de plata para purificar el agua de riego en hidroponía"
+    ],
+    "correcta": 1,
+    "explicacion": "El STS (mezcla de nitrato de plata y tiosulfato de sodio) bloquea los receptores de etileno, hormona que regula la diferenciación sexual femenina en cannabis. Aplicado en spray en los primeros días del ciclo 12/12 sobre una planta hembra, la fuerza a producir flores masculinas. El polen producido contiene solo cromosoma X (no hay Y en una planta hembra), por lo que al polinizar otra hembra produce semillas 100% femeninas. Es el método más fiable de feminización, superior a la rodelización."
+  },
+  {
+    "id": "TC-016",
+    "cat": "Tecnicas de cultivo",
+    "ico": "📋",
+    "nivel": 3,
+    "pregunta": "¿Qué es el DLI (Daily Light Integral) y por qué es un parámetro más útil que los luxes para optimizar la iluminación en cannabis?",
+    "opciones": [
+      "Es simplemente otra unidad de medida de la intensidad lumínica equivalente a los luxes",
+      "El DLI mide la cantidad total de fotones fotosintéticamente activos (PAR) que recibe la planta en 24 horas (mol/m²/día); integra intensidad y duración, siendo más relevante que la intensidad puntual para predecir la respuesta fotosintética y el rendimiento",
+      "Es un índice de calidad de luz que mide la proporción entre luz roja y luz azul",
+      "Medida de la eficiencia energética de las luminarias en lumens por watt"
+    ],
+    "correcta": 1,
+    "explicacion": "El DLI (mol/m²/día) = PPFD (µmol/m²/s) × horas de luz × 3600 / 1.000.000. Un DLI de 40-60 mol/m²/día es el rango objetivo para cannabis en floración. Los luxes miden percepción humana del brillo (no relevante para fotosíntesis); el PPFD mide la intensidad en un momento dado; el DLI integra todo el día. Permite comparar escenarios: 600 µmol/m²/s durante 18h = DLI 38.9, igual que 900 µmol/m²/s durante 12h = DLI 38.9. Esencial para optimización energética."
+  },
+  {
+    "id": "TC-017",
+    "cat": "Tecnicas de cultivo",
+    "ico": "📋",
+    "nivel": 3,
+    "pregunta": "¿Qué es el 'VPD' (Déficit de Presión de Vapor) y por qué es más útil que medir temperatura y humedad por separado?",
+    "opciones": [
+      "Sistema de ventilación por presión diferencial para controlar el flujo de aire en el cultivo",
+      "Medida de la diferencia entre la presión de vapor que puede contener el aire a una temperatura dada y la que contiene realmente; determina la tasa de transpiración de la planta y por tanto el ritmo de absorción de agua y nutrientes",
+      "Índice de calidad del aire que combina CO2, temperatura y humedad en un solo valor",
+      "Protocolo de ventilación que alterna presión positiva y negativa para eliminar patógenos"
+    ],
+    "correcta": 1,
+    "explicacion": "El VPD (kPa) combina temperatura y humedad en un valor que describe cuánta agua puede 'absorber' el aire. VPD bajo (aire casi saturado): la planta transpira poco, estomas se cierran, absorción de nutrientes lenta; riesgo de hongos. VPD alto (aire muy seco): la planta transpira en exceso, puede cerrarse para protegerse; riesgo de estrés hídrico. Rango óptimo cannabis: 0.8-1.2 kPa en vegetativo, 1.0-1.5 kPa en floración. Controlar VPD en lugar de temperatura y humedad por separado permite optimizar la fisiología de la planta de forma mucho más precisa."
+  },
+  {
+    "id": "TC-018",
+    "cat": "Tecnicas de cultivo",
+    "ico": "📋",
+    "nivel": 3,
+    "pregunta": "¿Qué es la 'curva de respuesta a la luz' en cannabis y qué implica para la gestión de la intensidad lumínica?",
+    "opciones": [
+      "El cannabis responde linealmente a la luz: a más intensidad siempre más fotosíntesis",
+      "La fotosíntesis aumenta con la intensidad lumínica hasta alcanzar un punto de saturación lumínica (aprox. 1500-2000 µmol/m²/s en CO2 enriquecido, 800-1200 sin CO2); por encima de ese punto la fotosíntesis no aumenta y el exceso puede causar fotoinhibición",
+      "El cannabis solo responde a la luz azul para crecer y a la roja para florecer, sin saturación",
+      "El punto de saturación lumínica varía solo según la variedad, no según el CO2 disponible"
+    ],
+    "correcta": 1,
+    "explicacion": "La curva de respuesta a la luz (LRC) muestra que la fotosíntesis aumenta con la intensidad hasta el punto de saturación lumínica (LSP). En condiciones normales de CO2 (400 ppm), el LSP del cannabis está alrededor de 800-1200 µmol/m²/s. Con CO2 enriquecido (1000-1500 ppm), el LSP puede elevarse hasta 1500-2000 µmol/m²/s porque el CO2 es el factor limitante que se desbloquea. Por encima del LSP, la fotosíntesis no aumenta y el exceso de luz genera especies reactivas de oxígeno (fotoinhibición). Esto explica por qué intensidad lumínica alta sin CO2 adicional no es siempre mejor."
+  }
+];
+
+// ─── TEMPORIZADOR ─────────────────────────────────────────────────────────────
+const TIMER_SECONDS = 60;
+let timerInterval = null;
+let timerLeft = TIMER_SECONDS;
+
+function startTimer(){
+  clearInterval(timerInterval);
+  timerLeft = TIMER_SECONDS;
+  updateTimerUI();
+  timerInterval = setInterval(() => {
+    timerLeft--;
+    updateTimerUI();
+    if(timerLeft <= 0){
+      clearInterval(timerInterval);
+      timeOut();
+    }
+  }, 1000);
+}
+
+function stopTimer(){ clearInterval(timerInterval); }
+
+function updateTimerUI(){
+  const pct = (timerLeft / TIMER_SECONDS) * 100;
+  const fill = $('timerFill');
+  const text = $('timerText');
+  fill.style.width = pct + '%';
+  text.textContent = timerLeft + 's';
+  const cls = timerLeft > 30 ? 'ok' : timerLeft > 15 ? 'warning' : 'urgent';
+  fill.className = 'timer-bar-fill ' + cls;
+  text.className = 'timer-text ' + cls;
+}
+
+function timeOut(){
+  // Tiempo agotado → marcar como incorrecta
+  const q = STATE.preguntas[STATE.actual];
+  if(STATE.respondidas.has(STATE.actual)) return;
+  STATE.respondidas.add(STATE.actual);
+  stopTimer();
+  // Marcar si fue fallada para estadísticas
+  if(!esCorrecta) STATE.preguntas[STATE.actual]._fallada = true;
+  STATE.incorrectas++;
+  const opciones = $('optionsContainer').querySelectorAll('.option');
+  opciones.forEach(o => o.disabled = true);
+  opciones[q.correcta].classList.add('correct');
+  const fb = $('feedback');
+  fb.className = 'feedback show wrong-fb';
+  fb.innerHTML = `<strong>⏱️ Tiempo agotado</strong>La respuesta correcta era: <strong>${q.opciones[q.correcta]}</strong>. ${q.explicacion}`;
+  updateScore();
+  $('nextBtn').disabled = false;
+  if(STATE.actual === STATE.preguntas.length - 1) $('nextBtn').textContent = 'Ver resultado →';
+}
+
+// ─── ESTADO ───────────────────────────────────────────────────────────────────
+const STATE = {
+  intento: parseInt(localStorage.getItem('ga_test_intento') || '1'),
+  preguntas: [],
+  actual: 0,
+  correctas: 0,
+  incorrectas: 0,
+  respondidas: new Set(),
+  email: new URLSearchParams(window.location.search).get('email') || localStorage.getItem('ga_email') || ''
+};
+
+// ─── UTILIDADES ───────────────────────────────────────────────────────────────
+function shuffle(arr){ return [...arr].sort(()=>Math.random()-.5) }
+function $(id){ return document.getElementById(id) }
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  $(id).classList.add('active');
+}
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+function init(){
+  $('attemptBadge').textContent = `Intento ${STATE.intento} de 3`;
+
+  // Filtrar por nivel según intento
+  const nivelMax = STATE.intento; // intento 1 → nivel 1, intento 2 → niveles 1-2, intento 3 → todos
+  const pool = BANCO.filter(q => q.nivel <= nivelMax);
+  STATE.preguntas = shuffle(pool).slice(0, 20);
+  showScreen('screenIntro');
+}
+
+function startTest(){
+  $('progressWrap').style.display = 'block';
+  $('timerWrap').style.display = 'block';
+  showScreen('screenTest');
+  renderQuestion();
+}
+
+// ─── RENDERIZAR PREGUNTA ──────────────────────────────────────────────────────
+function renderQuestion(){
+  const q = STATE.preguntas[STATE.actual];
+  const total = STATE.preguntas.length;
+  const num = STATE.actual + 1;
+
+  // Progress
+  $('progressCount').textContent = `${num} / ${total}`;
+  $('progressFill').style.width = `${(num/total)*100}%`;
+
+  // Categoría
+  $('categoryPill').innerHTML = `${q.ico} ${q.cat}`;
+
+  // Pregunta
+  $('questionNum').textContent = `Pregunta ${num} de ${total}`;
+  $('questionText').textContent = q.pregunta;
+
+  // Opciones
+  const container = $('optionsContainer');
+  container.innerHTML = '';
+  const letras = ['A','B','C','D'];
+  q.opciones.forEach((op, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'option';
+    btn.innerHTML = `<span class="option-letter">${letras[i]}</span>${op}`;
+    btn.onclick = () => selectAnswer(i, q);
+    container.appendChild(btn);
+  });
+
+  // Timer
+  startTimer();
+
+  // Reset feedback y botón
+  const fb = $('feedback');
+  fb.className = 'feedback';
+  fb.innerHTML = '';
+  $('nextBtn').disabled = true;
+  updateScore();
+}
+
+// ─── SELECCIONAR RESPUESTA ────────────────────────────────────────────────────
+function selectAnswer(idx, q){
+  if(STATE.respondidas.has(STATE.actual)) return;
+  STATE.respondidas.add(STATE.actual);
+  stopTimer();
+
+  const opciones = $('optionsContainer').querySelectorAll('.option');
+  opciones.forEach(o => o.disabled = true);
+
+  const esCorrecta = idx === q.correcta;
+  if(esCorrecta) STATE.correctas++; else STATE.incorrectas++;
+
+  // Marcar si fue fallada para estadísticas
+  if(!esCorrecta) STATE.preguntas[STATE.actual]._fallada = true;
+
+  // Marcar opciones
+  opciones[idx].classList.add(esCorrecta ? 'correct' : 'wrong');
+  if(!esCorrecta) opciones[q.correcta].classList.add('correct');
+
+  // Feedback
+  const fb = $('feedback');
+  fb.className = `feedback show ${esCorrecta ? 'correct-fb' : 'wrong-fb'}`;
+  fb.innerHTML = `<strong>${esCorrecta ? '✅ Correcto' : '❌ Incorrecto'}</strong>${q.explicacion}`;
+
+  updateScore();
+  $('nextBtn').disabled = false;
+
+  // Último → botón "Ver resultado"
+  if(STATE.actual === STATE.preguntas.length - 1){
+    $('nextBtn').textContent = 'Ver resultado →';
+  }
+}
+
+function updateScore(){
+  $('scoreMini').textContent = `Correctas: ${STATE.correctas} | Incorrectas: ${STATE.incorrectas}`;
+}
+
+// ─── SIGUIENTE PREGUNTA ───────────────────────────────────────────────────────
+function nextQuestion(){
+  if(STATE.actual < STATE.preguntas.length - 1){
+    STATE.actual++;
+    renderQuestion();
+    window.scrollTo({top:0,behavior:'smooth'});
+  } else {
+    showLoading('Evaluando tus respuestas…');
+    setTimeout(showResult, 1200);
+  }
+}
+
+function showLoading(msg){
+  $('loadingMsg').textContent = msg;
+  $('progressWrap').style.display = 'none';
+  $('timerWrap').style.display = 'none';
+  stopTimer();
+  showScreen('screenLoading');
+}
+
+// ─── RESULTADO ────────────────────────────────────────────────────────────────
+function showResult(){
+  const total = STATE.preguntas.length;
+  const pct = Math.round((STATE.correctas / total) * 100);
+
+  // Guardar intento
+  localStorage.setItem('ga_test_intento', STATE.intento + 1);
+  localStorage.setItem('ga_test_result', JSON.stringify({
+    pct, correctas: STATE.correctas, total, intento: STATE.intento, ts: Date.now()
+  }));
+
+  if(pct >= 90){
+    guardarResultadoTest(pct, STATE.correctas, total, 'elite', null);
+    const emailElite = STATE.email || localStorage.getItem('ga_email');
+    if(emailElite) {
+      enviarEmailBienvenida(emailElite, 7);
+      actualizarPlanBrevo(emailElite, 'semilla'); // elite entra como semilla hasta elegir plan
+    }
+    $('eliteScore').textContent = `${pct}% (${STATE.correctas}/${total})`;
+    showScreen('screenChoice');
+
+  } else if(pct >= 70){
+    guardarResultadoTest(pct, STATE.correctas, total, 'semilla', null);
+    const emailSemilla = STATE.email || localStorage.getItem('ga_email');
+    if(emailSemilla) {
+      enviarEmailBienvenida(emailSemilla, 6);
+      actualizarPlanBrevo(emailSemilla, 'semilla');
+    }
+    buildPassScreen(pct, STATE.correctas, total);
+    showScreen('screenPass');
+
+  } else {
+    guardarResultadoTest(pct, STATE.correctas, total, 'fallado', null);
+    const emailFallado = STATE.email || localStorage.getItem('ga_email');
+    if(emailFallado) actualizarPlanBrevo(emailFallado, 'libre');
+    buildFailScreen(pct, STATE.correctas, total);
+    showScreen('screenFail');
+  }
+
+  $('progressWrap').style.display = 'none';
+}
+
+function buildPassScreen(pct, correctas, total){
+  $('passScore').textContent = pct + '%';
+  const pctCss = `${pct}%`;
+  $('passRingBg').style.background = `conic-gradient(var(--forest) 0 ${pctCss}, #dfe7df ${pctCss} 100%)`;
+  $('passRing').style.boxShadow = 'inset 0 0 0 1px rgba(0,0,0,.03)';
+
+  if(pct >= 80){
+    $('passTitle').textContent = 'Excelente, Cannabicultor';
+    $('passText').textContent = `${correctas} de ${total} correctas. Tu nivel es sólido. Bienvenido a Growers Alliance como miembro Semilla.`;
+  } else {
+    $('passTitle').textContent = 'Aprobado, Cannabicultor';
+    $('passText').textContent = `${correctas} de ${total} correctas. Has superado el mínimo requerido. Bienvenido a la Alianza.`;
+  }
+}
+
+function buildFailScreen(pct, correctas, total){
+  $('failScore').textContent = pct + '%';
+  document.querySelector('#screenFail .result-ring-bg').style.setProperty('--pct', pct + '%');
+  $('failTitle').textContent = 'Sigue cultivando tu conocimiento';
+  $('failText').textContent = `Has obtenido ${correctas} de ${total} correctas (${pct}%). Necesitas el 70% para acceder. Repasa los conceptos e inténtalo de nuevo.`;
+
+  const intentosRestantes = 3 - STATE.intento;
+  if(intentosRestantes > 0){
+    $('retryBtn').textContent = `Intentar de nuevo (${intentosRestantes} ${intentosRestantes===1?'intento':'intentos'} restante${intentosRestantes===1?'':'s'})`;
+    $('retryBtn').style.display = 'inline-flex';
+    $('retryDivider').style.display = 'block';
+    $('freeAccessBtn').style.display = 'none';
+    $('noMoreAttempts').style.display = 'none';
+  } else {
+    // Agotados los 3 intentos
+    $('retryBtn').style.display = 'none';
+    $('retryDivider').style.display = 'none';
+    $('freeAccessBtn').style.display = 'inline-flex';
+    $('noMoreAttempts').style.display = 'block';
+  }
+}
+
+// ─── ACCIONES ─────────────────────────────────────────────────────────────────
+function retryTest(){
+  STATE.actual = 0;
+  STATE.correctas = 0;
+  STATE.incorrectas = 0;
+  STATE.respondidas.clear();
+  STATE.intento = parseInt(localStorage.getItem('ga_test_intento') || '2');
+  $('attemptBadge').textContent = `Intento ${STATE.intento} de 3`;
+
+  const nivelMax = Math.min(STATE.intento, 3);
+  const pool = BANCO.filter(q => q.nivel <= nivelMax);
+  STATE.preguntas = shuffle(pool).slice(0, 20);
+
+  $('progressWrap').style.display = 'block';
+  showScreen('screenTest');
+  renderQuestion();
+}
+
+function choosePlan(plan){
+  showLoading('Activando tu acceso…');
+  guardarResultadoTest(
+    parseInt($('eliteScore').textContent),
+    STATE.correctas,
+    STATE.preguntas.length,
+    'elite',
+    plan
+  );
+  const emailChoice = STATE.email || localStorage.getItem('ga_email');
+  if(emailChoice) actualizarPlanBrevo(emailChoice, plan);
+  setTimeout(()=>{
+    localStorage.setItem('ga_nivel', plan);
+    localStorage.setItem('ga_test_passed', 'true');
+    window.location.href = `dashboard.html?nivel=${plan}&new=true`;
+  }, 1500);
+}
+
+function goToDashboard(){
+  showLoading('Activando tu acceso…');
+  setTimeout(()=>{
+    localStorage.setItem('ga_nivel', 'semilla');
+    localStorage.setItem('ga_test_passed', 'true');
+    window.location.href = 'dashboard.html?nivel=semilla&new=true';
+  }, 1500);
+}
+
+function goFreeAccess(){
+  showLoading('Configurando acceso básico…');
+  setTimeout(()=>{
+    localStorage.setItem('ga_nivel', 'libre');
+    window.location.href = 'dashboard.html?nivel=libre';
+  }, 1500);
+}
+
+// ─── BREVO EMAIL (via Worker — key segura en servidor) ────────────────────────
+const WORKER_URL = 'https://growers-alliance-ai.enriquedorta.workers.dev';
+
+async function enviarEmailBienvenida(email, templateId){
+  if(!email) return;
+  try{
+    await fetch(`${WORKER_URL}/brevo-email`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, templateId })
+    });
+  } catch(e) { console.log('Brevo error:', e); }
+}
+
+// ─── SUPABASE ─────────────────────────────────────────────────────────────────
+const SB_URL = 'https://gfyrsrdnvgnhtsuexjkb.supabase.co';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdmeXJzcmRudmduaHRzdWV4amtiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg3MjIxNjUsImV4cCI6MjA5NDI5ODE2NX0.53peUmp28jF_b5tJFsHmP4STmGedRYUBV1WPItmdv50';
+
+async function sbInsert(table, data){
+  try{
+    await fetch(`${SB_URL}/rest/v1/${table}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SB_KEY,
+        'Authorization': `Bearer ${SB_KEY}`,
+        'Prefer': 'return=minimal'
+      },
+      body: JSON.stringify(data)
+    });
+  } catch(e) { console.log('Supabase error:', e); }
+}
+
+async function guardarResultadoTest(pct, correctas, total, nivel, plan){
+  await sbInsert('test_resultados', {
+    intento: STATE.intento,
+    porcentaje: pct,
+    correctas: correctas,
+    total: total,
+    nivel_obtenido: nivel,
+    plan_elegido: plan || null,
+    email: STATE.email || localStorage.getItem('ga_email') || null,
+    nombre: localStorage.getItem('ga_nombre') || null
+  });
+  
+  // Guardar preguntas falladas
+  STATE.preguntas.forEach((q, i) => {
+    if(STATE.respondidas.has(i) && q._fallada){
+      sbInsert('test_fallos', {
+        pregunta_id: q.id,
+        categoria: q.cat,
+        nivel: q.nivel
+      });
+    }
+  });
+}
+
+// ─── ACTUALIZAR PLAN EN BREVO ─────────────────────────────────────────────────
+async function actualizarPlanBrevo(email, plan) {
+  if (!email || !plan) return;
+  try {
+    await fetch(WORKER_URL + '/brevo-update-plan', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, plan })
+    });
+  } catch(e) {
+    console.warn('No se pudo actualizar PLAN en Brevo:', e);
+  }
+}
+
+// ─── START ────────────────────────────────────────────────────────────────────
+init();
+</script>
+</body>
+</html>
