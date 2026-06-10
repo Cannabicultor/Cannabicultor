@@ -137,10 +137,18 @@ footer{padding:24px 20px 32px;background:transparent;text-align:center}
         <label for="age">Confirmo que soy <strong>mayor de 18 años</strong>.</label>
       </div>
 
-      <div class="check-row" style="margin-bottom:24px">
+      <div class="check-row" style="margin-bottom:14px">
         <input type="checkbox" id="terms" required>
         <label for="terms">Acepto los <a href="/terminos.html" target="_blank">Términos</a> y la <a href="/privacidad.html" target="_blank">Política de Privacidad</a>.</label>
       </div>
+
+      <div class="check-row" style="margin-bottom:24px">
+        <input type="checkbox" id="marketing">
+        <label for="marketing">Quiero recibir consejos de cultivo y novedades por email <span style="color:var(--text4)">(opcional)</span>.</label>
+      </div>
+
+      <!-- Honeypot anti-bot: invisible para humanos, los bots lo rellenan -->
+      <input type="text" name="website" id="website" tabindex="-1" autocomplete="off" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0" aria-hidden="true">
 
       <button class="btn" type="submit" id="submit-btn">Crear cuenta</button>
     </form>
@@ -190,6 +198,14 @@ form.addEventListener('submit',async(e)=>{
   const password2=pw2Input.value;
   const age=document.getElementById('age').checked;
   const terms=document.getElementById('terms').checked;
+  const marketing=document.getElementById('marketing').checked;
+  const honeypot=document.getElementById('website').value;
+
+  // Honeypot: si está relleno, es un bot. Simulamos éxito y no hacemos nada.
+  if(honeypot){
+    showAlert('Cuenta creada. Revisa tu email.','success');
+    return;
+  }
 
   if(!email||!email.includes('@')){
     emailInput.classList.add('error');
@@ -222,7 +238,11 @@ form.addEventListener('submit',async(e)=>{
     const res=await fetch(API+'/auth/register',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({email,password})
+      body:JSON.stringify({
+        email, password,
+        remember: true,
+        consent:{ age:true, terms:true, marketing, terms_version:'v1' }
+      })
     });
     const data=await res.json().catch(()=>({}));
 
@@ -234,15 +254,7 @@ form.addEventListener('submit',async(e)=>{
       return;
     }
 
-    // Alta en Brevo en paralelo (no bloquea el flujo de registro)
-    fetch(API+'/brevo-contact',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({email,attributes:{PLAN:'LIBRE'}})
-    }).then(r=>{
-      if(!r.ok)console.error('Brevo contact failed:',r.status);
-    }).catch(err=>console.error('Brevo contact error:',err));
-
+    // El alta en Brevo y el registro de consentimiento los hace el Worker (server-side).
     const token=data.token||data.jwt||data.access_token;
     if(token){
       localStorage.setItem('ga_jwt',token);
@@ -253,6 +265,7 @@ form.addEventListener('submit',async(e)=>{
       setTimeout(()=>{window.location.href='/dashboard.html'},800);
     }else{
       showAlert('Cuenta creada. Revisa tu email para confirmar el acceso.','success');
+      btn.type='button';
       btn.textContent='Ir al login';
       btn.disabled=false;
       btn.onclick=()=>{window.location.href='/login.html'};
