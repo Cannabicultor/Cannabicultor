@@ -121,7 +121,7 @@ footer{padding:24px 20px 32px;background:transparent;text-align:center}
       <div class="field">
         <div class="label-row">
           <label class="label" for="password">Contraseña</label>
-          <a class="label-link" href="/forgot-password.html">¿Olvidaste?</a>
+          <a class="label-link" href="/forgot-password.html">¿Olvidaste tu contraseña?</a>
         </div>
         <input class="input" type="password" id="password" name="password" placeholder="Tu contraseña" autocomplete="current-password" required>
       </div>
@@ -164,15 +164,20 @@ function hideAlert(){alertBox.className='alert'}
   el.addEventListener('input',()=>{el.classList.remove('error');hideAlert();});
 });
 
-// Si ya hay sesión activa, salta directo al dashboard
-if(localStorage.getItem('ga_jwt')){
-  window.location.href='/dashboard.html';
-}
-
-// Si venimos de reset-password.html con éxito, avisar
-if(new URLSearchParams(window.location.search).get('reset')==='ok'){
-  showAlert('Contraseña actualizada. Inicia sesión con tu nueva contraseña.','success');
-}
+// Si ya hay sesión activa y el token no ha caducado, salta directo al dashboard
+(function(){
+  const jwt=localStorage.getItem('ga_jwt');
+  if(!jwt)return;
+  try{
+    const payload=JSON.parse(atob(jwt.split('.')[1].replace(/-/g,'+').replace(/_/g,'/')));
+    if(payload.exp&&payload.exp*1000<Date.now()){
+      // Token caducado: limpiar sesión y quedarse en login
+      ['ga_jwt','ga_email','ga_nivel','ga_test_passed','ga_perfil'].forEach(k=>localStorage.removeItem(k));
+      return;
+    }
+  }catch(e){/* token ilegible: el guard del dashboard hará la verificación real contra el Worker */}
+  window.location.replace('/dashboard.html');
+})();
 
 form.addEventListener('submit',async(e)=>{
   e.preventDefault();
@@ -199,7 +204,7 @@ form.addEventListener('submit',async(e)=>{
     const res=await fetch(API+'/auth/login',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({email,password})
+      body:JSON.stringify({email,password,remember:true})
     });
     const data=await res.json().catch(()=>({}));
 
@@ -223,6 +228,7 @@ form.addEventListener('submit',async(e)=>{
     localStorage.setItem('ga_email',email);
     localStorage.setItem('ga_nivel',data.nivel||data.plan||(data.user&&(data.user.nivel||data.user.plan))||'libre');
     localStorage.setItem('ga_test_passed','true');
+    if(data.perfil_cultivo){ localStorage.setItem('ga_perfil', JSON.stringify(data.perfil_cultivo)); }
 
     showAlert('Sesión iniciada. Cargando dashboard…','success');
     setTimeout(()=>{window.location.href='/dashboard.html'},500);
