@@ -1,0 +1,26 @@
+{
+  "name": "cannabicultor-pipeline",
+  "version": "0.1.0",
+  "description": "Canalización de datos modular para Cannabicultor IA (descubrimiento, extracción, IA y sincronización)",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "scrape:breeders": "node extractors/seedfinder-scraper.mjs",
+    "enrich:breeders": "node ../enrich-breeders.mjs",
+    "enrich:varieties": "node ../enrich-varieties-detailed.mjs",
+    "dev:scraper": "BATCH=10 DELAY_MS=800 node extractors/seedfinder-scraper.mjs",
+    "docker:build": "docker compose build",
+    "docker:up": "docker compose up -d",
+    "docker:logs": "docker compose logs -f scraper"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.108.1",
+    "cheerio": "^1.2.0"
+  },
+  "devDependencies": {
+    "playwright": "^1.44.0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

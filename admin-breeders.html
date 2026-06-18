@@ -1,0 +1,982 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Admin Breeders — Cannabicultor IA</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Lora:ital,wght@0,400;0,600;1,400;1,600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --white:#fff;
+  --bg:#f5f7f4;
+  --bg2:#eef1ec;
+  --card:#ffffff;
+  --forest:#1a5c32;
+  --forest2:#2a7a44;
+  --pale:#e6f0ea;
+  --pale2:#d0e8d8;
+  --sage:#5d8068;
+  --text:#151515;
+  --muted:#6f746f;
+  --soft:#9aa09a;
+  --border:rgba(0,0,0,.075);
+  --border2:rgba(0,0,0,.12);
+  --amber:#b5811d;
+  --amber-bg:#fff8e8;
+  --red:#b94b42;
+  --blue:#2a6f8f;
+  --shadow:0 1px 2px rgba(0,0,0,.04),0 10px 35px rgba(0,0,0,.06);
+  --shadow2:0 18px 70px rgba(0,0,0,.08);
+  --r:22px;
+}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;-webkit-font-smoothing:antialiased}
+button,input,select{font-family:inherit}
+a{color:var(--forest);text-decoration:none}
+a:hover{text-decoration:underline}
+
+/* APP SHELL */
+.app{display:flex;flex-direction:column;min-height:100vh}
+.topbar{position:sticky;top:0;z-index:50;background:rgba(245,247,244,.92);backdrop-filter:blur(24px);border-bottom:1px solid var(--border);padding:12px 28px;display:flex;align-items:center;justify-content:space-between;gap:16px}
+.brand{display:flex;align-items:center;gap:12px;text-decoration:none;color:var(--text)}
+.brand img{width:32px;height:32px;border-radius:10px;object-fit:contain}
+.brand-title{font-size:13px;font-weight:700;letter-spacing:.04em;text-transform:uppercase}
+.brand-sub{font-size:10px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;margin-top:-1px}
+.top-actions{display:flex;align-items:center;gap:10px}
+.btn{border:1px solid var(--border);background:#fff;color:var(--text);border-radius:999px;padding:9px 16px;font-size:13px;font-weight:600;box-shadow:0 1px 2px rgba(0,0,0,.03);transition:all .18s;text-decoration:none;display:inline-flex;align-items:center;gap:8px;cursor:pointer}
+.btn:hover{transform:translateY(-1px);box-shadow:var(--shadow)}
+.btn.primary{background:var(--forest);color:#fff;border-color:var(--forest)}
+.btn.primary:hover{background:var(--forest2)}
+.btn.ghost{background:transparent;box-shadow:none;border-color:transparent}
+.btn.small{padding:6px 12px;font-size:12px}
+
+/* MAIN */
+.main{padding:24px 28px 60px;max-width:1480px;margin:0 auto;width:100%}
+
+/* HEADER */
+.page-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:20px;flex-wrap:wrap}
+.page-kicker{font-size:11px;font-weight:700;letter-spacing:.12em;color:var(--forest);text-transform:uppercase;margin-bottom:4px}
+.page-title{font-family:Lora,Georgia,serif;font-size:32px;line-height:1.05;letter-spacing:-.04em;font-weight:600}
+.page-title em{color:var(--forest);font-style:italic;font-weight:400}
+.page-sub{font-size:14px;color:var(--muted);margin-top:6px}
+
+/* KPIs */
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(148px,1fr));gap:12px;margin-bottom:22px}
+.kpi{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:16px 18px;box-shadow:var(--shadow)}
+.kpi-label{font-size:11px;color:var(--soft);font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px}
+.kpi-value{font-size:28px;font-weight:700;letter-spacing:-.04em;line-height:1;color:var(--text)}
+.kpi-sub{font-size:12px;color:var(--muted);margin-top:4px}
+.kpi.pill .kpi-value{font-size:22px}
+
+/* FILTERS */
+.filters{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:14px 18px;margin-bottom:18px;box-shadow:var(--shadow);display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.filter-group{display:flex;align-items:center;gap:8px}
+.filter-label{font-size:11px;color:var(--soft);font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-right:4px}
+.search{width:280px;background:#fff;border:1.5px solid var(--border2);border-radius:999px;padding:9px 16px;font-size:14px;outline:none}
+.search:focus{border-color:var(--forest)}
+.pill{display:inline-flex;align-items:center;gap:6px;background:var(--bg);border:1px solid var(--border2);border-radius:999px;padding:5px 12px;font-size:12px;font-weight:600;color:var(--muted);cursor:pointer;user-select:none;transition:all .15s}
+.pill.active{background:var(--pale);border-color:var(--pale2);color:var(--forest)}
+.pill:hover{border-color:var(--forest)}
+select.filter{border:1.5px solid var(--border2);background:#fff;border-radius:10px;padding:7px 12px;font-size:13px;color:var(--text)}
+
+/* TABLES */
+.section-title{font-size:15px;font-weight:700;letter-spacing:-.02em;margin:18px 0 10px;display:flex;align-items:center;gap:10px}
+.table-wrap{background:var(--card);border:1px solid var(--border);border-radius:18px;overflow:hidden;box-shadow:var(--shadow)}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{padding:11px 14px;text-align:left;border-bottom:1px solid var(--border)}
+th{background:var(--bg);font-weight:600;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.06em;position:sticky;top:0;z-index:1}
+tr:hover td{background:var(--bg2)}
+td.num{font-variant-numeric:tabular-nums;text-align:right}
+.badge{display:inline-flex;align-items:center;padding:2px 9px;border-radius:999px;font-size:11px;font-weight:700;white-space:nowrap}
+.badge.feminizada{background:var(--pale);color:var(--forest)}
+.badge.regular{background:#fff0d0;color:#8a5f10}
+.badge.automatica{background:#e6f0ff;color:#1e5a8a}
+.badge.CBD{background:#f3e8ff;color:#5f3a8a}
+.badge.mixto{background:#f0f0f0;color:#444}
+.pill-mini{display:inline-flex;align-items:center;gap:4px;font-size:11px;padding:1px 7px;border-radius:6px;background:var(--bg);border:1px solid var(--border2)}
+.link-icon{font-size:13px;opacity:.7}
+.empty{padding:40px;text-align:center;color:var(--muted);font-size:13px}
+
+/* BREEDER ROW */
+.breeder-cell{display:flex;align-items:center;gap:10px}
+.breeder-logo{width:28px;height:28px;border-radius:6px;border:1px solid var(--border);object-fit:cover;background:#f8f8f6}
+.breeder-name{font-weight:600}
+.breeder-meta{font-size:11px;color:var(--soft)}
+
+/* QUALITY */
+.quality{display:flex;gap:3px}
+.qdot{width:11px;height:11px;border-radius:3px;background:var(--border2)}
+.qdot.on{background:var(--forest)}
+.qdot.warn{background:#f4c16f}
+
+/* MODAL */
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.35);display:none;align-items:center;justify-content:center;z-index:200;padding:20px}
+.modal.open{display:flex}
+.modal-card{width:100%;max-width:920px;background:#fff;border-radius:20px;border:1px solid var(--border);box-shadow:var(--shadow2);overflow:hidden;max-height:90vh;display:flex;flex-direction:column}
+.modal-head{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--bg)}
+.modal-body{padding:20px;overflow:auto}
+.modal-close{background:transparent;border:0;font-size:22px;line-height:1;color:var(--muted);cursor:pointer}
+
+/* VARIETIES INSIDE MODAL */
+.vtable{font-size:12.5px}
+.vtable th{font-size:10px;padding:8px 10px}
+
+/* INSIGHTS */
+.insights{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin-top:22px}
+.insight{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:16px 18px;box-shadow:var(--shadow)}
+.insight h4{font-size:12px;color:var(--soft);font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px}
+.bar{display:flex;align-items:center;gap:8px;margin:6px 0;font-size:12px}
+.bar-label{flex:0 0 78px;color:var(--muted)}
+.bar-track{flex:1;height:7px;background:var(--border);border-radius:999px;overflow:hidden}
+.bar-fill{height:100%;background:var(--forest);border-radius:999px}
+.bar-val{width:42px;text-align:right;font-variant-numeric:tabular-nums;color:var(--muted)}
+
+/* RESPONSIVE */
+@media(max-width:1100px){
+  .main{padding:18px 16px 40px}
+  .kpis{grid-template-columns:repeat(3,1fr)}
+  .filters{gap:8px}
+  .search{width:100%;max-width:220px}
+}
+@media(max-width:720px){
+  .kpis{grid-template-columns:repeat(2,1fr)}
+  th,td{padding:9px 8px;font-size:12px}
+  .page-title{font-size:26px}
+}
+
+/* small helpers */
+.count{font-variant-numeric:tabular-nums;color:var(--forest);font-weight:600}
+.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="topbar">
+    <a class="brand" href="/">
+      <img src="assets/icono_cannabicultor.png" alt="">
+      <div>
+        <div class="brand-title">Cannabicultor IA</div>
+        <div class="brand-sub">Admin • Growers Alliance</div>
+      </div>
+    </a>
+    <div class="top-actions">
+      <a class="btn ghost" href="dashboard.html">← Dashboard</a>
+      <a class="btn ghost" href="/">Ir a la web</a>
+      <button class="btn primary" onclick="refreshAll()">Refrescar datos</button>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="page-head">
+      <div>
+        <div class="page-kicker">Base de conocimiento</div>
+        <h1 class="page-title">Breeders &amp; <em>Variedades</em></h1>
+        <div class="page-sub">Visualización y exploración de breeders y variedades (datos ricos: terpenos, THC, efectos, aromas) desde Supabase. Admin tool para el pipeline de datos.</div>
+      </div>
+      <div style="text-align:right;font-size:12px;color:var(--muted);line-height:1.4">
+        <div id="last-updated">—</div>
+        <div class="mono" style="font-size:11px">anon key • lectura</div>
+      </div>
+    </div>
+
+    <!-- KPIs -->
+    <div class="kpis" id="kpis">
+      <div class="kpi"><div class="kpi-label">Breeders</div><div class="kpi-value" id="kpi-breeders">—</div><div class="kpi-sub">enriquecidos</div></div>
+      <div class="kpi"><div class="kpi-label">Variedades</div><div class="kpi-value" id="kpi-variedades">—</div><div class="kpi-sub">total en DB</div></div>
+      <div class="kpi"><div class="kpi-label">Con website</div><div class="kpi-value" id="kpi-web">—</div><div class="kpi-sub" id="kpi-web-sub">—%</div></div>
+      <div class="kpi"><div class="kpi-label">Con logo</div><div class="kpi-value" id="kpi-logo">—</div><div class="kpi-sub" id="kpi-logo-sub">—%</div></div>
+      <div class="kpi"><div class="kpi-label">Con Instagram</div><div class="kpi-value" id="kpi-ig">—</div><div class="kpi-sub" id="kpi-ig-sub">—%</div></div>
+      <div class="kpi"><div class="kpi-label">Avg variedades</div><div class="kpi-value" id="kpi-avg">—</div><div class="kpi-sub">por breeder</div></div>
+    </div>
+
+    <!-- GLOBAL FILTERS -->
+    <div class="filters">
+      <div class="filter-group" style="flex:1;min-width:240px">
+        <input id="search-breeders" class="search" type="search" placeholder="Buscar breeder (nombre o slug)..." oninput="debounceFilterBreeders()">
+      </div>
+      <div class="filter-group">
+        <span class="filter-label">Calidad</span>
+        <div onclick="togglePill(this,'hasWeb')" class="pill" data-f="hasWeb">Website</div>
+        <div onclick="togglePill(this,'hasLogo')" class="pill" data-f="hasLogo">Logo</div>
+        <div onclick="togglePill(this,'hasIg')" class="pill" data-f="hasIg">IG</div>
+      </div>
+      <div class="filter-group">
+        <span class="filter-label">País</span>
+        <select id="filter-pais" class="filter" onchange="filterBreeders()" style="min-width:128px">
+          <option value="">Todos</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <span class="filter-label">Extra</span>
+        <div onclick="togglePill(this,'hasPais')" class="pill" data-f="hasPais">Con país</div>
+        <div onclick="togglePill(this,'enriched')" class="pill" data-f="enriched">Enriquecido</div>
+      </div>
+      <div class="filter-group">
+        <select id="sort-breeders" class="filter" onchange="filterBreeders()">
+          <option value="qty-desc">Más variedades</option>
+          <option value="name-asc">Nombre A-Z</option>
+          <option value="name-desc">Nombre Z-A</option>
+          <option value="updated-desc">Actualizado reciente</option>
+        </select>
+      </div>
+      <button class="btn small" onclick="exportBreedersCSV()">CSV</button>
+      <button class="btn small" onclick="clearFilters()">Limpiar</button>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1.05fr;gap:18px;align-items:start">
+      <!-- BREEDERS TABLE -->
+      <div>
+        <div class="section-title">
+          Breeders <span class="count" id="breeders-count"></span>
+        </div>
+        <div class="table-wrap" style="max-height:62vh;overflow:auto">
+          <table id="breeders-table">
+            <thead>
+              <tr>
+                <th style="width:34%;cursor:pointer" onclick="setBreedersSort('name')" title="Click para ordenar">Breeder ↕</th>
+                <th style="width:10%;cursor:pointer" onclick="setBreedersSort('qty')" title="Click para ordenar">Vars ↕</th>
+                <th style="width:14%">Enlaces</th>
+                <th style="width:14%">Calidad</th>
+                <th style="width:12%;cursor:pointer" onclick="setBreedersSort('updated')" title="Click para ordenar">Sync</th>
+                <th style="width:14%">Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="breeders-tbody"></tbody>
+          </table>
+        </div>
+        <div style="margin-top:8px;font-size:11px;color:var(--soft)">Haz clic en una fila para ver todas sus variedades.</div>
+      </div>
+
+      <!-- VARIETIES LIVE SEARCH -->
+      <div>
+        <div class="section-title">
+          Explorar variedades <span class="count" id="variedades-count"></span>
+        </div>
+
+        <div class="filters" style="margin-bottom:8px;padding:12px 14px">
+          <input id="search-variedades" class="search" style="width:100%;max-width:none" placeholder="Buscar nombre de variedad..." oninput="debounceSearchVariedades()">
+          <div class="filter-group" style="width:100%;margin-top:6px">
+            <span class="filter-label">Tipo</span>
+            <div class="pill active" data-tipo="feminizada" onclick="toggleTipo(this)">Feminizada</div>
+            <div class="pill active" data-tipo="regular" onclick="toggleTipo(this)">Regular</div>
+            <div class="pill active" data-tipo="automatica" onclick="toggleTipo(this)">Automática</div>
+            <div class="pill" data-tipo="CBD" onclick="toggleTipo(this)">CBD</div>
+          </div>
+          <div class="filter-group" style="margin-top:2px">
+            <span class="filter-label">Estado</span>
+            <div class="pill" data-enriched="1" onclick="toggleEnrichedPill(this)">Enriquecidas</div>
+          </div>
+          <div class="filter-group" style="margin-top:4px">
+            <span class="filter-label">Floración</span>
+            <input id="flor-min" type="number" class="search" style="width:78px;padding:6px 10px" placeholder="min" value="40" oninput="debounceSearchVariedades()">
+            <span style="color:var(--soft)">–</span>
+            <input id="flor-max" type="number" class="search" style="width:78px;padding:6px 10px" placeholder="max" value="90" oninput="debounceSearchVariedades()">
+            <button class="btn small" onclick="searchVariedades(0,true)">Buscar</button>
+          </div>
+        </div>
+
+        <div class="table-wrap" style="max-height:46vh;overflow:auto">
+          <table>
+            <thead>
+              <tr>
+                <th>Variedad</th>
+                <th>Tipo</th>
+                <th style="width:58px">Días</th>
+                <th style="width:78px">THC</th>
+                <th>Perfil</th>
+              </tr>
+            </thead>
+            <tbody id="variedades-tbody">
+              <tr><td colspan="5" class="empty">Usa los filtros arriba para buscar variedades (consultas en vivo a Supabase).</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px">
+          <div style="font-size:11px;color:var(--soft)" id="variedades-meta"></div>
+          <button class="btn small" id="load-more-v" onclick="loadMoreVariedades()" style="display:none">Cargar más</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- INSIGHTS -->
+    <div class="insights">
+      <div class="insight">
+        <h4>Distribución por tipo (muestra)</h4>
+        <div id="tipo-bars"></div>
+      </div>
+      <div class="insight">
+        <h4>Top breeders por nº de variedades</h4>
+        <div id="top-breeders" style="font-size:12.5px;line-height:1.65"></div>
+      </div>
+      <div class="insight">
+        <h4>Estadísticas de floración</h4>
+        <div id="flor-stats" style="font-size:13px;line-height:1.7;color:var(--muted)"></div>
+        <div style="margin-top:10px;font-size:11px;color:var(--soft)">Rango real en DB: 43–135 días (promedio ~65). Datos de floración dinámicos vía filtros.</div>
+      </div>
+      <div class="insight">
+        <h4>Oportunidades de enriquecimiento</h4>
+        <div style="font-size:13px;line-height:1.65">
+          <div>• <strong id="miss-logo">—</strong> breeders sin logo_url</div>
+          <div>• <strong id="miss-ig">—</strong> breeders sin Instagram</div>
+          <div>• <strong id="miss-pais">—</strong> breeders sin país de origen</div>
+          <div style="margin-top:6px;color:var(--soft);font-size:11px">Enriquecimiento vía scripts (logos, descripciones, terpenos, perfiles en variedades). Exporta CSV para pipeline.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- BREEDER DETAIL MODAL -->
+<div class="modal" id="modal" onclick="if(event.target.id==='modal') closeModal()">
+  <div class="modal-card" onclick="event.stopImmediatePropagation()">
+    <div class="modal-head">
+      <div style="display:flex;align-items:center;gap:12px">
+        <img id="modal-logo" style="width:42px;height:42px;border-radius:8px;border:1px solid var(--border);object-fit:cover;background:#f8f8f6" alt="">
+        <div>
+          <div id="modal-name" style="font-weight:700;font-size:19px;letter-spacing:-.02em"></div>
+          <div id="modal-meta" style="font-size:12px;color:var(--muted)"></div>
+        </div>
+      </div>
+      <button class="modal-close" onclick="closeModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <div style="display:flex;gap:24px;flex-wrap:wrap">
+        <div style="flex:1;min-width:260px">
+          <div style="font-size:11px;color:var(--soft);margin-bottom:4px">ENLACES</div>
+          <div id="modal-links" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px"></div>
+
+          <div style="font-size:11px;color:var(--soft);margin-bottom:4px">DESCRIPCIÓN</div>
+          <div id="modal-desc" style="font-size:13.5px;line-height:1.55;color:var(--text);margin-bottom:16px"></div>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:13px">
+            <div><span style="color:var(--soft)">País:</span> <strong id="modal-pais"></strong></div>
+            <div><span style="color:var(--soft)">Fundado:</span> <strong id="modal-year"></strong></div>
+            <div><span style="color:var(--soft)">Tipo semillas:</span> <strong id="modal-tipo-sem"></strong></div>
+            <div><span style="color:var(--soft)">Activo:</span> <strong id="modal-activo"></strong></div>
+          </div>
+
+          <div id="modal-extra" style="margin-top:12px;font-size:12px;line-height:1.4;color:var(--muted)"></div>
+        </div>
+        <div style="flex:1;min-width:280px">
+          <div style="font-size:11px;color:var(--soft);margin-bottom:6px">VARIEDADES DE ESTE BREEDER <span id="modal-variedades-count" class="count"></span></div>
+          <div class="table-wrap" style="max-height:320px">
+            <table class="vtable">
+              <thead><tr><th>Nombre</th><th>Tipo</th><th>Días / THC</th><th>Genética / Efectos</th></tr></thead>
+              <tbody id="modal-variedades-tbody"></tbody>
+            </table>
+          </div>
+          <div style="font-size:11px;color:var(--soft);margin-top:6px" id="modal-variedades-note"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============ CONFIG (usa las mismas que test.html) ============
+const SB_URL = 'https://gfyrsrdnvgnhtsuexjkb.supabase.co';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdmeXJzcmRudmduaHRzdWV4amtiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg3MjIxNjUsImV4cCI6MjA5NDI5ODE2NX0.53peUmp28jF_b5tJFsHmP4STmGedRYUBV1WPItmdv50';
+
+// ============ STATE ============
+let allBreeders = [];
+let filteredBreeders = [];
+let currentFilters = { hasWeb: false, hasLogo: false, hasIg: false, hasPais: false, enriched: false };
+let paisList = [];
+let currentVariedadesOffset = 0;
+let currentVariedadesQuery = {};
+let currentBreederForModal = null;
+let sortMode = 'qty-desc'; // synced with select
+
+// ============ HELPERS ============
+function fmt(n){ return (n||0).toLocaleString('es-ES'); }
+function pct(n, total){ return total ? Math.round((n/total)*100) : 0; }
+function escapeHtml(s){ return String(s||'').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m])); }
+
+function copyToClipboard(text, el) {
+  navigator.clipboard.writeText(text).then(() => {
+    const old = el.textContent;
+    el.textContent = '✓';
+    setTimeout(() => { el.textContent = old; }, 900);
+  }).catch(() => {
+    // fallback
+    const ta = document.createElement('textarea'); ta.value = text; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
+    const old = el.textContent; el.textContent = '✓'; setTimeout(()=> el.textContent=old, 900);
+  });
+}
+
+async function sbFetch(table, queryParams='', options={}) {
+  const url = `${SB_URL}/rest/v1/${table}?${queryParams}`;
+  const r = await fetch(url, {
+    headers: {
+      'apikey': SB_KEY,
+      'Authorization': `Bearer ${SB_KEY}`,
+      'Accept': 'application/json',
+      ...(options.headers || {})
+    }
+  });
+  if (!r.ok) {
+    const txt = await r.text().catch(()=> '');
+    throw new Error(`${table} ${r.status} ${txt}`);
+  }
+  return r.json();
+}
+
+function updateKpis(breeders, vTotal) {
+  const totalB = breeders.length;
+  const withWeb = breeders.filter(b => b.website).length;
+  const withLogo = breeders.filter(b => b.logo_url).length;
+  const withIg = breeders.filter(b => b.instagram).length;
+  const withQty = breeders.filter(b => b.cantidad_variedades != null).length;
+  const sumQty = breeders.reduce((s,b) => s + (b.cantidad_variedades || 0), 0);
+  const avg = totalB ? (sumQty / totalB).toFixed(0) : 0;
+
+  document.getElementById('kpi-breeders').textContent = fmt(totalB);
+  document.getElementById('kpi-variedades').textContent = vTotal ? fmt(vTotal) : '40k+';
+  document.getElementById('kpi-web').textContent = fmt(withWeb);
+  document.getElementById('kpi-web-sub').textContent = pct(withWeb, totalB) + '%';
+  document.getElementById('kpi-logo').textContent = fmt(withLogo);
+  document.getElementById('kpi-logo-sub').textContent = pct(withLogo, totalB) + '%';
+  document.getElementById('kpi-ig').textContent = fmt(withIg);
+  document.getElementById('kpi-ig-sub').textContent = pct(withIg, totalB) + '%';
+  document.getElementById('kpi-avg').textContent = avg;
+
+  // enrichment hints
+  document.getElementById('miss-logo').textContent = fmt(totalB - withLogo);
+  document.getElementById('miss-ig').textContent = fmt(totalB - withIg);
+  document.getElementById('miss-pais').textContent = fmt(breeders.filter(b => !b.pais_origen).length);
+}
+
+function populatePaisFilter(breeders) {
+  const sel = document.getElementById('filter-pais');
+  if (!sel) return;
+  const counts = {};
+  breeders.forEach(b => {
+    const p = b.pais_origen || '—';
+    counts[p] = (counts[p]||0) + 1;
+  });
+  const sorted = Object.keys(counts).sort((a,b)=> counts[b]-counts[a]);
+  // keep the first "Todos", then add top countries
+  sel.innerHTML = '<option value="">Todos ('+breeders.length+')</option>' +
+    sorted.slice(0,18).map(p => `<option value="${escapeHtml(p)}">${escapeHtml(p)} (${counts[p]})</option>`).join('');
+  paisList = sorted;
+}
+
+function renderBreedersTable(list) {
+  const tbody = document.getElementById('breeders-tbody');
+  tbody.innerHTML = '';
+  document.getElementById('breeders-count').textContent = `(${fmt(list.length)})`;
+
+  if (!list.length) {
+    tbody.innerHTML = `<tr><td colspan="6" class="empty">No hay breeders que coincidan con los filtros.</td></tr>`;
+    return;
+  }
+
+  const frag = document.createDocumentFragment();
+  list.forEach(b => {
+    const tr = document.createElement('tr');
+    tr.style.cursor = 'pointer';
+    tr.onclick = () => openBreederModal(b);
+
+    const hasWeb = !!b.website;
+    const hasLogo = !!b.logo_url;
+    const hasIg = !!b.instagram;
+    const qty = b.cantidad_variedades || 0;
+    const synced = b.seedfinder_synced ? new Date(b.seedfinder_synced).toLocaleDateString('es-ES',{month:'short',day:'numeric'}) : '—';
+
+    const qualityHtml = `
+      <div class="quality" title="Web / Logo / IG">
+        <div class="qdot ${hasWeb?'on':''}"></div>
+        <div class="qdot ${hasLogo?'on':''}"></div>
+        <div class="qdot ${hasIg?'on':''}"></div>
+      </div>`;
+
+    const linksHtml = `
+      ${hasWeb ? `<a class="link-icon" href="${b.website}" target="_blank" onclick="event.stopImmediatePropagation()" title="Web">🌐</a>` : ''}
+      ${hasIg ? `<a class="link-icon" href="https://instagram.com/${b.instagram}" target="_blank" onclick="event.stopImmediatePropagation()" title="IG">📷</a>` : ''}
+    `;
+
+    const slug = b.seedfinder_slug || '';
+    const sfUrl = b.seedfinder_url || (slug ? `https://seedfinder.eu/en/database/breeder/${slug}` : null);
+    const actionsHtml = `
+      ${slug ? `<button class="btn small" style="padding:1px 6px;font-size:10px" onclick="event.stopImmediatePropagation(); copyToClipboard('${slug}', this)">slug</button>` : ''}
+      ${sfUrl ? `<a class="link-icon" href="${sfUrl}" target="_blank" onclick="event.stopImmediatePropagation()" title="Seedfinder">SF</a>` : ''}
+    `;
+
+    tr.innerHTML = `
+      <td>
+        <div class="breeder-cell">
+          ${b.logo_url ? `<img class="breeder-logo" src="${b.logo_url}" onerror="this.style.display='none'">` : `<div class="breeder-logo" style="background:#f0f0f0"></div>`}
+          <div>
+            <div class="breeder-name">${escapeHtml(b.breeder_name)}</div>
+            <div class="breeder-meta">${escapeHtml(b.pais_origen || '')} ${b.año_fundacion ? '· ' + b.año_fundacion : ''}</div>
+          </div>
+        </div>
+      </td>
+      <td class="num"><span style="font-weight:700;font-size:15px">${fmt(qty)}</span></td>
+      <td>${linksHtml}</td>
+      <td>${qualityHtml}</td>
+      <td style="font-size:11px;color:var(--soft)">${synced}</td>
+      <td onclick="event.stopImmediatePropagation()">${actionsHtml}</td>
+    `;
+    frag.appendChild(tr);
+  });
+  tbody.appendChild(frag);
+}
+
+function filterBreeders() {
+  const q = (document.getElementById('search-breeders').value || '').toLowerCase().trim();
+  const sort = document.getElementById('sort-breeders').value;
+  const paisSel = document.getElementById('filter-pais') ? document.getElementById('filter-pais').value : '';
+
+  let res = allBreeders.filter(b => {
+    const match = !q || b.breeder_name.toLowerCase().includes(q) || (b.seedfinder_slug||'').includes(q);
+    if (!match) return false;
+
+    if (currentFilters.hasWeb && !b.website) return false;
+    if (currentFilters.hasLogo && !b.logo_url) return false;
+    if (currentFilters.hasIg && !b.instagram) return false;
+    if (currentFilters.hasPais && !b.pais_origen) return false;
+    if (currentFilters.enriched && !b.logo_url && !b.visual_enriched_at) return false;
+    if (paisSel && (b.pais_origen || '') !== paisSel) return false;
+    return true;
+  });
+
+  // sort
+  if (sort === 'qty-desc') res.sort((a,b) => (b.cantidad_variedades||0) - (a.cantidad_variedades||0));
+  else if (sort === 'name-asc') res.sort((a,b) => a.breeder_name.localeCompare(b.breeder_name));
+  else if (sort === 'name-desc') res.sort((a,b) => b.breeder_name.localeCompare(a.breeder_name));
+  else if (sort === 'updated-desc') res.sort((a,b) => (b.updated_at||'').localeCompare(a.updated_at||''));
+
+  filteredBreeders = res;
+  renderBreedersTable(filteredBreeders);
+}
+
+let filterTimer = null;
+function debounceFilterBreeders() {
+  clearTimeout(filterTimer);
+  filterTimer = setTimeout(filterBreeders, 120);
+}
+
+function togglePill(el, key) {
+  currentFilters[key] = !currentFilters[key];
+  el.classList.toggle('active', currentFilters[key]);
+  filterBreeders();
+}
+
+function clearFilters() {
+  currentFilters = { hasWeb:false, hasLogo:false, hasIg:false, hasPais:false, enriched:false };
+  document.querySelectorAll('.pill').forEach(p => p.classList.remove('active'));
+  const pSel = document.getElementById('filter-pais');
+  if (pSel) pSel.value = '';
+  document.getElementById('search-breeders').value = '';
+  document.getElementById('sort-breeders').value = 'qty-desc';
+  filterBreeders();
+}
+
+function exportBreedersCSV() {
+  const list = filteredBreeders.length ? filteredBreeders : allBreeders;
+  if (!list.length) { alert('No hay datos para exportar'); return; }
+  const headers = ['breeder_name','pais_origen','año_fundacion','cantidad_variedades','website','instagram','seedfinder_slug','logo_url','activo','updated_at'];
+  const rows = list.map(b => headers.map(h => {
+    let val = b[h];
+    if (val == null) val = '';
+    if (typeof val === 'string' && (val.includes(',') || val.includes('"'))) val = '"' + val.replace(/"/g,'""') + '"';
+    return val;
+  }).join(','));
+  const csv = [headers.join(','), ...rows].join('\n');
+  const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `breeders-${new Date().toISOString().slice(0,10)}.csv`;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function setBreedersSort(mode) {
+  const sel = document.getElementById('sort-breeders');
+  if (!sel) return;
+  if (mode === 'name') {
+    // toggle asc/desc on repeated click? simple: cycle name
+    sel.value = (sel.value === 'name-asc') ? 'name-desc' : 'name-asc';
+  } else if (mode === 'qty') {
+    sel.value = 'qty-desc';
+  } else if (mode === 'updated') {
+    sel.value = 'updated-desc';
+  }
+  filterBreeders();
+}
+
+// ============ VARIETIES (live queries) ============
+const activeTipos = new Set(['feminizada','regular','automatica']);
+let onlyEnrichedVars = false;
+
+function toggleTipo(el) {
+  const t = el.dataset.tipo;
+  if (activeTipos.has(t)) activeTipos.delete(t);
+  else activeTipos.add(t);
+  el.classList.toggle('active', activeTipos.has(t));
+  searchVariedades(0, true);
+}
+
+function toggleEnrichedPill(el) {
+  onlyEnrichedVars = !onlyEnrichedVars;
+  el.classList.toggle('active', onlyEnrichedVars);
+  searchVariedades(0, true);
+}
+
+async function searchVariedades(offset = 0, reset = false) {
+  const tbody = document.getElementById('variedades-tbody');
+  const meta = document.getElementById('variedades-meta');
+  const loadMore = document.getElementById('load-more-v');
+
+  const term = (document.getElementById('search-variedades').value || '').trim();
+  const minD = parseInt(document.getElementById('flor-min').value) || 0;
+  const maxD = parseInt(document.getElementById('flor-max').value) || 200;
+
+  if (reset) {
+    currentVariedadesOffset = 0;
+    tbody.innerHTML = '';
+  }
+
+  let params = `select=id,breeder_id,nombre,floracion_dias,tipo,genetica,thc_min,thc_max,cbd_min,cbd_max,terpenos,efectos,aromas,image_url,enriched_at&order=floracion_dias.asc&limit=60&offset=${currentVariedadesOffset}`;
+
+  if (term) params += `&nombre=ilike.*${encodeURIComponent(term)}*`;
+  if (activeTipos.size && activeTipos.size < 4) {
+    const tiposArr = Array.from(activeTipos).map(t => `tipo.eq.${t}`).join(',');
+    params += `&or=(${tiposArr})`;
+  }
+  if (onlyEnrichedVars) {
+    params += `&enriched_at=not.is.null`;
+  }
+  params += `&floracion_dias=gte.${minD}&floracion_dias=lte.${maxD}`;
+
+  try {
+    const rows = await sbFetch('variedades', params);
+    // also get total count (we do a separate head request)
+    const countRes = await fetch(`${SB_URL}/rest/v1/variedades?${params.replace(/limit=\d+&offset=\d+/, 'limit=1')}`, {
+      headers: { apikey: SB_KEY, Authorization: `Bearer ${SB_KEY}`, Prefer: 'count=exact' }
+    });
+    const range = countRes.headers.get('content-range') || '';
+    const total = range.split('/')[1] || '?';
+
+    if (reset) {
+      tbody.innerHTML = '';
+      currentVariedadesQuery = { term, minD, maxD, tipos: Array.from(activeTipos) };
+    }
+
+    if (!rows.length && reset) {
+      tbody.innerHTML = `<tr><td colspan="5" class="empty">Sin resultados para esos filtros.</td></tr>`;
+      loadMore.style.display = 'none';
+      meta.textContent = `0 resultados`;
+      return;
+    }
+
+    const frag = document.createDocumentFragment();
+    rows.forEach(v => {
+      const tr = document.createElement('tr');
+      const tipoClass = (v.tipo || '').toLowerCase();
+      const breederName = allBreeders.find(b => b.id === v.breeder_id)?.breeder_name || `#${v.breeder_id}`;
+      const thc = (v.thc_min!=null || v.thc_max!=null) ? `${v.thc_min||'?'}–${v.thc_max||'?'}%` : (v.thc_pct ? v.thc_pct+'%' : '—');
+      let perfil = '';
+      if (v.terpenos) {
+        const t = typeof v.terpenos==='string' ? v.terpenos : (v.terpenos.dominant||[]).join(', ') || JSON.stringify(v.terpenos).slice(0,60);
+        perfil = escapeHtml(t).slice(0,42);
+      } else if (v.efectos && v.efectos.length) {
+        perfil = escapeHtml(v.efectos.slice(0,2).join(' · '));
+      } else {
+        perfil = escapeHtml(v.genetica || '—');
+      }
+      const eff = (v.efectos||[]).slice(0,2).map(e=>`<span class="pill-mini">${escapeHtml(e)}</span>`).join('');
+      tr.innerHTML = `
+        <td><strong>${escapeHtml(v.nombre)}</strong><div style="font-size:10px;color:var(--soft)">${escapeHtml(breederName)}</div></td>
+        <td><span class="badge ${tipoClass}">${escapeHtml(v.tipo || '—')}</span></td>
+        <td class="num">${v.floracion_dias || '—'}</td>
+        <td class="num" style="font-size:11px;font-weight:600;color:#3a5f3a">${thc}</td>
+        <td style="max-width:210px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${escapeHtml(v.genetica||'')}">${perfil} ${eff}</td>
+      `;
+      // click row → open breeder if we have it
+      tr.onclick = () => {
+        const b = allBreeders.find(x => x.id === v.breeder_id);
+        if (b) openBreederModal(b);
+      };
+      frag.appendChild(tr);
+    });
+    tbody.appendChild(frag);
+
+    currentVariedadesOffset += rows.length;
+    document.getElementById('variedades-count').textContent = `(${fmt(total)})`;
+    meta.textContent = `${currentVariedadesOffset} cargadas de ${fmt(total)}`;
+    loadMore.style.display = (currentVariedadesOffset < parseInt(total)) ? 'inline-flex' : 'none';
+  } catch(e) {
+    console.error(e);
+    if (reset) tbody.innerHTML = `<tr><td colspan="5" class="empty">Error consultando variedades: ${e.message}</td></tr>`;
+  }
+}
+
+function debounceSearchVariedades() {
+  clearTimeout(window._vTimer);
+  window._vTimer = setTimeout(() => searchVariedades(0, true), 280);
+}
+
+async function loadMoreVariedades() {
+  await searchVariedades(currentVariedadesOffset, false);
+}
+
+// ============ BREEDER MODAL + its varieties ============
+async function openBreederModal(b) {
+  currentBreederForModal = b;
+  const m = document.getElementById('modal');
+  document.getElementById('modal-name').textContent = b.breeder_name;
+  document.getElementById('modal-logo').src = b.logo_url || 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==';
+  document.getElementById('modal-logo').style.display = b.logo_url ? 'block' : 'none';
+
+  const metaParts = [];
+  if (b.pais_origen) metaParts.push(b.pais_origen);
+  if (b.año_fundacion) metaParts.push(b.año_fundacion);
+  if (b.tipo_semillas) metaParts.push(b.tipo_semillas);
+  document.getElementById('modal-meta').textContent = metaParts.join(' · ') || '—';
+
+  document.getElementById('modal-pais').textContent = b.pais_origen || '—';
+  document.getElementById('modal-year').textContent = b.año_fundacion || '—';
+  document.getElementById('modal-tipo-sem').textContent = b.tipo_semillas || '—';
+  document.getElementById('modal-activo').textContent = b.activo ? 'Sí' : '—';
+  document.getElementById('modal-desc').textContent = b.descripcion || 'Sin descripción.';
+
+  // extra fields
+  const extraEl = document.getElementById('modal-extra');
+  const extras = [];
+  if (b.variedades_famosas) extras.push('Famosas: ' + escapeHtml(b.variedades_famosas));
+  if (b.premios) extras.push('Premios: ' + escapeHtml(b.premios));
+  if (b.strain_img_url) extras.push('Tiene strain_img_url');
+  extraEl.innerHTML = extras.length ? extras.join('<br>') : '';
+
+  // links
+  const links = document.getElementById('modal-links');
+  links.innerHTML = '';
+  const mkLink = (href, label) => {
+    const a = document.createElement('a');
+    a.href = href; a.target = '_blank'; a.className = 'btn small';
+    a.textContent = label; return a;
+  };
+  if (b.website) links.appendChild(mkLink(b.website, 'Web oficial'));
+  if (b.instagram) links.appendChild(mkLink(`https://instagram.com/${b.instagram}`, 'Instagram'));
+
+  // load this breeder's varieties (targeted query)
+  const vTbody = document.getElementById('modal-variedades-tbody');
+  vTbody.innerHTML = `<tr><td colspan="4" style="padding:18px;color:var(--muted)">Cargando variedades…</td></tr>`;
+  document.getElementById('modal-variedades-count').textContent = '';
+
+  try {
+    const vs = await sbFetch('variedades', `select=nombre,tipo,floracion_dias,genetica,thc_min,thc_max,terpenos,efectos,aromas,image_url&breeder_id=eq.${b.id}&order=floracion_dias.asc&limit=400`);
+    vTbody.innerHTML = '';
+    document.getElementById('modal-variedades-count').textContent = `(${fmt(vs.length)})`;
+    document.getElementById('modal-variedades-note').textContent = vs.length >= 400 ? 'Mostrando primeras 400. Hay más en la base.' : '';
+
+    const f = document.createDocumentFragment();
+    vs.forEach(v => {
+      const tr = document.createElement('tr');
+      const tc = (v.tipo||'').toLowerCase();
+      const thc = (v.thc_min!=null||v.thc_max!=null) ? `${v.thc_min||'?'}-${v.thc_max||'?'}` : '—';
+      const extra = v.efectos && v.efectos[0] ? `<span style="font-size:9px;color:#666">· ${escapeHtml(v.efectos[0])}</span>` : '';
+      tr.innerHTML = `
+        <td>${escapeHtml(v.nombre)}</td>
+        <td><span class="badge ${tc}">${escapeHtml(v.tipo||'—')}</span></td>
+        <td class="num">${v.floracion_dias ?? '—'}<span style="font-size:9px;color:#555;margin-left:2px">${thc!=='—'?'·'+thc:''}</span></td>
+        <td style="font-size:11px;color:var(--soft);max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHtml(v.genetica||'')} ${extra}</td>
+      `;
+      f.appendChild(tr);
+    });
+    if (!vs.length) {
+      vTbody.innerHTML = `<tr><td colspan="4" class="empty" style="padding:16px">Este breeder no tiene variedades cargadas todavía.</td></tr>`;
+    } else {
+      vTbody.appendChild(f);
+    }
+  } catch(e) {
+    vTbody.innerHTML = `<tr><td colspan="4" class="empty">Error cargando variedades: ${e.message}</td></tr>`;
+  }
+
+  m.classList.add('open');
+}
+
+function closeModal() {
+  document.getElementById('modal').classList.remove('open');
+}
+
+// ============ INSIGHTS (client-side on breeders) ============
+function renderInsights(breeders) {
+  // Tipo distribution (we don't have global here, we show a note + sample from loaded variedades if wanted)
+  // Instead we show a static-ish summary + the top breeders
+  const top = [...breeders].sort((a,b)=>(b.cantidad_variedades||0)-(a.cantidad_variedades||0)).slice(0,6);
+  const el = document.getElementById('top-breeders');
+  const maxQty = top[0] ? (top[0].cantidad_variedades||1) : 1;
+  el.innerHTML = top.map(b => {
+    const pct = b.cantidad_variedades ? Math.min(100, Math.round((b.cantidad_variedades / maxQty)*100)) : 0;
+    return `<div style="margin:5px 0;display:flex;gap:8px;align-items:center">
+      <div style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtml(b.breeder_name)}</div>
+      <div style="font-variant-numeric:tabular-nums;font-weight:600">${fmt(b.cantidad_variedades||0)}</div>
+    </div>`;
+  }).join('');
+
+  // flor stats (static from our analysis)
+  document.getElementById('flor-stats').innerHTML = `
+    Promedio ≈ <strong>65 días</strong><br>
+    Rango observado: <strong>43 – 135 días</strong><br>
+    La mayoría entre 55-75 días.
+  `;
+
+  // Tipo bars (approximate from known global distribution)
+  const tipoData = [
+    {label:'Regular', val:476, color:'#b5811d'},
+    {label:'Feminizada', val:380, color:'#1a5c32'},
+    {label:'Automática', val:124, color:'#2a6f8f'},
+  ];
+  const max = Math.max(...tipoData.map(d=>d.val));
+  const bars = document.getElementById('tipo-bars');
+  bars.innerHTML = tipoData.map(d => `
+    <div class="bar">
+      <div class="bar-label">${d.label}</div>
+      <div class="bar-track"><div class="bar-fill" style="width:${(d.val/max*100).toFixed(0)}%;background:${d.color}"></div></div>
+      <div class="bar-val">${d.val}</div>
+    </div>
+  `).join('');
+}
+
+// ============ LOAD ============
+async function loadBreeders() {
+  // We ask for a high limit. In practice you may want to add pagination or use a materialized view for admin.
+  const data = await sbFetch('breeders', 'select=*&order=cantidad_variedades.desc.nullslast&limit=2200');
+  allBreeders = data;
+  filteredBreeders = [...data];
+  return data;
+}
+
+async function loadInitialVariedadesSample() {
+  // Just show a small initial sample so the section isn't empty
+  try {
+    const sample = await sbFetch('variedades', 'select=id,breeder_id,nombre,floracion_dias,tipo,genetica,thc_min,thc_max,terpenos,efectos&order=id&limit=12');
+    const tbody = document.getElementById('variedades-tbody');
+    tbody.innerHTML = '';
+    const frag = document.createDocumentFragment();
+    sample.forEach(v => {
+      const tr = document.createElement('tr');
+      const tc = (v.tipo||'').toLowerCase();
+      const bName = allBreeders.find(b=>b.id===v.breeder_id)?.breeder_name || `#${v.breeder_id}`;
+      const thc = (v.thc_min!=null || v.thc_max!=null) ? `${v.thc_min||'?'}–${v.thc_max||'?'}%` : '—';
+      const perfil = v.terpenos ? (typeof v.terpenos==='string'? escapeHtml(v.terpenos).slice(0,32) : 'terpenos') : (v.efectos? escapeHtml((v.efectos||[]).slice(0,1).join('')) : escapeHtml(v.genetica||'—'));
+      tr.innerHTML = `
+        <td><strong>${escapeHtml(v.nombre)}</strong><div style="font-size:10px;color:var(--soft)">${escapeHtml(bName)}</div></td>
+        <td><span class="badge ${tc}">${escapeHtml(v.tipo||'—')}</span></td>
+        <td class="num">${v.floracion_dias||'—'}</td>
+        <td class="num" style="font-size:11px;font-weight:600;color:#3a5f3a">${thc}</td>
+        <td style="max-width:210px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${perfil}</td>
+      `;
+      tr.onclick = () => {
+        const b = allBreeders.find(x => x.id === v.breeder_id);
+        if (b) openBreederModal(b);
+      };
+      frag.appendChild(tr);
+    });
+    tbody.appendChild(frag);
+    document.getElementById('variedades-meta').textContent = 'Muestra inicial. Usa los filtros para buscar.';
+    document.getElementById('variedades-count').textContent = '(40k+)';
+  } catch(e) {
+    console.warn('No se pudo cargar muestra inicial de variedades', e);
+  }
+}
+
+async function refreshAll() {
+  const btns = document.querySelectorAll('button');
+  btns.forEach(b => b.disabled = true);
+
+  try {
+    const breeders = await loadBreeders();
+    const countRes = await fetch(`${SB_URL}/rest/v1/variedades?select=id&limit=1`, {
+      headers: { apikey: SB_KEY, Authorization: `Bearer ${SB_KEY}`, Prefer: 'count=exact' }
+    });
+    const vTotal = countRes.headers.get('content-range')?.split('/')[1] || 40000;
+
+    updateKpis(breeders, vTotal);
+    populatePaisFilter(breeders);
+    renderBreedersTable(filteredBreeders);
+    renderInsights(breeders);
+
+    // update last updated
+    const latest = breeders.reduce((max, b) => {
+      const d = b.updated_at ? new Date(b.updated_at) : null;
+      return d && (!max || d > max) ? d : max;
+    }, null);
+    document.getElementById('last-updated').textContent = latest ? 'Actualizado ' + latest.toLocaleString('es-ES') : '';
+
+    // re-apply any active filters
+    filterBreeders();
+
+    // refresh the live varieties area (keep current filters or reset to sample)
+    onlyEnrichedVars = false;
+    document.querySelectorAll('.pill[data-enriched]').forEach(el=>el.classList.remove('active'));
+    const searchInput = document.getElementById('search-variedades');
+    if (searchInput.value.trim() || document.getElementById('flor-min').value !== '40') {
+      await searchVariedades(0, true);
+    } else {
+      await loadInitialVariedadesSample();
+    }
+  } catch(e) {
+    alert('Error cargando datos: ' + e.message);
+    console.error(e);
+  } finally {
+    btns.forEach(b => b.disabled = false);
+  }
+}
+
+async function init() {
+  // initial load
+  try {
+    const breeders = await loadBreeders();
+
+    // total variedades via header (fast)
+    const countRes = await fetch(`${SB_URL}/rest/v1/variedades?select=id&limit=1`, {
+      headers: { apikey: SB_KEY, Authorization: `Bearer ${SB_KEY}`, Prefer: 'count=exact' }
+    });
+    const vTotal = countRes.headers.get('content-range')?.split('/')[1] || 40000;
+
+    updateKpis(breeders, vTotal);
+    populatePaisFilter(breeders);
+    renderBreedersTable(breeders);
+    renderInsights(breeders);
+
+    const latest = breeders.reduce((max, b) => {
+      const d = b.updated_at ? new Date(b.updated_at) : null;
+      return d && (!max || d > max) ? d : max;
+    }, null);
+    if (latest) document.getElementById('last-updated').textContent = 'Datos actualizados ' + latest.toLocaleString('es-ES');
+
+    await loadInitialVariedadesSample();
+
+    // wire sort change already has onchange
+    // initial filter state
+    filteredBreeders = [...breeders];
+  } catch(e) {
+    console.error(e);
+    const tb = document.getElementById('breeders-tbody');
+    tb.innerHTML = `<tr><td colspan="6" class="empty">Error al cargar breeders: ${e.message}.<br>¿Tienes conexión y la anon key es correcta?</td></tr>`;
+  }
+
+  // keyboard niceties
+  document.addEventListener('keydown', (e) => {
+    if (e.key === '/' && document.activeElement.tagName === 'BODY') {
+      e.preventDefault();
+      document.getElementById('search-breeders').focus();
+    }
+    if (e.key === 'Escape') {
+      const m = document.getElementById('modal');
+      if (m.classList.contains('open')) closeModal();
+    }
+  });
+}
+
+init();
+</script>
+</body>
+</html>

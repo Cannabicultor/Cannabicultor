@@ -1,0 +1,101 @@
+version: '3.8'
+
+# Cannabicultor Data Pipeline
+# Orquestación modular de descubrimiento, extracción, procesamiento IA y sincronización.
+#
+# Uso:
+#   cd pipeline
+#   docker compose up --build -d
+#
+# Servicios:
+#   - scraper: workers de extracción (Node + cheerio/fetch por ahora, Playwright después)
+#   - (futuro) n8n: orquestador visual + CRONs
+#   - (futuro) ollama: LLM local para estructuración de texto
+#   - (futuro) worker-llm: contenedor dedicado a llamadas al LLM + dedup
+#
+# Requisitos de host (VPS recomendado):
+#   - Docker + Compose
+#   - Suficiente RAM para Ollama si lo corres aquí (8GB+ recomendado para modelos 7B)
+#   - Buen ancho de banda de salida (importante para scraping diario)
+#
+# Variables de entorno: copia pipeline/.env.example a .env y edita.
+
+services:
+  # === SCRAPER BASE (fase 2 - extracción) ===
+  # Contiene los scripts actuales refactorizados (enrich-*, scraper-*)
+  # Se puede escalar horizontalmente: docker compose up --scale scraper=3
+  scraper:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: cannabicultor-scraper
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      - NODE_ENV=production
+      - BATCH=${BATCH:-50}
+      - DELAY_MS=${DELAY_MS:-1500}
+    volumes:
+      # Para persistir logs o archivos temporales de cola si decides usarlos
+      - ./data:/app/data
+      - ./logs:/app/logs
+    # Resources limit (ajusta según tu VPS)
+    deploy:
+      resources:
+        limits:
+          cpus: '1.5'
+          memory: 1G
+    # Ejemplo de comando por defecto (puedes sobreescribirlo)
+    # command: ["node", "extractors/seedfinder-scraper.mjs"]
+    networks:
+      - pipeline-net
+
+  # === n8n (orquestador visual + scheduling) - Fase futura ===
+  # Descomenta cuando estés listo para reemplazar los run-*.sh por workflows visuales.
+  # n8n:
+  #   image: n8nio/n8n:latest
+  #   container_name: cannabicultor-n8n
+  #   restart: unless-stopped
+  #   ports:
+  #     - "5678:5678"
+  #   environment:
+  #     - N8N_BASIC_AUTH_ACTIVE=true
+  #     - N8N_BASIC_AUTH_USER=admin
+  #     - N8N_BASIC_AUTH_PASSWORD=${N8N_PASSWORD:-cannabicultor2026}
+  #     - WEBHOOK_URL=${WEBHOOK_URL:-http://localhost:5678}
+  #   volumes:
+  #     - ./n8n:/home/node/.n8n
+  #   networks:
+  #     - pipeline-net
+  #   depends_on:
+  #     - scraper
+
+  # === Ollama (cerebro LLM local) - Fase 3 ===
+  # Corre modelos locales para parseo de descripciones a JSON estructurado.
+  # Recomendado: llama3.1:8b, phi3, qwen2.5, o mistral para prompts en español.
+  # ollama:
+  #   image: ollama/ollama:latest
+  #   container_name: cannabicultor-ollama
+  #   restart: unless-stopped
+  #   ports:
+  #     - "11434:11434"
+  #   volumes:
+  #     - ollama-data:/root/.ollama
+  #   # Para GPU (si tu VPS/host la tiene):
+  #   # deploy:
+  #   #   resources:
+  #   #     reservations:
+  #   #       devices:
+  #   #         - driver: nvidia
+  #   #           count: 1
+  #   #           capabilities: [gpu]
+  #   networks:
+  #     - pipeline-net
+
+volumes:
+  ollama-data:
+
+networks:
+  pipeline-net:
+    driver: bridge

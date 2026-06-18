@@ -2,3 +2,8 @@
 __MACOSX
 *.log
 .env
+pipeline/.env
+node_modules/
+.claude/
+videos/
+output.json

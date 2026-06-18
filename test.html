@@ -2,10 +2,11 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Test de Acceso — Cannabicultor IA</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Lora:ital,wght@0,400;0,600;1,400;1,600&display=swap" rel="stylesheet">
+<script src="assets/auth.js"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -147,7 +148,7 @@ button,input{font-family:inherit;cursor:pointer}
 
 /* INTRO HERO — pantalla de desafío */
 .intro-hero{width:100%;max-width:680px;border-radius:var(--r);overflow:hidden;box-shadow:0 30px 90px rgba(0,0,0,.35);animation:fadeUp .5s ease}
-.intro-hero-img{position:relative;min-height:400px;background:url('assets/challenge.jpg') center/cover no-repeat;display:flex;flex-direction:column;justify-content:flex-end}
+.intro-hero-img{position:relative;min-height:400px;background:linear-gradient(135deg,rgba(26,92,50,.85),rgba(42,122,68,.65)),url('assets/escudo.jpg') center/cover no-repeat;display:flex;flex-direction:column;justify-content:flex-end}
 .intro-hero-overlay{position:absolute;inset:0;background:linear-gradient(to top,rgba(5,12,7,0.98) 0%,rgba(5,12,7,0.75) 45%,rgba(5,12,7,0.45) 100%)}
 .intro-hero-content{position:relative;z-index:1;padding:44px 40px 36px}
 .intro-kicker-dark{font-size:11px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:#4caf75;margin-bottom:16px}
@@ -2657,8 +2658,7 @@ function timeOut(){
   if(STATE.respondidas.has(STATE.actual)) return;
   STATE.respondidas.add(STATE.actual);
   stopTimer();
-  // Marcar si fue fallada para estadísticas
-  if(!esCorrecta) STATE.preguntas[STATE.actual]._fallada = true;
+  STATE.preguntas[STATE.actual]._fallada = true;
   STATE.incorrectas++;
   const opciones = $('optionsContainer').querySelectorAll('.option');
   opciones.forEach(o => o.disabled = true);
@@ -2692,6 +2692,15 @@ function showScreen(id){
 
 // ─── INIT ─────────────────────────────────────────────────────────────────────
 function init(){
+  if(!localStorage.getItem('ga_jwt') || !GAAuth.isJwtValid(localStorage.getItem('ga_jwt'))){
+    window.location.replace('/login.html');
+    return;
+  }
+  if(localStorage.getItem('ga_test_passed') === 'true'){
+    window.location.replace('/dashboard.html');
+    return;
+  }
+
   $('attemptBadge').textContent = `Intento ${STATE.intento} de 3`;
 
   // Filtrar por nivel según intento
@@ -2902,39 +2911,27 @@ function retryTest(){
   renderQuestion();
 }
 
+function completeTestAccess(plan, nivel){
+  const pct = Math.round((STATE.correctas / STATE.preguntas.length) * 100);
+  guardarResultadoTest(pct, STATE.correctas, STATE.preguntas.length, nivel, plan);
+  const emailChoice = STATE.email || localStorage.getItem('ga_email');
+  if(emailChoice) actualizarPlanBrevo(emailChoice, GAAuth.normalizePlan(plan));
+  setTimeout(()=>{ GAAuth.finishTest(plan); }, 1500);
+}
+
 function choosePlan(plan){
   showLoading('Activando tu acceso…');
-  guardarResultadoTest(
-    parseInt($('eliteScore').textContent),
-    STATE.correctas,
-    STATE.preguntas.length,
-    'elite',
-    plan
-  );
-  const emailChoice = STATE.email || localStorage.getItem('ga_email');
-  if(emailChoice) actualizarPlanBrevo(emailChoice, plan);
-  setTimeout(()=>{
-    localStorage.setItem('ga_nivel', plan);
-    localStorage.setItem('ga_test_passed', 'true');
-    window.location.href = `dashboard.html?nivel=${plan}&new=true`;
-  }, 1500);
+  completeTestAccess(plan, 'elite');
 }
 
 function goToDashboard(){
   showLoading('Activando tu acceso…');
-  setTimeout(()=>{
-    localStorage.setItem('ga_nivel', 'semilla');
-    localStorage.setItem('ga_test_passed', 'true');
-    window.location.href = 'dashboard.html?nivel=semilla&new=true';
-  }, 1500);
+  completeTestAccess('semilla', 'semilla');
 }
 
 function goFreeAccess(){
   showLoading('Configurando acceso básico…');
-  setTimeout(()=>{
-    localStorage.setItem('ga_nivel', 'libre');
-    window.location.href = 'dashboard.html?nivel=libre';
-  }, 1500);
+  completeTestAccess('libre', 'libre');
 }
 
 // ─── BREVO EMAIL (via Worker — key segura en servidor) ────────────────────────
@@ -3011,5 +3008,6 @@ async function actualizarPlanBrevo(email, plan) {
 // ─── START ────────────────────────────────────────────────────────────────────
 init();
 </script>
+<script src="assets/analytics.js" defer></script>
 </body>
 </html>

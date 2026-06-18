@@ -42,6 +42,9 @@ nav{position:fixed;top:0;left:0;right:0;z-index:500;background:rgba(255,255,255,
 .nav-links{display:flex;gap:28px}
 .nav-links a{font-size:13px;color:var(--text2);text-decoration:none;transition:color .15s}
 .nav-links a:hover{color:var(--forest)}
+.nav-login{font-size:13px;color:var(--text2);text-decoration:none;margin-right:8px}
+.nav-login:hover{color:var(--forest)}
+.nav-actions{display:flex;align-items:center;gap:12px}
 .nc{background:var(--forest);color:#fff;border:none;padding:9px 22px;border-radius:24px;font-size:13px;font-weight:500;cursor:pointer;transition:all .2s;letter-spacing:-0.01em}
 .nc:hover{background:var(--forest-light);transform:translateY(-1px)}
 
@@ -260,7 +263,7 @@ footer{padding:32px 0;background:var(--white);border-top:1px solid var(--border)
 <!-- NAV -->
 <nav>
   <div class="ni">
-    <a href="#" class="nl">
+    <a href="/" class="nl">
       <img src="assets/icono_cannabicultor.png" alt="Cannabicultor IA">
       <div class="nl-brand">Cannabicultor IA <span>/ Growers Alliance</span></div>
     </a>
@@ -270,7 +273,10 @@ footer{padding:32px 0;background:var(--white);border-top:1px solid var(--border)
       <a href="#planes">Planes</a>
       <a href="#growers">Growers Alliance</a>
     </div>
-    <button class="nc" onclick="window.location.href='/register.html'">Solicitar acceso</button>
+    <div class="nav-actions">
+      <a href="/login.html" class="nav-login">Iniciar sesión</a>
+      <button class="nc" id="nav-cta" onclick="window.location.href='/register.html'">Solicitar acceso</button>
+    </div>
   </div>
 </nav>
 
@@ -625,7 +631,7 @@ footer{padding:32px 0;background:var(--white);border-top:1px solid var(--border)
           <button type="submit" class="form-submit" id="submit-btn">Reservar plaza fundador</button>
         </div>
       </form>
-      <p class="form-note">Solo para mayores de 18 años. Sin spam. Cancela cuando quieras. Datos protegidos bajo RGPD.</p>
+      <p class="form-note">Para acceso completo, <a href="/register.html" style="color:var(--forest)">crea tu cuenta</a> y completa el test de acceso. Solo mayores de 18 años. Datos protegidos bajo RGPD.</p>
       <div class="form-ok" id="form-ok">✓ Bienvenido a Growers Alliance. Revisa tu email y confirma tu suscripción para acceder al dashboard.<br><span style="font-size:11px;opacity:.7">Si no lo ves en 5 minutos, revisa la carpeta de spam.</span></div>
     </div>
   </div>
@@ -644,24 +650,32 @@ footer{padding:32px 0;background:var(--white);border-top:1px solid var(--border)
       <img src="assets/icono_cannabicultor.png" alt="Cannabicultor IA">
       <span class="footer-brand">Cannabicultor IA</span>
     </div>
-    <p class="footer-note">Solo para mayores de 18 años. El cultivo de cannabis está regulado. Consulta la legislación vigente en tu país. Este servicio tiene fines educativos y de asesoramiento responsable.</p>
+    <div>
+      <p class="footer-note">Solo para mayores de 18 años. El cultivo de cannabis está regulado. Consulta la legislación vigente en tu país. Este servicio tiene fines educativos y de asesoramiento responsable.</p>
+      <p class="footer-visits" id="ga-visit-counter" style="font-size:11px;color:var(--text4);margin-top:8px;text-align:right;"></p>
+    </div>
   </div>
 </footer>
 
+<script src="assets/auth.js"></script>
 <script>
-// ── RECONOCIMIENTO DE USUARIO ─────────────────────────────────────────────────
 (function(){
-  const nivel = localStorage.getItem('ga_nivel');
-  const passed = localStorage.getItem('ga_test_passed');
-  if(nivel && passed === 'true'){
-    // Ya tiene acceso — mostrar botón "Entrar al dashboard" en lugar de formulario
-    const btns = document.querySelectorAll('a[href*="register"], button[onclick*="register"]');
-    btns.forEach(b => { b.textContent = 'Entrar al dashboard →'; b.href = 'dashboard.html'; });
-    // También cambiar el formulario si existe
-    const form = document.getElementById('brevo-form');
-    if(form){
-      form.innerHTML = '<a href="dashboard.html" style="display:inline-block;background:#1a5c32;color:#fff;border-radius:999px;padding:16px 32px;font-size:15px;font-weight:700;text-decoration:none;">Entrar al dashboard →</a>';
-    }
+  const token = localStorage.getItem('ga_jwt');
+  if(!GAAuth.isJwtValid(token)){
+    if(token) GAAuth.clearSession();
+    return;
+  }
+  const dest = GAAuth.postAuthDestination();
+  const label = dest.includes('test') ? 'Continuar test de acceso →' : 'Entrar al dashboard →';
+  document.querySelectorAll('button[onclick*="register"]').forEach(function(b){
+    b.textContent = label;
+    b.onclick = function(){ window.location.href = dest; };
+  });
+  const navCta = document.getElementById('nav-cta');
+  if(navCta){ navCta.textContent = label; navCta.onclick = function(){ window.location.href = dest; }; }
+  const form = document.getElementById('brevo-form');
+  if(form){
+    form.innerHTML = '<a href="'+dest+'" style="display:inline-block;background:#1a5c32;color:#fff;border-radius:999px;padding:16px 32px;font-size:15px;font-weight:700;text-decoration:none;">'+label+'</a>';
   }
 })();
 
@@ -680,7 +694,9 @@ document.getElementById('brevo-form').addEventListener('submit', function(e) {
     return;
   }
   document.getElementById('submit-btn').textContent = 'Enviando...';
+  document.getElementById('form-ok').style.display = 'block';
 });
 </script>
+<script src="assets/analytics.js" defer></script>
 </body>
 </html>

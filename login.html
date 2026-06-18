@@ -7,6 +7,7 @@
 <meta name="description" content="Accede a tu cuenta de Cannabicultor IA.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Lora:ital,wght@0,400;0,600;1,400;1,600&display=swap" rel="stylesheet">
+<script src="assets/auth.js"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -164,20 +165,10 @@ function hideAlert(){alertBox.className='alert'}
   el.addEventListener('input',()=>{el.classList.remove('error');hideAlert();});
 });
 
-// Si ya hay sesión activa y el token no ha caducado, salta directo al dashboard
-(function(){
-  const jwt=localStorage.getItem('ga_jwt');
-  if(!jwt)return;
-  try{
-    const payload=JSON.parse(atob(jwt.split('.')[1].replace(/-/g,'+').replace(/_/g,'/')));
-    if(payload.exp&&payload.exp*1000<Date.now()){
-      // Token caducado: limpiar sesión y quedarse en login
-      ['ga_jwt','ga_email','ga_nivel','ga_test_passed','ga_perfil'].forEach(k=>localStorage.removeItem(k));
-      return;
-    }
-  }catch(e){/* token ilegible: el guard del dashboard hará la verificación real contra el Worker */}
-  window.location.replace('/dashboard.html');
-})();
+// Si venimos de reset-password.html con éxito, avisar
+if(new URLSearchParams(window.location.search).get('reset')==='ok'){
+  showAlert('Contraseña actualizada. Inicia sesión con tu nueva contraseña.','success');
+}
 
 form.addEventListener('submit',async(e)=>{
   e.preventDefault();
@@ -224,14 +215,19 @@ form.addEventListener('submit',async(e)=>{
       return;
     }
 
-    localStorage.setItem('ga_jwt',token);
-    localStorage.setItem('ga_email',email);
-    localStorage.setItem('ga_nivel',data.nivel||data.plan||(data.user&&(data.user.nivel||data.user.plan))||'libre');
-    localStorage.setItem('ga_test_passed','true');
-    if(data.perfil_cultivo){ localStorage.setItem('ga_perfil', JSON.stringify(data.perfil_cultivo)); }
+    GAAuth.saveSession(token,email,data);
+    if(GAAuth.testPassedFromApi(data)){
+      localStorage.setItem('ga_test_passed','true');
+    }
+    if(data.perfil_cultivo){
+      localStorage.setItem('ga_perfil',JSON.stringify(data.perfil_cultivo));
+    }
 
-    showAlert('Sesión iniciada. Cargando dashboard…','success');
-    setTimeout(()=>{window.location.href='/dashboard.html'},500);
+    await GAAuth.syncTestPassedFromServer(email);
+
+    const dest=GAAuth.postAuthDestination();
+    showAlert(dest.includes('test')?'Sesión iniciada. Continúa con el test de acceso…':'Sesión iniciada. Cargando dashboard…','success');
+    setTimeout(()=>{window.location.href=dest},500);
   }catch(err){
     showAlert('Error de conexión. Revisa tu red e inténtalo de nuevo.','error');
     btn.disabled=false;
@@ -239,5 +235,9 @@ form.addEventListener('submit',async(e)=>{
   }
 });
 </script>
+<script>
+if(GAAuth.redirectIfAuthenticated()){}
+</script>
+<script src="assets/analytics.js" defer></script>
 </body>
 </html>

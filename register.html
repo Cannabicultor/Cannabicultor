@@ -7,6 +7,7 @@
 <meta name="description" content="Crea tu cuenta en Cannabicultor IA. Acceso fundador con precio bloqueado de por vida.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Lora:ital,wght@0,400;0,600;1,400;1,600&display=swap" rel="stylesheet">
+<script src="assets/auth.js"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -110,7 +111,7 @@ footer{padding:24px 20px 32px;background:transparent;text-align:center}
     <div class="card-head">
       <div class="eyebrow">Acceso fundador</div>
       <h1 class="title">Crea tu <em>cuenta</em></h1>
-      <p class="subtitle">Precio fundador bloqueado de por vida. Solo mayores de 18.</p>
+      <p class="subtitle">Tras crear tu cuenta completarás el test de acceso. Solo mayores de 18.</p>
     </div>
 
     <div id="alert" class="alert"></div>
@@ -189,6 +190,10 @@ function hideAlert(){alertBox.className='alert'}
   el.addEventListener('input',()=>{el.classList.remove('error');hideAlert();});
 });
 
+if(GAAuth.isJwtValid(localStorage.getItem('ga_jwt'))){
+  window.location.replace(GAAuth.postAuthDestination());
+}
+
 form.addEventListener('submit',async(e)=>{
   e.preventDefault();
   hideAlert();
@@ -217,6 +222,11 @@ form.addEventListener('submit',async(e)=>{
     showAlert('La contraseña debe tener al menos 8 caracteres.','error');
     return;
   }
+  if(!/[a-zA-Z]/.test(password)||!/[0-9]/.test(password)){
+    pwInput.classList.add('error');
+    showAlert('La contraseña debe incluir letras y números.','error');
+    return;
+  }
   if(password!==password2){
     pw2Input.classList.add('error');
     showAlert('Las contraseñas no coinciden.','error');
@@ -239,9 +249,8 @@ form.addEventListener('submit',async(e)=>{
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({
-        email, password,
-        remember: true,
-        consent:{ age:true, terms:true, marketing, terms_version:'v1' }
+        email,password,
+        consent:{age:true,terms:true,marketing,terms_version:'v1'}
       })
     });
     const data=await res.json().catch(()=>({}));
@@ -254,15 +263,17 @@ form.addEventListener('submit',async(e)=>{
       return;
     }
 
-    // El alta en Brevo y el registro de consentimiento los hace el Worker (server-side).
+    fetch(API+'/brevo-contact',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({email,attributes:{PLAN:'libre'}})
+    }).catch(()=>{});
     const token=data.token||data.jwt||data.access_token;
     if(token){
-      localStorage.setItem('ga_jwt',token);
-      localStorage.setItem('ga_email',email);
-      localStorage.setItem('ga_nivel',data.nivel||data.plan||(data.user&&(data.user.nivel||data.user.plan))||'libre');
-      localStorage.setItem('ga_test_passed','true');
-      showAlert('Cuenta creada. Entrando al dashboard…','success');
-      setTimeout(()=>{window.location.href='/dashboard.html'},800);
+      localStorage.removeItem('ga_test_passed');
+      GAAuth.saveSession(token,email,data);
+      showAlert('Cuenta creada. Siguiente paso: test de acceso…','success');
+      setTimeout(()=>{window.location.href='/test.html'},800);
     }else{
       showAlert('Cuenta creada. Revisa tu email para confirmar el acceso.','success');
       btn.type='button';
@@ -277,5 +288,6 @@ form.addEventListener('submit',async(e)=>{
   }
 });
 </script>
+<script src="assets/analytics.js" defer></script>
 </body>
 </html>
