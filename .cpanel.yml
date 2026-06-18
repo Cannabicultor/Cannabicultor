@@ -1,6 +1,5 @@
 ---
 deployment:
   tasks:
-    - export DEPLOYPATH=/home3/c4nn4bicultor/public_html
-    - export REPOPATH=~/cannabicultor-repo
-    - /bin/rsync -av --delete --exclude='.git' --exclude='.env' --exclude='pipeline' --exclude='worker' --exclude='node_modules' --exclude='.claude' --exclude='docs' --exclude='output.json' --exclude='*.log' $REPOPATH/ $DEPLOYPATH/
+    - export DEPLOYPATH=/home3/c4nn4bicultor/public_html/
+    - /bin/rsync -av --exclude='.git' --exclude='.env' --exclude='pipeline/' --exclude='worker/' --exclude='node_modules/' --exclude='.claude/' --exclude='docs/' --exclude='output.json' --exclude='*.log' --exclude='.well-known/' --exclude='cgi-bin/' ./ $DEPLOYPATH
