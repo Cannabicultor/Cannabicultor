@@ -1,3 +1,9 @@
+# Legacy analytics URL (file blocked on host; redirect to trafico.html)
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteRule ^analytics\.html$ /trafico.html [R=301,L]
+</IfModule>
+
 # Block sensitive files from web access
 <FilesMatch "^(\.env|\.git|package-lock\.json)$">
   Require all denied

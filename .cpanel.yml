@@ -4,5 +4,5 @@ deployment:
     - export DEPLOYPATH=/home3/c4nn4bicultor/public_html/
     - /bin/mkdir -p $DEPLOYPATH/assets
     - /bin/rsync -av --exclude=.git --exclude=pipeline --exclude=worker --exclude=node_modules --exclude=docs --exclude=.env --exclude=.claude . $DEPLOYPATH/
-    - /bin/cp -f dashboard.html login.html register.html test.html index.html forgot-password.html reset-password.html analytics.html $DEPLOYPATH/
+    - /bin/cp -f dashboard.html login.html register.html test.html index.html forgot-password.html reset-password.html trafico.html breeders.html $DEPLOYPATH/
     - /bin/cp -f assets/chat-vision.js assets/auth.js assets/analytics.js $DEPLOYPATH/assets/
