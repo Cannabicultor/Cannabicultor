@@ -23,6 +23,7 @@ HTML_FILES=(
   buscador-cannabicultor.html
   disenador_sala_cultivo.html
   app.html
+  atlas_landrace.html
 )
 
 for file in "${HTML_FILES[@]}"; do
