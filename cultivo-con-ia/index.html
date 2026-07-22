@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cultivo de cannabis con IA — Guía completa | Cannabicultor</title>
+<meta name="description" content="Aprende a cultivar cannabis con inteligencia artificial: diagnóstico, VPD, nutrientes y comunidad. Diario IA gratis con 44.000+ variedades.">
+<link rel="canonical" href="https://cannabicultor.com/cultivo-con-ia/">
+
+<!-- Open Graph -->
+<meta property="og:type" content="article">
+<meta property="og:title" content="Cultivo de cannabis con IA — Guía completa | Cannabicultor">
+<meta property="og:description" content="Aprende a cultivar cannabis con inteligencia artificial: diagnóstico, VPD, nutrientes y comunidad. Diario IA gratis con 44.000+ variedades.">
+<meta property="og:url" content="https://cannabicultor.com/cultivo-con-ia/">
+<meta property="og:image" content="https://cannabicultor.com/assets/logo_publico_4.png">
+<meta property="og:locale" content="es_ES">
+<meta property="og:site_name" content="Cannabicultor">
+
+<!-- Twitter Card -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Cultivo de cannabis con IA — Guía completa | Cannabicultor">
+<meta name="twitter:description" content="Aprende a cultivar cannabis con inteligencia artificial: diagnóstico, VPD, nutrientes y comunidad. Diario IA gratis con 44.000+ variedades.">
+<meta name="twitter:image" content="https://cannabicultor.com/assets/logo_publico_4.png">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Lora:ital,wght@0,400;1,400&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --white:#ffffff;--bg:#f5f7f4;--bg2:#eef1ec;
+  --forest:#1a5c32;--forest-light:#2a7a44;--forest-pale:#e6f0ea;--forest-pale2:#d0e8d8;
+  --text:#1a1f1c;--text2:#3d453f;--text3:#6b7370;--text4:#9aa19d;--border:#e2e7e1;
+}
+html{scroll-behavior:smooth}
+body{font-family:'Inter',system-ui,-apple-system,sans-serif;color:var(--text);background:var(--white);line-height:1.7;-webkit-font-smoothing:antialiased}
+a{color:var(--forest);text-decoration:none}
+a:hover{text-decoration:underline}
+
+/* Nav */
+nav{position:sticky;top:0;z-index:50;background:rgba(255,255,255,.92);backdrop-filter:blur(10px);border-bottom:1px solid var(--border)}
+.ni{max-width:1080px;margin:0 auto;padding:12px 24px;display:flex;align-items:center;justify-content:space-between;gap:16px}
+.nl{display:flex;align-items:center;gap:10px}
+.nl img{height:30px;width:auto}
+.nl-brand{font-size:14px;font-weight:600;color:var(--text)}
+.nl-brand span{color:var(--text4);font-weight:400}
+.nc{background:var(--forest);color:#fff;border:0;padding:9px 18px;border-radius:9px;font-size:13px;font-weight:500;cursor:pointer;font-family:inherit}
+.nc:hover{background:var(--forest-light)}
+
+/* Layout */
+.wrap{max-width:760px;margin:0 auto;padding:0 24px}
+.crumbs{font-size:13px;color:var(--text3);padding:20px 0 0}
+.crumbs a{color:var(--text3)}
+
+/* Hero */
+.hero{padding:28px 0 56px;border-bottom:1px solid var(--border)}
+h1{font-family:'Inter',sans-serif;font-size:clamp(32px,6vw,52px);font-weight:600;letter-spacing:-0.04em;line-height:1.07;margin:14px 0 18px}
+h1 em{font-family:'Lora',serif;font-style:italic;color:var(--forest);font-weight:400}
+.lead{font-size:clamp(16px,2.2vw,19px);color:var(--text2);line-height:1.65;max-width:620px}
+.hero-cta{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin:30px 0 14px}
+.btn{display:inline-block;background:var(--forest);color:#fff;padding:14px 28px;border-radius:11px;font-weight:500;font-size:16px}
+.btn:hover{background:var(--forest-light);text-decoration:none}
+.btn-ghost{background:transparent;color:var(--forest);border:1px solid var(--forest-pale2);padding:13px 24px}
+.btn-ghost:hover{background:var(--forest-pale);text-decoration:none}
+.micro{font-size:13px;color:var(--text3)}
+
+/* Contenido */
+section{padding:52px 0;border-bottom:1px solid var(--border)}
+h2{font-size:clamp(24px,3.6vw,32px);font-weight:600;letter-spacing:-0.03em;line-height:1.2;margin:0 0 20px}
+h3{font-size:19px;font-weight:600;letter-spacing:-0.02em;margin:32px 0 10px;color:var(--text)}
+p{margin:0 0 16px;color:var(--text2);font-size:16.5px}
+ul,ol{margin:0 0 16px;padding-left:22px;color:var(--text2)}
+li{margin:0 0 9px;font-size:16.5px}
+strong{color:var(--text);font-weight:600}
+
+/* Definición destacada (para AI Overview) */
+.definicion{background:var(--forest-pale);border-left:3px solid var(--forest);padding:20px 24px;border-radius:0 12px 12px 0;margin:0 0 26px}
+.definicion p{margin:0;font-size:17px;color:var(--text)}
+
+.nota{background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:18px 22px;margin:22px 0}
+.nota p{margin:0;font-size:15.5px;color:var(--text2)}
+.nota p+p{margin-top:10px}
+
+/* Tarjetas herramientas */
+.tools{display:grid;gap:16px;margin-top:26px}
+.tool{background:var(--bg);border:1px solid var(--border);border-radius:14px;padding:22px 24px}
+.tool h3{margin:0 0 8px;font-size:18px}
+.tool p{margin:0 0 12px;font-size:15.5px}
+.tool a.more{font-size:14px;font-weight:500}
+
+/* Pasos */
+.pasos{counter-reset:paso;list-style:none;padding:0;margin-top:24px}
+.pasos li{counter-increment:paso;position:relative;padding-left:46px;margin-bottom:26px}
+.pasos li::before{content:counter(paso);position:absolute;left:0;top:1px;width:31px;height:31px;border-radius:50%;background:var(--forest-pale);color:var(--forest);font-weight:600;font-size:14px;display:flex;align-items:center;justify-content:center}
+.pasos h3{margin:0 0 6px;font-size:17px}
+.pasos p{margin:0;font-size:16px}
+
+/* Casos */
+.caso{border-left:2px solid var(--forest-pale2);padding-left:20px;margin:0 0 24px}
+.caso h3{margin:0 0 8px;font-size:17px}
+.caso p{margin:0;font-size:16px}
+
+/* FAQ */
+.faq{margin-top:24px}
+.faq details{border-bottom:1px solid var(--border);padding:16px 0}
+.faq summary{font-weight:600;font-size:17px;cursor:pointer;list-style:none;color:var(--text);display:flex;justify-content:space-between;gap:16px;align-items:flex-start}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary::after{content:'+';color:var(--forest);font-weight:400;font-size:22px;line-height:1;flex-shrink:0}
+.faq details[open] summary::after{content:'–'}
+.faq details p{margin:12px 0 0;font-size:16px}
+
+/* CTA final */
+.final{background:var(--bg);border-radius:18px;padding:40px 32px;text-align:center;margin:52px 0}
+.final h2{margin-bottom:14px}
+.final p{max-width:520px;margin-left:auto;margin-right:auto}
+
+footer{border-top:1px solid var(--border);background:var(--bg2);margin-top:0}
+.fi{max-width:760px;margin:0 auto;padding:34px 24px 46px;font-size:13px;color:var(--text3)}
+.fi a{color:var(--text3)}
+.fi .flinks{margin-bottom:14px;display:flex;gap:16px;flex-wrap:wrap}
+.fi .flinks a{font-weight:500}
+
+@media(max-width:640px){
+  .wrap{padding:0 18px}
+  section{padding:40px 0}
+  .nl-brand span{display:none}
+  .final{padding:32px 22px}
+  .btn{width:100%;text-align:center}
+}
+</style>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Article",
+      "headline": "Cultivo de cannabis con inteligencia artificial: guía completa",
+      "description": "Guía sobre cómo la inteligencia artificial ayuda en el cultivo de cannabis: diagnóstico temprano, control de VPD, nutrientes por variedad y aprendizaje del historial de cultivo.",
+      "inLanguage": "es",
+      "mainEntityOfPage": "https://cannabicultor.com/cultivo-con-ia/",
+      "image": "https://cannabicultor.com/assets/logo_publico_4.png",
+      "author": {
+        "@type": "Person",
+        "name": "Enrique J. Dorta Pulido"
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "Cannabicultor",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://cannabicultor.com/assets/logo_publico_4.png"
+        }
+      },
+      "datePublished": "2026-07-22",
+      "dateModified": "2026-07-22"
+    },
+    {
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        { "@type": "ListItem", "position": 1, "name": "Inicio", "item": "https://cannabicultor.com/" },
+        { "@type": "ListItem", "position": 2, "name": "Cultivo con IA", "item": "https://cannabicultor.com/cultivo-con-ia/" }
+      ]
+    },
+    {
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "¿Cómo funciona la IA en el cultivo de cannabis?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "La IA recibe los datos de tu cultivo (variedad, fase, espacio, iluminación, sustrato, temperatura y humedad) y los cruza con conocimiento agronómico y con tu propio historial. A partir de ahí interpreta la situación concreta y responde con recomendaciones ajustadas a tu caso, en lugar de darte consejos genéricos que valdrían para cualquiera."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "¿Para qué sirve la inteligencia artificial en el cultivo?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Sirve sobre todo para tres cosas: detectar problemas antes de que se agraven, ajustar decisiones de riego, nutrientes y clima a la fase y la genética concretas, y ahorrarte tiempo de consulta. No sustituye tu criterio ni el trabajo manual: reduce el margen de error y acorta el tiempo entre la duda y la decisión."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "¿Es fiable la IA para cultivar cannabis?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Es fiable como apoyo a la decisión, no como oráculo. La calidad de la respuesta depende de la calidad de los datos que le des: con información precisa de tu setup acierta mucho más. Conviene contrastar siempre las recomendaciones críticas con tu observación directa de la planta, que sigue siendo la fuente principal."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "¿Puede la IA diagnosticar problemas en mi cultivo?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Puede orientar el diagnóstico. Si le describes los síntomas o le envías una foto de la hoja, propone las causas más probables y qué comprobar para confirmarlas: pH, EC, riego, temperatura o humedad. Es una hipótesis fundamentada que tú verificas, no un veredicto de laboratorio."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "¿Cuál es la diferencia entre automatización e IA en el cultivo?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "La automatización ejecuta reglas fijas: un temporizador enciende la luz a las 6:00 pase lo que pase. La IA interpreta el contexto y razona sobre él: entiende que tu planta está en semana 5 de floración, que la humedad subió y que eso aumenta el riesgo de botritis, y te lo advierte. Una obedece; la otra interpreta."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "¿Qué datos necesita la IA para ayudarme?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Lo básico: tipo de cultivo (interior o exterior), dimensiones del espacio, iluminación, sustrato, variedad y fase en la que estás. Con eso ya da respuestas útiles. Cuantos más datos añadas —nutrientes, riegos, temperatura, humedad y fotos—, más se ajustan las recomendaciones a tu caso concreto."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "¿Cuánto cuesta usar Cannabicultor IA?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Empezar es gratuito. El plan Libre permite consultas diarias sin coste, y el plan Semilla en condiciones de fundador también es gratuito e incluye memoria básica de tu setup. Los planes de pago, con memoria completa y alertas, parten de 9 € al mes. Puedes probar la herramienta antes de decidir si te compensa."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "¿La IA sustituye la experiencia real?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "No, y conviene desconfiar de quien lo prometa. La IA acelera el acceso al conocimiento y evita errores habituales, pero no ve tu planta, no huele tu sala ni toca tu sustrato. La experiencia sigue siendo insustituible: lo que cambia es que ahora tardas menos en adquirirla y cometes menos errores por el camino."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "¿Qué pasa con mis datos de cultivo?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Tus datos de cultivo son tuyos y se tratan conforme al RGPD. Se usan para dar contexto a tus propias consultas y para construir tu historial, no se publican en la comunidad sin que tú lo decidas. Puedes consultar el detalle en la política de privacidad del sitio."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "¿Necesito conocimientos previos para usarla?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "No. De hecho es donde más se nota: puedes preguntar con tus palabras, sin conocer la terminología técnica, y recibir una explicación clara del porqué. Si ya tienes experiencia, el valor está en otro sitio: en el historial, la comparación entre cultivos y el ahorro de tiempo."
+          }
+        }
+      ]
+    }
+  ]
+}
+</script>
+</head>
+<body>
+
+<nav>
+  <div class="ni">
+    <a href="/" class="nl">
+      <img src="/assets/icono_cannabicultor.png" alt="Cannabicultor IA">
+      <div class="nl-brand">Cannabicultor IA <span>/ Growers Alliance</span></div>
+    </a>
+    <button class="nc" onclick="window.location.href='/'">Empieza gratis</button>
+  </div>
+</nav>
+
+<div class="wrap">
+  <nav class="crumbs" aria-label="Ruta de navegación"><a href="/">Inicio</a> › Cultivo con IA</nav>
+
+  <header class="hero">
+    <h1>Cultivo de cannabis con <em>inteligencia artificial</em></h1>
+    <p class="lead">Una IA que recuerda tu setup, aprende de tus cultivos anteriores y te avisa antes de que un problema se te vaya de las manos. No es un buscador con otro nombre ni un chat que empieza de cero cada vez: es un asistente que conoce tu sala, tu genética y tu forma de cultivar, y que responde a partir de ahí. En esta guía verás qué puede hacer la inteligencia artificial en un cultivo real, qué no puede hacer por mucho que se anuncie, y cómo empezar hoy mismo con un diario de cultivo que aprende contigo.</p>
+    <div class="hero-cta">
+      <a class="btn" href="/">Empieza tu diario IA — Gratis</a>
+      <a class="btn btn-ghost" href="/buscador-cannabicultor.html">Explorar 44.000 variedades</a>
+    </div>
+    <p class="micro">Solo para mayores de 18 años. Base de datos con 44.000+ variedades.</p>
+  </header>
+
+  <section id="que-es">
+    <h2>Qué es cultivar cannabis con inteligencia artificial</h2>
+    <div class="definicion">
+      <p>Cultivar cannabis con inteligencia artificial consiste en usar un sistema capaz de interpretar los datos de tu cultivo —variedad, fase, clima, sustrato e historial— para darte recomendaciones adaptadas a tu situación concreta, en lugar de aplicar reglas fijas iguales para todos.</p>
+    </div>
+    <p>La diferencia con lo que ya conocías está en el verbo. Un controlador climático <strong>ejecuta</strong>. Una IA de cultivo <strong>interpreta</strong>.</p>
+    <p>Llevamos años automatizando el cultivo de interior: temporizadores que encienden la luz, controladores que activan el extractor a 28 °C, bombas que riegan cada equis horas. Todo eso es automatización, y funciona muy bien. Pero es ciega. El temporizador no sabe si tu planta está en semana 2 o en semana 8. El extractor no sabe que tu genética es una sativa larga que agradece más humedad relativa.</p>
+    <p>La inteligencia artificial aplicada al cultivo trabaja en otro plano: el de la decisión. Recibe el contexto, lo cruza con conocimiento agronómico y con lo que ya sabe de ti, y razona sobre tu caso.</p>
+    <h3>Qué sí hace la IA en tu cultivo</h3>
+    <ul>
+      <li>Interpreta síntomas y propone las causas más probables, ordenadas por probabilidad.</li>
+      <li>Ajusta recomendaciones de riego, nutrientes y clima a la fase y la genética concretas.</li>
+      <li>Recuerda tus cultivos anteriores y detecta patrones que se repiten.</li>
+      <li>Traduce datos técnicos (VPD, EC, pH) a decisiones concretas y accionables.</li>
+      <li>Responde a cualquier hora, sin que tengas que esperar a que alguien conteste en un foro.</li>
+    </ul>
+    <h3>Qué no hace, por mucho que se venda</h3>
+    <p>Conviene decirlo claro, porque en este sector sobra humo. La IA <strong>no ve tu planta</strong> salvo que le envíes una foto. <strong>No sustituye tu criterio</strong>: acierta más cuanto mejores son los datos que le das, y se equivoca cuando el contexto es pobre. <strong>No garantiza cosechas</strong>, porque el resultado depende de genética, ambiente, agua y manos. Y desde luego <strong>no reemplaza la experiencia</strong>: la acelera y evita que repitas errores caros, que ya es bastante.</p>
+  </section>
+
+  <section id="beneficios">
+    <h2>Cómo la IA mejora tus resultados de cultivo</h2>
+    <p>El valor real no está en la tecnología, sino en las decisiones que te ahorra o te corrige. Estos son los cinco puntos donde más se nota.</p>
+
+    <h3>Diagnóstico temprano de problemas</h3>
+    <p>La mayoría de los desastres de cultivo empiezan pequeños: un amarilleo entre nervios, una hoja con los bordes quemados, un olor raro a última hora del día. El problema no suele ser el problema, sino tardar diez días en identificarlo.</p>
+    <p>Al describir el síntoma o subir una foto, la IA propone un diagnóstico diferencial: qué causas encajan, qué comprobación te sacaría de dudas y en qué orden hacerlas. Por ejemplo, ante un amarilleo internervial en hojas bajas durante floración, señalará una carencia de magnesio como hipótesis principal y te pedirá el pH del sustrato antes de recomendarte nada, porque un bloqueo por pH y una carencia real se corrigen de forma distinta.</p>
+
+    <h3>Optimización de nutrientes según fase y variedad</h3>
+    <p>Las tablas del fabricante están pensadas para una planta media que no existe. Tu genética concreta, tu sustrato y tu agua cambian la ecuación.</p>
+    <p>Con la variedad identificada en una base de datos de más de 44.000 registros, la IA puede afinar: una índica de 55 días de floración y una sativa de 90 no llevan el mismo calendario de nutrición, y forzar la segunda con el esquema de la primera es una de las causas más comunes de cosechas mediocres.</p>
+    <p>El ajuste también va en sentido contrario. Si tu agua de red ya viene con una conductividad alta, arrancar con la dosis completa del fabricante es pedir una quemadura de puntas en la segunda semana. Un sistema que conoce tu agua, tu sustrato y tu genética puede recomendarte empezar por debajo de la tabla y subir según respuesta, que es como trabaja cualquier cultivador con oficio.</p>
+
+    <h3>Aprendizaje de tu historial personal</h3>
+    <p>Aquí está la diferencia entre un chat genérico y un diario con memoria. Imagina un cultivador que ha registrado tres cultivos y en los tres apareció una carencia de magnesio en la semana 5. Al arrancar el cuarto, el sistema no espera a que vuelva a pasar: avisa en la semana 4 y sugiere revisar el aporte de calcio y magnesio antes de que el síntoma aparezca.</p>
+    <p>Eso no lo puede hacer ninguna herramienta que te trate como a un desconocido en cada sesión.</p>
+
+    <h3>Reducción de errores para quien empieza</h3>
+    <p>El primer cultivo se paga caro en errores evitables: exceso de riego, luz demasiado cerca, sobrefertilización por miedo a quedarse corto. Poder preguntar «¿esto es normal?» con tus palabras, sin conocer la jerga y sin exponerte en un foro, resuelve la mayoría de esos tropiezos en el momento en que ocurren.</p>
+    <p>Hay además un efecto menos evidente: la explicación. Que te digan «riega menos» no te enseña nada; que te expliquen por qué un sustrato encharcado asfixia la raíz y cómo notar el peso de la maceta antes de regar te convierte en mejor cultivador para el ciclo siguiente. La IA puede permitirse explicar el porqué todas las veces que haga falta, sin cansarse.</p>
+
+    <h3>Ahorro de tiempo y decisiones más rápidas</h3>
+    <p>Buscar en foros la respuesta a una duda concreta puede llevarte media hora, y acabar con cinco opiniones contradictorias de gente que no conoce tu sala. Preguntar a un sistema que ya sabe tu setup lleva treinta segundos. Multiplícalo por las decenas de dudas de un ciclo completo.</p>
+    <p>Y hay decisiones que no admiten espera. Detectar una plaga un viernes por la noche, ver hongos tras una semana húmeda o encontrar una planta macho entre las hembras son situaciones en las que actuar hoy o el lunes marca la diferencia entre un susto y un cultivo perdido.</p>
+  </section>
+
+  <section id="herramientas">
+    <h2>Las herramientas de Cannabicultor con IA</h2>
+    <p>Cannabicultor no es solo un chat. Es un conjunto de herramientas conectadas entre sí, y todas alimentan el mismo contexto sobre tu cultivo.</p>
+
+    <div class="tools">
+      <div class="tool">
+        <h3>Diario de cultivo con IA y memoria</h3>
+        <p>El núcleo de la plataforma. Registras tu cultivo y la IA recuerda tu espacio, iluminación, sustrato, genética y fase. A partir de ahí cada respuesta parte de tu realidad, no de una planta teórica. Cuantos más ciclos registras, mejor anticipa lo que suele pasarte.</p>
+        <p>La memoria es lo que separa esta herramienta de un chat convencional. No tendrás que repetir tu configuración en cada consulta, y las respuestas dejan de ser consejos generales para convertirse en indicaciones sobre tu cultivo concreto, con tus limitaciones de espacio y tu equipo.</p>
+        <a class="more" href="/">Crear tu diario IA gratis →</a>
+      </div>
+
+      <div class="tool">
+        <h3>Buscador de 44.000 variedades</h3>
+        <p>Una base de datos con más de 44.000 variedades y más de 2.000 bancos de semillas, con genética, tiempos de floración y contenido de cannabinoides cuando el dato existe. Sirve para elegir qué cultivar y para que la IA sepa exactamente con qué genética estás trabajando.</p>
+        <p>Elegir bien la variedad es la decisión más barata y más determinante de todo el ciclo: una genética de noventa días de floración en un armario que necesitas libre en dos meses es un problema que ninguna técnica posterior arregla. Cuando un dato no es fiable, preferimos no mostrarlo.</p>
+        <a class="more" href="/buscador-cannabicultor.html">Explorar el buscador de variedades →</a>
+      </div>
+
+      <div class="tool">
+        <h3>Diseñador de salas de cultivo</h3>
+        <p>Calcula la relación entre espacio, iluminación y clima antes de gastar un euro: cuántas plantas caben, qué potencia de luz necesitas y qué VPD deberías mantener en cada fase. Corregir un diseño sobre el plano cuesta mucho menos que corregirlo con la sala montada.</p>
+        <p>Es la herramienta que más disgustos evita a quien monta su primer espacio, porque los errores de diseño —extracción insuficiente, luz mal dimensionada, plantas demasiado juntas— arrastran problemas durante todo el ciclo y no se arreglan con nutrientes.</p>
+        <a class="more" href="/disenador_sala_cultivo.html">Abrir el diseñador de salas →</a>
+      </div>
+
+      <div class="tool">
+        <h3>Atlas de landraces</h3>
+        <p>Un mapa de las variedades landrace y su origen geográfico, desde el Hindú Kush hasta Tailandia, Malawi o Colombia. Entender de dónde viene una genética explica buena parte de cómo se comporta en tu sala: ciclos, porte y exigencias de clima.</p>
+        <a class="more" href="/atlas_landrace.html">Ver el atlas de landraces →</a>
+      </div>
+
+      <div class="tool">
+        <h3>Comunidad de cultivadores</h3>
+        <p>Growers Alliance es la comunidad privada del proyecto, pensada para compartir resultados reales entre cultivadores en lugar de repetir mitos. El acceso depende del plan, y la idea es simple: lo que la comunidad aprende termina mejorando las recomendaciones de todos.</p>
+        <a class="more" href="/">Solicitar acceso a la comunidad →</a>
+      </div>
+    </div>
+  </section>
+
+  <section id="como-funciona">
+    <h2>Cómo funciona tu diario de cultivo con IA</h2>
+    <p>El proceso está pensado para que empieces a recibir valor desde el primer día, sin una configuración interminable.</p>
+
+    <ol class="pasos">
+      <li>
+        <h3>Registro y configuración inicial</h3>
+        <p>Creas tu cuenta y describes tu cultivo en unos minutos: interior o exterior, medidas del espacio, tipo de iluminación, sustrato y variedad. No necesitas tenerlo todo definido; puedes completarlo sobre la marcha.</p>
+        <p>Si aún estás decidiendo qué cultivar, puedes empezar por el <a href="/buscador-cannabicultor.html">buscador de variedades</a> y volver después. Y si todavía no tienes la sala montada, el <a href="/disenador_sala_cultivo.html">diseñador de salas</a> es mejor punto de partida que cualquier consulta.</p>
+      </li>
+      <li>
+        <h3>La IA aprende tu setup</h3>
+        <p>Esa configuración deja de ser un formulario y pasa a ser contexto permanente. No tendrás que volver a explicar que cultivas en un armario de 120×120 con LED de 480 W cada vez que preguntes algo.</p>
+        <p>El contexto también incluye tu ubicación a efectos prácticos y legales, porque el cultivo de cannabis está regulado de forma muy distinta según el país y las recomendaciones deben tenerlo en cuenta.</p>
+      </li>
+      <li>
+        <h3>Consultas con contexto real</h3>
+        <p>Preguntas con tus palabras y la respuesta ya viene ajustada a tu caso. La misma pregunta —«¿subo la EC?»— recibe respuestas distintas según estés en vegetativo con un LED modesto o en plena floración con una genética exigente.</p>
+        <p>Puedes acompañar la consulta con una foto cuando el síntoma sea visual. Una imagen de la hoja afectada, con luz natural y enfocada, aporta más información que tres párrafos describiendo un color.</p>
+      </li>
+      <li>
+        <h3>Alertas preventivas</h3>
+        <p>Con el historial acumulado, el sistema empieza a anticipar. Avisa cuando se acerca una fase crítica, cuando tocaría revisar un parámetro o cuando detecta un patrón que ya te dio problemas en un cultivo anterior.</p>
+        <p>Es el paso que más se nota a partir del segundo o tercer ciclo, cuando ya hay historial suficiente para que los patrones tengan sentido. En el primer cultivo la IA te acompaña; a partir del tercero, empieza a conocerte.</p>
+      </li>
+    </ol>
+  </section>
+
+  <section id="casos">
+    <h2>Ejemplos reales de cultivo con IA</h2>
+    <p>Estos ejemplos son ilustrativos —situaciones típicas, no testimonios— y sirven para ver dónde encaja la herramienta en el día a día.</p>
+
+    <div class="caso">
+      <h3>Diagnóstico a partir de una foto</h3>
+      <p>Cultivador con armario de interior, semana 6 de floración. Detecta manchas necróticas en hojas medias y sube una foto. La IA plantea las causas compatibles —carencia de calcio, bloqueo por pH alto, salpicadura de riego foliar— y le pide dos datos para descartar: pH de drenaje y si ha pulverizado con la luz encendida. Con esa respuesta, el diagnóstico se estrecha a uno.</p>
+    </div>
+
+    <div class="caso">
+      <h3>Cálculo de VPD según la fase</h3>
+      <p>Sala de 2×2 m con problemas de humedad en floración tardía. En lugar de dar un número genérico, se calcula el VPD objetivo para esa fase concreta y se traduce a acciones sobre temperatura y humedad. El <a href="/disenador_sala_cultivo.html">diseñador de salas de cultivo</a> permite simularlo antes de tocar nada en la sala.</p>
+    </div>
+
+    <div class="caso">
+      <h3>Nutrición ajustada a la variedad</h3>
+      <p>Cultivador que pasa de una índica corta a una sativa de ciclo largo y mantiene el mismo calendario de abonado. Identificando la genética en el <a href="/buscador-cannabicultor.html">buscador de variedades</a>, el sistema advierte de que ese esquema se queda corto en las últimas semanas y propone extender la fase de floración.</p>
+    </div>
+
+    <div class="caso">
+      <h3>Alertas basadas en tu historial</h3>
+      <p>Tres ciclos registrados, tres episodios de estrés hídrico en las mismas fechas de agosto. Al arrancar el cuarto cultivo de exterior, el aviso llega antes del calor, no durante. El patrón lo detecta el historial, no la memoria del cultivador, que suele fallar precisamente en lo que se repite cada temporada.</p>
+    </div>
+
+    <div class="caso">
+      <h3>Comparativa entre tus propios cultivos</h3>
+      <p>Con varios ciclos en el historial puedes comparar qué cambió entre el que fue bien y el que no: iluminación, riego, genética o clima. Es la forma más rápida de convertir la experiencia en criterio, y evita la trampa habitual de atribuir un buen resultado a lo último que cambiaste cuando en realidad influyeron tres factores a la vez.</p>
+    </div>
+  </section>
+
+  <section id="equipo">
+    <h2>El equipo detrás de Cannabicultor</h2>
+    <p>Cannabicultor lo dirige <strong>Enrique J. Dorta Pulido (Ernie)</strong>, con treinta años de experiencia real en cultivo de cannabis a sus espaldas. Ese es el motivo por el que el proyecto no promete cosechas milagrosas: quien lleva tres décadas cultivando sabe perfectamente cuántas variables se escapan al control de cualquiera.</p>
+    <p>Alrededor del proyecto hay una alianza de cultivadores y especialistas que contrastan el contenido antes de publicarlo. La base de datos de variedades y bancos se construye y se depura de forma continua, y cuando un dato no es fiable preferimos no mostrarlo antes que rellenar el hueco con algo inventado.</p>
+    <p>El compromiso es sencillo: recomendaciones basadas en evidencia agronómica y en experiencia contrastada, advertencias claras cuando algo depende del contexto, y ni una promesa que no podamos sostener. Cuando la respuesta honesta a una pregunta es «depende», lo decimos y explicamos de qué depende.</p>
+    <p>El proyecto está en desarrollo activo y crece con las aportaciones de quienes lo usan. Si detectas un dato erróneo en la base de variedades o una recomendación que no encaja con tu experiencia, decírnoslo es la forma más directa de mejorar la herramienta para todos.</p>
+  </section>
+
+  <section id="faq">
+    <h2>Preguntas frecuentes sobre cultivo con IA</h2>
+    <div class="faq">
+      <details open>
+        <summary>¿Cómo funciona la IA en el cultivo de cannabis?</summary>
+        <p>La IA recibe los datos de tu cultivo (variedad, fase, espacio, iluminación, sustrato, temperatura y humedad) y los cruza con conocimiento agronómico y con tu propio historial. A partir de ahí interpreta la situación concreta y responde con recomendaciones ajustadas a tu caso, en lugar de darte consejos genéricos que valdrían para cualquiera.</p>
+      </details>
+      <details>
+        <summary>¿Para qué sirve la inteligencia artificial en el cultivo?</summary>
+        <p>Sirve sobre todo para tres cosas: detectar problemas antes de que se agraven, ajustar decisiones de riego, nutrientes y clima a la fase y la genética concretas, y ahorrarte tiempo de consulta. No sustituye tu criterio ni el trabajo manual: reduce el margen de error y acorta el tiempo entre la duda y la decisión.</p>
+      </details>
+      <details>
+        <summary>¿Es fiable la IA para cultivar cannabis?</summary>
+        <p>Es fiable como apoyo a la decisión, no como oráculo. La calidad de la respuesta depende de la calidad de los datos que le des: con información precisa de tu setup acierta mucho más. Conviene contrastar siempre las recomendaciones críticas con tu observación directa de la planta, que sigue siendo la fuente principal.</p>
+      </details>
+      <details>
+        <summary>¿Puede la IA diagnosticar problemas en mi cultivo?</summary>
+        <p>Puede orientar el diagnóstico. Si le describes los síntomas o le envías una foto de la hoja, propone las causas más probables y qué comprobar para confirmarlas: pH, EC, riego, temperatura o humedad. Es una hipótesis fundamentada que tú verificas, no un veredicto de laboratorio.</p>
+      </details>
+      <details>
+        <summary>¿Cuál es la diferencia entre automatización e IA en el cultivo?</summary>
+        <p>La automatización ejecuta reglas fijas: un temporizador enciende la luz a las 6:00 pase lo que pase. La IA interpreta el contexto y razona sobre él: entiende que tu planta está en semana 5 de floración, que la humedad subió y que eso aumenta el riesgo de botritis, y te lo advierte. Una obedece; la otra interpreta.</p>
+      </details>
+      <details>
+        <summary>¿Qué datos necesita la IA para ayudarme?</summary>
+        <p>Lo básico: tipo de cultivo (interior o exterior), dimensiones del espacio, iluminación, sustrato, variedad y fase en la que estás. Con eso ya da respuestas útiles. Cuantos más datos añadas —nutrientes, riegos, temperatura, humedad y fotos—, más se ajustan las recomendaciones a tu caso concreto.</p>
+      </details>
+      <details>
+        <summary>¿Cuánto cuesta usar Cannabicultor IA?</summary>
+        <p>Empezar es gratuito. El plan Libre permite consultas diarias sin coste, y el plan Semilla en condiciones de fundador también es gratuito e incluye memoria básica de tu setup. Los planes de pago, con memoria completa y alertas, parten de 9 € al mes. Puedes probar la herramienta antes de decidir si te compensa.</p>
+      </details>
+      <details>
+        <summary>¿La IA sustituye la experiencia real?</summary>
+        <p>No, y conviene desconfiar de quien lo prometa. La IA acelera el acceso al conocimiento y evita errores habituales, pero no ve tu planta, no huele tu sala ni toca tu sustrato. La experiencia sigue siendo insustituible: lo que cambia es que ahora tardas menos en adquirirla y cometes menos errores por el camino.</p>
+      </details>
+      <details>
+        <summary>¿Qué pasa con mis datos de cultivo?</summary>
+        <p>Tus datos de cultivo son tuyos y se tratan conforme al RGPD. Se usan para dar contexto a tus propias consultas y para construir tu historial, no se publican en la comunidad sin que tú lo decidas. Puedes consultar el detalle en la <a href="/privacidad.html">política de privacidad</a>.</p>
+      </details>
+      <details>
+        <summary>¿Necesito conocimientos previos para usarla?</summary>
+        <p>No. De hecho es donde más se nota: puedes preguntar con tus palabras, sin conocer la terminología técnica, y recibir una explicación clara del porqué. Si ya tienes experiencia, el valor está en otro sitio: en el historial, la comparación entre cultivos y el ahorro de tiempo.</p>
+      </details>
+    </div>
+  </section>
+
+  <div class="final">
+    <h2>Empieza tu primer cultivo con IA hoy</h2>
+    <p>Una base de datos de más de 44.000 variedades, herramientas para diseñar tu sala y calcular el VPD, y un diario que recuerda tu cultivo y aprende de él. Todo en español y pensado para cultivadores reales.</p>
+    <p>No necesitas experiencia previa ni tener el cultivo montado para empezar: puedes crear tu diario mientras decides la genética o el espacio, y dejar que la IA te acompañe desde la primera decisión. Registrar el primer ciclo es lo que activa la memoria, y a partir de ahí cada cultivo que documentas hace más precisas las recomendaciones del siguiente.</p>
+    <p><a class="btn" href="/">Empieza tu diario IA — Gratis</a></p>
+    <p class="micro" style="margin-top:16px">Gratis para empezar · Datos protegidos bajo RGPD · Solo para mayores de 18 años</p>
+  </div>
+</div>
+
+<footer>
+  <div class="fi">
+    <div class="flinks">
+      <a href="/">Inicio</a>
+      <a href="/buscador-cannabicultor.html">Buscador de variedades</a>
+      <a href="/disenador_sala_cultivo.html">Diseñador de salas</a>
+      <a href="/atlas_landrace.html">Atlas de landraces</a>
+    </div>
+    <p>Solo para mayores de 18 años. El cultivo de cannabis está regulado. Consulta la legislación vigente en tu país. Este servicio tiene fines educativos y de asesoramiento responsable.</p>
+    <p style="margin-top:10px"><a href="/aviso-legal.html">Aviso legal</a> · <a href="/privacidad.html">Privacidad</a> · <a href="/cookies.html">Cookies</a> · <a href="/terminos.html">Términos</a></p>
+  </div>
+</footer>
+
+<!--
+  ═══════════════════════════════════════════════════════════════════════════
+  REFERENCIA SEO INTERNA — NO ES CONTENIDO PUBLICADO
+  Clúster de long-tail que esta página pillar debería capturar.
+  Uso: guiar futuras ampliaciones de secciones y artículos satélite.
+  NO insertar estos términos forzados en el texto (keyword stuffing).
+  Última revisión: 2026-07-22
+  ═══════════════════════════════════════════════════════════════════════════
+
+  — Núcleo (intención informativa) —
+   1. cultivo de cannabis con inteligencia artificial
+   2. cómo funciona la ia en el cultivo de cannabis
+   3. para qué sirve la inteligencia artificial en el cultivo
+   4. inteligencia artificial aplicada al cultivo de marihuana
+   5. producción de cannabis con inteligencia artificial
+   6. ia para cultivar cannabis en casa
+   7. cultivar marihuana con ia paso a paso
+   8. qué es un asistente de cultivo con ia
+   9. weed ia
+  10. cannabis con inteligencia artificial
+
+  — Herramienta / producto (intención transaccional) —
+  11. app cultivo cannabis con ia
+  12. diario de cultivo con ia gratis
+  13. mejor app para llevar diario de cultivo
+  14. asistente ia cannabis en español
+  15. software de cultivo de cannabis con ia
+  16. aplicación para controlar cultivo de marihuana
+  17. diario de cultivo digital con memoria
+  18. chatbot experto en cultivo de cannabis
+
+  — Diagnóstico y problemas (alto valor, alta intención) —
+  19. puede la ia diagnosticar problemas en cultivo
+  20. diagnosticar deficiencias de cannabis por foto
+  21. ia para detectar plagas en cannabis
+  22. identificar carencia de magnesio en floración
+  23. detectar botritis con inteligencia artificial
+  24. app que analiza hojas de marihuana
+  25. por qué se amarillean las hojas en floración
+
+  — Parámetros y cálculo (enlaza con diseñador de salas) —
+  26. calcular vpd cultivo cannabis
+  27. vpd óptimo por fase de floración
+  28. calculadora de luz para cultivo interior
+  29. cuántas plantas caben en un armario de cultivo
+  30. ec y ph recomendados por fase
+  31. ia para calcular nutrientes cannabis
+  32. tabla de nutrientes personalizada por variedad
+
+  — Genética y variedades (enlaza con buscador y fichas) —
+  33. base de datos de variedades de cannabis en español
+  34. buscador de genéticas de cannabis
+  35. qué variedad de cannabis cultivar según mi espacio
+  36. diferencia entre índica y sativa en cultivo
+  37. variedades landrace y su origen
+  38. elegir genética según tiempo de floración
+
+  — Comparativas y escepticismo (captura dudas, construye confianza) —
+  39. diferencia entre automatización y ia en cultivo
+  40. es fiable la ia para cultivar cannabis
+  41. la ia sustituye al cultivador experto
+  42. ventajas y desventajas de la ia en agricultura
+  43. ia vs foros de cultivo
+  44. qué datos necesita la ia para ayudarme
+
+  — Principiantes (volumen alto, conversión alta) —
+  45. primer cultivo de cannabis sin errores
+  46. errores comunes en el primer cultivo
+  47. cultivo de cannabis para principiantes en español
+  48. necesito conocimientos previos para cultivar
+
+  — Privacidad y legalidad (long-tail defensiva) —
+  49. es seguro registrar mi cultivo en una app
+  50. protección de datos en apps de cultivo rgpd
+-->
+
+</body>
+</html>
