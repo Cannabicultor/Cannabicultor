@@ -35,9 +35,24 @@ if [ -f .htaccess ]; then
   /bin/cp -f .htaccess "$DEPLOYPATH/"
 fi
 
-for file in sitemap.xml robots.txt; do
+for file in sitemap.xml sitemap-static.xml sitemap-breeders.xml sitemap-strains.xml robots.txt; do
   if [ -f "$file" ]; then
     /bin/cp -f "$file" "$DEPLOYPATH/"
+  fi
+done
+
+# Páginas pre-renderizadas (generadas por prerender/build.mjs).
+# Son directorios completos y exclusivos del generador: se sincronizan con
+# --delete para que no queden fichas huérfanas de slugs que ya no existen.
+# Si el host no tiene rsync, cae a cp -R (sin borrado de huérfanos).
+for dir in breeders variedades; do
+  if [ -d "$dir" ]; then
+    if command -v rsync >/dev/null 2>&1; then
+      rsync -a --delete "$dir/" "$DEPLOYPATH/$dir/"
+    else
+      mkdir -p "$DEPLOYPATH/$dir"
+      /bin/cp -Rf "$dir/." "$DEPLOYPATH/$dir/"
+    fi
   fi
 done
 
