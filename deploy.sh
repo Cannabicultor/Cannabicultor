@@ -35,6 +35,12 @@ if [ -f .htaccess ]; then
   /bin/cp -f .htaccess "$DEPLOYPATH/"
 fi
 
+for file in sitemap.xml robots.txt; do
+  if [ -f "$file" ]; then
+    /bin/cp -f "$file" "$DEPLOYPATH/"
+  fi
+done
+
 ASSET_FILES=(
   assets/analytics.js
   assets/auth.js
