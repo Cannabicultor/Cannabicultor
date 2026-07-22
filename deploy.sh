@@ -10,7 +10,6 @@ HTML_FILES=(
   dashboard.html
   login.html
   register.html
-  test.html
   forgot-password.html
   reset-password.html
   trafico.html
