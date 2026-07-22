@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Buscador genético — Cannabicultor IA</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Lora:ital,wght@0,400;0,600;1,400;1,600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f5f7f4;--bg2:#eef1ec;--card:#fff;
+  --forest:#1a5c32;--forest2:#2a7a44;
+  --pale:#e8f0ea;--pale2:#d4e4d9;
+  --text:#151515;--muted:#6f746f;--soft:#9aa09a;
+  --border:rgba(0,0,0,.075);--border2:rgba(0,0,0,.12);
+  --radius:14px;
+  --shadow:0 1px 3px rgba(0,0,0,.04);
+  --rojo:#E85C4A;
+  --font-ui:'Inter',system-ui,sans-serif;
+  --font-display:'Lora',Georgia,serif;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{scroll-behavior:smooth}
+body{
+  font-family:var(--font-ui);
+  background:var(--bg);
+  color:var(--text);
+  min-height:100dvh;
+  -webkit-font-smoothing:antialiased;
+}
+.app{max-width:480px;margin:0 auto;padding:0 16px calc(40px + env(safe-area-inset-bottom));position:relative}
+
+/* ---------- Header ---------- */
+header{padding:18px 0 6px;position:sticky;top:0;z-index:40;background:linear-gradient(to bottom,var(--bg) 78%,rgba(245,247,244,0))}
+.brand{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.brand .logo{width:34px;height:34px;border-radius:50%;background:var(--pale);border:1px solid var(--forest);display:flex;align-items:center;justify-content:center;font-size:17px}
+.brand .name{font-size:13px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.brand .name b{color:var(--text)}
+h1{font-family:var(--font-display);font-weight:600;font-size:27px;line-height:1.15;margin-bottom:4px}
+h1 em{color:var(--forest);font-style:italic}
+.stats{font-size:12.5px;color:var(--muted);display:flex;align-items:center;gap:7px;margin-bottom:14px}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--forest);animation:pulse 2.2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+
+/* ---------- Search ---------- */
+.searchbox{position:relative;margin-bottom:12px}
+.searchbox svg{position:absolute;left:14px;top:50%;transform:translateY(-50%);opacity:.65}
+.searchbox input{
+  width:100%;padding:14px 42px 14px 42px;font-size:16px;font-family:var(--font-ui);
+  background:var(--card);border:1px solid var(--border2);border-radius:var(--radius);
+  color:var(--text);outline:none;transition:border-color .18s;box-shadow:var(--shadow);
+}
+.searchbox input::placeholder{color:var(--soft)}
+.searchbox input:focus{border-color:var(--forest)}
+.clear-btn{position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--muted);font-size:20px;padding:6px 10px;cursor:pointer;display:none}
+
+/* ---------- Tabs ---------- */
+.tabs{display:flex;gap:6px;margin-bottom:10px;background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:4px}
+.tab{flex:1;padding:9px 0;border:none;border-radius:9px;background:transparent;color:var(--muted);font-family:var(--font-ui);font-size:13.5px;font-weight:600;cursor:pointer;transition:all .15s}
+.tab.active{background:var(--forest);color:#fff}
+
+/* ---------- Chips ---------- */
+.chips{display:flex;gap:8px;overflow-x:auto;padding:2px 0 12px;scrollbar-width:none;-ms-overflow-style:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{
+  flex:0 0 auto;padding:7px 14px;border-radius:100px;font-size:12.5px;font-weight:500;
+  background:var(--card);border:1px solid var(--border2);color:var(--muted);
+  font-family:var(--font-ui);cursor:pointer;transition:all .15s;white-space:nowrap;
+}
+.chip.active{background:var(--pale);border-color:var(--forest);color:var(--forest);font-weight:600}
+
+/* ---------- Results ---------- */
+.count-line{font-size:12px;color:var(--muted);margin-bottom:10px;min-height:15px}
+.count-line b{color:var(--forest)}
+.list{display:flex;flex-direction:column;gap:10px}
+.card{
+  display:flex;gap:12px;align-items:center;background:var(--card);
+  border:1px solid var(--border);border-radius:var(--radius);padding:12px;cursor:pointer;
+  transition:border-color .15s,transform .1s;text-align:left;width:100%;font-family:var(--font-ui);color:var(--text);
+  box-shadow:var(--shadow);
+}
+.card:active{transform:scale(.985);border-color:var(--forest)}
+.thumb{
+  width:58px;height:58px;flex:0 0 58px;border-radius:11px;background:var(--pale);
+  display:flex;align-items:center;justify-content:center;font-family:var(--font-display);
+  font-size:21px;font-style:italic;color:var(--forest);overflow:hidden;border:1px solid var(--border);
+}
+.thumb img{width:100%;height:100%;object-fit:cover}
+.card-body{flex:1;min-width:0}
+.card-title{font-size:15px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:2px}
+.card-sub{font-size:11.5px;color:var(--forest);letter-spacing:.05em;text-transform:uppercase;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:6px}
+.badges{display:flex;gap:6px;flex-wrap:wrap}
+.badge{font-size:10.5px;font-weight:600;padding:3px 8px;border-radius:6px;background:var(--bg2);color:var(--muted);border:1px solid var(--border)}
+.badge.tipo{color:var(--text)}
+.badge.thc{color:var(--forest);border-color:rgba(26,92,50,.25);background:var(--pale)}
+.chev{color:var(--soft);flex:0 0 auto;font-size:18px}
+
+/* skeleton */
+.sk{height:82px;border-radius:var(--radius);background:linear-gradient(100deg,var(--bg2) 40%,var(--pale) 50%,var(--bg2) 60%);background-size:200% 100%;animation:shine 1.3s infinite;border:1px solid var(--border)}
+@keyframes shine{to{background-position:-200% 0}}
+@media (prefers-reduced-motion:reduce){.sk{animation:none}.dot{animation:none}}
+
+.empty{padding:40px 16px;text-align:center;color:var(--muted);font-size:14px;line-height:1.6}
+.empty .big{font-family:var(--font-display);font-style:italic;font-size:19px;color:var(--text);display:block;margin-bottom:6px}
+.more-btn{margin:14px auto 0;display:block;padding:11px 26px;border-radius:100px;background:var(--card);border:1px solid var(--forest);color:var(--forest);font-family:var(--font-ui);font-weight:600;font-size:13.5px;cursor:pointer}
+
+/* ---------- Bottom sheet ---------- */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.35);opacity:0;pointer-events:none;transition:opacity .22s;z-index:60;backdrop-filter:blur(2px)}
+.overlay.open{opacity:1;pointer-events:auto}
+.sheet{
+  position:fixed;left:0;right:0;bottom:0;z-index:70;max-width:480px;margin:0 auto;
+  background:var(--card);border:1px solid var(--border);border-bottom:none;
+  border-radius:22px 22px 0 0;transform:translateY(102%);transition:transform .26s cubic-bezier(.3,.9,.3,1);
+  max-height:88dvh;display:flex;flex-direction:column;box-shadow:0 -8px 30px rgba(0,0,0,.12);
+}
+.sheet.open{transform:translateY(0)}
+.sheet-handle{width:44px;height:4px;border-radius:4px;background:var(--border2);margin:10px auto 4px;flex:0 0 auto}
+.sheet-scroll{overflow-y:auto;padding:8px 20px calc(28px + env(safe-area-inset-bottom))}
+.sheet-head{display:flex;gap:14px;align-items:center;margin-bottom:16px}
+.sheet-head .thumb{width:72px;height:72px;flex-basis:72px;font-size:27px}
+.sheet-title{font-family:var(--font-display);font-size:22px;font-weight:700;line-height:1.15}
+.sheet-breeder{font-size:12px;color:var(--forest);letter-spacing:.05em;text-transform:uppercase;font-weight:600;margin-top:3px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:16px}
+.stat-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:11px 13px}
+.stat-card .k{font-size:10.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:4px}
+.stat-card .v{font-size:16px;font-weight:700}
+.stat-card .v em{font-family:var(--font-display);font-style:italic;color:var(--forest)}
+.section{margin-bottom:15px}
+.section .k{font-size:10.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:6px}
+.section p{font-size:13.5px;line-height:1.65;color:var(--text)}
+.tag-row{display:flex;gap:6px;flex-wrap:wrap}
+.tag{font-size:11.5px;padding:5px 11px;border-radius:100px;background:var(--pale);border:1px solid rgba(26,92,50,.2);color:var(--forest);font-weight:500}
+.link-btn{display:block;text-align:center;margin-top:6px;padding:13px;border-radius:12px;background:var(--forest);color:#fff;font-weight:700;font-size:14px;text-decoration:none}
+.gen-line{font-family:var(--font-display);font-style:italic;font-size:15px;color:var(--text);line-height:1.5}
+.gen-line .x{color:var(--forest);font-style:normal;font-family:var(--font-ui);font-size:12px;font-weight:700;padding:0 4px}
+
+footer{margin-top:34px;padding-top:16px;border-top:1px solid var(--border);font-size:11px;color:var(--muted);line-height:1.6;text-align:center}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="brand">
+      <div class="logo">🌿</div>
+      <div class="name"><b>Cannabicultor IA</b> · Growers Alliance</div>
+    </div>
+    <h1>Buscador <em>genético</em></h1>
+    <div class="stats"><span class="dot"></span><span id="statsLine">Conectando con la base de datos…</span></div>
+    <div class="searchbox">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#6f746f" stroke-width="2.4" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+      <input id="q" type="search" placeholder="Busca una variedad o breeder…" autocomplete="off" enterkeyhint="search">
+      <button class="clear-btn" id="clearBtn" aria-label="Borrar búsqueda">×</button>
+    </div>
+    <div class="tabs" role="tablist">
+      <button class="tab active" data-tab="variedades" role="tab">Variedades</button>
+      <button class="tab" data-tab="breeders" role="tab">Breeders</button>
+    </div>
+  </header>
+
+  <div class="chips" id="chips">
+    <button class="chip active" data-f="">Todas</button>
+    <button class="chip" data-f="tipo=eq.feminizada">Feminizadas</button>
+    <button class="chip" data-f="tipo=eq.automatica">Automáticas</button>
+    <button class="chip" data-f="tipo=eq.regular">Regulares</button>
+    <button class="chip" data-f="or=(thc_pct.gte.20,thc_max.gte.20)">THC alto</button>
+    <button class="chip" data-f="cbd=1">CBD</button>
+    <button class="chip" data-f="floracion_dias=lte.56">Floración rápida</button>
+    <button class="chip" data-f="es_landrace=is.true">Landraces</button>
+    <button class="chip" data-f="image_url=not.is.null">Con foto</button>
+  </div>
+
+  <div class="count-line" id="countLine"></div>
+  <div class="list" id="list"></div>
+  <button class="more-btn" id="moreBtn" style="display:none">Cargar más</button>
+
+  <footer>
+    Base de datos genética de Cannabicultor IA · Growers Alliance.<br>
+    Contenido informativo y educativo. Solo mayores de 18 años.<br>
+    Consulta la legislación vigente en tu país.
+  </footer>
+</div>
+
+<div class="overlay" id="overlay"></div>
+<div class="sheet" id="sheet" role="dialog" aria-modal="true">
+  <div class="sheet-handle"></div>
+  <div class="sheet-scroll" id="sheetContent"></div>
+</div>
+
+<script>
+const SUPABASE_URL = "https://gfyrsrdnvgnhtsuexjkb.supabase.co";
+const SUPABASE_KEY = "sb_publishable_FdRmfirvOTAIfZFOcj2ZZg_Vic__TDw";
+const HEADERS = { apikey: SUPABASE_KEY, Authorization: "Bearer " + SUPABASE_KEY };
+const PAGE = 25;
+
+let tab = "variedades", query = "", filter = "", offset = 0, busy = false, lastToken = 0;
+
+const $ = id => document.getElementById(id);
+const list = $("list"), countLine = $("countLine"), moreBtn = $("moreBtn");
+
+/* ---------- helpers ---------- */
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const cap = s => s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
+const nf = new Intl.NumberFormat("es-ES");
+
+function thcLabel(v){
+  if (v.thc_min && v.thc_max && +v.thc_min !== +v.thc_max) {
+    const lo = Math.min(+v.thc_min, +v.thc_max), hi = Math.max(+v.thc_min, +v.thc_max);
+    return lo + "–" + hi + "%";
+  }
+  const t = v.thc_pct ?? v.thc_max ?? v.thc_min;
+  return t ? (+t) + "%" : null;
+}
+
+async function pg(path, { count = false, signal } = {}) {
+  const h = { ...HEADERS };
+  if (count) h.Prefer = "count=exact";
+  const r = await fetch(SUPABASE_URL + "/rest/v1/" + path, { headers: h, signal });
+  if (!r.ok) throw new Error("HTTP " + r.status);
+  const total = count ? parseInt((r.headers.get("content-range") || "/0").split("/")[1], 10) : null;
+  return { data: await r.json(), total };
+}
+
+/* ---------- stats en vivo ---------- */
+(async () => {
+  try {
+    const [v, b] = await Promise.all([
+      pg("variedades?select=id&activa=is.true&limit=1", { count: true }),
+      pg("breeders?select=id&limit=1", { count: true })
+    ]);
+    $("statsLine").textContent = nf.format(v.total) + " variedades · " + nf.format(b.total) + " breeders · En vivo";
+  } catch { $("statsLine").textContent = "Base de datos genética · Growers Alliance"; }
+})();
+
+/* ---------- búsqueda ---------- */
+function buildUrl() {
+  const q = query.trim().replace(/[,()*]/g, " ").trim();
+  if (tab === "variedades") {
+    let u = "variedades?select=id,nombre,tipo,thc_pct,thc_min,thc_max,floracion_dias,genetica,image_url,es_landrace,breeders(breeder_name)"
+          + "&activa=is.true";
+    if (q) u += "&nombre=ilike.*" + encodeURIComponent(q) + "*";
+    if (filter === "cbd=1") u += "&or=(tipo.eq.CBD,cbd_pct.gte.4,cbd_max.gte.4)";
+    else if (filter) u += "&" + filter;
+    u += "&order=image_url.desc.nullslast,nombre.asc&limit=" + PAGE + "&offset=" + offset;
+    return u;
+  }
+  let u = "breeders?select=id,breeder_name,pais_origen,cantidad_variedades,logo_url,website,instagram,tipo_semillas&activo=is.true";
+  if (q) u += "&breeder_name=ilike.*" + encodeURIComponent(q) + "*";
+  u += "&order=cantidad_variedades.desc.nullslast&limit=" + PAGE + "&offset=" + offset;
+  return u;
+}
+
+let controller;
+async function load(reset = true) {
+  if (busy) controller?.abort();
+  busy = true;
+  const token = ++lastToken;
+  controller = new AbortController();
+  if (reset) { offset = 0; list.innerHTML = '<div class="sk"></div><div class="sk"></div><div class="sk"></div><div class="sk"></div>'; moreBtn.style.display = "none"; countLine.textContent = ""; }
+  try {
+    const { data, total } = await pg(buildUrl(), { count: reset, signal: controller.signal });
+    if (token !== lastToken) return;
+    if (reset) {
+      list.innerHTML = "";
+      countLine.innerHTML = total ? "<b>" + nf.format(total) + "</b> resultados" : "";
+      if (!data.length) {
+        list.innerHTML = '<div class="empty"><span class="big">Sin resultados</span>Prueba con otro nombre o quita filtros.<br>Ej.: «Kush», «Haze», «Gorilla»…</div>';
+        busy = false; return;
+      }
+    }
+    data.forEach(row => list.appendChild(tab === "variedades" ? cardVariedad(row) : cardBreeder(row)));
+    moreBtn.style.display = data.length === PAGE ? "block" : "none";
+  } catch (e) {
+    if (e.name !== "AbortError" && token === lastToken)
+      list.innerHTML = '<div class="empty"><span class="big">Error de conexión</span>No se pudo consultar la base de datos. Revisa tu conexión e inténtalo de nuevo.</div>';
+  }
+  busy = false;
+}
+
+/* ---------- cards ---------- */
+function thumbEl(url, name) {
+  const t = document.createElement("div");
+  t.className = "thumb";
+  if (url) { const i = document.createElement("img"); i.loading = "lazy"; i.src = url; i.alt = ""; i.onerror = () => { i.remove(); t.textContent = name.charAt(0); }; t.appendChild(i); }
+  else t.textContent = (name || "?").charAt(0);
+  return t;
+}
+
+function cardVariedad(v) {
+  const b = document.createElement("button");
+  b.className = "card";
+  b.appendChild(thumbEl(v.image_url, v.nombre));
+  const body = document.createElement("div");
+  body.className = "card-body";
+  const thc = thcLabel(v);
+  body.innerHTML =
+    '<div class="card-title">' + esc(v.nombre) + '</div>' +
+    '<div class="card-sub">' + esc(v.breeders?.breeder_name || "Breeder desconocido") + '</div>' +
+    '<div class="badges">' +
+      (v.tipo ? '<span class="badge tipo">' + esc(cap(v.tipo)) + '</span>' : "") +
+      (thc ? '<span class="badge thc">THC ' + thc + '</span>' : "") +
+      (v.floracion_dias ? '<span class="badge">' + v.floracion_dias + ' días flora</span>' : "") +
+      (v.es_landrace ? '<span class="badge thc">Landrace</span>' : "") +
+    '</div>';
+  b.appendChild(body);
+  b.insertAdjacentHTML("beforeend", '<span class="chev">›</span>');
+  b.onclick = () => openVariedad(v.id);
+  return b;
+}
+
+function cardBreeder(br) {
+  const b = document.createElement("button");
+  b.className = "card";
+  b.appendChild(thumbEl(br.logo_url, br.breeder_name));
+  const body = document.createElement("div");
+  body.className = "card-body";
+  body.innerHTML =
+    '<div class="card-title">' + esc(br.breeder_name) + '</div>' +
+    '<div class="card-sub">' + esc(br.pais_origen || "Origen desconocido") + '</div>' +
+    '<div class="badges">' +
+      (br.cantidad_variedades ? '<span class="badge thc">' + nf.format(br.cantidad_variedades) + ' variedades</span>' : "") +
+      (br.tipo_semillas ? '<span class="badge">' + esc(cap(br.tipo_semillas)) + '</span>' : "") +
+    '</div>';
+  b.appendChild(body);
+  b.insertAdjacentHTML("beforeend", '<span class="chev">›</span>');
+  b.onclick = () => openBreeder(br.id);
+  return b;
+}
+
+/* ---------- bottom sheet ---------- */
+const overlay = $("overlay"), sheet = $("sheet"), sheetContent = $("sheetContent");
+function openSheet(html){ sheetContent.innerHTML = html; overlay.classList.add("open"); sheet.classList.add("open"); document.body.style.overflow = "hidden"; }
+function closeSheet(){ overlay.classList.remove("open"); sheet.classList.remove("open"); document.body.style.overflow = ""; }
+overlay.onclick = closeSheet;
+sheet.querySelector(".sheet-handle").onclick = closeSheet;
+document.addEventListener("keydown", e => { if (e.key === "Escape") closeSheet(); });
+
+function statCard(k, v, em){ return v ? '<div class="stat-card"><div class="k">' + k + '</div><div class="v">' + (em ? '<em>' + v + '</em>' : v) + '</div></div>' : ""; }
+function tagRow(k, arr){
+  if (!arr || !arr.length) return "";
+  return '<div class="section"><div class="k">' + k + '</div><div class="tag-row">' + arr.map(t => '<span class="tag">' + esc(cap(t)) + '</span>').join("") + '</div></div>';
+}
+function genLine(g){
+  if (!g) return "";
+  const parts = esc(g).split(/\s+[xX×]\s+/).join('<span class="x">×</span>');
+  return '<div class="section"><div class="k">Genética</div><div class="gen-line">' + parts + '</div></div>';
+}
+
+async function openVariedad(id) {
+  openSheet('<div class="sk" style="height:120px"></div>');
+  try {
+    const { data } = await pg("variedades?select=*,breeders(breeder_name,website,pais_origen)&id=eq." + id + "&limit=1");
+    const v = data[0]; if (!v) return closeSheet();
+    const thc = thcLabel(v);
+    const cbd = v.cbd_pct ?? v.cbd_max;
+    openSheet(
+      '<div class="sheet-head">' + thumbEl(v.image_url, v.nombre).outerHTML +
+        '<div><div class="sheet-title">' + esc(v.nombre) + '</div>' +
+        '<div class="sheet-breeder">' + esc(v.breeders?.breeder_name || "") + (v.breeders?.pais_origen ? " · " + esc(v.breeders.pais_origen) : "") + '</div></div>' +
+      '</div>' +
+      '<div class="grid">' +
+        statCard("Tipo", v.tipo ? esc(cap(v.tipo)) : null) +
+        statCard("THC", thc, true) +
+        statCard("CBD", cbd ? (+cbd) + "%" : null) +
+        statCard("Floración", v.floracion_dias ? v.floracion_dias + " días" : null) +
+        statCard("Producción", v.produccion ? esc(v.produccion) : null) +
+        statCard("Altura", v.altura ? esc(v.altura) : null) +
+        (v.es_landrace ? statCard("Origen", esc(v.origen_geografico || "Landrace"), true) : "") +
+      '</div>' +
+      genLine(v.genetica) +
+      tagRow("Efectos", v.efectos) +
+      tagRow("Sabores", v.sabores) +
+      tagRow("Aromas", v.aromas) +
+      (v.descripcion ? '<div class="section"><div class="k">Descripción</div><p>' + esc(v.descripcion) + '</p></div>' : "") +
+      (v.premios ? '<div class="section"><div class="k">Premios</div><p>' + esc(v.premios) + '</p></div>' : "") +
+      (v.breeders?.website ? '<a class="link-btn" href="' + esc(v.breeders.website) + '" target="_blank" rel="noopener">Web del breeder →</a>' : "")
+    );
+  } catch { closeSheet(); }
+}
+
+async function openBreeder(id) {
+  openSheet('<div class="sk" style="height:120px"></div>');
+  try {
+    const { data } = await pg("breeders?select=*&id=eq." + id + "&limit=1");
+    const b = data[0]; if (!b) return closeSheet();
+    openSheet(
+      '<div class="sheet-head">' + thumbEl(b.logo_url, b.breeder_name).outerHTML +
+        '<div><div class="sheet-title">' + esc(b.breeder_name) + '</div>' +
+        '<div class="sheet-breeder">' + esc(b.pais_origen || "") + (b.año_fundacion ? " · desde " + b.año_fundacion : "") + '</div></div>' +
+      '</div>' +
+      '<div class="grid">' +
+        statCard("Variedades", b.cantidad_variedades ? nf.format(b.cantidad_variedades) : null, true) +
+        statCard("Semillas", b.tipo_semillas ? esc(cap(b.tipo_semillas)) : null) +
+      '</div>' +
+      (b.descripcion ? '<div class="section"><div class="k">Sobre el breeder</div><p>' + esc(b.descripcion) + '</p></div>' : "") +
+      (b.variedades_famosas ? '<div class="section"><div class="k">Variedades destacadas</div><p>' + esc(b.variedades_famosas) + '</p></div>' : "") +
+      (b.premios ? '<div class="section"><div class="k">Premios</div><p>' + esc(b.premios) + '</p></div>' : "") +
+      (b.instagram ? '<div class="section"><div class="k">Instagram</div><p>' + esc(b.instagram) + '</p></div>' : "") +
+      (b.website ? '<a class="link-btn" href="' + esc(b.website) + '" target="_blank" rel="noopener">Visitar web oficial →</a>' : "")
+    );
+  } catch { closeSheet(); }
+}
+
+/* ---------- eventos ---------- */
+let debounce;
+$("q").addEventListener("input", e => {
+  query = e.target.value;
+  $("clearBtn").style.display = query ? "block" : "none";
+  clearTimeout(debounce);
+  debounce = setTimeout(() => load(true), 320);
+});
+$("clearBtn").onclick = () => { $("q").value = ""; query = ""; $("clearBtn").style.display = "none"; load(true); };
+
+document.querySelectorAll(".tab").forEach(t => t.onclick = () => {
+  document.querySelectorAll(".tab").forEach(x => x.classList.remove("active"));
+  t.classList.add("active");
+  tab = t.dataset.tab;
+  $("chips").style.display = tab === "variedades" ? "flex" : "none";
+  $("q").placeholder = tab === "variedades" ? "Busca una variedad o breeder…" : "Busca un breeder…";
+  load(true);
+});
+
+document.querySelectorAll(".chip").forEach(c => c.onclick = () => {
+  document.querySelectorAll(".chip").forEach(x => x.classList.remove("active"));
+  c.classList.add("active");
+  filter = c.dataset.f;
+  load(true);
+});
+
+moreBtn.onclick = () => { offset += PAGE; load(false); };
+
+load(true);
+</script>
+</body>
+</html>

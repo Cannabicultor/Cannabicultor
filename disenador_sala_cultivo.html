@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Diseñador de sala de cultivo · Cannabicultor</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Lora:ital,wght@0,400;0,600;1,400;1,600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#f5f7f4;--bg2:#eef1ec;--card:#fff;
+    --forest:#1a5c32;--forest2:#2a7a44;
+    --pale:#e8f0ea;--pale2:#d4e4d9;
+    --text:#151515;--muted:#6f746f;--soft:#9aa09a;
+    --border:rgba(0,0,0,.075);--border2:rgba(0,0,0,.12);
+    --r:20px;--shadow:0 1px 3px rgba(0,0,0,.04);
+    --blue:#0284c7;--amber:#b45309;--red:#b91c1c;
+    --amber-bg:#fef3c7;--red-bg:#fee2e2;--green-bg:#dcfce7;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;}
+  body{background:var(--bg);color:var(--text);font-family:Inter,-apple-system,sans-serif;-webkit-font-smoothing:antialiased;}
+  button,input{font-family:inherit;}
+  .app{max-width:480px;margin:0 auto;min-height:100vh;background:var(--bg);position:relative;padding-bottom:calc(24px + env(safe-area-inset-bottom));}
+
+  .top{display:flex;align-items:center;gap:9px;padding:16px 18px 4px;}
+  .top img{width:30px;height:30px;border-radius:50%;}
+  .top b{font-family:Lora,Georgia,serif;font-size:16px;font-weight:600;}
+  .top span{font-size:11px;color:var(--soft);margin-left:auto;letter-spacing:.06em;text-transform:uppercase;font-weight:600;}
+
+  .scroll{padding:6px 16px 12px;}
+  .kicker{font-size:11px;font-weight:700;letter-spacing:.12em;color:var(--forest);text-transform:uppercase;margin:10px 2px 4px;}
+  .title{font-family:Lora,Georgia,serif;font-size:24px;line-height:1.15;letter-spacing:-.02em;font-weight:600;margin-bottom:4px;}
+  .title em{color:var(--forest);font-style:italic;font-weight:400;}
+  .lead{font-size:13px;color:var(--muted);line-height:1.5;margin-bottom:16px;}
+
+  /* ===== Escena 3D ===== */
+  .scene-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden;margin-bottom:10px;}
+  .scene{position:relative;height:clamp(200px,52vw,300px);background:linear-gradient(180deg,#eef4f0 0%,#e3ece6 100%);display:flex;align-items:center;justify-content:center;perspective:1000px;cursor:grab;touch-action:none;}
+  .scene.grabbing{cursor:grabbing;}
+  .grid-floor{position:absolute;inset:0;background-image:linear-gradient(rgba(26,92,50,.09) 1px,transparent 1px),linear-gradient(90deg,rgba(26,92,50,.09) 1px,transparent 1px);background-size:28px 28px;mask-image:radial-gradient(circle at 50% 60%, #000 0%, transparent 75%);}
+  .box{position:relative;transform-style:preserve-3d;will-change:transform;}
+  .face{position:absolute;top:50%;left:50%;border:1.5px solid var(--forest2);background:rgba(26,92,50,.055);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;letter-spacing:.05em;color:rgba(21,21,21,.3);backface-visibility:visible;}
+  .face.floor{background:rgba(26,92,50,.13);}
+  .face.top{background:rgba(26,92,50,.02);border-style:dashed;}
+  .hud{position:absolute;left:12px;bottom:10px;font-size:12px;color:var(--muted);line-height:1.6;font-weight:500;}
+  .hud b{color:var(--forest);font-weight:700;}
+  .hint{position:absolute;right:12px;top:10px;font-size:10.5px;color:var(--soft);}
+
+  /* ===== Steppers de dimensión (zona del pulgar) ===== */
+  .dim-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--shadow);padding:6px 16px;margin-bottom:10px;}
+  .dim-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 0;border-bottom:1px solid var(--border);}
+  .dim-row:last-child{border-bottom:none;}
+  .dim-label{font-size:13.5px;font-weight:600;}
+  .dim-label small{display:block;font-size:11px;color:var(--soft);font-weight:500;margin-top:1px;}
+  .dim-stepper{display:flex;align-items:center;gap:2px;background:var(--bg2);border-radius:14px;padding:4px;flex-shrink:0;}
+  .dim-btn{width:42px;height:42px;border-radius:11px;border:none;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.06);font-size:19px;font-weight:700;color:var(--forest);display:flex;align-items:center;justify-content:center;cursor:pointer;user-select:none;touch-action:manipulation;}
+  .dim-btn:active{background:var(--pale);transform:scale(.96);}
+  .dim-val{min-width:70px;text-align:center;}
+  .dim-val b{font-size:16px;font-weight:700;}
+  .dim-val small{font-size:11px;color:var(--muted);font-weight:500;margin-left:2px;}
+
+  .chips{display:flex;flex-wrap:wrap;gap:7px;margin:2px 0 14px;}
+  .chip{border:1px solid var(--border2);background:#fff;border-radius:11px;padding:8px 12px;font-size:12.5px;font-weight:600;cursor:pointer;transition:.15s;color:var(--muted);touch-action:manipulation;}
+  .chip.selected{background:var(--pale);border-color:var(--forest2);color:var(--forest);}
+  .field-label{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--soft);margin:0 0 8px;font-weight:700;}
+
+  /* ===== Segmentado etapa / luz ===== */
+  .panel{background:var(--card);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--shadow);padding:16px;margin-bottom:10px;}
+  .panel h2{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--soft);margin:0 0 12px;font-weight:700;}
+  .seg{display:flex;flex-wrap:wrap;gap:6px;}
+  .seg button{flex:1 1 auto;background:var(--bg2);border:1px solid transparent;color:var(--muted);font-size:12.5px;font-weight:600;padding:10px 8px;border-radius:11px;cursor:pointer;transition:.15s;touch-action:manipulation;}
+  .seg button.active{background:var(--forest);color:#fff;}
+  .divider{height:1px;background:var(--border);margin:14px 0;}
+
+  /* ===== Resultados ===== */
+  .group-label{font-family:Lora,Georgia,serif;font-size:15px;font-weight:600;margin:20px 2px 10px;}
+  .results{display:grid;grid-template-columns:1fr 1fr;gap:9px;}
+  .stat{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:13px;box-shadow:var(--shadow);}
+  .stat.accent{background:var(--pale);border-color:var(--pale2);}
+  .stat .k{font-size:10.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--soft);margin-bottom:6px;font-weight:700;}
+  .stat .v{font-size:21px;font-weight:700;letter-spacing:-.02em;color:var(--text);line-height:1;}
+  .stat .v small{font-size:12px;color:var(--soft);font-weight:500;}
+  .stat .note{font-size:11.5px;color:var(--muted);margin-top:6px;line-height:1.4;}
+  .stat .note b{color:var(--forest);font-weight:600;}
+
+  .vpd-card{grid-column:1 / -1;background:var(--card);border:1px solid var(--border);border-radius:14px;padding:15px;box-shadow:var(--shadow);}
+  .vpd-top{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:12px;flex-wrap:wrap;gap:8px;}
+  .vpd-num{font-family:Lora,serif;font-size:30px;font-weight:700;line-height:1;}
+  .vpd-status{font-size:12px;font-weight:700;padding:5px 11px;border-radius:99px;}
+  .vpd-ok{color:#15803d;background:var(--green-bg);}
+  .vpd-warn{color:var(--amber);background:var(--amber-bg);}
+  .vpd-bad{color:var(--red);background:var(--red-bg);}
+  .gauge{position:relative;height:10px;border-radius:99px;background:linear-gradient(90deg,var(--blue) 0%,var(--forest2) 35%,var(--forest2) 70%,var(--red) 100%);opacity:.8;}
+  .gauge .band{position:absolute;top:-3px;bottom:-3px;border:2px solid #fff;border-radius:7px;box-shadow:0 0 0 1.5px rgba(0,0,0,.25);pointer-events:none;}
+  .gauge .needle{position:absolute;top:-6px;width:3px;height:22px;background:var(--text);border-radius:2px;box-shadow:0 0 0 2px #fff;transform:translateX(-50%);transition:left .15s ease;}
+  .gauge-scale{display:flex;justify-content:space-between;font-size:10px;color:var(--soft);margin-top:6px;font-weight:500;}
+  .vpd-foot{font-size:12px;color:var(--muted);margin-top:10px;line-height:1.45;}
+
+  /* ===== Ajustes avanzados (acordeón) ===== */
+  .adv-toggle{display:flex;align-items:center;justify-content:space-between;width:100%;background:none;border:none;cursor:pointer;padding:0;color:var(--text);touch-action:manipulation;}
+  .adv-toggle .arrow{transition:transform .2s;color:var(--soft);font-size:14px;}
+  .adv-toggle.open .arrow{transform:rotate(180deg);}
+  .adv-body{max-height:0;overflow:hidden;transition:max-height .25s ease;}
+  .adv-body.open{max-height:600px;}
+  .adv-body-inner{padding-top:16px;}
+  .slider-row{margin-bottom:16px;}
+  .slider-row:last-child{margin-bottom:0;}
+  .slider-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;}
+  .slider-head label{font-size:13px;font-weight:600;}
+  .readout{font-size:15px;font-weight:700;color:var(--forest);}
+  .readout small{font-size:11px;color:var(--muted);font-weight:500;}
+  input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:5px;border-radius:99px;background:var(--bg2);outline:none;}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;border-radius:50%;background:var(--forest);border:3px solid #fff;cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,.25);}
+  input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;background:var(--forest);border:3px solid #fff;cursor:pointer;}
+  .note-sm{font-size:11.5px;color:var(--soft);margin:8px 0 0;line-height:1.45;}
+
+  footer{margin-top:22px;font-size:11px;color:var(--soft);text-align:center;line-height:1.7;padding:0 8px;}
+  footer b{color:var(--forest2);}
+  @media(prefers-reduced-motion:reduce){.box{transition:none!important;}}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="top">
+    <img src="https://cannabicultor.com/assets/icono_cannabicultor.png" alt="">
+    <b>Cannabicultor</b>
+    <span>Herramientas</span>
+  </div>
+
+  <div class="scroll">
+    <div class="kicker">Diseñador · Sala de cultivo</div>
+    <div class="title">Diseña tu <em>sala de cultivo</em></div>
+    <p class="lead">Ajusta las medidas con los botones. El modelo y los cálculos —aire, luz, VPD, coste y cosecha— se actualizan al instante.</p>
+
+    <!-- VISUAL -->
+    <div class="scene-card">
+      <div class="scene" id="scene">
+        <div class="grid-floor"></div>
+        <div class="box" id="box">
+          <div class="face front"  id="f-front">FRONTAL</div>
+          <div class="face back"   id="f-back"></div>
+          <div class="face right"  id="f-right"></div>
+          <div class="face left"   id="f-left"></div>
+          <div class="face top"    id="f-top"></div>
+          <div class="face floor"  id="f-floor">SUELO</div>
+        </div>
+        <div class="hud">
+          <span>ANCHO <b id="hud-w">1.2</b></span> ×
+          <span>PROF <b id="hud-d">1.2</b></span> ×
+          <span>ALTO <b id="hud-h">2.0</b></span> m
+        </div>
+        <div class="hint">↻ arrastra para girar</div>
+      </div>
+    </div>
+
+    <!-- DIMENSIONES: botones al alcance del pulgar, justo bajo la imagen -->
+    <div class="dim-card">
+      <div class="dim-row">
+        <div class="dim-label">Ancho<small>eje X</small></div>
+        <div class="dim-stepper" data-key="w" data-min="0.4" data-max="20" data-step="0.1" data-dec="2">
+          <button class="dim-btn" data-act="down">−</button>
+          <div class="dim-val"><b id="w-val">1.2</b><small>m</small></div>
+          <button class="dim-btn" data-act="up">+</button>
+        </div>
+      </div>
+      <div class="dim-row">
+        <div class="dim-label">Profundidad<small>eje Y</small></div>
+        <div class="dim-stepper" data-key="d" data-min="0.4" data-max="20" data-step="0.1" data-dec="2">
+          <button class="dim-btn" data-act="down">−</button>
+          <div class="dim-val"><b id="d-val">1.2</b><small>m</small></div>
+          <button class="dim-btn" data-act="up">+</button>
+        </div>
+      </div>
+      <div class="dim-row">
+        <div class="dim-label">Altura<small>eje Z</small></div>
+        <div class="dim-stepper" data-key="h" data-min="0.5" data-max="20" data-step="0.1" data-dec="2">
+          <button class="dim-btn" data-act="down">−</button>
+          <div class="dim-val"><b id="h-val">2.0</b><small>m</small></div>
+          <button class="dim-btn" data-act="up">+</button>
+        </div>
+      </div>
+    </div>
+
+    <p class="field-label">Medidas habituales de armario</p>
+    <div class="chips" id="presets"></div>
+
+    <!-- ETAPA Y LUZ -->
+    <div class="panel">
+      <h2>Etapa de cultivo</h2>
+      <div class="seg" id="stage"></div>
+      <div class="divider"></div>
+      <h2>Tipo de luz</h2>
+      <div class="seg" id="light">
+        <button data-light="led" class="active">LED</button>
+        <button data-light="hps">HPS</button>
+        <button data-light="cmh">CMH/LEC</button>
+      </div>
+    </div>
+
+    <!-- RESULTADOS -->
+    <div class="group-label">Espacio y equipo</div>
+    <div class="results">
+      <div class="stat">
+        <div class="k">Volumen</div>
+        <div class="v"><span id="r-vol">2.88</span> <small>m³</small></div>
+        <div class="note">Superficie de suelo: <b id="r-area">1.44</b> m²</div>
+      </div>
+      <div class="stat">
+        <div class="k">Extracción</div>
+        <div class="v"><span id="r-ext">230</span> <small>m³/h</small></div>
+        <div class="note">Intake: <b id="r-int">175</b> m³/h · Tubo Ø <b id="r-duct">125</b> mm</div>
+      </div>
+      <div class="stat">
+        <div class="k">Potencia lumínica</div>
+        <div class="v"><span id="r-watt">575</span> <small>W</small></div>
+        <div class="note">Floración plena: <b id="r-watt-flor">575</b> W · <span id="r-light-name">LED</span></div>
+      </div>
+      <div class="stat">
+        <div class="k">Plantas estimadas</div>
+        <div class="v"><span id="r-plants">6</span> <small>uds</small></div>
+        <div class="note">Estándar 4/m² · SOG hasta <b id="r-plants-sog">17</b></div>
+      </div>
+
+      <div class="vpd-card">
+        <div class="vpd-top">
+          <div>
+            <div class="k" style="font-size:10.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--soft);font-weight:700;margin-bottom:5px;">Déficit de presión de vapor (VPD)</div>
+            <span class="vpd-num" id="vpd-num">1.30</span> <small style="color:var(--muted);">kPa</small>
+          </div>
+          <span class="vpd-status vpd-ok" id="vpd-status">Óptimo</span>
+        </div>
+        <div class="gauge">
+          <div class="band" id="vpd-band"></div>
+          <div class="needle" id="vpd-needle"></div>
+        </div>
+        <div class="gauge-scale"><span>0</span><span>0.5</span><span>1.0</span><span>1.5</span><span>2.0 kPa</span></div>
+        <div class="vpd-foot">Objetivo para <b id="vpd-stagename" style="color:var(--forest);">floración</b>: <span id="vpd-range">1.2 – 1.5</span> kPa. Ajusta temperatura y humedad para entrar en banda.</div>
+      </div>
+    </div>
+
+    <!-- AJUSTES AVANZADOS: justo debajo del VPD, porque temperatura y humedad son las variables que mueven el VPD -->
+    <div class="panel" style="margin-top:10px;">
+      <button class="adv-toggle" id="adv-toggle">
+        <h2 style="margin:0;">Ajustes avanzados · clima y energía</h2>
+        <span class="arrow">▾</span>
+      </button>
+      <div class="adv-body" id="adv-body">
+        <div class="adv-body-inner">
+          <div class="slider-row">
+            <div class="slider-head"><label for="temp">Temperatura del aire</label><span class="readout"><span id="temp-val">25</span> <small>°C</small></span></div>
+            <input type="range" id="temp" min="15" max="35" step="0.5" value="25">
+          </div>
+          <div class="slider-row">
+            <div class="slider-head"><label for="rh">Humedad relativa</label><span class="readout"><span id="rh-val">55</span> <small>%</small></span></div>
+            <input type="range" id="rh" min="20" max="90" step="1" value="55">
+          </div>
+          <div class="slider-row">
+            <div class="slider-head"><label for="leaf">Hoja más fría que el aire</label><span class="readout"><span id="leaf-val">2.0</span> <small>°C</small></span></div>
+            <input type="range" id="leaf" min="0" max="4" step="0.5" value="2">
+          </div>
+          <div class="slider-row">
+            <div class="slider-head"><label for="price">Precio electricidad</label><span class="readout"><span id="price-val">0.15</span> <small>€/kWh</small></span></div>
+            <input type="range" id="price" min="0.05" max="0.40" step="0.01" value="0.15">
+          </div>
+          <p class="note-sm">VPD calculado con temperatura de hoja (≈ aire − 2 °C). Pon 0 para VPD de aire.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="group-label">Coste, cosecha y clima</div>
+    <div class="results">
+      <div class="stat accent">
+        <div class="k">Coste eléctrico</div>
+        <div class="v"><span id="r-cost-mo">28</span> <small>€/mes</small></div>
+        <div class="note">Ciclo de floración (~70 días): <b id="r-cost-cycle">65</b> €</div>
+      </div>
+      <div class="stat accent">
+        <div class="k">Cosecha estimada</div>
+        <div class="v"><span id="r-yield">290–575</span> <small>g</small></div>
+        <div class="note">Seco · orientativo. Depende de <b>genética y manejo</b></div>
+      </div>
+      <div class="stat">
+        <div class="k">Carga térmica</div>
+        <div class="v"><span id="r-btu">2100</span> <small>BTU/h</small></div>
+        <div class="note" id="r-btu-note">La extracción debería disiparla</div>
+      </div>
+      <div class="stat">
+        <div class="k">Deshumidificación</div>
+        <div class="v"><span id="r-dehum">8.6</span> <small>L/día</small></div>
+        <div class="note">Transpiración estimada de la planta</div>
+      </div>
+    </div>
+
+    <footer>
+      Renovación de aire ≈ 1 vol/min + factores de filtro de carbón, calor de luz y etapa. Cosecha y coste son estimaciones honestas, no promesas.<br>
+      <b>cannabicultor.com</b>
+    </footer>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  var STAGES = {
+    esquejes:  {label:'Esquejes',    temp:24, rh:68, vpdMin:0.4, vpdMax:0.8,  lightMult:0.35, airMult:0.8,  hours:18, water:1},
+    veg:       {label:'Vegetativo',  temp:25, rh:60, vpdMin:0.9, vpdMax:1.2,  lightMult:0.6,  airMult:0.9,  hours:18, water:3},
+    florini:   {label:'Flor inicial',temp:25, rh:55, vpdMin:1.2, vpdMax:1.45, lightMult:1.0,  airMult:1.1,  hours:12, water:5},
+    floracion: {label:'Floración',   temp:24, rh:48, vpdMin:1.4, vpdMax:1.6,  lightMult:1.0,  airMult:1.15, hours:12, water:6}
+  };
+  var LIGHT = {
+    led:{name:'LED',     wm2:400, airMult:1.0,  gw:[0.5,1.2]},
+    hps:{name:'HPS',     wm2:550, airMult:1.25, gw:[0.5,1.0]},
+    cmh:{name:'CMH/LEC', wm2:480, airMult:1.1,  gw:[0.5,1.0]}
+  };
+  var PRESETS = [[0.6,0.6,1.4],[0.8,0.8,1.6],[1.0,1.0,2.0],[1.2,1.2,2.0],[1.2,2.4,2.0],[1.5,1.5,2.0],[3.0,3.0,2.5]];
+  var state = {w:1.2,d:1.2,h:2.0,stage:'floracion',light:'led',temp:25,rh:55,leaf:2,price:0.15};
+  var $ = function(id){return document.getElementById(id);};
+  var box=$('box'), scene=$('scene');
+
+  // ---- Presets rápidos ----
+  var presetWrap=$('presets');
+  PRESETS.forEach(function(p){
+    var b=document.createElement('button');b.className='chip';
+    b.textContent=(p[0]*100).toFixed(0)+'×'+(p[1]*100).toFixed(0);
+    b.title=p[0]+'×'+p[1]+'×'+p[2]+' m';
+    b.onclick=function(){state.w=p[0];state.d=p[1];state.h=p[2];markPreset();update();};
+    b._dims=p;presetWrap.appendChild(b);
+  });
+  function markPreset(){Array.prototype.forEach.call(presetWrap.children,function(c){var p=c._dims;c.classList.toggle('selected',Math.abs(p[0]-state.w)<.001&&Math.abs(p[1]-state.d)<.001&&Math.abs(p[2]-state.h)<.001);});}
+
+  // ---- Steppers de dimensión (botones -/+, mantener pulsado para repetir) ----
+  Array.prototype.forEach.call(document.querySelectorAll('.dim-stepper'),function(st){
+    var key=st.dataset.key, min=parseFloat(st.dataset.min), max=parseFloat(st.dataset.max), step=parseFloat(st.dataset.step), dec=parseInt(st.dataset.dec,10);
+    function apply(dir){
+      var v=state[key]+dir*step;
+      v=Math.max(min,Math.min(max,v));
+      v=Math.round(v/step)*step;
+      state[key]=parseFloat(v.toFixed(dec));
+      markPreset();update();
+    }
+    Array.prototype.forEach.call(st.querySelectorAll('.dim-btn'),function(btn){
+      var dir = btn.dataset.act==='up' ? 1 : -1, timer=null, delay=null;
+      function start(e){
+        e.preventDefault();
+        apply(dir);
+        delay=setTimeout(function loop(){timer=setInterval(function(){apply(dir);},110);},420);
+      }
+      function stop(){clearTimeout(delay);clearInterval(timer);}
+      btn.addEventListener('pointerdown',start);
+      btn.addEventListener('pointerup',stop);
+      btn.addEventListener('pointerleave',stop);
+      btn.addEventListener('pointercancel',stop);
+    });
+  });
+
+  // ---- Etapa y tipo de luz ----
+  var stageWrap=$('stage');
+  Object.keys(STAGES).forEach(function(k){
+    var b=document.createElement('button');b.textContent=STAGES[k].label;b.dataset.stage=k;
+    if(k===state.stage)b.className='active';
+    b.onclick=function(){state.stage=k;state.temp=STAGES[k].temp;state.rh=STAGES[k].rh;$('temp').value=state.temp;$('rh').value=state.rh;setSeg(stageWrap,b);update();};
+    stageWrap.appendChild(b);
+  });
+  function setSeg(wrap,active){Array.prototype.forEach.call(wrap.children,function(c){c.classList.toggle('active',c===active);});}
+  Array.prototype.forEach.call($('light').children,function(b){b.onclick=function(){state.light=b.dataset.light;setSeg($('light'),b);update();};});
+
+  // ---- Sliders avanzados ----
+  function bind(id,key){$(id).addEventListener('input',function(){state[key]=parseFloat(this.value);update();});}
+  bind('temp','temp');bind('rh','rh');bind('leaf','leaf');bind('price','price');
+
+  // ---- Acordeón ajustes avanzados ----
+  var advToggle=$('adv-toggle'), advBody=$('adv-body');
+  advToggle.addEventListener('click',function(){
+    var open=advBody.classList.toggle('open');
+    advToggle.classList.toggle('open',open);
+  });
+
+  function svp(t){return 0.61078*Math.exp(17.27*t/(t+237.3));}
+  function ductFor(e){if(e<=200)return 125;if(e<=380)return 150;if(e<=700)return 200;return 250;}
+  function fmt(n,d){return Number(n).toFixed(d===undefined?0:d);}
+
+  // ---- Modelo 3D arrastrable ----
+  var rotX=-16,rotY=-30,dragging=false,lastX,lastY,lastInteract=0;
+  var reduce=window.matchMedia&&window.matchMedia('(prefers-reduced-motion:reduce)').matches;
+  function sizeBox(){
+    var w=state.w,d=state.d,h=state.h,maxPx=Math.min(190,scene.clientHeight*0.62),px=maxPx/Math.max(w,d,h),W=w*px,D=d*px,H=h*px;
+    function set(id,fw,fh,tf){var el=$(id);el.style.width=fw+'px';el.style.height=fh+'px';el.style.marginLeft=(-fw/2)+'px';el.style.marginTop=(-fh/2)+'px';el.style.transform=tf;}
+    set('f-front',W,H,'rotateY(0deg) translateZ('+(D/2)+'px)');
+    set('f-back', W,H,'rotateY(180deg) translateZ('+(D/2)+'px)');
+    set('f-right',D,H,'rotateY(90deg) translateZ('+(W/2)+'px)');
+    set('f-left', D,H,'rotateY(-90deg) translateZ('+(W/2)+'px)');
+    set('f-top',  W,D,'rotateX(90deg) translateZ('+(H/2)+'px)');
+    set('f-floor',W,D,'rotateX(-90deg) translateZ('+(H/2)+'px)');
+  }
+  function renderBox(){box.style.transform='translateY(6px) rotateX('+rotX+'deg) rotateY('+rotY+'deg)';}
+  function tick(){if(!dragging&&(Date.now()-lastInteract>2500))rotY+=0.25;renderBox();requestAnimationFrame(tick);}
+  scene.addEventListener('pointerdown',function(e){dragging=true;lastX=e.clientX;lastY=e.clientY;scene.classList.add('grabbing');scene.setPointerCapture(e.pointerId);});
+  scene.addEventListener('pointermove',function(e){if(!dragging)return;rotY+=(e.clientX-lastX)*0.5;rotX-=(e.clientY-lastY)*0.5;rotX=Math.max(-85,Math.min(85,rotX));lastX=e.clientX;lastY=e.clientY;lastInteract=Date.now();renderBox();});
+  function endDrag(){dragging=false;lastInteract=Date.now();scene.classList.remove('grabbing');}
+  scene.addEventListener('pointerup',endDrag);scene.addEventListener('pointercancel',endDrag);
+  window.addEventListener('resize',sizeBox);
+
+  function update(){
+    var s=state,st=STAGES[s.stage],lt=LIGHT[s.light];
+    $('w-val').textContent=fmt(s.w,2);$('d-val').textContent=fmt(s.d,2);$('h-val').textContent=fmt(s.h,2);
+    $('temp-val').textContent=fmt(s.temp,s.temp%1?1:0);$('rh-val').textContent=fmt(s.rh);
+    $('leaf-val').textContent=fmt(s.leaf,1);$('price-val').textContent=fmt(s.price,2);
+    $('hud-w').textContent=fmt(s.w,2);$('hud-d').textContent=fmt(s.d,2);$('hud-h').textContent=fmt(s.h,2);
+    sizeBox();
+
+    var vol=s.w*s.d*s.h,area=s.w*s.d;
+    $('r-vol').textContent=fmt(vol,2);$('r-area').textContent=fmt(area,2);
+
+    var ext=Math.round(vol*60*1.35*lt.airMult*st.airMult);
+    $('r-ext').textContent=ext;$('r-int').textContent=Math.round(ext*0.75);$('r-duct').textContent=ductFor(ext);
+
+    var wattFlor=Math.round(area*lt.wm2),watt=Math.round(area*lt.wm2*st.lightMult);
+    $('r-watt').textContent=watt;$('r-watt-flor').textContent=wattFlor;$('r-light-name').textContent=lt.name;
+    $('r-plants').textContent=Math.max(1,Math.round(area*4));$('r-plants-sog').textContent=Math.max(1,Math.round(area*12));
+
+    // VPD
+    var leafT=s.temp-s.leaf,vpd=svp(leafT)-svp(s.temp)*(s.rh/100);if(vpd<0)vpd=0;
+    $('vpd-num').textContent=fmt(vpd,2);$('vpd-stagename').textContent=st.label.toLowerCase();
+    $('vpd-range').textContent=fmt(st.vpdMin,1)+' - '+fmt(st.vpdMax,1);
+    var band=$('vpd-band'),needle=$('vpd-needle');
+    band.style.left=(st.vpdMin/2*100)+'%';band.style.width=((st.vpdMax-st.vpdMin)/2*100)+'%';
+    needle.style.left=(Math.min(vpd,2)/2*100)+'%';
+    var status=$('vpd-status'),num=$('vpd-num'),cls,label;
+    if(vpd>=st.vpdMin&&vpd<=st.vpdMax){cls='vpd-ok';label='Óptimo';num.style.color='var(--forest)';}
+    else if(vpd>=st.vpdMin-0.2&&vpd<=st.vpdMax+0.2){cls='vpd-warn';label=vpd<st.vpdMin?'Algo bajo':'Algo alto';num.style.color='var(--amber)';}
+    else{cls='vpd-bad';label=vpd<st.vpdMin?'Bajo · riesgo hongos':'Alto · estrés hídrico';num.style.color='var(--red)';}
+    status.textContent=label;status.className='vpd-status '+cls;
+
+    // Energía
+    var fanW=Math.round(ext*0.13);
+    var kwhDay=(watt*st.hours+fanW*24)/1000;
+    var costMo=kwhDay*30*s.price;
+    var kwhCycle=((wattFlor*12+fanW*24)/1000)*70;
+    var costCycle=kwhCycle*s.price;
+    $('r-cost-mo').textContent=fmt(costMo,costMo<10?1:0);
+    $('r-cost-cycle').textContent=fmt(costCycle,0);
+
+    // Cosecha
+    var yLow=Math.round(wattFlor*lt.gw[0]),yHigh=Math.round(wattFlor*lt.gw[1]);
+    $('r-yield').textContent=yLow+'-'+yHigh;
+
+    // Carga térmica
+    var btu=Math.round((watt+fanW)*3.412*1.15);
+    $('r-btu').textContent=btu;
+    $('r-btu-note').textContent = vol<=4 ? 'La extracción debería disiparla' : 'Valora aire acondicionado en sala cerrada';
+
+    // Deshumidificación
+    $('r-dehum').textContent=fmt(area*st.water,1);
+  }
+
+  markPreset();update();
+  if(reduce){renderBox();}else{requestAnimationFrame(tick);}
+})();
+</script>
+</body>
+</html>

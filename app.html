@@ -1,0 +1,1055 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Cannabicultor · App</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Lora:ital,wght@0,400;0,600;1,400;1,600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#f5f7f4;--bg2:#eef1ec;--card:#fff;
+    --forest:#1a5c32;--forest2:#2a7a44;
+    --pale:#e8f0ea;--pale2:#d4e4d9;
+    --text:#151515;--muted:#6f746f;--soft:#9aa09a;
+    --border:rgba(0,0,0,.075);--border2:rgba(0,0,0,.12);
+    --r:20px;--shadow:0 1px 3px rgba(0,0,0,.04);
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;}
+  body{background:var(--bg);color:var(--text);font-family:Inter,-apple-system,sans-serif;-webkit-font-smoothing:antialiased;overflow:hidden;position:fixed;width:100%;}
+  button,input,textarea,select{font-family:inherit;}
+  .app{height:100dvh;display:flex;flex-direction:column;max-width:480px;margin:0 auto;background:var(--bg);position:relative;}
+
+  .top{display:flex;align-items:center;justify-content:space-between;padding:14px 18px 8px;flex-shrink:0;}
+  .top .brand{display:flex;align-items:center;gap:9px;}
+  .top .brand img{width:34px;height:34px;border-radius:50%;}
+  .top .brand b{font-family:Lora,Georgia,serif;font-size:17px;font-weight:600;}
+  .burger{width:26px;height:22px;display:flex;flex-direction:column;justify-content:center;gap:5px;cursor:pointer;}
+  .burger span{height:2px;border-radius:2px;background:var(--muted);}
+  .burger span:nth-child(2){width:70%;}
+
+  .scroll{flex:1;overflow-y:auto;padding:6px 16px 12px;-webkit-overflow-scrolling:touch;}
+  .scroll::-webkit-scrollbar{display:none;}
+  .view{display:none;}
+  .view.on{display:block;animation:fadeUp .3s ease;}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:none;}}
+
+  .kicker{font-size:11px;font-weight:700;letter-spacing:.12em;color:var(--forest);text-transform:uppercase;margin:8px 2px 4px;}
+  .title{font-family:Lora,Georgia,serif;font-size:26px;line-height:1.08;letter-spacing:-.03em;font-weight:600;margin-bottom:16px;}
+  .title em{color:var(--forest);font-style:italic;font-weight:400;}
+
+  .briefing{background:linear-gradient(135deg,var(--forest),var(--forest2));border-radius:var(--r);padding:17px 18px;margin-bottom:14px;display:flex;gap:13px;align-items:flex-start;color:#fff;}
+  .briefing .ico{font-size:22px;flex-shrink:0;}
+  .briefing .label{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;opacity:.7;margin-bottom:5px;}
+  .briefing .txt{font-size:14px;line-height:1.5;}
+  .briefing-loading{opacity:.7;}
+
+  .panel{background:var(--card);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--shadow);padding:16px;margin-bottom:14px;}
+  .cult-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;gap:10px;}
+  .cult-name{font-family:Lora,Georgia,serif;font-size:20px;font-weight:600;}
+  .cult-meta{display:flex;flex-wrap:wrap;gap:6px;margin-top:7px;}
+  .meta-chip{font-size:12px;color:var(--muted);background:var(--bg2);border-radius:8px;padding:4px 9px;}
+  .edit-btn{font-size:12px;font-weight:600;color:var(--forest);background:var(--pale);border:none;border-radius:10px;padding:8px 11px;cursor:pointer;flex-shrink:0;}
+
+  .health-card{display:flex;align-items:center;gap:16px;}
+  .ring{width:84px;height:84px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:conic-gradient(var(--forest) 0 0%, #dfe7df 0% 100%);position:relative;}
+  .ring::after{content:'';position:absolute;width:64px;height:64px;background:var(--card);border-radius:50%;}
+  .ring-inner{position:relative;z-index:1;text-align:center;}
+  .ring-val{font-family:Lora,serif;font-size:20px;font-weight:600;color:var(--forest);line-height:1;}
+  .ring-label{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-top:2px;}
+  .health-title{font-weight:600;font-size:15px;margin-bottom:3px;}
+  .health-text{font-size:13px;color:var(--muted);line-height:1.45;}
+  .health-list{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px;}
+  .check{font-size:11px;color:var(--forest);background:var(--pale);border-radius:7px;padding:3px 7px;}
+
+  .vpd-wrap{margin-bottom:14px;}
+
+  .params{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:14px;}
+  .metric{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:13px;position:relative;}
+  .metric-head{display:flex;justify-content:space-between;align-items:center;}
+  .metric-k{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;}
+  .metric-ok{display:none;align-items:center;justify-content:center;width:16px;height:16px;border-radius:50%;background:#dcfce7;color:#15803d;font-size:10px;}
+  .metric-val{font-size:21px;font-weight:700;letter-spacing:-.02em;margin:4px 0 6px;}
+  .metric-val small{font-size:11px;color:var(--soft);font-weight:500;}
+  .metric-meta{font-size:10px;color:var(--soft);line-height:1.3;}
+  .metric-track{height:4px;background:var(--bg2);border-radius:3px;margin-top:7px;overflow:hidden;}
+  .metric-bar{height:100%;background:var(--forest);border-radius:3px;width:0;transition:width .5s;}
+
+  .detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;}
+  .detail{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:13px;position:relative;cursor:pointer;}
+  .detail-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;}
+  .detail-main{font-size:16px;font-weight:700;letter-spacing:-.02em;}
+  .detail-sub{font-size:11px;color:var(--soft);margin-top:2px;}
+  .inline-edit{display:none;position:absolute;left:0;right:0;bottom:100%;margin-bottom:6px;background:#fff;border:1px solid var(--border2);border-radius:12px;padding:10px;box-shadow:0 8px 24px rgba(0,0,0,.12);z-index:5;}
+  .inline-edit.show{display:block;}
+  .inline-edit select,.inline-edit input{width:100%;padding:8px;border:1px solid var(--border2);border-radius:8px;font-size:13px;margin-bottom:7px;}
+  .inline-edit-btns{display:flex;gap:6px;}
+  .ie-ok{flex:1;background:var(--forest);color:#fff;border:none;border-radius:8px;padding:8px;font-size:12px;font-weight:600;cursor:pointer;}
+  .ie-cancel{background:var(--bg2);border:none;border-radius:8px;padding:8px 12px;font-size:14px;cursor:pointer;}
+
+  .section-sub{font-size:12px;color:var(--soft);margin-bottom:10px;}
+
+  .tool{display:flex;align-items:center;gap:13px;background:var(--card);border:1px solid var(--border);border-radius:16px;padding:15px;margin-bottom:10px;box-shadow:var(--shadow);cursor:pointer;}
+  .tool.soon{opacity:.55;}
+  .tool .tic{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden;}
+  .tool .tic img{width:100%;height:100%;display:block;}
+  .tool b{font-family:Lora,serif;font-size:16px;font-weight:600;display:block;}
+  .tool small{font-size:12px;color:var(--muted);}
+  .tool .soon-tag{margin-left:auto;font-size:10px;font-weight:700;color:var(--soft);text-transform:uppercase;letter-spacing:.06em;}
+  .empty{text-align:center;padding:36px 20px;color:var(--muted);font-size:13px;line-height:1.6;}
+  .empty .big{font-size:38px;margin-bottom:10px;}
+
+  /* Diario dentro de Tu cultivo */
+  .diary-add{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;background:var(--pale);color:var(--forest);border:1px dashed var(--pale2);border-radius:14px;padding:14px;font-size:13px;font-weight:600;cursor:pointer;margin-bottom:12px;}
+  .diary-empty{text-align:center;padding:24px;color:var(--soft);font-size:12px;}
+
+  /* Dock IA */
+  .ia-dock{flex-shrink:0;padding:8px 16px 6px;}
+  .ia-bar{display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--border2);border-radius:15px;padding:11px 13px;box-shadow:var(--shadow);cursor:pointer;}
+  .ia-bar .cam{width:32px;height:32px;border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden;}
+  .ia-bar .cam img{width:100%;height:100%;display:block;}
+  .ia-bar .ia-text{flex:1;font-size:14px;color:var(--soft);}
+
+  /* Barra inferior */
+  .nav{flex-shrink:0;display:flex;padding:6px 12px calc(8px + env(safe-area-inset-bottom));border-top:1px solid var(--border);background:rgba(255,255,255,.92);backdrop-filter:blur(12px);}
+  .nav a{flex:1;text-align:center;padding:8px 4px;display:flex;flex-direction:column;align-items:center;gap:3px;color:var(--soft);cursor:pointer;border-radius:12px;transition:.15s;}
+  .nav a .ni{width:24px;height:24px;display:block;opacity:.55;transition:.15s;}
+  .nav a.active .ni{opacity:1;}
+  .nav a span{font-size:10.5px;font-weight:600;}
+  .nav a.active{color:var(--forest);}
+
+  /* Drawer */
+  .drawer-bg{position:absolute;inset:0;background:rgba(0,0,0,.35);opacity:0;pointer-events:none;transition:.25s;z-index:40;}
+  .drawer-bg.show{opacity:1;pointer-events:auto;}
+  .drawer{position:absolute;top:0;left:0;bottom:0;width:82%;max-width:330px;background:var(--card);transform:translateX(-100%);transition:.28s cubic-bezier(.3,.7,.3,1);z-index:41;padding:22px 18px;display:flex;flex-direction:column;gap:5px;overflow-y:auto;}
+  .drawer.show{transform:none;}
+  .drawer .dhead{display:flex;align-items:center;gap:10px;margin-bottom:18px;}
+  .drawer .dhead img{width:40px;height:40px;border-radius:50%;}
+  .drawer .dhead b{font-family:Lora,serif;font-size:17px;}
+  .drawer .dhead small{display:block;font-size:11px;color:var(--muted);}
+  .drawer .ditem{display:flex;align-items:center;gap:11px;padding:13px 12px;border-radius:12px;font-size:14px;font-weight:500;color:var(--text);cursor:pointer;}
+  .drawer .ditem:hover{background:var(--bg2);}
+  .drawer .ditem .di{font-size:18px;}
+  .drawer .level-badge{background:var(--bg2);border-radius:14px;padding:14px;margin-bottom:6px;}
+  .drawer .level-badge .lb-k{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);}
+  .drawer .level-badge .lb-name{font-family:Lora,serif;font-size:18px;font-weight:600;margin:3px 0;}
+  .drawer .level-badge .lb-note{font-size:11px;color:var(--muted);}
+  .drawer .level-badge .lb-test{display:block;margin-top:9px;width:100%;background:var(--forest);color:#fff;border:none;border-radius:10px;padding:10px;font-size:12px;font-weight:600;cursor:pointer;}
+  .drawer .plan-card{margin-top:auto;background:linear-gradient(135deg,var(--forest),var(--forest2));border-radius:18px;padding:16px;color:#fff;}
+  .drawer .plan-card .pl{font-size:10px;letter-spacing:.12em;text-transform:uppercase;opacity:.7;}
+  .drawer .plan-card b{font-family:Lora,serif;font-size:18px;display:block;margin:2px 0 8px;}
+  .drawer .plan-card button{width:100%;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.3);color:#fff;border-radius:10px;padding:10px;font-weight:600;font-size:13px;cursor:pointer;}
+  .dsep{height:1px;background:var(--border);margin:8px 4px;}
+
+  /* Chat panel (reusa lógica del dashboard) */
+  .chat-panel{position:absolute;inset:0;background:var(--bg);z-index:50;display:flex;flex-direction:column;transform:translateY(100%);transition:.3s cubic-bezier(.3,.7,.3,1);}
+  .chat-panel.open{transform:none;}
+  .chat-head{display:flex;align-items:center;justify-content:space-between;padding:16px 18px;border-bottom:1px solid var(--border);flex-shrink:0;}
+  .chat-title{display:flex;align-items:center;gap:10px;font-family:Lora,serif;font-size:17px;font-weight:600;}
+  .chat-title .ico{width:30px;height:30px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;}
+  .chat-head .close{font-size:26px;color:var(--muted);background:none;border:none;cursor:pointer;line-height:1;}
+  .msgs{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px;}
+  .msg{display:flex;gap:9px;align-items:flex-end;max-width:88%;}
+  .msg.user{align-self:flex-end;flex-direction:row-reverse;}
+  .msg .avatar{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;flex-shrink:0;}
+  .msg .avatar.ai{background:var(--forest);color:#fff;}
+  .msg .avatar.user{background:var(--bg2);color:var(--muted);}
+  .msg .bubble{padding:11px 14px;border-radius:16px;font-size:14px;line-height:1.5;}
+  .msg.ai .bubble{background:var(--card);border:1px solid var(--border);}
+  .msg.user .bubble{background:var(--forest);color:#fff;}
+  .input-area{flex-shrink:0;padding:10px 14px calc(12px + env(safe-area-inset-bottom));border-top:1px solid var(--border);background:var(--card);}
+  .attach-preview{display:none;align-items:center;gap:8px;padding:7px;background:var(--bg2);border-radius:10px;margin-bottom:8px;}
+  .attach-preview.show{display:flex;}
+  .attach-preview img{width:34px;height:34px;border-radius:7px;object-fit:cover;}
+  .attach-preview span{flex:1;font-size:12px;color:var(--muted);}
+  .attach-remove{background:none;border:none;font-size:18px;color:var(--muted);cursor:pointer;}
+  #photoInput{display:none;}
+  .input-row{display:flex;align-items:center;gap:8px;}
+  .attach-btn{width:38px;height:38px;border-radius:11px;background:var(--bg2);border:none;font-size:17px;cursor:pointer;flex-shrink:0;}
+  #chatInput{flex:1;border:1px solid var(--border2);border-radius:12px;padding:11px 13px;font-size:14px;outline:none;}
+  .send{background:var(--forest);color:#fff;border:none;border-radius:12px;padding:11px 16px;font-size:13px;font-weight:600;cursor:pointer;flex-shrink:0;}
+  .chat-note{font-size:11px;color:var(--soft);text-align:center;margin-top:7px;}
+  .typing{display:flex;gap:4px;padding:11px 14px;}
+  .typing span{width:7px;height:7px;border-radius:50%;background:var(--soft);animation:blink 1.2s infinite;}
+  .typing span:nth-child(2){animation-delay:.2s;}.typing span:nth-child(3){animation-delay:.4s;}
+  @keyframes blink{0%,60%,100%{opacity:.3;}30%{opacity:1;}}
+
+  /* Modal onboarding/editar (reusa lógica) */
+  .modal-overlay{position:absolute;inset:0;background:rgba(0,0,0,.5);z-index:60;display:flex;align-items:flex-end;justify-content:center;transition:.25s;}
+  .modal-overlay.hide{opacity:0;pointer-events:none;}
+  .modal{background:#fff;border-radius:22px 22px 0 0;width:100%;max-width:480px;padding:24px 20px calc(24px + env(safe-area-inset-bottom));max-height:88dvh;overflow-y:auto;}
+  .modal-kicker{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--forest);margin-bottom:6px;}
+  .modal-title{font-family:Lora,serif;font-size:23px;font-weight:600;line-height:1.15;margin-bottom:16px;}
+  .modal-title em{color:var(--forest);font-style:italic;font-weight:400;}
+  .chip-group{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px;}
+  .chip{border:1px solid var(--border2);background:#fff;border-radius:12px;padding:11px 14px;font-size:14px;cursor:pointer;transition:.15s;}
+  .chip.selected{background:var(--pale);border-color:var(--forest);color:var(--forest);font-weight:600;}
+  .modal input[type=text],.modal input[type=number],.modal select{width:100%;padding:12px;border:1px solid var(--border2);border-radius:12px;font-size:15px;margin-bottom:10px;}
+  .modal-next{width:100%;background:var(--forest);color:#fff;border:none;border-radius:14px;padding:14px;font-size:15px;font-weight:600;cursor:pointer;margin-top:8px;}
+  .modal-skip{display:block;width:100%;text-align:center;color:var(--muted);background:none;border:none;font-size:13px;margin-top:10px;cursor:pointer;}
+
+  /* Upgrade modal */
+  .upgrade-overlay{position:absolute;inset:0;background:rgba(0,0,0,.5);z-index:60;display:flex;align-items:center;justify-content:center;padding:20px;}
+  .upgrade-overlay.hide{display:none;}
+
+  .modal-step-dot{flex:1;height:4px;border-radius:3px;background:var(--bg2);}
+  .modal-step-dot.active{background:var(--forest);}
+  .modal-step-dot.done{background:var(--pale2);}
+  .vpd-badge{font-size:11px;font-weight:600;border-radius:8px;padding:5px 9px;}
+  .vpd-ok{color:#15803d;background:#dcfce7;}
+  .vpd-warn{color:#b45309;background:#fef3c7;}
+  .vpd-bad{color:#b91c1c;background:#fee2e2;}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="top">
+    <div class="brand">
+      <img src="https://cannabicultor.com/assets/icono_cannabicultor.png" alt="">
+      <b>Cannabicultor</b>
+    </div>
+    <div class="burger" onclick="abrirDrawer()"><span></span><span></span><span></span></div>
+  </div>
+
+  <div class="scroll" id="scroll">
+
+    <!-- ===== INICIO ===== -->
+    <div class="view on" id="v-inicio">
+      <div class="kicker">Tu cultivo · Hoy</div>
+      <div class="title" id="pageTitle">Tu cultivo, <em>en una vista</em></div>
+
+      <!-- Estado inicial: botón. Al pulsar, se pide el briefing a la IA -->
+      <div id="briefingInicial" style="margin-bottom:14px">
+        <button onclick="pedirBriefing()" style="width:100%;display:flex;align-items:center;justify-content:center;gap:10px;background:linear-gradient(135deg,var(--forest),var(--forest2));color:#fff;border:none;border-radius:var(--r);padding:16px;font-family:Inter;font-size:15px;font-weight:600;cursor:pointer;box-shadow:var(--shadow)">
+          <span style="font-size:19px">🤖</span> Comenzar análisis cultivo
+        </button>
+      </div>
+
+      <!-- Caja del briefing: oculta hasta que se pulsa -->
+      <div class="briefing" id="briefingBox" style="display:none">
+        <div class="ico">🤖</div>
+        <div>
+          <div class="label">Resumen de la IA · Hoy</div>
+          <div class="txt briefing-loading" id="briefingText">Analizando tu cultivo…</div>
+        </div>
+      </div>
+
+
+      <div class="panel">
+        <div class="cult-head">
+          <div>
+            <div class="cult-name" id="cultNombre">—</div>
+            <div class="cult-meta">
+              <span class="meta-chip" id="cultFase">—</span>
+              <span class="meta-chip" id="cultSemana">—</span>
+              <span class="meta-chip" id="cultSustrato">—</span>
+              <span class="meta-chip" id="cultLuz">—</span>
+            </div>
+          </div>
+          <button class="edit-btn" onclick="ir('cultivo')">Ver →</button>
+        </div>
+        <div class="health-card">
+          <div class="ring" id="healthRing"><div class="ring-inner"><div class="ring-val" id="healthPct">—</div><div class="ring-label">Salud</div></div></div>
+          <div>
+            <div class="health-title" id="healthTitle">Configura tu cultivo</div>
+            <div class="health-text" id="healthText">Introduce los parámetros para que la IA analice su estado.</div>
+            <div class="health-list" id="healthList"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="vpd-wrap" id="vpdSlot"></div>
+
+      <div class="kicker" style="margin-top:18px">Accesos rápidos</div>
+      <div class="tool" onclick="ir('cultivo')"><div class="tic"><img src="assets/icons/03-tu-cultivo.svg" alt=""></div><div><b>Mi cultivo</b><small>Parámetros y diario</small></div></div>
+      <div class="tool" onclick="openChat()"><div class="tic"><img src="assets/icons/04-subir-foto.svg" alt=""></div><div><b>Diagnóstico por foto</b><small>Sube tu planta a la IA</small></div></div>
+
+      <!-- elementos ocultos que el script del dashboard espera (resumen IA) -->
+      <div style="display:none">
+        <span id="aiSummaryText"></span><span id="chatPreviewText"></span>
+      </div>
+    </div>
+
+    <!-- ===== HERRAMIENTAS ===== -->
+    <div class="view" id="v-herramientas">
+      <div class="kicker">Herramientas</div>
+      <div class="title">Todo para <em>cultivar mejor</em></div>
+      <div class="tool" onclick="window.location.href='buscador-cannabicultor.html'"><div class="tic"><img src="assets/icons/07-buscar-variedad.svg" alt=""></div><div><b>Buscar variedad</b><small>Variedades y breeders · en vivo</small></div></div>
+      <div class="tool" onclick="window.location.href='disenador_sala_cultivo.html'"><div class="tic"><img src="assets/icons/08-disenador-sala.svg" alt=""></div><div><b>Diseñador de sala</b><small>Mide, calcula, equipa</small></div></div>
+      <div class="tool" onclick="window.location.href='atlas-landrace.html'"><div class="tic"><img src="assets/icons/09-mapa-landraces.svg" alt=""></div><div><b>Mapa de landraces</b><small>Orígenes genéticos · mapa interactivo</small></div></div>
+      <div class="tool soon"><div class="tic"><img src="assets/icons/10-biblioteca.svg" alt=""></div><div><b>Biblioteca</b><small>Guías y libros</small></div><span class="soon-tag">pronto</span></div>
+      <div class="empty"><div class="big">🔧</div>Más herramientas en camino.<br>Esta sección se irá llenando.</div>
+    </div>
+
+    <!-- ===== TU CULTIVO ===== -->
+    <div class="view" id="v-cultivo">
+      <div class="kicker">Tu cultivo</div>
+      <div class="title">Parámetros de <em id="cultivoTitleGen">tu cultivo</em></div>
+      <div class="section-sub" id="paramFecha">Sin configurar</div>
+
+      <!-- Métricas (mPh, mEc, mTemp, mHum) — IDs que espera setMetric() -->
+      <div class="params">
+        <div class="metric" data-inline="ph" style="cursor:pointer">
+          <div class="metric-head"><span class="metric-k">pH</span><span class="metric-ok" id="mPhOk">✓</span></div>
+          <div class="metric-val" id="mPh">—</div><div class="metric-meta" id="mPhMeta">—</div>
+          <div class="metric-track"><div class="metric-bar" id="mPhBar"></div></div>
+          <div class="inline-edit" id="ie_ph" onclick="event.stopPropagation()">
+            <input type="number" step="0.1" min="3" max="9" id="ie_ph_val" placeholder="pH (ej: 6.2)">
+            <div class="inline-edit-btns"><button class="ie-ok" onclick="saveInline('ph')">Guardar</button><button class="ie-cancel" onclick="closeInline('ph')">×</button></div>
+          </div>
+        </div>
+        <div class="metric" data-inline="ec" style="cursor:pointer">
+          <div class="metric-head"><span class="metric-k">EC</span><span class="metric-ok" id="mEcOk">✓</span></div>
+          <div class="metric-val" id="mEc">—</div><div class="metric-meta" id="mEcMeta">—</div>
+          <div class="metric-track"><div class="metric-bar" id="mEcBar"></div></div>
+          <div class="inline-edit" id="ie_ec" onclick="event.stopPropagation()">
+            <input type="number" step="0.1" min="0" max="5" id="ie_ec_val" placeholder="EC (ej: 1.4)">
+            <div class="inline-edit-btns"><button class="ie-ok" onclick="saveInline('ec')">Guardar</button><button class="ie-cancel" onclick="closeInline('ec')">×</button></div>
+          </div>
+        </div>
+        <div class="metric" data-inline="temp" style="cursor:pointer">
+          <div class="metric-head"><span class="metric-k">Temp</span><span class="metric-ok" id="mTempOk">✓</span></div>
+          <div class="metric-val" id="mTemp">—</div><div class="metric-meta" id="mTempMeta">—</div>
+          <div class="metric-track"><div class="metric-bar" id="mTempBar"></div></div>
+          <div class="inline-edit" id="ie_temp" onclick="event.stopPropagation()">
+            <input type="number" min="0" max="50" id="ie_temp_val" placeholder="Temperatura °C">
+            <div class="inline-edit-btns"><button class="ie-ok" onclick="saveInline('temp')">Guardar</button><button class="ie-cancel" onclick="closeInline('temp')">×</button></div>
+          </div>
+        </div>
+        <div class="metric" data-inline="hum" style="cursor:pointer">
+          <div class="metric-head"><span class="metric-k">Humedad</span><span class="metric-ok" id="mHumOk">✓</span></div>
+          <div class="metric-val" id="mHum">—</div><div class="metric-meta" id="mHumMeta">—</div>
+          <div class="metric-track"><div class="metric-bar" id="mHumBar"></div></div>
+          <div class="inline-edit" id="ie_hum" onclick="event.stopPropagation()">
+            <input type="number" min="0" max="100" id="ie_hum_val" placeholder="Humedad %">
+            <div class="inline-edit-btns"><button class="ie-ok" onclick="saveInline('hum')">Guardar</button><button class="ie-cancel" onclick="closeInline('hum')">×</button></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-sub" style="margin-bottom:16px;text-align:center">Toca cualquier dato para editarlo</div>
+
+      <!-- Detalle editable inline (dSustrato, dGenetica… — IDs que espera renderDashboard) -->
+      <div class="detail-grid">
+        <div class="detail" data-inline="sustrato" onclick="openInline('sustrato')">
+          <div class="detail-label">Sustrato</div>
+          <div class="detail-main" id="dSustrato">—</div>
+          <div class="detail-sub" id="dPhEc">pH — · EC —</div>
+          <div class="inline-edit" id="ie_sustrato" onclick="event.stopPropagation()">
+            <select id="ie_sustrato_val"><option>Tierra</option><option>Coco coir</option><option>Hidropónico</option><option>Fibra de coco</option><option>Mix</option></select>
+            <div class="inline-edit-btns"><button class="ie-ok" onclick="saveInline('sustrato')">Guardar</button><button class="ie-cancel" onclick="closeInline('sustrato')">×</button></div>
+          </div>
+        </div>
+        <div class="detail" data-inline="genetica" onclick="openInline('genetica')">
+          <div class="detail-label">Genética</div>
+          <div class="detail-main" id="dGenetica">—</div>
+          <div class="detail-sub" id="dTipo">—</div>
+          <div class="inline-edit" id="ie_genetica" onclick="event.stopPropagation()">
+            <input type="text" id="ie_genetica_val" placeholder="Ej: Blue Dream…">
+            <div class="inline-edit-btns"><button class="ie-ok" onclick="saveInline('genetica')">Guardar</button><button class="ie-cancel" onclick="closeInline('genetica')">×</button></div>
+          </div>
+        </div>
+        <div class="detail" data-inline="riego" onclick="openInline('riego')">
+          <div class="detail-label">Último riego</div>
+          <div class="detail-main" id="dRiego">—</div>
+          <div class="detail-sub" id="dRiegoSub">—</div>
+          <div class="inline-edit" id="ie_riego" onclick="event.stopPropagation()">
+            <select id="ie_riego_val"><option>Hoy</option><option>Ayer</option><option>Hace 2 días</option><option>Hace 3 días</option><option>Hace más de 3 días</option></select>
+            <div class="inline-edit-btns"><button class="ie-ok" onclick="saveInline('riego')">Guardar</button><button class="ie-cancel" onclick="closeInline('riego')">×</button></div>
+          </div>
+        </div>
+        <div class="detail" data-inline="semana" onclick="openInline('semana')">
+          <div class="detail-label">Semana</div>
+          <div class="detail-main" id="dMaceta">—</div>
+          <div class="detail-sub" id="dLuzW">—</div>
+          <div class="inline-edit" id="ie_semana" onclick="event.stopPropagation()">
+            <input type="number" min="1" max="30" id="ie_semana_val" placeholder="Semana (ej: 6)">
+            <div class="inline-edit-btns"><button class="ie-ok" onclick="saveInline('semana')">Guardar</button><button class="ie-cancel" onclick="closeInline('semana')">×</button></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Diario del cultivo ACTUAL -->
+      <div class="kicker" style="margin-top:20px">Diario · cultivo actual</div>
+      <div class="diary-add" onclick="openChat()">📷 Añadir foto de hoy</div>
+      <div class="diary-empty">Aún no hay entradas. Sube una foto y la IA la guarda en tu diario.</div>
+    </div>
+
+  </div>
+
+  <!-- Dock IA -->
+  <div class="ia-dock">
+    <div class="ia-bar" onclick="openChat()">
+      <div class="cam"><img src="assets/icons/04-subir-foto.svg" alt=""></div>
+      <div class="ia-text">Pregúntale a tu asesor de cultivo…</div>
+    </div>
+  </div>
+
+  <!-- Barra inferior -->
+  <nav class="nav">
+    <a class="active" id="n-inicio" onclick="ir('inicio')"><img class="ni" src="assets/icons/05-inicio.svg" alt=""><span>Inicio</span></a>
+    <a id="n-herramientas" onclick="ir('herramientas')"><img class="ni" src="assets/icons/06-herramientas.svg" alt=""><span>Herramientas</span></a>
+    <a id="n-cultivo" onclick="ir('cultivo')"><img class="ni" src="assets/icons/03-tu-cultivo.svg" alt=""><span>Tu cultivo</span></a>
+  </nav>
+
+  <!-- Drawer lateral -->
+  <div class="drawer-bg" id="drawerBg" onclick="cerrarDrawer()"></div>
+  <div class="drawer" id="drawer">
+    <div class="dhead">
+      <img src="https://cannabicultor.com/assets/icono_cannabicultor.png" alt="">
+      <div><b>Cannabicultor</b><small id="drawerEmail">—</small></div>
+    </div>
+    <div class="level-badge">
+      <div class="lb-k">Tu nivel</div>
+      <div class="lb-name"><span id="nivelBadge">🌱</span> <span id="nivelName">Semilla</span></div>
+      <div class="lb-note" id="nivelNote">—</div>
+      <button class="lb-test" onclick="location.href='/test.html'">🧪 Subir de nivel · Test de certificación</button>
+    </div>
+    <div class="dsep"></div>
+    <div class="ditem" onclick="openOnboarding(true)"><span class="di">👤</span> Mi cuenta y cultivo</div>
+    <div class="ditem"><span class="di">📔</span> Archivo de diarios</div>
+    <div class="dsep"></div>
+    <div class="ditem" onclick="cerrarSesion()"><span class="di">↩️</span> Cerrar sesión</div>
+    <div class="plan-card">
+      <div class="pl">Tu plan</div>
+      <b id="planName">🌱 Semilla · Fundador</b>
+      <button id="nivelUpgrade" onclick="goUpgrade()">Ver todos los planes →</button>
+    </div>
+  </div>
+
+  <!-- Chat panel (reusa lógica) -->
+  <div class="chat-panel" id="chatPanel">
+    <div class="chat-head">
+      <div class="chat-title"><span class="ico" style="background:var(--forest);color:#fff">IA</span> Cannabicultor IA</div>
+      <button class="close" onclick="closeChat()">×</button>
+    </div>
+    <div class="msgs" id="msgs"></div>
+    <div class="input-area">
+      <div class="attach-preview" id="attachPreview">
+        <img id="attachThumb" alt="">
+        <span id="attachLabel">Foto lista para analizar</span>
+        <button type="button" class="attach-remove" onclick="clearAttachment()">×</button>
+      </div>
+      <div class="input-row">
+        <input type="file" id="photoInput" accept="image/*">
+        <button type="button" class="attach-btn" onclick="document.getElementById('photoInput').click()">📷</button>
+        <input id="chatInput" placeholder="Escribe o adjunta una foto…" onkeydown="if(event.key==='Enter')sendMsg()">
+        <button class="send" id="sendBtn" onclick="sendMsg()">Enviar</button>
+      </div>
+      <div class="chat-note" id="chatNote">Cargando…</div>
+    </div>
+  </div>
+
+  <!-- Modal (onboarding/editar) - lo rellena renderStep() del script reusado -->
+  <div class="modal-overlay hide" id="modalOverlay">
+    <div class="modal">
+      <div id="stepDots" style="display:flex;gap:5px;margin-bottom:10px"></div>
+      <div class="modal-kicker" id="modalKicker">Paso</div>
+      <h2 class="modal-title" id="modalTitle">Configura tu cultivo</h2>
+      <div id="modalSub" style="font-size:13px;color:var(--muted);margin:-8px 0 14px"></div>
+      <div id="modalBody"></div>
+      <div id="modalProgressText" style="display:none"></div>
+      <button class="modal-next" id="modalNext" onclick="nextStep()">Siguiente</button>
+      <button class="modal-skip" id="modalSkip" onclick="skipOnboarding()">Ahora no</button>
+    </div>
+  </div>
+
+  <!-- Upgrade modal slot -->
+  <div class="upgrade-overlay hide" id="upgradeModal"></div>
+
+</div>
+
+<script src="https://cannabicultor.com/assets/chat-vision.js?v=3"></script>
+<script>
+
+const WORKER = 'https://growers-alliance-ai.enriquedorta.workers.dev';
+
+// ─── GUARD DE SESIÓN JWT ──────────────────────────────────────────────────────
+// LOGIN ÚNICO: acepta el token venga del dashboard (ga_jwt) o del onboarding (cc_token).
+// Si llega como cc_token, lo normalizamos a ga_jwt para que toda la app use una sola clave.
+let JWT = localStorage.getItem('ga_jwt') || sessionStorage.getItem('ga_jwt') || localStorage.getItem('cc_token');
+if(JWT && !localStorage.getItem('ga_jwt')){ localStorage.setItem('ga_jwt', JWT); }
+if(!JWT){ window.location.replace('/login.html'); }
+
+function logout401(){
+  ['ga_jwt','ga_email','ga_nivel','ga_test_passed','ga_perfil'].forEach(k=>{
+    localStorage.removeItem(k); sessionStorage.removeItem(k);
+  });
+  window.location.replace('/login.html');
+}
+
+// ─── ESTADO GLOBAL ────────────────────────────────────────────────────────────
+const LIM = {libre:2, semilla:5, cultivador:999, master:999, genetista:999};
+const NIVEL_INFO = {
+  libre:     {name:'Libre',     badge:'👁️', note:'2 consultas diarias · Acceso básico'},
+  semilla:   {name:'Semilla',   badge:'🌱', note:'5 consultas diarias · Memoria IA básica'},
+  cultivador:{name:'Cultivador',badge:'🌿', note:'Consultas ilimitadas · Alertas y calendario'},
+  master:    {name:'Master',    badge:'🔥', note:'Prioridad · Historial completo · Funciones avanzadas'},
+  genetista: {name:'Genetista', badge:'🧬', note:'Acceso total · Genética y reproducción'}
+};
+
+let PERFIL = JSON.parse(localStorage.getItem('ga_perfil') || 'null');
+let NIVEL  = localStorage.getItem('ga_nivel') || 'libre';
+let MSGS   = [];
+let PREGUNTAS = 0;
+let pendingImage = null;
+
+const params = new URLSearchParams(window.location.search);
+// El nivel NO se acepta desde la URL (era falsificable). La fuente de verdad es
+// el servidor: el dashboard muestra el nivel guardado en login, y el límite real
+// lo aplica el Worker leyendo el plan de Supabase en cada consulta.
+const IS_NEW = params.get('new') === 'true';
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+function init(){
+  renderNivel();
+  if(!PERFIL || IS_NEW){
+    setTimeout(()=>openOnboarding(false), 600);
+  } else {
+    renderDashboard();
+    renderVPD();
+    setTimeout(mostrarCheckin, 2000);
+  }
+}
+
+// ─── NIVEL ────────────────────────────────────────────────────────────────────
+function renderNivel(){
+  const info = NIVEL_INFO[NIVEL] || NIVEL_INFO.libre;
+  document.getElementById('nivelBadge').textContent = info.badge;
+  document.getElementById('nivelName').textContent  = info.name;
+  document.getElementById('nivelNote').textContent  = info.note;
+  const upBtn = document.getElementById('nivelUpgrade');
+  if(NIVEL === 'libre' || NIVEL === 'semilla'){
+    upBtn.style.display = 'block';
+    upBtn.textContent = 'Ver todos los planes →';
+  }
+  updateChatNote();
+}
+
+function updateChatNote(){
+  const lim  = LIM[NIVEL] || 2;
+  const left = lim >= 999 ? 'consultas ilimitadas' : `${Math.max(0, lim - PREGUNTAS)} consultas disponibles`;
+  const info = NIVEL_INFO[NIVEL] || NIVEL_INFO.libre;
+  document.getElementById('chatNote').textContent = `${info.badge} ${info.name} · ${left} · 📷 fotos`;
+}
+
+// ─── RENDER DASHBOARD ─────────────────────────────────────────────────────────
+function renderDashboard(){
+  if(!PERFIL) return;
+  const p = PERFIL;
+  const nombre = p.nombre ? `Cannabicultor ${p.nombre}` : 'Cannabicultor';
+  document.getElementById('pageTitle').innerHTML = `${nombre}, <em>tu cultivo</em>`;
+  document.getElementById('chatPreviewText').textContent = `Pregunta sobre tu ${p.genetica || 'cultivo'}…`;
+
+  document.getElementById('cultNombre').textContent = p.genetica || '—';
+  document.getElementById('cultFase').textContent   = p.fase    || '—';
+  document.getElementById('cultSemana').textContent = p.semana  ? `Semana ${p.semana}` : '—';
+  document.getElementById('cultSustrato').textContent = p.sustrato || '—';
+  document.getElementById('cultLuz').textContent    = p.luz     ? `${p.luz}W` : p.tipoLuz || '—';
+
+  const pct = calcHealth(p);
+  document.getElementById('healthPct').textContent = pct + '%';
+  document.getElementById('healthRing').style.background = `conic-gradient(var(--forest) 0 ${pct}%, #dfe7df ${pct}% 100%)`;
+  document.getElementById('healthTitle').textContent = pct >= 80 ? 'Cultivo en buen estado' : pct >= 60 ? 'Estado aceptable' : 'Revisa los parámetros';
+  document.getElementById('healthText').textContent  = `${p.genetica || 'Tu planta'} en ${p.fase || 'cultivo'}, semana ${p.semana || '—'}. pH ${p.ph || '—'} · EC ${p.ec || '—'}`;
+
+  const checks = [];
+  if(p.ph)   checks.push(`✓ pH ${p.ph}`);
+  if(p.ec)   checks.push(`✓ EC ${p.ec}`);
+  if(p.temp) checks.push(`✓ ${p.temp}°C`);
+  if(p.hum)  checks.push(`✓ ${p.hum}% HR`);
+  document.getElementById('healthList').innerHTML = checks.map(c=>`<span class="check">${c}</span>`).join('');
+
+  document.getElementById('aiSummaryText').textContent = `Semana ${p.semana || '—'} de ${p.fase || 'cultivo'} en ${p.sustrato || '—'}. Iluminación: ${p.tipoLuz || '—'} ${p.luz ? p.luz+'W' : ''}. Próximo riego: ${p.riego || 'sin datos'}.`;
+
+  setMetric('Ph', p.ph, 'Óptimo 6.0–7.0 tierra · 5.5–6.5 coco', p.ph ? phOk(p.ph, p.sustrato) : false, p.ph ? phPct(p.ph) : 0);
+  setMetric('Ec', p.ec, 'Óptimo 0.8–2.0 según fase', p.ec ? ecOk(p.ec) : false, p.ec ? ecPct(p.ec) : 0);
+  setMetric('Temp', p.temp, `Óptimo 20–28°C · ${p.fase || 'cultivo'}`, p.temp ? tempOk(p.temp) : false, p.temp ? tempPct(p.temp) : 0);
+  setMetric('Hum', p.hum, `Óptimo ${p.fase==='Floración'?'40–55':'50–70'}% HR`, p.hum ? humOk(p.hum, p.fase) : false, p.hum ? humPct(p.hum) : 0);
+
+  document.getElementById('dSustrato').textContent  = p.sustrato || '—';
+  document.getElementById('dPhEc').textContent      = `pH ${p.ph || '—'} · EC ${p.ec || '—'}`;
+  document.getElementById('dGenetica').textContent  = p.genetica || '—';
+  document.getElementById('dTipo').textContent      = `${p.tipo || '—'} · ${p.espacio || '—'}`;
+  document.getElementById('dRiego').textContent     = p.riego    || '—';
+  document.getElementById('dRiegoSub').textContent  = p.maceta ? `Maceta ${p.maceta}L` : '—';
+  document.getElementById('dMaceta').textContent    = p.semana ? `Semana ${p.semana}` : '—';
+  document.getElementById('dLuzW').textContent      = p.tipoLuz ? `${p.tipoLuz} ${p.luz ? p.luz+'W' : ''}` : '—';
+  document.getElementById('paramFecha').textContent = `Actualizado: ${new Date(p.ts || Date.now()).toLocaleDateString('es-ES')}`;
+}
+
+function setMetric(key, val, meta, ok, pct){
+  if(val) document.getElementById('m'+key).innerHTML = val + (key==='Ph'?'':key==='Ec'?'<small> mS</small>':key==='Temp'?'<small>°C</small>':'<small>%</small>');
+  document.getElementById('m'+key+'Meta').textContent = meta;
+  document.getElementById('m'+key+'Ok').style.display = ok ? 'flex' : 'none';
+  document.getElementById('m'+key+'Bar').style.width  = pct + '%';
+}
+
+// ─── CÁLCULOS ─────────────────────────────────────────────────────────────────
+function calcHealth(p){
+  let score = 0, total = 0;
+  if(p.ph)   { total+=25; if(phOk(p.ph, p.sustrato))   score+=25; else score+=10; }
+  if(p.ec)   { total+=25; if(ecOk(p.ec))                score+=25; else score+=10; }
+  if(p.temp) { total+=25; if(tempOk(p.temp))            score+=25; else score+=10; }
+  if(p.hum)  { total+=25; if(humOk(p.hum, p.fase))     score+=25; else score+=10; }
+  return total ? Math.round((score/total)*100) : 0;
+}
+function phOk(ph, sust){ const v=parseFloat(ph); return sust&&sust.toLowerCase().includes('coco') ? v>=5.5&&v<=6.5 : v>=6.0&&v<=7.0; }
+function ecOk(ec){ const v=parseFloat(ec); return v>=0.8&&v<=2.2; }
+function tempOk(t){ const v=parseFloat(t); return v>=18&&v<=28; }
+function humOk(h, fase){ const v=parseFloat(h); return fase==='Floración' ? v>=40&&v<=55 : v>=50&&v<=70; }
+function phPct(ph){ return Math.min(100, Math.max(0, ((parseFloat(ph)-4)/(8-4))*100)); }
+function ecPct(ec){ return Math.min(100, (parseFloat(ec)/3)*100); }
+function tempPct(t){ return Math.min(100, Math.max(0, ((parseFloat(t)-10)/(40-10))*100)); }
+function humPct(h){ return Math.min(100, parseFloat(h)); }
+
+// ─── BRIEFING IA ──────────────────────────────────────────────────────────────
+// Muestra la caja y pide el briefing a la IA SOLO cuando el usuario pulsa el botón.
+function pedirBriefing(){
+  document.getElementById('briefingInicial').style.display = 'none';
+  document.getElementById('briefingBox').style.display = 'flex';
+  document.getElementById('briefingText').className = 'txt briefing-loading';
+  document.getElementById('briefingText').textContent = 'Analizando tu cultivo…';
+  loadBriefing();
+}
+// Al cambiar de cultivo/parámetros, vuelve a mostrar el botón (resumen desactualizado).
+function resetBriefing(){
+  var ini = document.getElementById('briefingInicial');
+  var box = document.getElementById('briefingBox');
+  if(ini) ini.style.display = 'block';
+  if(box) box.style.display = 'none';
+}
+
+async function loadBriefing(){
+  if(!PERFIL){ document.getElementById('briefingText').textContent = 'Configura tu cultivo para recibir el briefing diario.'; return; }
+  const nombre = PERFIL.nombre ? `Cannabicultor ${PERFIL.nombre}` : 'Cannabicultor';
+  const briefingPrompt = `Eres el asistente de Growers Alliance. Saluda al usuario como "${nombre}" y dale un briefing breve (3-4 líneas máximo) sobre su cultivo actual. Sus datos: Genética: ${PERFIL.genetica||'—'}, Fase: ${PERFIL.fase||'—'}, Semana: ${PERFIL.semana||'—'}, Sustrato: ${PERFIL.sustrato||'—'}, pH: ${PERFIL.ph||'—'}, EC: ${PERFIL.ec||'—'}, Temperatura: ${PERFIL.temp||'—'}°C, Humedad: ${PERFIL.hum||'—'}%. Sé específico con sus datos reales. Menciona algo importante que deba vigilar esta semana.`;
+  try{
+    const res = await fetch(WORKER,{
+      method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+JWT},
+      body: JSON.stringify({messages:[{role:'user',content:briefingPrompt}], perfil:{proyecto:'Cannabicultor IA',plan:NIVEL,email:localStorage.getItem('ga_email')||null,cultivo:PERFIL}})
+    });
+    if(res.status===401){ logout401(); return; }
+    const data = await res.json().catch(()=>({}));
+    const text = data.reply || data.content || data.message || 'No se pudo cargar el briefing.';
+    document.getElementById('briefingText').className = 'briefing-text';
+    document.getElementById('briefingText').textContent = text;
+  }catch(e){
+    document.getElementById('briefingText').textContent = `Hola ${nombre}. Sistema listo para analizar tu cultivo.`;
+  }
+}
+
+// ─── ONBOARDING ───────────────────────────────────────────────────────────────
+let onboardingStep = 0;
+let tmp = {};
+const STEPS = [
+  {
+    kicker:'Paso 1 de 6 · Tu nombre',
+    title:'Hola Cannabicultor.<br><em>¿Cómo te llamamos?</em>',
+    sub:'La IA te saludará siempre como "Cannabicultor [nombre]". Solo se pregunta una vez.',
+    render: () => `<div class="field-group"><label class="field-label">Tu nombre o apodo</label><input class="field-input" id="f_nombre" placeholder="Ej: Enrique, Grower, Master…" value="${PERFIL?.nombre||''}"></div>`,
+    save: () => { tmp.nombre = document.getElementById('f_nombre').value.trim(); }
+  },
+  {
+    kicker:'Paso 2 de 6 · Tu cultivo · Datos fijos',
+    title:'¿Qué estás<br><em>cultivando ahora?</em>',
+    sub:'Estos datos no cambian durante el cultivo.',
+    render: () => `
+      <div class="field-group"><label class="field-label">Nombre de la genética</label><input class="field-input" id="f_genetica" placeholder="Ej: Blue Dream, OG Kush Auto…" value="${PERFIL?.genetica||''}"></div>
+      <div class="field-group"><label class="field-label">Tipo de semilla</label><div class="chip-group" id="chips_tipo">${['Feminizada','Autofloreciente','Regular'].map(t=>`<button class="chip ${PERFIL?.tipo===t?'selected':''}" onclick="selectChip('chips_tipo',this,'${t}')">${t}</button>`).join('')}</div></div>
+      <div class="field-group"><label class="field-label">Espacio de cultivo</label><div class="chip-group" id="chips_espacio">${['Interior','Exterior','Invernadero'].map(t=>`<button class="chip ${PERFIL?.espacio===t?'selected':''}" onclick="selectChip('chips_espacio',this,'${t}')">${t}</button>`).join('')}</div></div>`,
+    save: () => {
+      tmp.genetica = document.getElementById('f_genetica').value.trim();
+      tmp.tipo = document.querySelector('#chips_tipo .selected')?.dataset.val || tmp.tipo;
+      tmp.espacio = document.querySelector('#chips_espacio .selected')?.dataset.val || tmp.espacio;
+    }
+  },
+  {
+    kicker:'Paso 3 de 6 · Setup técnico · Datos fijos',
+    title:'Tu instalación,<br><em>una sola vez.</em>',
+    sub:'Luz, sustrato y maceta.',
+    render: () => `
+      <div class="field-group"><label class="field-label">Tipo de iluminación</label><div class="chip-group" id="chips_luz">${['LED','HPS','CMH/LEC','CFL','Solar'].map(t=>`<button class="chip ${PERFIL?.tipoLuz===t?'selected':''}" onclick="selectChip('chips_luz',this,'${t}')">${t}</button>`).join('')}</div></div>
+      <div class="field-row"><div class="field-group"><label class="field-label">Potencia (W)</label><input class="field-input" type="number" id="f_luz" placeholder="Ej: 600" value="${PERFIL?.luz||''}"></div><div class="field-group"><label class="field-label">Sustrato</label><select class="field-select" id="f_sustrato">${['Tierra','Coco coir','Hidropónico','Fibra de coco','Mix'].map(s=>`<option ${PERFIL?.sustrato===s?'selected':''}>${s}</option>`).join('')}</select></div></div>
+      <div class="field-row"><div class="field-group"><label class="field-label">Maceta (litros)</label><input class="field-input" type="number" id="f_maceta" placeholder="Ej: 11" value="${PERFIL?.maceta||''}"></div><div class="field-group"><label class="field-label">Inicio cultivo</label><input class="field-input" type="date" id="f_fechaInicio" value="${PERFIL?.fechaInicio||''}"><div class="field-hint">La semana se calcula sola</div></div></div>`,
+    save: () => {
+      tmp.tipoLuz = document.querySelector('#chips_luz .selected')?.dataset.val || tmp.tipoLuz;
+      tmp.luz = document.getElementById('f_luz').value;
+      tmp.sustrato = document.getElementById('f_sustrato').value;
+      tmp.maceta = document.getElementById('f_maceta').value;
+      tmp.fechaInicio = document.getElementById('f_fechaInicio').value;
+      if(tmp.fechaInicio){
+        const dias = Math.floor((new Date() - new Date(tmp.fechaInicio)) / (1000*60*60*24));
+        tmp.semana = Math.max(1, Math.ceil(dias/7));
+      }
+    }
+  },
+  {
+    kicker:'Paso 4 de 6 · Parámetros de hoy',
+    title:'¿Cómo están tus<br><em>lecturas de hoy?</em>',
+    sub:'Estos datos los actualizarás cada vez que entres.',
+    render: () => `
+      <div class="field-row"><div class="field-group"><label class="field-label">pH del agua</label><input class="field-input" type="number" step="0.1" id="f_ph" placeholder="Ej: 6.2" value="${PERFIL?.ph||''}"></div><div class="field-group"><label class="field-label">EC (mS/cm)</label><input class="field-input" type="number" step="0.1" id="f_ec" placeholder="Ej: 1.4" value="${PERFIL?.ec||''}"></div></div>
+      <div class="field-row"><div class="field-group"><label class="field-label">Temperatura (°C)</label><input class="field-input" type="number" id="f_temp" placeholder="Ej: 24" value="${PERFIL?.temp||''}"></div><div class="field-group"><label class="field-label">Humedad (%)</label><input class="field-input" type="number" id="f_hum" placeholder="Ej: 55" value="${PERFIL?.hum||''}"></div></div>
+      <div class="field-group"><label class="field-label">Último riego</label><select class="field-select" id="f_riego">${['Hoy','Ayer','Hace 2 días','Hace 3 días','Hace más de 3 días'].map(s=>`<option ${PERFIL?.riego===s?'selected':''}>${s}</option>`).join('')}</select></div>`,
+    save: () => {
+      tmp.ph = document.getElementById('f_ph').value;
+      tmp.ec = document.getElementById('f_ec').value;
+      tmp.temp = document.getElementById('f_temp').value;
+      tmp.hum = document.getElementById('f_hum').value;
+      tmp.riego = document.getElementById('f_riego').value;
+    }
+  },
+  {
+    kicker:'Paso 5 de 6 · Módulo VPD · Opcional',
+    title:'¿Quieres activar<br><em>el módulo VPD?</em>',
+    sub:'El VPD determina si los estomas de tu planta están abiertos.',
+    render: () => `
+      <div style="background:var(--pale);border:1px solid var(--pale2);border-radius:20px;padding:20px;margin-bottom:20px">
+        <div style="font-size:15px;font-weight:700;margin-bottom:6px">💧 VPD — Déficit de Presión de Vapor</div>
+        <div style="font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:16px">Con tu temperatura y humedad, la IA calcula el VPD automáticamente y te avisa si los estomas están cerrados.</div>
+        <div style="display:flex;gap:10px"><button class="chip ${PERFIL?.vpdActivo?'selected':''}" id="vpd_si" onclick="selectVPD(true)" style="flex:1;justify-content:center">✅ Activar VPD</button><button class="chip ${!PERFIL?.vpdActivo?'selected':''}" id="vpd_no" onclick="selectVPD(false)" style="flex:1;justify-content:center">❌ No por ahora</button></div>
+      </div>`,
+    save: () => { tmp.vpdActivo = document.getElementById('vpd_si')?.classList.contains('selected') || false; }
+  },
+  {
+    kicker:'Paso 6 de 6 · Tu experiencia',
+    title:'¿Cómo prefieres tu<br><em>check-in diario?</em>',
+    sub:'Cuando entres al dashboard cada día.',
+    render: () => `
+      <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:20px">
+        <div class="chip ${PERFIL?.checkinMode==='auto'?'selected':''}" id="checkin_auto" onclick="selectCheckin('auto')" style="border-radius:16px;padding:18px;text-align:left;align-items:flex-start;flex-direction:column;gap:6px"><div style="display:flex;align-items:center;gap:10px"><span style="font-size:22px">🔔</span><strong style="font-size:15px">Automático</strong></div><div style="font-size:13px;color:var(--muted);padding-left:32px;line-height:1.5">Al entrar me pregunta pH, EC y novedades.</div></div>
+        <div class="chip ${PERFIL?.checkinMode==='manual'?'selected':''}" id="checkin_manual" onclick="selectCheckin('manual')" style="border-radius:16px;padding:18px;text-align:left;align-items:flex-start;flex-direction:column;gap:6px"><div style="display:flex;align-items:center;gap:10px"><span style="font-size:22px">📋</span><strong style="font-size:15px">Manual</strong></div><div style="font-size:13px;color:var(--muted);padding-left:32px;line-height:1.5">Actualizo cuando yo quiera. Sin interrupciones.</div></div>
+      </div>`,
+    save: () => { tmp.checkinMode = document.getElementById('checkin_auto')?.classList.contains('selected') ? 'auto' : 'manual'; }
+  }
+];
+
+function openOnboarding(edit){
+  tmp = edit && PERFIL ? {...PERFIL} : {};
+  onboardingStep = 0;
+  document.getElementById('modalOverlay').classList.remove('hide');
+  renderStep();
+}
+function renderStep(){
+  const s = STEPS[onboardingStep];
+  document.getElementById('stepDots').innerHTML = STEPS.map((_,i)=>`<div class="modal-step-dot ${i===onboardingStep?'active':i<onboardingStep?'done':''}"></div>`).join('');
+  document.getElementById('modalKicker').textContent = s.kicker;
+  document.getElementById('modalTitle').innerHTML    = s.title;
+  document.getElementById('modalSub').textContent    = s.sub;
+  document.getElementById('modalBody').innerHTML     = s.render();
+  document.getElementById('modalProgressText').textContent = `${onboardingStep+1} de ${STEPS.length}`;
+  document.querySelectorAll('.chip').forEach(btn => { if(!btn.dataset.val) btn.dataset.val = btn.textContent.trim(); });
+  document.getElementById('modalNext').textContent = onboardingStep === STEPS.length-1 ? 'Guardar y entrar →' : 'Continuar →';
+  document.getElementById('modalSkip').style.display = onboardingStep === 0 ? 'block' : 'none';
+}
+function selectVPD(a){ document.getElementById('vpd_si').classList.toggle('selected',a); document.getElementById('vpd_no').classList.toggle('selected',!a); }
+function selectCheckin(m){ document.getElementById('checkin_auto').classList.toggle('selected',m==='auto'); document.getElementById('checkin_manual').classList.toggle('selected',m==='manual'); }
+function selectChip(groupId, btn, val){ document.querySelectorAll(`#${groupId} .chip`).forEach(c => c.classList.remove('selected')); btn.classList.add('selected'); btn.dataset.val = val; }
+function nextStep(){
+  STEPS[onboardingStep].save();
+  if(onboardingStep < STEPS.length - 1){ onboardingStep++; renderStep(); }
+  else { saveProfile(); }
+}
+function saveProfile(){
+  tmp.ts = Date.now();
+  PERFIL = tmp;
+  localStorage.setItem('ga_perfil', JSON.stringify(PERFIL));
+  document.getElementById('modalOverlay').classList.add('hide');
+  syncPerfilSupabase();
+  guardarCultivoStats(PERFIL);
+  renderDashboard();
+  renderVPD();
+  resetBriefing();
+}
+function skipOnboarding(){ document.getElementById('modalOverlay').classList.add('hide'); }
+
+// ─── SYNC PERFIL → SUPABASE ───────────────────────────────────────────────────
+function syncPerfilSupabase(){
+  if(!JWT) return;
+  fetch(`${WORKER}/auth/save-perfil`, {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ token: JWT, perfil_cultivo: PERFIL })
+  }).catch(()=>{});
+}
+
+// ─── EDICIÓN INLINE ───────────────────────────────────────────────────────────
+const IE_FIELDS = {
+  ph:{key:'ph'}, ec:{key:'ec'}, temp:{key:'temp'}, hum:{key:'hum'},
+  sustrato:{key:'sustrato'}, genetica:{key:'genetica'}, riego:{key:'riego'}, semana:{key:'semana'}
+};
+function openInline(field){
+  document.querySelectorAll('.inline-edit').forEach(el=>el.classList.remove('show'));
+  const el = document.getElementById('ie_'+field);
+  if(!el) return;
+  const inp = document.getElementById('ie_'+field+'_val');
+  if(inp && PERFIL && PERFIL[IE_FIELDS[field].key]) inp.value = PERFIL[IE_FIELDS[field].key];
+  el.classList.add('show');
+  if(inp && inp.type !== 'select-one') setTimeout(()=>inp.focus(), 50);
+}
+function closeInline(field){ document.getElementById('ie_'+field)?.classList.remove('show'); }
+function saveInline(field){
+  if(!PERFIL) PERFIL = {};
+  const inp = document.getElementById('ie_'+field+'_val');
+  if(!inp || !inp.value) { closeInline(field); return; }
+  PERFIL[IE_FIELDS[field].key] = inp.value;
+  PERFIL.ts = Date.now();
+  localStorage.setItem('ga_perfil', JSON.stringify(PERFIL));
+  closeInline(field);
+  syncPerfilSupabase();
+  renderDashboard();
+  renderVPD();
+  resetBriefing();
+}
+document.addEventListener('click', (e) => {
+  if(e.target.closest('.inline-edit')) return;
+  const editable = e.target.closest('[data-inline]');
+  if(editable){ openInline(editable.dataset.inline); return; }
+  document.querySelectorAll('.inline-edit').forEach(el => el.classList.remove('show'));
+});
+
+// ─── UPGRADE ──────────────────────────────────────────────────────────────────
+const STRIPE_LINKS = {
+  cultivador:'https://buy.stripe.com/14AfZa3g96OzdLxbbp6AM00',
+  master:'https://buy.stripe.com/6oU7sE6sl0qbdLxfrF6AM01',
+  genetista:'https://buy.stripe.com/eVq3co8Atc8TgXJ7Zd6AM02',
+  semilla:'https://buy.stripe.com/dRm9AM6sl5KvbDpbbp6AM03'
+};
+function goUpgrade(){ showUpgradeModal(); }
+function showUpgradeModal(){
+  const overlay = document.createElement('div');
+  overlay.id = 'upgradeOverlay';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(10,15,10,.75);backdrop-filter:blur(8px);z-index:2000;display:flex;align-items:center;justify-content:center;padding:20px';
+  overlay.innerHTML = `
+    <div style="background:#fff;border-radius:28px;box-shadow:0 40px 120px rgba(0,0,0,.3);width:100%;max-width:540px;overflow:hidden">
+      <div style="background:linear-gradient(135deg,#1a5c32,#2a7a44);padding:28px 32px 24px"><div style="font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.6);margin-bottom:8px">Elige tu plan</div><h2 style="font-family:Lora,Georgia,serif;font-size:26px;font-weight:600;color:#fff;margin:0">Sube de nivel, <em style="color:#7dd4a0">Cannabicultor</em></h2></div>
+      <div style="padding:24px 32px 32px;display:flex;flex-direction:column;gap:12px">
+        <a href="${STRIPE_LINKS.semilla}" style="display:flex;align-items:center;justify-content:space-between;padding:16px 18px;border:1.5px solid #d0e8d8;border-radius:16px;text-decoration:none;background:#f7faf6"><div><div style="font-size:16px;font-weight:700;color:#151515">🌱 Plaza Fundador</div><div style="font-size:13px;color:#6f746f;margin-top:3px">Gratis de por vida · Solo 500 plazas</div></div><div style="font-size:20px;font-weight:700;color:#1a5c32">Gratis</div></a>
+        <a href="${STRIPE_LINKS.cultivador}" style="display:flex;align-items:center;justify-content:space-between;padding:16px 18px;border:1.5px solid #d0e8d8;border-radius:16px;text-decoration:none;background:#fff"><div><div style="font-size:16px;font-weight:700;color:#151515">🌿 Cultivador</div><div style="font-size:13px;color:#6f746f;margin-top:3px">Consultas ilimitadas · Memoria IA · Alertas</div></div><div style="font-size:20px;font-weight:700;color:#1a5c32">9€<span style="font-size:12px;color:#9aa09a">/mes</span></div></a>
+        <a href="${STRIPE_LINKS.master}" style="display:flex;align-items:center;justify-content:space-between;padding:16px 18px;border:1.5px solid #d0e8d8;border-radius:16px;text-decoration:none;background:#fff"><div><div style="font-size:16px;font-weight:700;color:#151515">🔥 Master Grower</div><div style="font-size:13px;color:#6f746f;margin-top:3px">Prioridad · Historial completo</div></div><div style="font-size:20px;font-weight:700;color:#1a5c32">19€<span style="font-size:12px;color:#9aa09a">/mes</span></div></a>
+        <a href="${STRIPE_LINKS.genetista}" style="display:flex;align-items:center;justify-content:space-between;padding:16px 18px;border:1.5px solid #ffd700;border-radius:16px;text-decoration:none;background:#fffdf0"><div><div style="font-size:16px;font-weight:700;color:#151515">🧬 Genetista</div><div style="font-size:13px;color:#6f746f;margin-top:3px">Acceso total · Banco genético</div></div><div style="font-size:20px;font-weight:700;color:#b5811d">47€<span style="font-size:12px;color:#9aa09a">/mes</span></div></a>
+        <button onclick="document.getElementById('upgradeOverlay').remove()" style="margin-top:4px;background:transparent;border:0;color:#9aa09a;font-size:13px;font-weight:600;padding:8px;cursor:pointer">Cancelar</button>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+  overlay.addEventListener('click', e => { if(e.target===overlay) overlay.remove(); });
+}
+
+// ─── CHAT ─────────────────────────────────────────────────────────────────────
+function openChat(){
+  document.getElementById('chatPanel').classList.add('open');
+  if(!document.getElementById('msgs').children.length){
+    const nombre = PERFIL?.nombre ? `Cannabicultor ${PERFIL.nombre}` : 'Cannabicultor';
+    const saludo = PERFIL
+      ? `Hola ${nombre}. Estoy al tanto de tu ${PERFIL.genetica||'cultivo'} en semana ${PERFIL.semana||'—'} de ${PERFIL.fase||'cultivo'}. pH ${PERFIL.ph||'—'}, EC ${PERFIL.ec||'—'}. ¿En qué te ayudo hoy? También puedes enviarme una 📷 foto para analizarla.`
+      : `Hola Cannabicultor. Configura tu cultivo para que pueda ayudarte de forma personalizada. Puedes adjuntar una 📷 foto con el botón de la cámara.`;
+    addMsg('ai', saludo);
+  }
+  setTimeout(()=>document.getElementById('chatInput').focus(), 80);
+}
+function closeChat(){ document.getElementById('chatPanel').classList.remove('open'); }
+function addMsg(who, text){
+  const wrap = document.createElement('div');
+  wrap.className = 'msg ' + (who==='user'?'user':'ai');
+  wrap.innerHTML = who==='ai'
+    ? `<div class="avatar ai">IA</div><div class="bubble">${escHtml(text).replace(/\n/g,'<br>')}</div>`
+    : `<div class="bubble">${escHtml(text).replace(/\n/g,'<br>')}</div><div class="avatar user">TÚ</div>`;
+  document.getElementById('msgs').appendChild(wrap);
+  document.getElementById('msgs').scrollTop = 99999;
+}
+function escHtml(s){ return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m])); }
+
+function clearAttachment(){
+  pendingImage = null;
+  document.getElementById('photoInput').value = '';
+  document.getElementById('attachPreview').classList.remove('show');
+}
+
+document.getElementById('photoInput').addEventListener('change', async (e) => {
+  const file = e.target.files && e.target.files[0];
+  if(!file) return;
+  try{
+    pendingImage = await ChatVision.compressFile(file);
+    document.getElementById('attachThumb').src = pendingImage.previewUrl;
+    document.getElementById('attachLabel').textContent = file.name || 'Foto lista para analizar';
+    document.getElementById('attachPreview').classList.add('show');
+  }catch(err){
+    clearAttachment();
+    addMsg('ai', err.message || 'No se pudo cargar la imagen.');
+  }
+});
+
+async function sendMsg(){
+  const input = document.getElementById('chatInput');
+  const btn   = document.getElementById('sendBtn');
+  const text  = input.value.trim();
+  const image = pendingImage;
+  if(!text && !image) return;
+  const lim = LIM[NIVEL] || 2;
+  if(PREGUNTAS >= lim){
+    addMsg('ai', `Has alcanzado el límite del plan ${NIVEL_INFO[NIVEL].name}. ${NIVEL==='libre'||NIVEL==='semilla'?'Sube de nivel para más consultas.':''}`);
+    return;
+  }
+
+  const displayText = text || (image ? '📷 Foto del cultivo' : '');
+  addMsg('user', displayText);
+  input.value = '';
+  clearAttachment();
+  PREGUNTAS++;
+  updateChatNote();
+
+  const nombre = PERFIL?.nombre ? `Cannabicultor ${PERFIL.nombre}` : 'Cannabicultor';
+  const perfil = { proyecto:'Cannabicultor IA / Growers Alliance', plan:NIVEL, usuario:nombre, email:localStorage.getItem('ga_email')||null, cultivo:PERFIL || {} };
+  const userContent = ChatVision.buildUserContent(text, image);
+  const messages = ChatVision.buildApiMessages(MSGS, userContent);
+  MSGS.push({ role:'user', content: text || (image ? 'Analiza esta foto de mi cultivo.' : ''), _hadImage: !!image });
+
+  btn.disabled = true;
+  addTyping();
+  try{
+    const res = await fetch(WORKER,{
+      method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+JWT},
+      body: JSON.stringify({messages, perfil})
+    });
+    if(res.status===401){ removeTyping(); logout401(); return; }
+    const data = await res.json().catch(()=>({}));
+    removeTyping();
+    const reply = data.reply || data.content || data.message || 'No pude interpretar la respuesta.';
+    MSGS.push({role:'assistant', content:reply});
+    addMsg('ai', reply);
+  }catch(e){
+    removeTyping();
+    addMsg('ai','Error de conexión con la IA.');
+  }finally{
+    btn.disabled = false;
+    input.focus();
+  }
+}
+function addTyping(){
+  const wrap = document.createElement('div');
+  wrap.className = 'msg ai'; wrap.id = 'typing';
+  wrap.innerHTML = `<div class="avatar ai">IA</div><div class="bubble"><span style="color:var(--muted)">Analizando tu cultivo…</span></div>`;
+  document.getElementById('msgs').appendChild(wrap);
+  document.getElementById('msgs').scrollTop = 99999;
+}
+function removeTyping(){ const t=document.getElementById('typing'); if(t) t.remove(); }
+
+// ─── CHECK-IN DIARIO ──────────────────────────────────────────────────────────
+function mostrarCheckin(){
+  if(!PERFIL || PERFIL.checkinMode !== 'auto') return;
+  const hoy = new Date().toDateString();
+  if(localStorage.getItem('ga_ultimo_checkin') === hoy) return;
+  const modal = document.createElement('div');
+  modal.className = 'checkin-modal';
+  modal.id = 'checkinModal';
+  const nombre = PERFIL.nombre ? `Cannabicultor ${PERFIL.nombre}` : 'Cannabicultor';
+  modal.innerHTML = `
+    <div class="checkin-title">🌱 Buenos días, ${nombre}</div>
+    <div class="checkin-sub">Tu ${PERFIL.genetica||'cultivo'} en semana ${PERFIL.semana||'—'}. ¿Cómo están los parámetros hoy?</div>
+    <div class="checkin-fields">
+      <div class="checkin-field"><label>pH</label><input type="number" step="0.1" id="ci_ph" value="${PERFIL.ph||''}"></div>
+      <div class="checkin-field"><label>EC</label><input type="number" step="0.1" id="ci_ec" value="${PERFIL.ec||''}"></div>
+      <div class="checkin-field"><label>Humedad %</label><input type="number" id="ci_hum" value="${PERFIL.hum||''}"></div>
+    </div>
+    <div class="checkin-actions"><button class="checkin-save" onclick="guardarCheckin()">Guardar check-in →</button><button class="checkin-skip" onclick="saltarCheckin()">Ahora no</button></div>`;
+  document.body.appendChild(modal);
+}
+function guardarCheckin(){
+  const ph = document.getElementById('ci_ph')?.value || PERFIL.ph;
+  const ec = document.getElementById('ci_ec')?.value || PERFIL.ec;
+  const hum = document.getElementById('ci_hum')?.value || PERFIL.hum;
+  if(ph) PERFIL.ph = ph;
+  if(ec) PERFIL.ec = ec;
+  if(hum) PERFIL.hum = hum;
+  PERFIL.ts = Date.now();
+  localStorage.setItem('ga_perfil', JSON.stringify(PERFIL));
+  localStorage.setItem('ga_ultimo_checkin', new Date().toDateString());
+  syncPerfilSupabase();
+  guardarCultivoStats(PERFIL);
+  document.getElementById('checkinModal')?.remove();
+  renderDashboard();
+  renderVPD();
+}
+function saltarCheckin(){
+  localStorage.setItem('ga_ultimo_checkin', new Date().toDateString());
+  document.getElementById('checkinModal')?.remove();
+}
+
+// ─── VPD ──────────────────────────────────────────────────────────────────────
+function calcVPD(temp, hum){
+  if(!temp || !hum) return null;
+  const t = parseFloat(temp), h = parseFloat(hum);
+  const svp = 0.6108 * Math.exp(17.27 * t / (t + 237.3));
+  return ((100 - h) / 100 * svp).toFixed(2);
+}
+function renderVPD(){
+  if(!PERFIL || !PERFIL.vpdActivo || !PERFIL.temp || !PERFIL.hum) return;
+  const vpd = calcVPD(PERFIL.temp, PERFIL.hum);
+  if(!vpd) return;
+  const v = parseFloat(vpd);
+  let cls, label, emoji;
+  if(v >= 0.8 && v <= 1.6){ cls='vpd-ok'; label='Óptimo'; emoji='✅'; }
+  else if(v < 0.8){ cls='vpd-warn'; label='Muy bajo — estomas cerrados'; emoji='⚠️'; }
+  else { cls='vpd-bad'; label='Muy alto — estrés hídrico'; emoji='❌'; }
+  const existing = document.getElementById('vpdBadge');
+  if(existing) existing.remove();
+  const badge = document.createElement('div');
+  badge.id = 'vpdBadge';
+  badge.style.cssText = 'margin-bottom:18px';
+  badge.innerHTML = `<div style="display:flex;align-items:center;gap:10px;padding:14px 18px;background:#fff;border:1px solid var(--border);border-radius:16px;box-shadow:var(--shadow)"><span style="font-size:20px">💧</span><div><div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:3px">VPD Actual</div><div style="display:flex;align-items:center;gap:10px"><span style="font-size:22px;font-weight:700;letter-spacing:-.04em">${vpd} <small style="font-size:13px;color:var(--muted)">kPa</small></span><span class="vpd-badge ${cls}">${emoji} ${label}</span></div></div><div style="margin-left:auto;font-size:12px;color:var(--muted);text-align:right;line-height:1.5">Óptimo floración<br><strong style="color:var(--forest)">1.0 – 1.5 kPa</strong></div></div>`;
+  const slot = document.getElementById('vpdSlot');
+  if(slot){ slot.innerHTML=''; slot.appendChild(badge); }
+}
+
+// ─── CERRAR SESIÓN ────────────────────────────────────────────────────────────
+function cerrarSesion(){
+  if(!confirm('¿Cerrar sesión?')) return;
+  ['ga_jwt','ga_email','ga_nivel','ga_test_passed','ga_perfil'].forEach(k=>{
+    localStorage.removeItem(k); sessionStorage.removeItem(k);
+  });
+  window.location.href = 'login.html';
+}
+
+// ─── GUARDAR CULTIVO (vía Worker, identidad por token) ────────────────────────
+// El email lo pone el Worker desde el token. Ya NO se expone ninguna clave aquí.
+function guardarCultivoStats(p){
+  if(!p || !p.espacio) return;
+  const jwt = localStorage.getItem('ga_jwt') || sessionStorage.getItem('ga_jwt');
+  if(!jwt) return;
+  fetch(`${WORKER}/cultivo/guardar`, {
+    method:'POST',
+    headers:{'Content-Type':'application/json','Authorization':`Bearer ${jwt}`},
+    body: JSON.stringify({
+      espacio:p.espacio||null, tipoLuz:p.tipoLuz||null, sustrato:p.sustrato||null,
+      fase:p.fase||null, semana:p.semana||null, ph:p.ph||null, ec:p.ec||null,
+      temp:p.temp||null, humedad:p.hum||null, genetica:p.genetica||null, nombre:p.nombre||null
+    })
+  }).catch(()=>{});
+}
+
+// ─── START ────────────────────────────────────────────────────────────────────
+init();
+
+
+
+// ===== NAVEGACIÓN DE LA APP (nueva, no interfiere con la lógica reusada) =====
+function ir(name){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('on'));
+  document.querySelectorAll('.nav a').forEach(a=>a.classList.remove('active'));
+  document.getElementById('v-'+name).classList.add('on');
+  document.getElementById('n-'+name).classList.add('active');
+  document.getElementById('scroll').scrollTop=0;
+  cerrarDrawer();
+}
+function abrirDrawer(){ document.getElementById('drawer').classList.add('show'); document.getElementById('drawerBg').classList.add('show'); }
+function cerrarDrawer(){ document.getElementById('drawer').classList.remove('show'); document.getElementById('drawerBg').classList.remove('show'); }
+
+// Rellena email del drawer y nombre del plan al cargar
+(function(){
+  var email = localStorage.getItem('ga_email') || '';
+  var de = document.getElementById('drawerEmail'); if(de) de.textContent = email;
+})();
+</script>
+</body>
+</html>

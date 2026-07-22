@@ -20,6 +20,9 @@ HTML_FILES=(
   contratacion.html
   privacidad.html
   terminos.html
+  buscador-cannabicultor.html
+  disenador_sala_cultivo.html
+  app.html
 )
 
 for file in "${HTML_FILES[@]}"; do
