@@ -475,6 +475,7 @@ ${names.map((n) => `  <sitemap><loc>${SITE}/${n}</loc><lastmod>${TODAY}</lastmod
 const STATIC_URLS = [
   { loc: `${SITE}/`, priority: '1.0', changefreq: 'weekly', lastmod: TODAY },
   { loc: `${SITE}/cultivo-con-ia/`, priority: '0.9', changefreq: 'monthly', lastmod: TODAY },
+  { loc: `${SITE}/biblioteca/`, priority: '0.9', changefreq: 'monthly', lastmod: TODAY },
   { loc: `${SITE}/buscador-cannabicultor.html`, priority: '0.9', changefreq: 'monthly' },
   { loc: `${SITE}/disenador_sala_cultivo.html`, priority: '0.9', changefreq: 'monthly' },
   { loc: `${SITE}/atlas_landrace.html`, priority: '0.9', changefreq: 'monthly' },

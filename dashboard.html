@@ -242,6 +242,7 @@ button{cursor:pointer}
 .tool-tx b{display:block;font-size:15px;font-weight:600;letter-spacing:-.02em}
 .tool-tx small{font-size:12px;color:var(--muted)}
 .tool-soon-tag{margin-left:auto;font-size:10px;font-weight:700;color:var(--soft);text-transform:uppercase;letter-spacing:.06em;white-space:nowrap}
+.diary-empty{border:1px dashed var(--border2);border-radius:16px;padding:36px 24px;text-align:center;color:var(--muted);font-size:14.5px;background:var(--bg)}
 
 /* RESPONSIVE */
 @media(max-width:980px){
@@ -311,7 +312,7 @@ button{cursor:pointer}
       <div class="side-label">Dashboard</div>
       <button class="nav-btn active"><span class="ico">⌘</span>Resumen</button>
       <button class="nav-btn"><span class="ico"><img src="assets/icons/03-tu-cultivo.svg" alt=""></span>Mi cultivo</button>
-      <button class="nav-btn"><span class="ico">📈</span>Historial</button>
+      <button class="nav-btn" onclick="document.getElementById('diario').scrollIntoView({behavior:'smooth'})"><span class="ico"><img src="assets/icons/03-tu-cultivo.svg" alt=""></span>Diario de cultivo</button>
       <button class="nav-btn"><span class="ico">⚠️</span>Alertas</button>
       <button class="nav-btn" onclick="document.getElementById('herramientas').scrollIntoView({behavior:'smooth'})"><span class="ico"><img src="assets/icons/06-herramientas.svg" alt=""></span>Herramientas</button>
       <button class="nav-btn" onclick="openOnboarding(true)"><span class="ico">✏️</span>Editar cultivo</button>
@@ -498,6 +499,19 @@ button{cursor:pointer}
       </div>
     </section>
 
+    <!-- DIARIO DEL CULTIVO -->
+    <section class="panel" id="diario" style="margin-bottom:18px">
+      <div class="section-head">
+        <div>
+          <div class="section-title">Diario del cultivo</div>
+          <div class="section-sub">Registro fotográfico de tu cultivo actual</div>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="diary-empty">Aún no hay entradas. Adjunta una 📷 foto en el chat con la IA y la guardará en tu diario.</div>
+      </div>
+    </section>
+
     <!-- HERRAMIENTAS -->
     <section class="panel" id="herramientas" style="margin-bottom:18px">
       <div class="section-head">
@@ -524,11 +538,10 @@ button{cursor:pointer}
             <span class="tool-ic"><img src="assets/icons/01-analisis-briefing.svg" alt=""></span>
             <span class="tool-tx"><b>Guía Cultivo con IA</b><small>Aprende a cultivar paso a paso</small></span>
           </a>
-          <div class="tool-card soon">
+          <a class="tool-card" href="/biblioteca/">
             <span class="tool-ic"><img src="assets/icons/10-biblioteca.svg" alt=""></span>
-            <span class="tool-tx"><b>Biblioteca</b><small>Guías y libros</small></span>
-            <span class="tool-soon-tag">Pronto</span>
-          </div>
+            <span class="tool-tx"><b>Biblioteca</b><small>Informes, investigaciones, guías y libros</small></span>
+          </a>
         </div>
       </div>
     </section>

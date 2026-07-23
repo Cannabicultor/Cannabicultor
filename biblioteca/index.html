@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Biblioteca Cannabicultor — Informes y guías de cultivo</title>
+<meta name="description" content="Informes, investigaciones, guías y libros sobre cultivo de cannabis, mercado y regulación en España.">
+<link rel="canonical" href="https://cannabicultor.com/biblioteca/">
+
+<!-- Open Graph -->
+<meta property="og:type" content="website">
+<meta property="og:title" content="Biblioteca Cannabicultor — Informes y guías de cultivo">
+<meta property="og:description" content="Informes, investigaciones, guías y libros sobre cultivo de cannabis, mercado y regulación en España.">
+<meta property="og:url" content="https://cannabicultor.com/biblioteca/">
+<meta property="og:image" content="https://cannabicultor.com/assets/logo_publico_4.png">
+<meta property="og:locale" content="es_ES">
+<meta property="og:site_name" content="Cannabicultor">
+
+<!-- Twitter Card -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Biblioteca Cannabicultor — Informes y guías de cultivo">
+<meta name="twitter:description" content="Informes, investigaciones, guías y libros sobre cultivo de cannabis, mercado y regulación en España.">
+<meta name="twitter:image" content="https://cannabicultor.com/assets/logo_publico_4.png">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Lora:ital,wght@0,400;1,400&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --white:#ffffff;--bg:#f5f7f4;--bg2:#eef1ec;
+  --forest:#1a5c32;--forest-light:#2a7a44;--forest-pale:#e6f0ea;--forest-pale2:#d0e8d8;
+  --text:#1a1f1c;--text2:#3d453f;--text3:#6b7370;--text4:#9aa19d;--border:#e2e7e1;
+}
+html{scroll-behavior:smooth}
+body{font-family:'Inter',system-ui,-apple-system,sans-serif;color:var(--text);background:var(--white);line-height:1.7;-webkit-font-smoothing:antialiased}
+a{color:var(--forest);text-decoration:none}
+a:hover{text-decoration:underline}
+
+/* Nav */
+nav{position:sticky;top:0;z-index:50;background:rgba(255,255,255,.92);backdrop-filter:blur(10px);border-bottom:1px solid var(--border)}
+.ni{max-width:1080px;margin:0 auto;padding:12px 24px;display:flex;align-items:center;justify-content:space-between;gap:16px}
+.nl{display:flex;align-items:center;gap:10px}
+.nl img{height:30px;width:auto}
+.nl-brand{font-size:14px;font-weight:600;color:var(--text)}
+.nl-brand span{color:var(--text4);font-weight:400}
+.nc{background:var(--forest);color:#fff;border:0;padding:9px 18px;border-radius:9px;font-size:13px;font-weight:500;cursor:pointer;font-family:inherit}
+.nc:hover{background:var(--forest-light)}
+
+/* Layout */
+.wrap{max-width:1080px;margin:0 auto;padding:0 24px}
+.crumbs{font-size:13px;color:var(--text3);padding:20px 0 0}
+.crumbs a{color:var(--text3)}
+
+/* Hero */
+.hero{padding:28px 0 40px;border-bottom:1px solid var(--border)}
+h1{font-family:'Inter',sans-serif;font-size:clamp(32px,6vw,52px);font-weight:600;letter-spacing:-0.04em;line-height:1.07;margin:14px 0 18px}
+h1 em{font-family:'Lora',serif;font-style:italic;color:var(--forest);font-weight:400}
+.lead{font-size:clamp(16px,2.2vw,19px);color:var(--text2);line-height:1.65;max-width:680px}
+
+/* Filtros */
+.hub{padding:36px 0 64px}
+.filters{display:flex;gap:9px;flex-wrap:wrap;margin:0 0 28px}
+.chip{border:1px solid var(--forest-pale2);background:#fff;color:var(--text2);padding:8px 16px;border-radius:999px;font-size:13.5px;font-weight:500;cursor:pointer;font-family:inherit;transition:all .16s}
+.chip:hover{background:var(--forest-pale)}
+.chip.active{background:var(--forest);color:#fff;border-color:var(--forest)}
+
+/* Grid de cards */
+.lib-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:18px}
+.lib-card{display:block;border:1px solid var(--border);border-radius:16px;padding:24px;background:#fff;transition:border-color .18s,box-shadow .18s,transform .18s}
+.lib-card:hover{border-color:var(--forest-pale2);box-shadow:0 12px 34px rgba(0,0,0,.07);transform:translateY(-2px);text-decoration:none}
+.lib-top{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.badge{display:inline-block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#fff;background:var(--forest);padding:4px 11px;border-radius:999px}
+.lib-date{font-size:12.5px;color:var(--text4);font-weight:500}
+.lib-card h3{font-family:'Inter',sans-serif;font-size:20px;font-weight:600;letter-spacing:-0.02em;line-height:1.25;margin:0 0 6px;color:var(--text)}
+.lib-card .sub{font-size:14px;color:var(--text3);font-style:italic;margin:0 0 12px;font-family:'Lora',serif}
+.lib-card p{font-size:14.5px;color:var(--text2);margin:0 0 16px}
+.lib-card .go{font-size:13.5px;font-weight:600;color:var(--forest)}
+
+/* Estado vacío / próximamente */
+.lib-empty{border:1px dashed var(--border);border-radius:16px;padding:52px 28px;text-align:center;background:var(--bg)}
+.lib-empty .big{font-size:36px;margin-bottom:12px}
+.lib-empty p{margin:0;font-size:15.5px;color:var(--text3);max-width:460px;margin:0 auto}
+
+/* Footer */
+footer{border-top:1px solid var(--border);background:var(--bg2);margin-top:0}
+.fi{max-width:1080px;margin:0 auto;padding:34px 24px 46px;font-size:13px;color:var(--text3)}
+.fi a{color:var(--text3)}
+.fi .flinks{margin-bottom:14px;display:flex;gap:16px;flex-wrap:wrap}
+.fi .flinks a{font-weight:500}
+
+@media(max-width:640px){
+  .wrap{padding:0 18px}
+  .nl-brand span{display:none}
+}
+</style>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "CollectionPage",
+      "@id": "https://cannabicultor.com/biblioteca/#page",
+      "url": "https://cannabicultor.com/biblioteca/",
+      "name": "Biblioteca Cannabicultor",
+      "description": "Informes, investigaciones, guías y libros sobre cultivo de cannabis, mercado y regulación en España.",
+      "inLanguage": "es",
+      "isPartOf": {
+        "@type": "WebSite",
+        "name": "Cannabicultor",
+        "url": "https://cannabicultor.com/"
+      },
+      "about": ["Cultivo de cannabis", "Mercado del cannabis", "Regulación del cannabis en España"],
+      "hasPart": [
+        {
+          "@type": "Report",
+          "name": "Del barrio al turista, y la vuelta al cultivador",
+          "url": "https://cannabicultor.com/informes/cannabis-del-barrio-al-turista/",
+          "datePublished": "2026-07-23"
+        }
+      ]
+    },
+    {
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        { "@type": "ListItem", "position": 1, "name": "Inicio", "item": "https://cannabicultor.com/" },
+        { "@type": "ListItem", "position": 2, "name": "Biblioteca", "item": "https://cannabicultor.com/biblioteca/" }
+      ]
+    }
+  ]
+}
+</script>
+</head>
+<body>
+
+<nav>
+  <div class="ni">
+    <a href="/" class="nl">
+      <img src="/assets/icono_cannabicultor.png" alt="Cannabicultor IA">
+      <div class="nl-brand">Cannabicultor IA <span>/ Growers Alliance</span></div>
+    </a>
+    <button class="nc" onclick="window.location.href='/'">Empieza gratis</button>
+  </div>
+</nav>
+
+<div class="wrap">
+  <nav class="crumbs" aria-label="Ruta de navegación"><a href="/">Inicio</a> › Biblioteca</nav>
+
+  <header class="hero">
+    <h1>Biblioteca <em>Cannabicultor</em></h1>
+    <p class="lead">Informes, investigaciones, guías y libros sobre cultivo de cannabis, mercado y regulación en España. Conocimiento riguroso y en abierto, para cultivar y entender mejor.</p>
+  </header>
+
+  <section class="hub">
+    <div class="filters" role="tablist" aria-label="Filtrar por tipo">
+      <button class="chip active" data-tipo="todos" role="tab">Todos</button>
+      <button class="chip" data-tipo="informes" role="tab">Informes</button>
+      <button class="chip" data-tipo="investigaciones" role="tab">Investigaciones</button>
+      <button class="chip" data-tipo="guias" role="tab">Guías</button>
+      <button class="chip" data-tipo="libros" role="tab">Libros</button>
+    </div>
+
+    <div class="lib-grid" id="libGrid">
+      <a class="lib-card" data-tipo="informes" href="/informes/cannabis-del-barrio-al-turista/">
+        <div class="lib-top">
+          <span class="badge">Informe</span>
+          <span class="lib-date">23 jul 2026</span>
+        </div>
+        <h3>Del barrio al turista, y la vuelta al cultivador</h3>
+        <div class="sub">Auge, fractura y futuro de las asociaciones cannábicas en España</div>
+        <p>La historia completa de las asociaciones cannábicas españolas —del club de barrio al giro turístico— con testimonios inéditos de cultivadores veteranos y la pieza que falta para cerrar la normalización: el porte.</p>
+        <span class="go">Leer el informe →</span>
+      </a>
+    </div>
+
+    <div class="lib-empty" id="libEmpty" hidden>
+      <div class="big">📚</div>
+      <p id="libEmptyText">Próximamente publicaremos más contenidos aquí.</p>
+    </div>
+  </section>
+</div>
+
+<footer>
+  <div class="fi">
+    <div class="flinks">
+      <a href="/">Inicio</a>
+      <a href="/cultivo-con-ia/">Cultivo con IA</a>
+      <a href="/buscador-cannabicultor.html">Buscador de variedades</a>
+      <a href="/disenador_sala_cultivo.html">Diseñador de salas</a>
+      <a href="/atlas_landrace.html">Atlas de landraces</a>
+      <a href="/contacto.html">Contacto</a>
+    </div>
+    <p>Solo para mayores de 18 años. El cultivo de cannabis está regulado. Consulta la legislación vigente en tu país. Este servicio tiene fines educativos y de asesoramiento responsable.</p>
+    <p style="margin-top:10px"><a href="/aviso-legal.html">Aviso legal</a> · <a href="/privacidad.html">Privacidad</a> · <a href="/cookies.html">Cookies</a> · <a href="/terminos.html">Términos</a></p>
+  </div>
+</footer>
+
+<script>
+(function () {
+  var chips = Array.prototype.slice.call(document.querySelectorAll('.chip'));
+  var cards = Array.prototype.slice.call(document.querySelectorAll('.lib-card'));
+  var empty = document.getElementById('libEmpty');
+  var emptyText = document.getElementById('libEmptyText');
+  var LABELS = {
+    investigaciones: 'investigaciones',
+    guias: 'guías',
+    libros: 'libros',
+    informes: 'informes'
+  };
+
+  function apply(tipo) {
+    var shown = 0;
+    cards.forEach(function (c) {
+      var ok = tipo === 'todos' || c.getAttribute('data-tipo') === tipo;
+      c.style.display = ok ? '' : 'none';
+      if (ok) shown++;
+    });
+    if (shown === 0) {
+      var label = LABELS[tipo] || 'contenidos';
+      emptyText.textContent = 'Próximamente publicaremos ' + label + ' aquí.';
+      empty.hidden = false;
+    } else {
+      empty.hidden = true;
+    }
+  }
+
+  chips.forEach(function (ch) {
+    ch.addEventListener('click', function () {
+      chips.forEach(function (x) { x.classList.remove('active'); });
+      ch.classList.add('active');
+      apply(ch.getAttribute('data-tipo'));
+    });
+  });
+
+  apply('todos');
+})();
+</script>
+
+</body>
+</html>
