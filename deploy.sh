@@ -22,6 +22,7 @@ HTML_FILES=(
   contratacion.html
   privacidad.html
   terminos.html
+  contacto.html
   buscador-cannabicultor.html
   disenador_sala_cultivo.html
   app.html
@@ -48,7 +49,7 @@ done
 # Son directorios completos y exclusivos del generador: se sincronizan con
 # --delete para que no queden fichas huérfanas de slugs que ya no existen.
 # Si el host no tiene rsync, cae a cp -R (sin borrado de huérfanos).
-for dir in breeders variedades cultivo-con-ia biblioteca; do
+for dir in breeders variedades cultivo-con-ia biblioteca informes; do
   if [ -d "$dir" ]; then
     if command -v rsync >/dev/null 2>&1; then
       rsync -a --delete "$dir/" "$DEPLOYPATH/$dir/"

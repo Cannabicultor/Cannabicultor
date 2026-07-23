@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Del barrio al turista: asociaciones cannábicas en España</title>
+<meta name="description" content="Informe Cannabicultor 2026: historia y futuro de las asociaciones cannábicas en España. Testimonios de cultivadores veteranos y análisis del art. 36.16.">
+<link rel="canonical" href="https://cannabicultor.com/informes/cannabis-del-barrio-al-turista/">
+
+<!-- Open Graph -->
+<meta property="og:type" content="article">
+<meta property="og:title" content="Del barrio al turista: asociaciones cannábicas en España">
+<meta property="og:description" content="Informe Cannabicultor 2026: historia y futuro de las asociaciones cannábicas en España. Testimonios de cultivadores veteranos y análisis del art. 36.16.">
+<meta property="og:url" content="https://cannabicultor.com/informes/cannabis-del-barrio-al-turista/">
+<!-- TODO: crear cover art dedicado del informe; de momento se usa el logo público como fallback. -->
+<meta property="og:image" content="https://cannabicultor.com/assets/logo_publico_4.png">
+<meta property="og:locale" content="es_ES">
+<meta property="og:site_name" content="Cannabicultor">
+<meta property="article:published_time" content="2026-07-23T00:00:00+02:00">
+<meta property="article:author" content="Enrique J. Dorta Pulido">
+
+<!-- Twitter Card -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Del barrio al turista: asociaciones cannábicas en España">
+<meta name="twitter:description" content="Informe Cannabicultor 2026: historia y futuro de las asociaciones cannábicas en España. Testimonios de cultivadores veteranos y análisis del art. 36.16.">
+<meta name="twitter:image" content="https://cannabicultor.com/assets/logo_publico_4.png">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Lora:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --white:#ffffff;--bg:#f5f7f4;--bg2:#eef1ec;
+  --forest:#1a5c32;--forest-light:#2a7a44;--forest-pale:#e6f0ea;--forest-pale2:#d0e8d8;
+  --text:#1a1f1c;--text2:#3d453f;--text3:#6b7370;--text4:#9aa19d;--border:#e2e7e1;
+  --amber:#8a6a1f;--amber-bg:#fbf6e8;
+}
+html{scroll-behavior:smooth}
+body{font-family:'Inter',system-ui,-apple-system,sans-serif;color:var(--text);background:var(--white);line-height:1.72;-webkit-font-smoothing:antialiased}
+a{color:var(--forest);text-decoration:none}
+a:hover{text-decoration:underline}
+
+/* Nav */
+nav.top{position:sticky;top:0;z-index:50;background:rgba(255,255,255,.92);backdrop-filter:blur(10px);border-bottom:1px solid var(--border)}
+.ni{max-width:1120px;margin:0 auto;padding:12px 24px;display:flex;align-items:center;justify-content:space-between;gap:16px}
+.nl{display:flex;align-items:center;gap:10px}
+.nl img{height:30px;width:auto}
+.nl-brand{font-size:14px;font-weight:600;color:var(--text)}
+.nl-brand span{color:var(--text4);font-weight:400}
+.nc{background:var(--forest);color:#fff;border:0;padding:9px 18px;border-radius:9px;font-size:13px;font-weight:500;cursor:pointer;font-family:inherit}
+.nc:hover{background:var(--forest-light)}
+
+.wrap{max-width:1120px;margin:0 auto;padding:0 24px}
+.crumbs{font-size:13px;color:var(--text3);padding:18px 0 0}
+.crumbs a{color:var(--text3)}
+
+/* Hero */
+.hero{padding:26px 0 40px;border-bottom:1px solid var(--border)}
+.eyebrow{display:inline-block;font-size:11.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--forest);background:var(--forest-pale);padding:6px 13px;border-radius:999px;margin-bottom:20px}
+h1{font-family:'Inter',sans-serif;font-size:clamp(30px,5.4vw,50px);font-weight:700;letter-spacing:-0.04em;line-height:1.06;margin:0 0 14px}
+.subtitle{font-family:'Lora',serif;font-size:clamp(18px,2.6vw,24px);font-style:italic;color:var(--forest);font-weight:400;line-height:1.3;margin:0 0 22px}
+.deck{font-size:clamp(16px,2vw,18.5px);color:var(--text2);line-height:1.6;max-width:680px;margin:0 0 26px}
+.meta{display:flex;flex-wrap:wrap;gap:8px 22px;font-size:13.5px;color:var(--text3);margin:0 0 26px}
+.meta strong{color:var(--text2);font-weight:600}
+.btn-dl{display:inline-flex;align-items:center;gap:9px;background:var(--forest);color:#fff;padding:13px 24px;border-radius:11px;font-weight:600;font-size:15px}
+.btn-dl:hover{background:var(--forest-light);text-decoration:none}
+
+/* Layout informe: TOC + artículo */
+.report{display:grid;grid-template-columns:1fr;gap:0;padding:40px 0 20px}
+.toc{margin:0 0 30px}
+.toc summary{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text4);cursor:pointer;padding:12px 14px;background:var(--bg);border:1px solid var(--border);border-radius:10px;list-style:none}
+.toc summary::-webkit-details-marker{display:none}
+.toc ol{list-style:none;counter-reset:toc;padding:10px 0 0;margin:0}
+.toc li{counter-increment:toc;margin:0}
+.toc a{display:block;font-size:13.5px;color:var(--text3);padding:6px 12px;border-left:2px solid transparent;line-height:1.4}
+.toc a:hover{color:var(--forest);border-left-color:var(--forest-pale2);text-decoration:none}
+.toc a::before{content:counter(toc) ". ";color:var(--text4)}
+
+article{min-width:0}
+article h2{font-size:clamp(22px,3.4vw,29px);font-weight:700;letter-spacing:-0.03em;line-height:1.2;margin:44px 0 16px;scroll-margin-top:80px}
+article h2:first-child{margin-top:0}
+article h3{font-size:19px;font-weight:600;letter-spacing:-0.02em;margin:30px 0 10px;color:var(--text)}
+article p{margin:0 0 17px;color:var(--text2);font-size:17px}
+article ul,article ol{margin:0 0 18px;padding-left:4px;list-style:none}
+article li{margin:0 0 14px;color:var(--text2);font-size:17px;padding-left:30px;position:relative}
+.exec li{counter-increment:exec}
+.exec{counter-reset:exec}
+.exec li::before{content:counter(exec);position:absolute;left:0;top:1px;width:22px;height:22px;background:var(--forest);color:#fff;border-radius:50%;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center}
+.blist li::before{content:"";position:absolute;left:6px;top:12px;width:7px;height:7px;background:var(--forest-pale2);border:1px solid var(--forest);border-radius:50%}
+article strong{color:var(--text);font-weight:600}
+
+/* Superíndices de cita */
+sup.cite{font-size:.68em;line-height:0;vertical-align:super}
+sup.cite a{font-weight:600;padding:0 1px}
+
+/* Callout metodología */
+.callout{background:var(--bg);border:1px solid var(--border);border-radius:14px;padding:22px 26px;margin:0 0 8px}
+.callout .k{font-size:11px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--text4);margin-bottom:10px}
+.callout p{font-size:15px;color:var(--text2);margin:0 0 12px}
+.callout p:last-child{margin-bottom:0}
+
+/* Data highlights */
+.data-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:26px 0 8px}
+.data-card{background:linear-gradient(150deg,var(--forest),var(--forest-light));color:#fff;border-radius:16px;padding:22px}
+.data-num{font-family:'Inter',sans-serif;font-size:30px;font-weight:700;letter-spacing:-0.03em;line-height:1.05;margin-bottom:8px}
+.data-txt{font-size:13px;line-height:1.5;color:rgba(255,255,255,.9)}
+.data-txt sup.cite a{color:#fff}
+
+/* Testimonio */
+.testi{background:var(--forest-pale);border-left:4px solid var(--forest);border-radius:0 14px 14px 0;padding:22px 26px;margin:26px 0}
+.testi .k{font-size:10.5px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--forest);margin-bottom:12px}
+.testi blockquote{font-family:'Lora',serif;font-size:19px;font-style:italic;line-height:1.55;color:var(--text);margin:0 0 12px}
+.testi .after{font-size:15px;color:var(--text2);margin:0}
+
+/* Quote highlight */
+.pull{font-family:'Lora',serif;font-size:clamp(20px,3vw,27px);font-style:italic;line-height:1.4;color:var(--forest);border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:28px 0;margin:30px 0;text-align:center}
+
+.kicker-line{font-weight:600;color:var(--text);font-size:18px;margin:22px 0}
+
+/* CTA próxima edición */
+.cta{background:var(--bg2);border-radius:18px;padding:32px;margin:48px 0 0}
+.cta h2{margin-top:0}
+.cta .btn-dl{margin-top:6px}
+
+/* Fuentes */
+.sources{margin:44px 0 0;padding-top:8px}
+.sources ol{list-style:none;counter-reset:src;padding:0;margin:0}
+.sources li{counter-increment:src;font-size:13.5px;color:var(--text3);line-height:1.55;padding:9px 0 9px 34px;position:relative;border-top:1px solid var(--border);scroll-margin-top:80px}
+.sources li::before{content:"["counter(src)"]";position:absolute;left:0;top:9px;font-weight:600;color:var(--forest);font-size:12.5px}
+.sources a{word-break:break-word}
+
+.legal{font-size:12px;color:var(--text4);line-height:1.6;margin:36px 0 0;padding-top:18px;border-top:1px solid var(--border)}
+
+/* Footer */
+footer{border-top:1px solid var(--border);background:var(--bg2);margin-top:56px}
+.fi{max-width:1120px;margin:0 auto;padding:34px 24px 46px;font-size:13px;color:var(--text3)}
+.fi a{color:var(--text3)}
+.fi .flinks{margin-bottom:14px;display:flex;gap:16px;flex-wrap:wrap}
+.fi .flinks a{font-weight:500}
+
+@media(min-width:900px){
+  .report{grid-template-columns:230px 1fr;gap:52px;align-items:start}
+  .toc{position:sticky;top:78px;margin:0}
+  .toc summary{background:none;border:0;padding:0 0 6px 12px;cursor:default;pointer-events:none}
+}
+@media(max-width:640px){
+  .wrap{padding:0 18px}
+  .nl-brand span{display:none}
+  .data-grid{grid-template-columns:1fr}
+  .callout,.testi{padding:18px 20px}
+  .cta{padding:24px 20px}
+}
+</style>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Article",
+      "headline": "Del barrio al turista, y la vuelta al cultivador",
+      "description": "Informe Cannabicultor 2026: historia y futuro de las asociaciones cannábicas en España. Testimonios de cultivadores veteranos y análisis del art. 36.16.",
+      "image": "https://cannabicultor.com/assets/logo_publico_4.png",
+      "datePublished": "2026-07-23T00:00:00+02:00",
+      "dateModified": "2026-07-23T00:00:00+02:00",
+      "inLanguage": "es",
+      "author": {
+        "@type": "Person",
+        "name": "Enrique J. Dorta Pulido"
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "Cannabicultor",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://cannabicultor.com/assets/logo_publico_4.png"
+        }
+      },
+      "mainEntityOfPage": {
+        "@type": "WebPage",
+        "@id": "https://cannabicultor.com/informes/cannabis-del-barrio-al-turista/"
+      }
+    },
+    {
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        { "@type": "ListItem", "position": 1, "name": "Inicio", "item": "https://cannabicultor.com/" },
+        { "@type": "ListItem", "position": 2, "name": "Biblioteca", "item": "https://cannabicultor.com/biblioteca/" },
+        { "@type": "ListItem", "position": 3, "name": "Informes", "item": "https://cannabicultor.com/biblioteca/" },
+        { "@type": "ListItem", "position": 4, "name": "Del barrio al turista", "item": "https://cannabicultor.com/informes/cannabis-del-barrio-al-turista/" }
+      ]
+    }
+  ]
+}
+</script>
+</head>
+<body>
+
+<nav class="top">
+  <div class="ni">
+    <a href="/" class="nl">
+      <img src="/assets/icono_cannabicultor.png" alt="Cannabicultor IA">
+      <div class="nl-brand">Cannabicultor IA <span>/ Growers Alliance</span></div>
+    </a>
+    <button class="nc" onclick="window.location.href='/'">Empieza gratis</button>
+  </div>
+</nav>
+
+<div class="wrap">
+  <nav class="crumbs" aria-label="Ruta de navegación"><a href="/">Inicio</a> › <a href="/biblioteca/">Biblioteca</a> › Informes › Del barrio al turista</nav>
+
+  <header class="hero">
+    <span class="eyebrow">Informe · Ed. 0.5 · Julio 2026</span>
+    <h1>Del barrio al turista, y la vuelta al cultivador</h1>
+    <p class="subtitle">Auge, fractura y futuro de las asociaciones cannábicas en España</p>
+    <p class="deck">Con testimonios inéditos de cannabicultores veteranos y una conclusión: la normalización pendiente del porte.</p>
+    <div class="meta">
+      <span><strong>Autor:</strong> Enrique J. Dorta Pulido «Ernie» · Growers Alliance / Cannabicultor</span>
+      <span><strong>Publicación:</strong> 23 julio 2026</span>
+      <span><strong>Distribución gratuita</strong></span>
+    </div>
+    <a class="btn-dl" href="informe.pdf" download>⬇ Descargar PDF</a>
+  </header>
+
+  <div class="report">
+    <!-- TOC -->
+    <details class="toc" open>
+      <summary>Índice</summary>
+      <ol>
+        <li><a href="#metodologia">Nota metodológica</a></li>
+        <li><a href="#resumen">Resumen ejecutivo</a></li>
+        <li><a href="#antes">Antes de los clubes</a></li>
+        <li><a href="#etapa1">Etapa 1: el club de barrio</a></li>
+        <li><a href="#etapa2">Etapa 2: la expansión</a></li>
+        <li><a href="#etapa3">Etapa 3: giro turístico</a></li>
+        <li><a href="#asociacion-hoy">Qué significa hoy</a></li>
+        <li><a href="#conclusion">Conclusión: el porte</a></li>
+        <li><a href="#radiografia">Próxima edición</a></li>
+        <li><a href="#fuentes">Fuentes</a></li>
+      </ol>
+    </details>
+
+    <article>
+      <h2 id="metodologia">Nota metodológica <span style="font-weight:400;color:var(--text4);font-size:.7em">(léela primero)</span></h2>
+      <div class="callout">
+        <div class="k">Cómo se ha hecho este informe</div>
+        <p>Este informe combina dos tipos de material. Primero, una síntesis de fuentes públicas y académicas: investigación universitaria, organismos oficiales y entidades del sector, todas citadas al final. Segundo, y como novedad de esta edición, testimonios de primera mano: entrevistas realizadas por el autor a cannabicultores veteranos —cultivadores con décadas de oficio, la mayoría activos en el mercado informal— sobre cómo vivieron, desde el cultivo, el nacimiento, auge y transformación de las asociaciones cannábicas.</p>
+        <p>Sobre los testimonios: son entrevistas cualitativas, anónimas y no representativas en sentido estadístico. Describen, en primera persona, actividades que se desarrollan al margen del marco legal vigente; se recogen aquí como documento sociológico, sin datos identificativos ni operativos, y su inclusión no supone promoción ni aprobación de ninguna actividad ilícita. Su valor es otro: ninguna historia del sector está completa sin la versión de quienes cultivaban antes, durante y después de los clubes.</p>
+        <p>La Edición 1 (Radiografía 2026) incorporará trabajo de campo cuantitativo: una encuesta anónima a personas consumidoras de toda España y entrevistas presenciales a asociaciones, comenzando por la Comunidad de Madrid. Criterio editorial: evidencia antes que opinión; cuando un dato es estimación, se dice; cuando una afirmación procede de testimonio, se marca.</p>
+      </div>
+
+      <h2 id="resumen">Resumen ejecutivo</h2>
+      <p>La historia de las asociaciones cannábicas españolas suele contarse desde el club. Este informe la cuenta completa: desde el club y desde el cultivo. Cuatro ideas la resumen:</p>
+      <ol class="exec">
+        <li><strong>Nacieron como clubes de barrio (1999–2011).</strong> Asociaciones de consumidores vecinos, sin ánimo de lucro, con autocultivo colectivo. Antes de ellas ya existía una cultura cannábica española: dominaba el hachís, y las flores circulaban en redes discretas de cultivador y cliente-amigo.<sup class="cite"><a href="#f2">2</a></sup><sup class="cite"><a href="#f12">12</a></sup></li>
+        <li><strong>La expansión rompió el modelo (2012–2015).</strong> El boom multiplicó los clubes hasta 800–1.000 en todo el país, arrastró a los cultivadores veteranos a un mercado gris que no habían pedido, atrajo capital y cultivadores extranjeros, y provocó el cierre judicial del espacio legal en 2015.<sup class="cite"><a href="#f2">2</a></sup><sup class="cite"><a href="#f3">3</a></sup><sup class="cite"><a href="#f12">12</a></sup></li>
+        <li><strong>El sector se partió — y el cultivador se retiró (2015–hoy).</strong> Parte de los clubes urbanos derivó al modelo comercial-turístico.<sup class="cite"><a href="#f3">3</a></sup><sup class="cite"><a href="#f4">4</a></sup> Los cultivadores veteranos, según su propio testimonio, volvieron a sus redes discretas de siempre; y el consumidor local, en gran medida, se fue con ellos.<sup class="cite"><a href="#f12">12</a></sup></li>
+        <li><strong>El resultado es la paradoja española:</strong> consumo en máximo histórico,<sup class="cite"><a href="#f5">5</a></sup> mercado informal mayor que antes de los clubes,<sup class="cite"><a href="#f9">9</a></sup><sup class="cite"><a href="#f12">12</a></sup> clubes divididos entre lo comunitario y lo turístico, y una sola pieza pendiente para cerrar la normalización: el porte de pequeñas cantidades sin multas.<sup class="cite"><a href="#f10">10</a></sup><sup class="cite"><a href="#f11">11</a></sup></li>
+      </ol>
+
+      <div class="data-grid">
+        <div class="data-card">
+          <div class="data-num">10,5%</div>
+          <div class="data-txt">de la población (15-64) consumió cannabis en el último mes — máximo histórico (EDADES 2024).<sup class="cite"><a href="#f5">5</a></sup></div>
+        </div>
+        <div class="data-card">
+          <div class="data-num">800–1.000</div>
+          <div class="data-txt">clubes llegó a haber en España a finales de la década de 2010.<sup class="cite"><a href="#f2">2</a></sup></div>
+        </div>
+        <div class="data-card">
+          <div class="data-num">601–30.000 €</div>
+          <div class="data-txt">multa por consumo o tenencia en vía pública, aunque no haya tráfico (art. 36.16, LO 4/2015).<sup class="cite"><a href="#f10">10</a></sup></div>
+        </div>
+      </div>
+
+      <h2 id="antes">Antes de los clubes: la España del hachís y las redes discretas</h2>
+      <p>Los testimonios recogidos coinciden en un punto de partida que la literatura académica apenas documenta: el <a href="/buscador-cannabicultor.html">cannabicultor español</a> existía mucho antes que el club. En los años ochenta y noventa el mercado estaba dominado por el hachís; el consumo de flores era minoritario, aunque bien recibido, y quien cultivaba lo hacía para una red estable y pequeña de clientes que eran, a la vez, amigos.<sup class="cite"><a href="#f12">12</a></sup></p>
+      <p>El perfil comercial era la excepción: unos pocos cultivos grandes orientados al norte de Europa —incluidos cultivos en el norte de España que abastecían a <em>coffee shops</em> de Ámsterdam—, productores de semillas con cultivos valiosos pero no comerciales, y una mayoría de <a href="/disenador_sala_cultivo.html">cultivadores de sala pequeña</a>, para quienes la cosecha era un ingreso extra que mantenía el cultivo y poco más.<sup class="cite"><a href="#f12">12</a></sup></p>
+
+      <h2 id="etapa1">Etapa 1 (1999–2011): el club de barrio</h2>
+      <p>El modelo de club social nace en los noventa desde el activismo. La reforma del Código Penal de 1983 había dejado el consumo fuera del ámbito penal, manteniendo el castigo del tráfico. En esa zona gris, asociaciones pioneras como ARSEC en Barcelona (1993) y Kalamudia en el País Vasco impulsaron cultivos colectivos buscando que los tribunales aclararan los límites del autoconsumo compartido; las primeras sentencias favorables de principios de los 2000 dieron alas al modelo.<sup class="cite"><a href="#f2">2</a></sup><sup class="cite"><a href="#f12">12</a></sup></p>
+      <p>Sobre la doctrina del consumo compartido se construyó el club clásico: asociación de vecinos consumidores, registro de socios, aportaciones a coste, espacio social discreto y vocación de reducción de riesgos. El País Vasco consolidó el modelo entre 2002 y 2011; en 2003 se creó la Federación de Asociaciones Cannábicas (FAC) y en 2011 el Código de Conducta europeo de ENCOD fijó los principios de funcionamiento no lucrativo.<sup class="cite"><a href="#f1">1</a></sup><sup class="cite"><a href="#f2">2</a></sup></p>
+      <div class="testi">
+        <div class="k">La voz del cultivo — testimonio recogido por el autor</div>
+        <blockquote>«El cannabicultor tenía su red de clientes-amigos. Había pocos cultivadores grandes comerciales; el de una sala tenía un ingreso extra suficiente para mantener el cultivo y algo más.»</blockquote>
+        <p class="after">El club de la primera etapa atendía al barrio: el socio era el vecino, la cuota cubría costes y el local era un espacio comunitario, no un negocio.</p>
+      </div>
+
+      <h2 id="etapa2">Etapa 2 (2012–2015): la expansión que fracturó el modelo</h2>
+      <p>A partir de 2012 el crecimiento se dispara, sobre todo en Cataluña: solo en 2012 se registraron 72 nuevas asociaciones y en 2013-2014 el ritmo se aceleró hasta superar ampliamente al País Vasco en clubes por habitante. A finales de la década, España llegó a contar entre 800 y 1.000 clubes,<sup class="cite"><a href="#f2">2</a></sup> con estimaciones sectoriales de cientos de miles de socios concentrados en Barcelona.<sup class="cite"><a href="#f6">6</a></sup></p>
+      <p>Los testimonios añaden la cara oculta de ese boom: hacia 2010 la demanda de los clubes alcanzó a los cannabicultores de siempre. Muchos se resistían —la discreción era la regla de oro del oficio—, pero el volumen de demanda acabó imponiéndose. Y con el nuevo canal llegó un problema estructural que la literatura no recoge: el club pagaba a plazos. La asociación retiraba el producto, lo dispensaba y pagaba después, generando lo que los entrevistados llaman «la eterna deuda» del club con el cultivador.<sup class="cite"><a href="#f12">12</a></sup></p>
+      <p>Esa deuda tuvo dos consecuencias. Primera: muchos cultivadores abrieron su propio club para cobrar de una vez, transformándose de la noche a la mañana en gerentes de un local — alquiler, empleados, exposición pública y competencia creciente. Segunda: la oportunidad atrajo a cultivadores de otros países, y aparecieron clubes de otras nacionalidades en Barcelona, Ibiza, Marbella, Alicante y otros centros turísticos.<sup class="cite"><a href="#f12">12</a></sup> La heterogeneidad que la academia describe como tensión entre modelo comunitario y lógica de servicio<sup class="cite"><a href="#f2">2</a></sup><sup class="cite"><a href="#f3">3</a></sup> se estaba gestando también desde el lado de la producción.</p>
+      <p>La reacción institucional fue rápida: moratorias e inspecciones en Barcelona, la Instrucción 2/2013 de la Fiscalía y, en 2015, las sentencias del Tribunal Supremo (casos Ebers, Three Monkeys y Pannagh) que restringieron drásticamente el consumo compartido. Después, el Tribunal Constitucional anuló las leyes autonómicas de Navarra y Cataluña.<sup class="cite"><a href="#f2">2</a></sup></p>
+      <div class="testi">
+        <div class="k">La voz del cultivo — testimonio recogido por el autor</div>
+        <blockquote>«Al cannabicultor español le quedaron dos opciones: seguir suministrando a un club que pagaba siempre a plazo, o abrir el suyo y convertirse en gerente de hostelería. En 2015 el Supremo limitó el juego, empezaron las intervenciones, y muchos entendimos que no debíamos estar en todo.»</blockquote>
+      </div>
+
+      <h2 id="etapa3">Etapa 3 (2015–hoy): giro turístico y la vuelta al cultivador</h2>
+      <h3>El giro turístico en las grandes ciudades</h3>
+      <p>Con el espacio legal cerrado y los costes al alza, parte de los clubes urbanos derivó hacia una variante abiertamente comercial. La investigación europea describe estos «clubes comerciales»: miles de socios, admisión laxa, producción externalizada y, en algunos casos, promotores captando turistas en la calle.<sup class="cite"><a href="#f3">3</a></sup><sup class="cite"><a href="#f4">4</a></sup> Barcelona pasó a ser descrita como la «nueva Ámsterdam».<sup class="cite"><a href="#f7">7</a></sup> Los testimonios apuntan incluso a clubes turísticos abastecidos con flores importadas de California.<sup class="cite"><a href="#f12">12</a></sup> En Madrid, la presión ha llegado por la vía municipal, con inspecciones y cierres en distritos céntricos.<sup class="cite"><a href="#f8">8</a></sup></p>
+      <h3>La vuelta al cultivador: la fuga del socio local, confirmada desde el cultivo</h3>
+      <p>La edición anterior de este informe planteaba como hipótesis la fuga del socio local. Los testimonios recogidos la convierten en tesis con relato propio: tras 2015, los cultivadores veteranos se retiraron del circuito asociativo y volvieron a sus redes de clientes-amigos de siempre — «se vive mejor», resumen. Y el consumidor local fue detrás: <a href="/">acceso directo al cultivador</a>, ahorro considerable y la privacidad de toda la vida. El paisaje resultante, según los entrevistados: clubes de amigos que perduran, clubes turísticos en las grandes ciudades, y un mercado informal de flores más grande que antes de la aparición de los clubes, precisamente porque el cannabis está hoy más normalizado.<sup class="cite"><a href="#f12">12</a></sup></p>
+      <p>El testimonio encaja con todas las señales objetivas disponibles: consumo en máximo histórico (10,5% en el último mes en 2024, frente al 4,6% de 1995; 43,7% de prevalencia vital, récord de la serie);<sup class="cite"><a href="#f5">5</a></sup> España concentra en torno al 20% de las ventas ilícitas de cannabis de la UE;<sup class="cite"><a href="#f9">9</a></sup> y la propia literatura reconoce que los clubes no desplazaron de forma significativa al mercado informal.<sup class="cite"><a href="#f2">2</a></sup> Los entrevistados describen además una demanda enorme y estructural en ambos canales, con compradores de gran volumen pagando al contado en el mercado informal y asociaciones que priorizan calidad sobre cantidad.<sup class="cite"><a href="#f12">12</a></sup> Queda pendiente la cuantificación — objetivo de la Radiografía 2026.</p>
+      <p class="kicker-line">Más consumidores que nunca, menos club que nunca, y el cultivador de vuelta en el centro del mercado: la paradoja española ya tiene relato completo. Falta medirla.</p>
+
+      <h2 id="asociacion-hoy">Qué significa esto para una asociación hoy</h2>
+      <p>Si esta lectura es correcta, las asociaciones compiten hoy contra un canal —el cultivador directo— que gana en precio, discreción y confianza. No podrán recuperarlo compitiendo en precio; sí en valor:</p>
+      <ul class="blist">
+        <li><strong>Recuperar al socio de barrio.</strong> El socio que se fue solo vuelve por lo que el canal informal no ofrece: espacio social seguro, información y análisis del producto, reducción de riesgos, comunidad y vida asociativa real, con aportaciones transparentes y a coste.</li>
+        <li><strong>Diferenciarse del modelo comercial.</strong> La etapa 3 demuestra que la variante turístico-comercial concentra el riesgo legal y reputacional del sector entero. El club comunitario tiene hoy en su autenticidad su principal activo.<sup class="cite"><a href="#f3">3</a></sup><sup class="cite"><a href="#f4">4</a></sup></li>
+        <li><strong>Profesionalizar gestión, compras y pagos.</strong> Sin ánimo de lucro no significa sin gestión: cada euro de gasto corriente (suministros, consumibles, servicios) importa, y pagar al cultivador en plazos justos es también una política de calidad y de lealtad del proveedor.<sup class="cite"><a href="#f12">12</a></sup></li>
+        <li><strong>Construir datos comunes.</strong> Treinta años de historia y ni un dato consolidado propio. Participar en estudios independientes y anónimos es la vía para que la próxima discusión regulatoria parta de la realidad del sector, no de su caricatura.</li>
+      </ul>
+
+      <h2 id="conclusion">Conclusión: la última pieza es el porte</h2>
+      <p>En España, el consumo y la tenencia en el ámbito privado no son sancionables; la sociedad entiende desde hace décadas que el cannabis pertenece a la esfera privada. Pero el trayecto entre el punto de acceso y el domicilio sigue castigado: el artículo 36.16 de la Ley Orgánica 4/2015 sanciona el consumo y la tenencia en vía pública —aun sin ningún indicio de tráfico— con multas de 601 a 30.000 euros.<sup class="cite"><a href="#f10">10</a></sup> La recaudación por estas multas creció un 68% en un solo año tras la entrada en vigor de la ley, y el cannabis concentra la gran mayoría de los expedientes.<sup class="cite"><a href="#f11">11</a></sup></p>
+      <p>El resultado es una incoherencia que todo el sector conoce: es lícito consumir en casa y es lícito cultivar para uno mismo en el ámbito privado, pero llevar encima una pequeña cantidad para consumo propio expone al ciudadano a una multa mínima de 601 euros. Esa sanción no reduce el consumo —que está en máximo histórico—,<sup class="cite"><a href="#f5">5</a></sup> recae sobre el consumidor y no sobre el tráfico, y empuja al usuario a decisiones de más riesgo.</p>
+      <p>Este informe concluye, por ello, con una posición: la normalización pendiente en España es el reconocimiento del porte de pequeñas cantidades para consumo personal por adultos como conducta no sancionable, mediante la reforma del artículo 36.16. No se trata de regular un mercado —debate legítimo pero distinto—, sino de algo previo y más simple: que el ciudadano que ya tiene derecho a consumir en privado no sea multado por el camino a casa. Quienes se oponen alegan el riesgo de banalizar el consumo en espacios públicos; la respuesta está en el propio diseño de la norma: umbrales claros de cantidad, mantenimiento de las sanciones por consumo ostensible en espacios públicos y protección reforzada de menores.</p>
+      <p class="pull">«Privado ya significa privado en el consumo y en el cultivo personal. Falta que lo signifique también en el bolsillo del que vuelve a casa.»</p>
+
+      <section class="cta" id="radiografia" aria-labelledby="radiografia-h">
+        <h2 id="radiografia-h" style="margin-top:0">Próxima edición: Radiografía 2026</h2>
+        <p>La Radiografía 2026 tendrá dos partes: una encuesta anónima online a consumidores de toda España (perfil, hábitos, gasto, canal de acceso y motivos de permanencia o abandono del club) y un estudio presencial de asociaciones, que arranca por la Comunidad de Madrid con entrevistas confidenciales de 15 minutos. Las asociaciones participantes recibirán el informe completo antes de su publicación y una ficha gratuita en el directorio de cannabicultor.com. Todos los datos se publican únicamente de forma agregada y anónima.</p>
+        <a class="btn-dl" href="/contacto.html">Participa en la Radiografía 2026 →</a>
+      </section>
+
+      <section class="sources" id="fuentes" aria-labelledby="fuentes-h">
+        <h2 id="fuentes-h">Fuentes</h2>
+        <ol>
+          <li id="f1">ICEERS — <em>Mapeando los clubes sociales de cannabis en Europa</em>; <em>Clubes de cannabis en Barcelona: un modelo que defender</em>. <a href="https://www.iceers.org" rel="noopener nofollow" target="_blank">iceers.org</a></li>
+          <li id="f2">Álvarez Roldán, A., Parra, I. y Gamella, J.F. (Universidad de Granada, 2026). <em>Contentious legality in decentralized governance: the rise and decline of cannabis social clubs in Spain</em>. International Journal of Drug Policy. Reseña en castellano: <a href="https://lasdrogas.info" rel="noopener nofollow" target="_blank">lasdrogas.info</a></li>
+          <li id="f3">Pardal, M., Decorte, T., Bone, M., Parés, Ò. y Johansson, J. (2022). <em>Mapping Cannabis Social Clubs in Europe</em>. European Journal of Criminology.</li>
+          <li id="f4">Decorte, T. et al. (2017) y Parés, Ò. y Bouso, J.C. (2015) — literatura sobre la deriva comercial del modelo CSC en Barcelona. Síntesis en Transform Drug Policy Foundation: <a href="https://transformdrugs.org" rel="noopener nofollow" target="_blank">transformdrugs.org</a></li>
+          <li id="f5">Observatorio Español de las Drogas y las Adicciones (OEDA) — Encuesta EDADES 2024. Ministerio de Sanidad. <a href="https://pnsd.sanidad.gob.es" rel="noopener nofollow" target="_blank">pnsd.sanidad.gob.es</a></li>
+          <li id="f6">Transnational Institute (TNI) — <em>Los Clubes Sociales de Cannabis en España</em>; estimaciones sectoriales recogidas en prensa especializada.</li>
+          <li id="f7">Guías y plataformas internacionales de turismo cannábico sobre Barcelona (documentación del fenómeno de captación de visitantes).</li>
+          <li id="f8">Prensa y medios especializados sobre inspecciones y cierres de clubes en Madrid (normativa municipal de actividad).</li>
+          <li id="f9">eldiario.es — <em>España concentra el 20% de las ventas ilícitas de cannabis de toda la Unión Europea</em>. <a href="https://www.eldiario.es" rel="noopener nofollow" target="_blank">eldiario.es</a></li>
+          <li id="f10">Ley Orgánica 4/2015, de protección de la seguridad ciudadana, art. 36.16: multas de 601 a 30.000 € por consumo o tenencia ilícita en lugares públicos aun no destinada al tráfico. <a href="https://www.boe.es/buscar/act.php?id=BOE-A-2015-3442" rel="noopener nofollow" target="_blank">BOE</a>.</li>
+          <li id="f11">eldiario.es — <em>El Estado ingresó en un año un 68% más en multas por tener o fumar cannabis en la calle con la Ley Mordaza</em>. <a href="https://www.eldiario.es" rel="noopener nofollow" target="_blank">eldiario.es</a></li>
+          <li id="f12">Entrevistas del autor (2026) a cannabicultores veteranos. Testimonios anónimos, cualitativos y no representativos; véase la nota metodológica.</li>
+        </ol>
+      </section>
+
+      <p class="legal">Aviso: este informe tiene fines informativos, sociológicos y de análisis sectorial. Los testimonios citados describen actividades al margen del marco legal vigente y se recogen exclusivamente como documento histórico y social; su publicación no supone promoción, facilitación ni aprobación de actividad ilícita alguna. Este documento no promueve el consumo de ninguna sustancia ni constituye asesoramiento jurídico. Cualquier decisión organizativa debe consultarse con asesoría legal especializada.</p>
+    </article>
+  </div>
+</div>
+
+<footer>
+  <div class="fi">
+    <div class="flinks">
+      <a href="/">Inicio</a>
+      <a href="/biblioteca/">Biblioteca</a>
+      <a href="/cultivo-con-ia/">Cultivo con IA</a>
+      <a href="/buscador-cannabicultor.html">Buscador de variedades</a>
+      <a href="/disenador_sala_cultivo.html">Diseñador de salas</a>
+      <a href="/contacto.html">Contacto</a>
+    </div>
+    <p>Solo para mayores de 18 años. El cultivo de cannabis está regulado. Consulta la legislación vigente en tu país. Este servicio tiene fines educativos y de asesoramiento responsable.</p>
+    <p style="margin-top:10px"><a href="/aviso-legal.html">Aviso legal</a> · <a href="/privacidad.html">Privacidad</a> · <a href="/cookies.html">Cookies</a> · <a href="/terminos.html">Términos</a></p>
+  </div>
+</footer>
+
+</body>
+</html>

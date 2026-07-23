@@ -476,6 +476,8 @@ const STATIC_URLS = [
   { loc: `${SITE}/`, priority: '1.0', changefreq: 'weekly', lastmod: TODAY },
   { loc: `${SITE}/cultivo-con-ia/`, priority: '0.9', changefreq: 'monthly', lastmod: TODAY },
   { loc: `${SITE}/biblioteca/`, priority: '0.9', changefreq: 'monthly', lastmod: TODAY },
+  { loc: `${SITE}/informes/cannabis-del-barrio-al-turista/`, priority: '0.9', changefreq: 'yearly', lastmod: '2026-07-23' },
+  { loc: `${SITE}/informes/cannabis-del-barrio-al-turista/informe.pdf`, priority: '0.6', changefreq: 'yearly', lastmod: '2026-07-23' },
   { loc: `${SITE}/buscador-cannabicultor.html`, priority: '0.9', changefreq: 'monthly' },
   { loc: `${SITE}/disenador_sala_cultivo.html`, priority: '0.9', changefreq: 'monthly' },
   { loc: `${SITE}/atlas_landrace.html`, priority: '0.9', changefreq: 'monthly' },
@@ -484,6 +486,7 @@ const STATIC_URLS = [
   { loc: `${SITE}/privacidad.html`, priority: '0.3', changefreq: 'yearly', lastmod: '2026-06-18' },
   { loc: `${SITE}/terminos.html`, priority: '0.3', changefreq: 'yearly', lastmod: '2026-06-18' },
   { loc: `${SITE}/contratacion.html`, priority: '0.3', changefreq: 'yearly', lastmod: '2026-06-18' },
+  { loc: `${SITE}/contacto.html`, priority: '0.5', changefreq: 'yearly', lastmod: '2026-07-23' },
 ];
 
 // ── Slug assignment con dedupe ───────────────────────────────────────────────
