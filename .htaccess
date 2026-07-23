@@ -2,6 +2,8 @@
 <IfModule mod_rewrite.c>
   RewriteEngine On
   RewriteRule ^analytics\.html$ /trafico.html [R=301,L]
+  # Legacy atlas (guion) -> versión canónica con guion bajo
+  RewriteRule ^atlas-landrace\.html$ /atlas_landrace.html [R=301,L]
 </IfModule>
 
 # Block sensitive files from web access
