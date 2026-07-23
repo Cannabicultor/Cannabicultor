@@ -228,6 +228,21 @@ button{cursor:pointer}
 .vpd-warn{background:var(--amber-bg);color:var(--amber);border-color:rgba(181,129,29,.3)}
 .vpd-bad{background:var(--red-bg);color:var(--red);border-color:rgba(185,75,66,.2)}
 
+/* Iconos SVG de marca dentro de contenedores que antes llevaban emoji */
+.ico img{width:100%;height:100%;display:block;border-radius:7px}
+.briefing-ico img{width:100%;height:100%;display:block;border-radius:11px}
+
+/* Herramientas — grid de tarjetas (misma familia visual que app.html) */
+.tools-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.tool-card{display:flex;align-items:center;gap:13px;background:#fff;border:1px solid var(--border);border-radius:18px;padding:14px 15px;text-decoration:none;color:var(--text);transition:border-color .18s,box-shadow .18s,transform .18s}
+.tool-card:hover{border-color:var(--pale2);box-shadow:var(--shadow);transform:translateY(-1px)}
+.tool-card.soon{opacity:.55}
+.tool-ic{width:42px;height:42px;border-radius:12px;overflow:hidden;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+.tool-ic img{width:100%;height:100%;display:block}
+.tool-tx b{display:block;font-size:15px;font-weight:600;letter-spacing:-.02em}
+.tool-tx small{font-size:12px;color:var(--muted)}
+.tool-soon-tag{margin-left:auto;font-size:10px;font-weight:700;color:var(--soft);text-transform:uppercase;letter-spacing:.06em;white-space:nowrap}
+
 /* RESPONSIVE */
 @media(max-width:980px){
   .app{grid-template-columns:1fr}
@@ -238,6 +253,7 @@ button{cursor:pointer}
   .hero{grid-template-columns:1fr}
   .metrics{grid-template-columns:repeat(2,1fr)}
   .detail-grid{grid-template-columns:repeat(2,1fr)}
+  .tools-grid{grid-template-columns:repeat(2,1fr)}
   .chat-launch{left:50%;width:calc(100vw - 28px)}
   .page-title{font-size:26px}
   .status,.top-actions .btn.ghost{display:none}
@@ -245,6 +261,7 @@ button{cursor:pointer}
 @media(max-width:560px){
   .metrics{grid-template-columns:1fr}
   .detail-grid{grid-template-columns:1fr}
+  .tools-grid{grid-template-columns:1fr}
   .chat-panel{inset:0;width:100%;height:100%;border-radius:0;border:0}
   .chat-launch{bottom:14px}
   .chat-preview{display:none}
@@ -293,9 +310,10 @@ button{cursor:pointer}
     <div class="side-section">
       <div class="side-label">Dashboard</div>
       <button class="nav-btn active"><span class="ico">⌘</span>Resumen</button>
-      <button class="nav-btn"><span class="ico">🌱</span>Mi cultivo</button>
+      <button class="nav-btn"><span class="ico"><img src="assets/icons/03-tu-cultivo.svg" alt=""></span>Mi cultivo</button>
       <button class="nav-btn"><span class="ico">📈</span>Historial</button>
       <button class="nav-btn"><span class="ico">⚠️</span>Alertas</button>
+      <button class="nav-btn" onclick="document.getElementById('herramientas').scrollIntoView({behavior:'smooth'})"><span class="ico"><img src="assets/icons/06-herramientas.svg" alt=""></span>Herramientas</button>
       <button class="nav-btn" onclick="openOnboarding(true)"><span class="ico">✏️</span>Editar cultivo</button>
       <button class="nav-btn" onclick="cerrarSesion()" style="color:var(--red)"><span class="ico" style="background:#fdf0ef">🚪</span>Cerrar sesión</button>
     </div>
@@ -332,7 +350,7 @@ button{cursor:pointer}
 
     <!-- BRIEFING -->
     <div class="briefing" id="briefingBox">
-      <div class="briefing-ico">🤖</div>
+      <div class="briefing-ico"><img src="assets/icons/02-onboarding.svg" alt=""></div>
       <div class="briefing-body">
         <div class="briefing-label">Briefing de la IA · Hoy</div>
         <div class="briefing-text briefing-loading" id="briefingText">Analizando tu cultivo…</div>
@@ -475,6 +493,41 @@ button{cursor:pointer}
               <input type="number" min="1" max="30" id="ie_semana_val" placeholder="Semana (ej: 6)">
               <div class="inline-edit-btns"><button class="ie-ok" onclick="saveInline('semana')">Guardar</button><button class="ie-cancel" onclick="closeInline('semana')">×</button></div>
             </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- HERRAMIENTAS -->
+    <section class="panel" id="herramientas" style="margin-bottom:18px">
+      <div class="section-head">
+        <div>
+          <div class="section-title">Herramientas</div>
+          <div class="section-sub">Todo tu instrumental de cultivo, en un sitio</div>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="tools-grid">
+          <a class="tool-card" href="buscador-cannabicultor.html">
+            <span class="tool-ic"><img src="assets/icons/07-buscar-variedad.svg" alt=""></span>
+            <span class="tool-tx"><b>Buscador de variedades</b><small>Variedades y breeders · en vivo</small></span>
+          </a>
+          <a class="tool-card" href="disenador_sala_cultivo.html">
+            <span class="tool-ic"><img src="assets/icons/08-disenador-sala.svg" alt=""></span>
+            <span class="tool-tx"><b>Diseñador de salas</b><small>Mide, calcula y equipa</small></span>
+          </a>
+          <a class="tool-card" href="atlas_landrace.html">
+            <span class="tool-ic"><img src="assets/icons/09-mapa-landraces.svg" alt=""></span>
+            <span class="tool-tx"><b>Atlas de landraces</b><small>Orígenes genéticos · mapa interactivo</small></span>
+          </a>
+          <a class="tool-card" href="/cultivo-con-ia/">
+            <span class="tool-ic"><img src="assets/icons/01-analisis-briefing.svg" alt=""></span>
+            <span class="tool-tx"><b>Guía Cultivo con IA</b><small>Aprende a cultivar paso a paso</small></span>
+          </a>
+          <div class="tool-card soon">
+            <span class="tool-ic"><img src="assets/icons/10-biblioteca.svg" alt=""></span>
+            <span class="tool-tx"><b>Biblioteca</b><small>Guías y libros</small></span>
+            <span class="tool-soon-tag">Pronto</span>
           </div>
         </div>
       </div>

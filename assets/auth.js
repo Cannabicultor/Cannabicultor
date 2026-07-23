@@ -53,8 +53,30 @@
     SESSION_KEYS.forEach(function (k) { localStorage.removeItem(k); });
   }
 
+  // Detección de dispositivo para elegir la interfaz post-login.
+  // Se combinan dos señales con OR (basta con que UNA indique "móvil"):
+  //   1) userAgent — clase de dispositivo declarada por el navegador. Un
+  //      teléfono real debe ir a app.html aunque reporte un ancho atípico.
+  //   2) viewport < 768px — una ventana estrecha se ve mejor en la UI móvil,
+  //      aunque el equipo sea de escritorio.
+  // Caso especial: iPadOS 13+ se identifica como "Macintosh"; se distingue por
+  //   el soporte táctil (maxTouchPoints > 1) para tratarlo como tablet.
+  function isMobileDevice() {
+    var ua = navigator.userAgent || '';
+    var uaMobile = /Android|iPhone|iPad|iPod|Mobile|Opera Mini|IEMobile|BlackBerry/i.test(ua);
+    var iPadOS = /Macintosh/.test(ua) && navigator.maxTouchPoints > 1;
+    var narrow = (window.innerWidth || document.documentElement.clientWidth || 0) < 768;
+    return uaMobile || iPadOS || narrow;
+  }
+
   function postAuthDestination() {
-    return isTestPassed() ? '/dashboard.html' : '/test.html';
+    // Registro nuevo (test sin superar): siempre al Test de Acceso, con
+    // independencia del dispositivo. Preserva el flujo register -> test.html.
+    if (!isTestPassed()) return '/test.html';
+    // Usuario verificado: interfaz según dispositivo.
+    //   móvil / tablet -> app.html      (nav inferior, vista compacta)
+    //   escritorio     -> dashboard.html (sidebar, vista amplia)
+    return isMobileDevice() ? '/app.html' : '/dashboard.html';
   }
 
   function redirectIfAuthenticated() {
@@ -88,6 +110,11 @@
   function finishTest(plan) {
     localStorage.setItem('ga_nivel', normalizePlan(plan));
     localStorage.setItem('ga_test_passed', 'true');
+    // Se envía siempre a dashboard.html para mantener el onboarding único
+    // (?new=true) en un solo sitio, con independencia del dispositivo.
+    // TODO: cuando la base de usuarios móvil crezca, valorar portar el
+    //       onboarding a app.html y hacer este destino device-aware
+    //       (isMobileDevice() ? '/app.html?new=true' : '/dashboard.html?new=true').
     window.location.href = '/dashboard.html?new=true';
   }
 
@@ -145,6 +172,7 @@
     isJwtValid: isJwtValid,
     normalizePlan: normalizePlan,
     isTestPassed: isTestPassed,
+    isMobileDevice: isMobileDevice,
     testPassedFromApi: testPassedFromApi,
     saveSession: saveSession,
     clearSession: clearSession,
