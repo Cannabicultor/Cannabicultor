@@ -77,3 +77,13 @@ for ext in png jpg jpeg gif webp svg ico; do
     /bin/cp -f "$file" "$DEPLOYPATH/assets/"
   done
 done
+
+# Iconos SVG personalizados de la UI (app.html / dashboard.html) viven en la
+# subcarpeta assets/icons/, que el bucle de arriba (solo assets/*.ext) no cubre.
+if [ -d assets/icons ]; then
+  mkdir -p "$DEPLOYPATH/assets/icons"
+  for file in assets/icons/*.svg; do
+    [ -f "$file" ] || continue
+    /bin/cp -f "$file" "$DEPLOYPATH/assets/icons/"
+  done
+fi
