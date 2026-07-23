@@ -12,6 +12,8 @@ HTML_FILES=(
   register.html
   forgot-password.html
   reset-password.html
+  empezar.html
+  google6cb08dd01808031a.html
   trafico.html
   breeders.html
   aviso-legal.html

@@ -8,6 +8,7 @@ Disallow: /login.html
 Disallow: /register.html
 Disallow: /forgot-password.html
 Disallow: /reset-password.html
+Disallow: /empezar.html
 Disallow: /cannabicultor-repo/
 
 Sitemap: https://cannabicultor.com/sitemap.xml

@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="robots" content="noindex, nofollow">
+<title>Cannabicultor IA · Empieza</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..600;1,9..144,400..600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  /* ============================================================
+     CANNABICULTOR IA — Onboarding (estilo claro, consistente con la web)
+     Display: Fraunces (serif, itálica para acentos) · Body: Inter
+     ============================================================ */
+  :root{
+    --bg:#ffffff; --paper:#f5f8f4; --paper-2:#eef3ec;
+    --ink:#13201a; --ink-soft:#5b6b61; --ink-faint:#8a9990;
+    --forest:#1a5c32; --forest-deep:#0f3d20; --forest-bright:#2a7d46;
+    --gold:#c2952b; --line:#e3e9e1; --danger:#c0392b;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;}
+  body{
+    font-family:'Inter',sans-serif; background:var(--bg); color:var(--ink);
+    overflow:hidden; position:fixed; width:100%;
+  }
+  .app{
+    height:100dvh; display:flex; flex-direction:column; max-width:480px; margin:0 auto;
+    background:
+      radial-gradient(120% 38% at 50% 0%, rgba(26,92,50,.06), transparent 70%),
+      var(--bg);
+  }
+
+  /* progreso */
+  .bar{flex-shrink:0; padding:18px 22px 4px;}
+  .bar .track{height:3px; background:var(--paper-2); border-radius:3px; overflow:hidden;}
+  .bar .fill{height:100%; width:20%; background:var(--forest); border-radius:3px; transition:width .4s cubic-bezier(.4,0,.2,1);}
+  .bar .step{
+    font-family:'Inter'; font-size:10px; font-weight:600; color:var(--ink-faint);
+    margin-top:8px; letter-spacing:.14em; text-transform:uppercase;
+  }
+
+  .scroll{flex:1; overflow-y:auto; padding:6px 22px 18px; -webkit-overflow-scrolling:touch;}
+  .scroll::-webkit-scrollbar{display:none;}
+  .screen{display:none; animation:rise .35s cubic-bezier(.2,.7,.3,1);}
+  .screen.on{display:block;}
+  @keyframes rise{from{opacity:0; transform:translateY(10px);} to{opacity:1; transform:none;}}
+
+  /* logo / cabecera de cada paso */
+  .crest{
+    width:62px; height:62px; border-radius:50%; margin:20px 0 6px;
+    display:flex; align-items:center; justify-content:center;
+    box-shadow:0 6px 20px rgba(15,61,32,.18);
+    background:var(--bg);
+  }
+  .crest img{width:62px; height:62px; border-radius:50%; object-fit:cover; display:block;}
+  .eyebrow{
+    font-size:11px; font-weight:600; letter-spacing:.16em; text-transform:uppercase;
+    color:var(--forest); margin:18px 0 10px; display:flex; align-items:center; gap:10px;
+  }
+  .eyebrow::before,.eyebrow::after{content:''; height:1px; width:18px; background:var(--gold); opacity:.6;}
+  .eyebrow::after{flex:0;}
+
+  .speech{
+    font-family:'Fraunces'; font-weight:500; font-size:30px; line-height:1.16;
+    letter-spacing:-.015em; color:var(--ink); margin-bottom:10px;
+  }
+  .speech .hl{font-style:italic; color:var(--forest); font-weight:500;}
+  .sub{font-size:15.5px; color:var(--ink-soft); line-height:1.55; margin-bottom:26px;}
+
+  /* opciones */
+  .opts{display:flex; flex-direction:column; gap:11px;}
+  .opt{
+    width:100%; text-align:left; font-family:'Inter'; font-weight:500; font-size:16px; color:var(--ink);
+    background:var(--bg); border:1px solid var(--line); border-radius:14px;
+    padding:17px 18px; cursor:pointer; transition:.15s; display:flex; align-items:center; gap:13px;
+    box-shadow:0 1px 2px rgba(19,32,26,.03);
+  }
+  .opt:active{transform:scale(.985);}
+  .opt:hover{border-color:var(--forest); background:var(--paper);}
+  .opt .em{font-size:20px;}
+
+  /* lista de beneficios (rama empezar) */
+  .perks{list-style:none; margin:2px 0 0;}
+  .perks li{display:flex; align-items:flex-start; gap:11px; padding:11px 0; border-bottom:1px solid var(--line); font-size:15px; color:var(--ink);}
+  .perks li:last-child{border-bottom:none;}
+  .perks .tick{color:var(--forest); font-weight:700; margin-top:1px;}
+  .perks b{font-weight:600;}
+  .perks small{display:block; color:var(--ink-soft); font-size:13px; margin-top:1px;}
+
+  /* foto */
+  .drop{
+    border:1.5px dashed var(--line); border-radius:18px; padding:34px 20px; text-align:center;
+    background:var(--paper); cursor:pointer; transition:.15s;
+  }
+  .drop:active,.drop:hover{border-color:var(--forest);}
+  .drop .ic{font-size:38px; margin-bottom:12px;}
+  .drop b{font-family:'Fraunces'; font-weight:500; font-size:18px; display:block; margin-bottom:4px;}
+  .drop small{font-size:13px; color:var(--ink-soft);}
+  .preview{border-radius:16px; width:100%; max-height:320px; object-fit:cover; margin-bottom:14px; display:none;}
+  .photo-actions{display:flex; gap:11px;}
+  .photo-btn{
+    flex:1; background:var(--paper); border:1px solid var(--line); border-radius:16px;
+    padding:20px 14px; cursor:pointer; transition:.15s; text-align:center;
+    display:flex; flex-direction:column; align-items:center; gap:5px;
+  }
+  .photo-btn:active{transform:scale(.98);}
+  .photo-btn:hover{border-color:var(--forest); background:#fff;}
+  .photo-btn .pic{font-size:30px;}
+  .photo-btn b{font-family:'Fraunces'; font-weight:500; font-size:16px; color:var(--ink);}
+  .photo-btn small{font-size:12px; color:var(--ink-soft);}
+  .skip{display:inline-block; margin-top:16px; font-size:14px; color:var(--ink-faint); text-decoration:underline; cursor:pointer;}
+
+  .reply{
+    background:var(--paper); border:1px solid var(--line); border-radius:16px; border-top-left-radius:6px;
+    padding:16px 17px; margin-top:18px; font-size:15px; line-height:1.55; white-space:pre-wrap; display:none; color:var(--ink);
+  }
+  .reply .who{display:flex; align-items:center; gap:9px; margin-bottom:9px;}
+  .reply .who img{width:24px;height:24px;border-radius:50%;}
+  .reply .who b{font-family:'Inter'; font-weight:600; font-size:13px; color:var(--forest);}
+  .thinking{display:none; align-items:center; gap:10px; color:var(--ink-soft); font-size:14px; margin-top:18px;}
+  .thinking .spin{width:18px;height:18px;border:2px solid var(--line);border-top-color:var(--forest);border-radius:50%;animation:spin .8s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+
+  /* form P5 */
+  .founder{
+    background:linear-gradient(135deg, var(--paper), var(--paper-2));
+    border:1px solid var(--line); border-left:3px solid var(--gold);
+    border-radius:13px; padding:14px 15px; margin-bottom:20px; display:flex; gap:12px; align-items:center;
+  }
+  .founder .star{font-size:23px;}
+  .founder b{font-family:'Fraunces'; font-weight:600; font-size:15.5px; display:block; color:var(--ink);}
+  .founder small{font-size:12.5px; color:var(--ink-soft);}
+  .field{margin-bottom:12px;}
+  .field input{
+    width:100%; background:var(--bg); border:1px solid var(--line); border-radius:12px;
+    padding:15px 16px; color:var(--ink); font-family:'Inter'; font-size:16px; outline:none; transition:.15s;
+  }
+  .field input:focus{border-color:var(--forest);}
+  .check{display:flex; gap:11px; align-items:flex-start; margin:14px 0 4px; font-size:13.5px; color:var(--ink-soft); line-height:1.5;}
+  .check input{width:20px; height:20px; margin-top:1px; flex-shrink:0; accent-color:var(--forest);}
+  .check a{color:var(--forest); font-weight:500;}
+  .legal{font-size:11.5px; color:var(--ink-faint); margin-top:12px; line-height:1.5;}
+  .err{color:var(--danger); font-size:13px; margin-top:10px; display:none;}
+
+  /* footer cta */
+  .foot{flex-shrink:0; padding:12px 22px calc(18px + env(safe-area-inset-bottom)); background:linear-gradient(0deg, var(--bg) 70%, transparent);}
+  .cta{
+    width:100%; font-family:'Inter'; font-weight:600; font-size:16px; color:#fff;
+    background:var(--forest); border:none; border-radius:13px; padding:17px; cursor:pointer; transition:.15s;
+    box-shadow:0 4px 14px rgba(26,92,50,.22);
+  }
+  .cta:active{transform:scale(.99);}
+  .cta:disabled{opacity:.45; cursor:not-allowed;}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="bar">
+    <div class="track"><div class="fill" id="fill"></div></div>
+    <div class="step" id="stepLabel">Empecemos</div>
+  </div>
+
+  <div class="scroll" id="scroll">
+
+    <!-- P0 -->
+    <div class="screen on" data-p="0">
+      <div class="crest"><img src="https://cannabicultor.com/assets/icono_cannabicultor.png" alt="Cannabicultor IA"></div>
+      <div class="eyebrow">Cannabicultor IA</div>
+      <div class="speech">Soy la IA de <span class="hl">tu cultivo</span>.</div>
+      <div class="sub">Entrenada con conocimiento experto en cannabis y revisada por cultivadores experimentados. ¿Cómo puedo ayudarte? Vamos paso a paso, y en un minuto le echo un ojo a tu planta.</div>
+    </div>
+
+    <!-- P1 -->
+    <div class="screen" data-p="1">
+      <div class="crest"><img src="https://cannabicultor.com/assets/icono_cannabicultor.png" alt=""></div>
+      <div class="eyebrow">Tu momento</div>
+      <div class="speech">¿En qué punto <span class="hl">estás</span>?</div>
+      <div class="sub">Así adapto lo que te muestro a tu situación.</div>
+      <div class="opts" id="optsP1">
+        <button class="opt" data-val="cultivando"><span class="em">🌱</span> Ya estoy cultivando</button>
+        <button class="opt" data-val="empezar"><span class="em">🚀</span> Quiero empezar</button>
+        <button class="opt" data-val="mirando"><span class="em">👀</span> Solo miro</button>
+      </div>
+    </div>
+
+    <!-- P2 -->
+    <div class="screen" data-p="2">
+      <div class="crest"><img src="https://cannabicultor.com/assets/icono_cannabicultor.png" alt=""></div>
+      <div class="eyebrow" id="p2Eyebrow">Cuéntame</div>
+      <div class="speech" id="p2Speech"></div>
+      <div class="sub" id="p2Sub"></div>
+      <div class="opts" id="optsP2"></div>
+    </div>
+
+    <!-- P3 FOTO -->
+    <div class="screen" data-p="3">
+      <div class="crest"><img src="https://cannabicultor.com/assets/icono_cannabicultor.png" alt=""></div>
+      <div class="eyebrow">Diagnóstico</div>
+      <div class="speech">Enséñamela.</div>
+      <div class="sub">Hazme una foto clara de la hoja o la zona que te preocupa y te digo qué veo y qué hacer.</div>
+      <img class="preview" id="preview" alt="">
+      <div class="photo-actions" id="photoActions">
+        <button class="photo-btn" id="btnCamara">
+          <span class="pic">📷</span>
+          <b>Hacer foto</b>
+          <small>Con tu cámara ahora</small>
+        </button>
+        <button class="photo-btn" id="btnGaleria">
+          <span class="pic">🖼️</span>
+          <b>Subir foto</b>
+          <small>Desde tu galería</small>
+        </button>
+      </div>
+      <input type="file" id="fileCam" accept="image/*" capture="environment" hidden>
+      <input type="file" id="fileGal" accept="image/*" hidden>
+      <div class="thinking" id="thinking"><div class="spin"></div> Analizando tu planta…</div>
+      <div class="reply" id="reply"><div class="who"><img src="https://cannabicultor.com/assets/icono_cannabicultor.png" alt=""><b>Cannabicultor IA</b></div><span id="replyText"></span></div>
+      <div style="text-align:center"><span class="skip" id="noPhoto">No tengo foto ahora</span></div>
+    </div>
+
+    <!-- P4 -->
+    <div class="screen" data-p="4">
+      <div class="crest"><img src="https://cannabicultor.com/assets/icono_cannabicultor.png" alt=""></div>
+      <div class="eyebrow">Tu cultivo</div>
+      <div class="speech">¿En qué <span class="hl">fase</span> está?</div>
+      <div class="sub">Con esto afino el seguimiento de tu planta.</div>
+      <div class="opts" id="optsP4">
+        <button class="opt" data-val="germinacion"><span class="em">🌰</span> Germinación</button>
+        <button class="opt" data-val="crecimiento"><span class="em">🌿</span> Crecimiento</button>
+        <button class="opt" data-val="floracion"><span class="em">🌸</span> Floración</button>
+      </div>
+    </div>
+
+    <!-- P5 -->
+    <div class="screen" data-p="5">
+      <div class="crest"><img src="https://cannabicultor.com/assets/icono_cannabicultor.png" alt=""></div>
+      <div class="eyebrow">Plaza de fundador</div>
+      <div class="speech" id="p5Speech">Guarda tu <span class="hl">cultivo</span> y entra.</div>
+      <div class="sub" id="p5Sub">Crea tu cuenta para no perder el seguimiento y acceder a todo lo de dentro.</div>
+      <div class="founder">
+        <div class="star">⭐</div>
+        <div><b>Plan Semilla · Fundador</b><small>Gratis de por vida. Quedan plazas de las primeras 500.</small></div>
+      </div>
+      <div class="field"><input type="email" id="email" placeholder="Tu email" autocomplete="email"></div>
+      <div class="field"><input type="password" id="password" placeholder="Crea una contraseña" autocomplete="new-password"></div>
+      <label class="check">
+        <input type="checkbox" id="consent">
+        <span>Confirmo que soy mayor de 18 años y acepto los <a href="https://cannabicultor.com/terminos.html" target="_blank">términos</a> y la <a href="https://cannabicultor.com/privacidad.html" target="_blank">política de privacidad</a>.</span>
+      </label>
+      <div class="legal">Sin spam. Cancela cuando quieras. Datos protegidos bajo RGPD. El cultivo de cannabis está regulado: consulta la legislación de tu país. Servicio con fines educativos y de asesoramiento responsable.</div>
+      <div class="err" id="err"></div>
+    </div>
+
+  </div>
+
+  <div class="foot">
+    <button class="cta" id="cta">Empezar</button>
+  </div>
+
+</div>
+
+<script>
+// ============================================================
+//  CONFIGURACIÓN — AJUSTA ESTO
+// ============================================================
+const WORKER_URL = 'https://growers-alliance-ai.enriquedorta.workers.dev';
+const TERMS_URL  = 'https://cannabicultor.com/terminos.html';
+const APP_URL    = 'https://cannabicultor.com/dashboard.html';
+// ============================================================
+
+const state = { p:0, token:null, sessionId:null, segmento:null, intencion:null, fase:null, fotoSubida:false, modoLogin:false };
+const screens = [...document.querySelectorAll('.screen')];
+const fill = document.getElementById('fill');
+const stepLabel = document.getElementById('stepLabel');
+const cta = document.getElementById('cta');
+
+async function iniciar(){
+  try{
+    const r = await fetch(`${WORKER_URL}/onboarding/start`, { method:'POST', headers:{'Content-Type':'application/json'}, body:'{}' });
+    const d = await r.json();
+    if(d.ok){ state.token = d.token; state.sessionId = d.session_id; }
+  }catch(e){}
+}
+iniciar();
+
+async function guardarPaso(paso, clave, valor){
+  if(!state.sessionId) return;
+  try{
+    await fetch(`${WORKER_URL}/onboarding/answer`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ session_id: state.sessionId, paso, clave, valor })
+    });
+  }catch(e){}
+}
+
+function mostrar(p){
+  state.p = p;
+  screens.forEach(s => s.classList.toggle('on', +s.dataset.p === p));
+  fill.style.width = (p/5*100) + '%';
+  stepLabel.textContent = p === 0 ? 'Empecemos' : `Paso ${p} de 5`;
+  document.getElementById('scroll').scrollTop = 0;
+  configurarCTA(p);
+}
+
+function configurarCTA(p){
+  cta.style.display = 'block'; cta.disabled = false; cta.onclick = ctaDefault;
+  if(p === 0){ cta.textContent = 'Empezar'; }
+  else if(p === 1 || p === 4){ cta.style.display = 'none'; }
+  else if(p === 2){ cta.style.display = state.segmento === 'empezar' ? 'none' : 'none'; } // P2 avanza al tocar opción
+  else if(p === 3){ cta.style.display = 'none'; }
+  else if(p === 5){ cta.textContent = 'Reclamar mi plaza de Fundador'; }
+}
+function ctaDefault(){ if(state.p===0) mostrar(1); else if(state.p===5){ state.modoLogin ? entrar() : registrar(); } }
+cta.addEventListener('click', ctaDefault);
+
+// P1
+document.getElementById('optsP1').addEventListener('click', e => {
+  const b = e.target.closest('.opt'); if(!b) return;
+  state.segmento = b.dataset.val;
+  guardarPaso('P1','segmento',state.segmento);
+  construirP2(state.segmento);
+  mostrar(2);
+});
+
+// P2 ramas
+function construirP2(seg){
+  const eb = document.getElementById('p2Eyebrow');
+  const sp = document.getElementById('p2Speech');
+  const su = document.getElementById('p2Sub');
+  const op = document.getElementById('optsP2');
+
+  if(seg === 'cultivando'){
+    eb.textContent = 'Cuéntame';
+    sp.innerHTML = '¿Va todo bien o hay <span class="hl">algo</span> que te preocupa?';
+    su.textContent = 'Si hay un problema, vamos directos a verlo.';
+    op.innerHTML = `
+      <button class="opt" data-val="problema"><span class="em">🔍</span> Tengo un problema</button>
+      <button class="opt" data-val="mejorar"><span class="em">📈</span> Va bien, quiero mejorar</button>`;
+  } else if(seg === 'empezar'){
+    eb.textContent = 'Empieza con quien sabe';
+    sp.innerHTML = 'Todo lo que necesitas para <span class="hl">empezar</span>.';
+    su.innerHTML = `Crea tu cuenta gratis de Fundador y entra. Tendrás:
+      <ul class="perks">
+        <li><span class="tick">✓</span><span><b>Tu IA de cultivo</b><small>Resuelve cualquier duda, a cualquier hora.</small></span></li>
+        <li><span class="tick">✓</span><span><b>Guías para empezar</b><small>Paso a paso, desde la semilla.</small></span></li>
+        <li><span class="tick">✓</span><span><b>Acceso a genética de calidad</b><small>Para tu primer cultivo, a buen precio.</small></span></li>
+      </ul>`;
+    op.innerHTML = `<button class="opt" data-val="seguir" style="justify-content:center; border-color:var(--forest); color:var(--forest); font-weight:600;">Crear mi cuenta gratis</button>`;
+  } else {
+    eb.textContent = 'Sin prisa';
+    sp.innerHTML = 'Mira con <span class="hl">calma</span>.';
+    su.textContent = '¿Qué es lo que más te interesa ahora?';
+    op.innerHTML = `
+      <button class="opt" data-val="como"><span class="em">💡</span> Cómo funciona esto</button>
+      <button class="opt" data-val="herramienta"><span class="em">🔧</span> Ver una herramienta</button>`;
+  }
+}
+
+document.getElementById('optsP2').addEventListener('click', e => {
+  const b = e.target.closest('.opt'); if(!b) return;
+  state.intencion = b.dataset.val;
+  guardarPaso('P2','intencion',state.intencion);
+  if(state.segmento === 'cultivando'){ mostrar(3); }
+  else{ ajustarP5(); mostrar(5); }
+});
+
+// Ajusta el mensaje de P5 según la rama
+function ajustarP5(){
+  if(state.segmento === 'empezar'){
+    document.getElementById('p5Speech').innerHTML = 'Crea tu cuenta y <span class="hl">empieza</span>.';
+    document.getElementById('p5Sub').textContent = 'Tu IA de cultivo, guías para empezar y acceso a genética de calidad para tu primer cultivo te esperan dentro.';
+  }
+}
+
+// P3 foto
+const fileCam = document.getElementById('fileCam');
+const fileGal = document.getElementById('fileGal');
+document.getElementById('btnCamara').addEventListener('click', () => fileCam.click());
+document.getElementById('btnGaleria').addEventListener('click', () => fileGal.click());
+document.getElementById('noPhoto').addEventListener('click', () => mostrar(5));
+
+async function procesarFoto(file){
+  if(!file) return;
+  const thinking = document.getElementById('thinking');
+  const replyBox = document.getElementById('reply');
+  const replyText = document.getElementById('replyText');
+  document.getElementById('photoActions').style.display = 'none';
+  thinking.style.display = 'flex';
+  try{
+    const dataUrl = await convertirAJpeg(file);     // robusto; lanza error si no puede
+    const img = document.getElementById('preview');
+    img.src = dataUrl; img.style.display = 'block';
+    await diagnosticar(dataUrl.split(',')[1]);
+  }catch(err){
+    thinking.style.display = 'none';
+    replyText.textContent = 'No he podido procesar esa foto (' + (err && err.message ? err.message : 'formato no compatible') + '). Prueba con otra o elígela de la galería.';
+    replyBox.style.display = 'block';
+    document.getElementById('photoActions').style.display = 'flex';  // dejamos volver a intentar
+  }
+}
+
+fileCam.addEventListener('change', () => procesarFoto(fileCam.files[0]));
+fileGal.addEventListener('change', () => procesarFoto(fileGal.files[0]));
+
+// Convierte cualquier imagen (incl. HEIC de iPhone) a JPEG y la devuelve como dataURL.
+// Usa createImageBitmap (compatible con iPhone) y cae a <img> si hace falta.
+async function convertirAJpeg(file){
+  const max = 1600;
+  let bitmap;
+  try{
+    bitmap = await createImageBitmap(file);          // funciona con HEIC en Safari iOS
+  }catch(e){
+    bitmap = await cargarConImg(file);               // fallback para navegadores viejos
+  }
+  let w = bitmap.width, h = bitmap.height;
+  if(w > max || h > max){ const r = Math.min(max/w, max/h); w = Math.round(w*r); h = Math.round(h*r); }
+  const c = document.createElement('canvas'); c.width = w; c.height = h;
+  c.getContext('2d').drawImage(bitmap, 0, 0, w, h);
+  const dataUrl = c.toDataURL('image/jpeg', 0.88);
+  if(!dataUrl || dataUrl.length < 100) throw new Error('conversión vacía');
+  return dataUrl;
+}
+
+function cargarConImg(file){
+  return new Promise((res, rej) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => { res(img); };
+    img.onerror = () => { rej(new Error('formato no compatible')); };
+    img.src = url;
+    setTimeout(() => rej(new Error('tiempo agotado al cargar la foto')), 8000); // no colgar para siempre
+  });
+}
+
+async function diagnosticar(base64){
+  document.getElementById('thinking').style.display = 'flex';
+  try{
+    const r = await fetch(`${WORKER_URL}/chat`, {
+      method:'POST',
+      headers:{ 'Content-Type':'application/json', 'Authorization':`Bearer ${state.token}` },
+      body: JSON.stringify({
+        session_id: state.sessionId,
+        messages: [{ role:'user', content:[
+          { type:'text', text:'Analiza esta foto de mi planta de cannabis. Dime qué ves y qué debo hacer.' },
+          { type:'image', source:{ type:'base64', media_type:'image/jpeg', data: base64 } }
+        ]}]
+      })
+    });
+    const d = await r.json();
+    document.getElementById('thinking').style.display = 'none';
+    document.getElementById('replyText').textContent = d.reply || 'No he podido analizar la foto. Prueba con otra más clara.';
+    document.getElementById('reply').style.display = 'block';
+    state.fotoSubida = true;
+    cta.style.display = 'block'; cta.textContent = 'Continuar';
+    cta.onclick = () => mostrar(4);
+  }catch(e){
+    document.getElementById('thinking').style.display = 'none';
+    document.getElementById('replyText').textContent = 'Algo ha fallado al analizar. Inténtalo de nuevo en un momento.';
+    document.getElementById('reply').style.display = 'block';
+  }
+}
+
+// P4 fase
+document.getElementById('optsP4').addEventListener('click', e => {
+  const b = e.target.closest('.opt'); if(!b) return;
+  state.fase = b.dataset.val;
+  guardarPaso('P4','fase',state.fase);
+  mostrar(5);
+});
+
+// P5 registro
+let registrando = false;   // candado: evita el doble disparo del registro
+function registrar(){
+  if(registrando) return;  // si ya está en marcha, ignora clics extra
+  const email = document.getElementById('email').value.trim().toLowerCase();
+  const password = document.getElementById('password').value;
+  const consent = document.getElementById('consent').checked;
+  const err = document.getElementById('err'); err.style.display='none';
+
+  if(!email.includes('@')){ err.textContent='Escribe un email válido.'; err.style.display='block'; return; }
+  if(password.length < 6){ err.textContent='La contraseña necesita al menos 6 caracteres.'; err.style.display='block'; return; }
+  if(!consent){ err.textContent='Debes confirmar tu edad y aceptar los términos.'; err.style.display='block'; return; }
+
+  registrando = true;
+  cta.disabled = true; cta.textContent = 'Creando tu cuenta…';
+  fetch(`${WORKER_URL}/auth/register`, {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({
+      email, password, session_id: state.sessionId,
+      consent: { age:true, terms:true },
+      perfil: { segmento:state.segmento, intencion:state.intencion, fase:state.fase }
+    })
+  })
+  .then(r => r.json())
+  .then(d => {
+    if(d.ok && d.token){ guardarSesion(d); window.location.href = APP_URL; }
+    else if(d.needs_login){ activarModoLogin(); }
+    else { registrando=false; cta.disabled=false; cta.textContent='Reclamar mi plaza de Fundador'; err.textContent=d.error||'No se pudo crear la cuenta.'; err.style.display='block'; }
+  })
+  .catch(() => { registrando=false; cta.disabled=false; cta.textContent='Reclamar mi plaza de Fundador'; err.textContent='Error de conexión. Inténtalo de nuevo.'; err.style.display='block'; });
+}
+
+// ===== Guarda la sesión con las MISMAS llaves que espera el dashboard (ga_*) =====
+function guardarSesion(d){
+  localStorage.setItem('ga_jwt', d.token);
+  localStorage.setItem('ga_nivel', d.plan || 'libre');
+  localStorage.setItem('ga_email', document.getElementById('email').value.trim().toLowerCase());
+  if(d.perfil_cultivo) localStorage.setItem('ga_perfil', JSON.stringify(d.perfil_cultivo));
+}
+
+// ===== Usuario que YA tiene cuenta: en vez de registrar, entra (y engancha su foto) =====
+function activarModoLogin(){
+  state.modoLogin = true;
+  registrando = false;
+  document.getElementById('p5Speech').innerHTML = '¡Espera! Ya eres de <span class="hl">los nuestros</span>.';
+  document.getElementById('p5Sub').textContent = 'Este email ya tiene cuenta. Entra con tu contraseña y recuperas tu cultivo y el diagnóstico que acabas de hacer.';
+  const f = document.querySelector('.founder'); if(f) f.style.display = 'none';
+  const chk = document.querySelector('.check'); if(chk) chk.style.display = 'none';
+  const pass = document.getElementById('password');
+  pass.placeholder = 'Tu contraseña'; pass.value = ''; pass.setAttribute('autocomplete','current-password');
+  document.getElementById('email').setAttribute('readonly','readonly');
+  const err = document.getElementById('err'); err.style.display = 'none'; err.style.color = 'var(--danger)';
+  if(!document.getElementById('forgot')){
+    const wrap = document.createElement('div');
+    wrap.style.textAlign = 'center'; wrap.style.marginTop = '4px';
+    wrap.innerHTML = '<span id="forgot" class="skip">¿Olvidaste tu contraseña?</span>';
+    err.parentNode.insertBefore(wrap, err);
+    document.getElementById('forgot').addEventListener('click', olvideContrasena);
+  }
+  cta.disabled = false; cta.textContent = 'Entrar';
+}
+
+function entrar(){
+  if(registrando) return;
+  const email = document.getElementById('email').value.trim().toLowerCase();
+  const password = document.getElementById('password').value;
+  const err = document.getElementById('err'); err.style.display = 'none'; err.style.color = 'var(--danger)';
+  if(password.length < 1){ err.textContent = 'Escribe tu contraseña.'; err.style.display = 'block'; return; }
+  registrando = true; cta.disabled = true; cta.textContent = 'Entrando…';
+  fetch(`${WORKER_URL}/auth/login`, {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ email, password, session_id: state.sessionId })
+  })
+  .then(r => r.json())
+  .then(d => {
+    if(d.ok && d.token){ guardarSesion(d); window.location.href = APP_URL; }
+    else { registrando=false; cta.disabled=false; cta.textContent='Entrar'; err.textContent='Contraseña incorrecta. Prueba de nuevo o usa "¿Olvidaste tu contraseña?".'; err.style.display='block'; }
+  })
+  .catch(() => { registrando=false; cta.disabled=false; cta.textContent='Entrar'; err.textContent='Error de conexión. Inténtalo de nuevo.'; err.style.display='block'; });
+}
+
+function olvideContrasena(){
+  const email = document.getElementById('email').value.trim().toLowerCase();
+  const err = document.getElementById('err');
+  fetch(`${WORKER_URL}/auth/forgot-password`, {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ email })
+  }).catch(()=>{});
+  err.style.color = 'var(--forest)';
+  err.textContent = 'Te he enviado un enlace a tu email para entrar. Revisa tu correo (y la carpeta de spam).';
+  err.style.display = 'block';
+}
+
+mostrar(0);
+</script>
+</body>
+</html>
