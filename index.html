@@ -81,8 +81,8 @@ nav{position:fixed;top:0;left:0;right:0;z-index:500;background:rgba(255,255,255,
 .nav-links{display:flex;gap:28px}
 .nav-links a{font-size:13px;color:var(--text2);text-decoration:none;transition:color .15s}
 .nav-links a:hover{color:var(--forest)}
-.nav-login{font-size:13px;color:var(--text2);text-decoration:none;margin-right:8px}
-.nav-login:hover{color:var(--forest)}
+.nav-login{font-size:13px;font-weight:500;color:var(--forest);text-decoration:none;padding:8px 18px;border:1.5px solid rgba(26,92,50,.28);border-radius:24px;transition:all .2s}
+.nav-login:hover{background:rgba(26,92,50,.06);border-color:var(--forest);text-decoration:none}
 .nav-actions{display:flex;align-items:center;gap:12px}
 .nc{background:var(--forest);color:#fff;border:none;padding:9px 22px;border-radius:24px;font-size:13px;font-weight:500;cursor:pointer;transition:all .2s;letter-spacing:-0.01em}
 .nc:hover{background:var(--forest-light);transform:translateY(-1px)}
@@ -99,6 +99,8 @@ nav{position:fixed;top:0;left:0;right:0;z-index:500;background:rgba(255,255,255,
 .hero-badge{display:inline-flex;align-items:center;gap:8px;background:var(--forest-pale);border:1px solid var(--forest-pale2);padding:6px 16px;border-radius:24px;font-size:12px;color:var(--forest);font-weight:500;margin-bottom:28px;opacity:0;animation:fadeUp .7s .28s forwards}
 .hero-badge-dot{width:6px;height:6px;border-radius:50%;background:var(--forest);animation:pulse 2s infinite}
 .hero-cta{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;opacity:0;animation:fadeUp .8s .45s forwards;margin-bottom:72px}
+.hero-login-hint{width:100%;text-align:center;font-size:14px;color:var(--text3);margin:6px 0 0}
+.hero-login-hint a{color:var(--forest);font-weight:600}
 .btn-primary{background:var(--forest);color:#fff;border:none;padding:15px 32px;border-radius:32px;font-size:15px;font-weight:500;cursor:pointer;transition:all .22s;letter-spacing:-0.01em}
 .btn-primary:hover{background:var(--forest-light);transform:translateY(-2px);box-shadow:0 8px 24px rgba(26,92,50,.25)}
 .btn-secondary{background:transparent;color:var(--forest);border:1.5px solid rgba(26,92,50,.25);padding:15px 32px;border-radius:32px;font-size:15px;font-weight:500;cursor:pointer;transition:all .22s}
@@ -336,6 +338,7 @@ footer{padding:32px 0;background:var(--white);border-top:1px solid var(--border)
   <div class="hero-cta">
     <button class="btn-primary" onclick="window.location.href='/register.html'">Reservar plaza fundador</button>
     <button class="btn-secondary" onclick="document.getElementById('como-funciona').scrollIntoView({behavior:'smooth'})">Ver cómo funciona</button>
+    <p class="hero-login-hint">¿Ya tienes cuenta? <a href="/login.html">Inicia sesión</a></p>
   </div>
   <div class="hero-stats">
     <div class="stat"><div class="stat-num"><strong>+150</strong></div><div class="stat-label">Años de experiencia combinada</div></div>
@@ -703,26 +706,27 @@ footer{padding:32px 0;background:var(--white);border-top:1px solid var(--border)
   </div>
 </footer>
 
-<script src="assets/auth.js?v=20260723"></script>
+<script src="assets/auth.js?v=20260724"></script>
 <script>
+// AUTO-RECONOCER usuarios con sesión válida: se les lleva directo a su interfaz
+// (app.html móvil / dashboard.html escritorio, vía postAuthDestination) sin
+// mostrarles el landing de registro. Si no hay sesión válida, se ve el landing.
 (function(){
   const token = localStorage.getItem('ga_jwt');
   if(!GAAuth.isJwtValid(token)){
     if(token) GAAuth.clearSession();
+    return; // sin sesión válida -> landing normal (con "Iniciar sesión" visible)
+  }
+  // Caso rápido (sin parpadeo): sesión válida y test ya conocido -> redirect ya.
+  if(GAAuth.isTestPassed()){
+    window.location.replace(GAAuth.postAuthDestination());
     return;
   }
-  const dest = GAAuth.postAuthDestination();
-  const label = dest.includes('test') ? 'Continuar test de acceso →' : 'Entrar al dashboard →';
-  document.querySelectorAll('button[onclick*="register"]').forEach(function(b){
-    b.textContent = label;
-    b.onclick = function(){ window.location.href = dest; };
-  });
-  const navCta = document.getElementById('nav-cta');
-  if(navCta){ navCta.textContent = label; navCta.onclick = function(){ window.location.href = dest; }; }
-  const form = document.getElementById('brevo-form');
-  if(form){
-    form.innerHTML = '<a href="'+dest+'" style="display:inline-block;background:#1a5c32;color:#fff;border-radius:999px;padding:16px 32px;font-size:15px;font-weight:700;text-decoration:none;">'+label+'</a>';
-  }
+  // Sesión válida pero test desconocido en local (p. ej. ITP limpió el flag):
+  // se sincroniza desde el servidor ANTES de decidir, para no reenviar al test.
+  GAAuth.syncTestPassedFromServer(localStorage.getItem('ga_email'))
+    .catch(function(){})
+    .then(function(){ window.location.replace(GAAuth.postAuthDestination()); });
 })();
 
 const obs = new IntersectionObserver(e => {

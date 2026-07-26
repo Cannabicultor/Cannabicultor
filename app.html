@@ -463,6 +463,7 @@
 
 </div>
 
+<script src="assets/auth.js?v=20260724"></script>
 <script src="https://cannabicultor.com/assets/chat-vision.js?v=3"></script>
 <script>
 
@@ -477,17 +478,17 @@ if(!JWT){ window.location.replace('/login.html'); }
 
 // ─── SAFETY NET · routing por dispositivo ─────────────────────────────────────
 // app.html (móvil) y dashboard.html (escritorio) son la MISMA interfaz en dos
-// presentaciones. Si un usuario de escritorio aterriza aquí lo reencaminamos a
-// la versión de escritorio. Detección autocontenida e idéntica a la de
-// dashboard.html (regla de paridad app/dashboard).
-(function(){
-  if(!JWT) return;
-  var ua = navigator.userAgent || '';
-  var isMobile = /Android|iPhone|iPad|iPod|Mobile|Opera Mini|IEMobile|BlackBerry/i.test(ua)
-    || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1)
-    || (window.innerWidth || document.documentElement.clientWidth || 0) < 768;
-  if(!isMobile){ window.location.replace('/dashboard.html'); }
-})();
+// presentaciones. Idéntico a dashboard.html (regla de paridad): si el dispositivo
+// no coincide con esta interfaz, se redirige a la correcta vía
+// GAAuth.isMobileDevice() (cargado arriba con ?v=). Se exime ?new=true.
+if(JWT && window.GAAuth && typeof GAAuth.isMobileDevice === 'function'
+   && !/[?&]new=true/.test(location.search)){
+  var _isMobile = GAAuth.isMobileDevice();
+  var _isDashboard = location.pathname.includes('dashboard');
+  var _isApp = location.pathname.includes('app.html');
+  if(_isMobile && _isDashboard){ window.location.replace('/app.html'); }
+  else if(!_isMobile && _isApp){ window.location.replace('/dashboard.html'); }
+}
 
 function logout401(){
   ['ga_jwt','ga_email','ga_nivel','ga_test_passed','ga_perfil'].forEach(k=>{

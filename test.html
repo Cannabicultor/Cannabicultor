@@ -7,7 +7,7 @@
 <title>Test de Acceso — Cannabicultor IA</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Lora:ital,wght@0,400;0,600;1,400;1,600&display=swap" rel="stylesheet">
-<script src="assets/auth.js?v=20260723"></script>
+<script src="assets/auth.js?v=20260724"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -2692,13 +2692,18 @@ function showScreen(id){
 }
 
 // ─── INIT ─────────────────────────────────────────────────────────────────────
-function init(){
+async function init(){
   if(!localStorage.getItem('ga_jwt') || !GAAuth.isJwtValid(localStorage.getItem('ga_jwt'))){
     window.location.replace('/login.html');
     return;
   }
-  if(localStorage.getItem('ga_test_passed') === 'true'){
-    window.location.replace('/dashboard.html');
+  // Self-heal: si el test ya está superado (según localStorage o, si ITP lo
+  // limpió, según el servidor) no lo repetimos. Sincroniza antes de decidir.
+  if(!GAAuth.isTestPassed()){
+    try{ await GAAuth.syncTestPassedFromServer(localStorage.getItem('ga_email')); }catch(e){}
+  }
+  if(GAAuth.isTestPassed()){
+    window.location.replace(GAAuth.postAuthDestination());  // device-aware (no hardcode)
     return;
   }
 

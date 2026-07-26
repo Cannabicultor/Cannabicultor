@@ -110,12 +110,15 @@
   function finishTest(plan) {
     localStorage.setItem('ga_nivel', normalizePlan(plan));
     localStorage.setItem('ga_test_passed', 'true');
-    // Se envía siempre a dashboard.html para mantener el onboarding único
-    // (?new=true) en un solo sitio, con independencia del dispositivo.
-    // TODO: cuando la base de usuarios móvil crezca, valorar portar el
-    //       onboarding a app.html y hacer este destino device-aware
-    //       (isMobileDevice() ? '/app.html?new=true' : '/dashboard.html?new=true').
-    window.location.href = '/dashboard.html?new=true';
+    // Persistencia server-side: test.html ya inserta el resultado en
+    // test_resultados (fuente de verdad actual). La columna canónica
+    // users.test_passed debería escribirla el worker (service_role) — ver
+    // migración y nota de seguridad. Aquí NO escribimos con la anon key.
+    // Routing device-aware: pasa SIEMPRE por postAuthDestination (regla:
+    // ningún redirect del flujo de auth hardcodea dashboard). Conserva
+    // ?new=true; el onboarding lo atienden ambas interfaces (app/dashboard).
+    var dest = postAuthDestination();
+    window.location.href = dest + (dest.indexOf('?') === -1 ? '?' : '&') + 'new=true';
   }
 
   function getDisplayName() {
@@ -149,22 +152,41 @@
   var SB_URL = 'https://gfyrsrdnvgnhtsuexjkb.supabase.co';
   var SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdmeXJzcmRudmduaHRzdWV4amtiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg3MjIxNjUsImV4cCI6MjA5NDI5ODE2NX0.53peUmp28jF_b5tJFsHmP4STmGedRYUBV1WPItmdv50';
 
+  // Sincroniza el estado del test desde el servidor y cachea en localStorage.
+  // Fuente de verdad: users.test_passed (columna canónica); si no está poblada
+  // todavía, cae al legacy test_resultados. Es la vía para que el test NO se
+  // repita aunque Safari/ITP haya limpiado localStorage o el usuario cambie de
+  // dispositivo. Async: se invoca en los puntos de entrada async (login.html,
+  // index.html, test.html) ANTES de decidir el destino con postAuthDestination.
   function syncTestPassedFromServer(email) {
     if (!email || isTestPassed()) {
       return Promise.resolve(isTestPassed());
     }
-    return fetch(SB_URL + '/rest/v1/test_resultados?email=eq.' + encodeURIComponent(email) + '&select=id&limit=1', {
-      headers: { apikey: SB_KEY, Authorization: 'Bearer ' + SB_KEY }
-    })
-      .then(function (res) { return res.ok ? res.json() : []; })
-      .then(function (rows) {
-        if (rows && rows.length > 0) {
-          localStorage.setItem('ga_test_passed', 'true');
-          return true;
-        }
-        return false;
+    // Legacy fallback: la tabla test_resultados (escrita por test.html) sigue
+    // sirviendo mientras users.test_passed no esté poblada por el worker.
+    function checkLegacy() {
+      return fetch(SB_URL + '/rest/v1/test_resultados?email=eq.' + encodeURIComponent(email) + '&select=id&limit=1', {
+        headers: { apikey: SB_KEY, Authorization: 'Bearer ' + SB_KEY }
       })
-      .catch(function () { return false; });
+        .then(function (res) { return res.ok ? res.json() : []; })
+        .then(function (rows) {
+          if (rows && rows.length > 0) { localStorage.setItem('ga_test_passed', 'true'); return true; }
+          return false;
+        });
+    }
+    // Fuente canónica vía RPC SECURITY DEFINER: expone SOLO el booleano, sin
+    // abrir la tabla users a la anon key. Ver migración (get_test_passed).
+    return fetch(SB_URL + '/rest/v1/rpc/get_test_passed', {
+      method: 'POST',
+      headers: { apikey: SB_KEY, Authorization: 'Bearer ' + SB_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ p_email: email })
+    })
+      .then(function (res) { return res.ok ? res.json() : null; })
+      .then(function (val) {
+        if (val === true) { localStorage.setItem('ga_test_passed', 'true'); return true; }
+        return checkLegacy();
+      })
+      .catch(function () { return checkLegacy().catch(function () { return false; }); });
   }
 
   global.GAAuth = {
