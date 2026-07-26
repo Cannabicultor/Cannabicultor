@@ -153,40 +153,27 @@
   var SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdmeXJzcmRudmduaHRzdWV4amtiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg3MjIxNjUsImV4cCI6MjA5NDI5ODE2NX0.53peUmp28jF_b5tJFsHmP4STmGedRYUBV1WPItmdv50';
 
   // Sincroniza el estado del test desde el servidor y cachea en localStorage.
-  // Fuente de verdad: users.test_passed (columna canónica); si no está poblada
-  // todavía, cae al legacy test_resultados. Es la vía para que el test NO se
-  // repita aunque Safari/ITP haya limpiado localStorage o el usuario cambie de
-  // dispositivo. Async: se invoca en los puntos de entrada async (login.html,
-  // index.html, test.html) ANTES de decidir el destino con postAuthDestination.
+  // Fuente de verdad: RPC SECURITY DEFINER get_test_passed(email), que comprueba
+  // server-side TANTO "Usuarios".test_passed COMO un test_resultados aprobado
+  // (porcentaje >= 70). Importante: el cliente NO puede leer test_resultados con
+  // la anon key (RLS la devuelve vacía → content-range */0), por eso NO hay
+  // fallback client-side: todo pasa por la RPC. Async: se invoca en los puntos
+  // de entrada async (login/index/test) ANTES de decidir con postAuthDestination.
   function syncTestPassedFromServer(email) {
     if (!email || isTestPassed()) {
       return Promise.resolve(isTestPassed());
     }
-    // Legacy fallback: la tabla test_resultados (escrita por test.html) sigue
-    // sirviendo mientras users.test_passed no esté poblada por el worker.
-    function checkLegacy() {
-      return fetch(SB_URL + '/rest/v1/test_resultados?email=eq.' + encodeURIComponent(email) + '&select=id&limit=1', {
-        headers: { apikey: SB_KEY, Authorization: 'Bearer ' + SB_KEY }
-      })
-        .then(function (res) { return res.ok ? res.json() : []; })
-        .then(function (rows) {
-          if (rows && rows.length > 0) { localStorage.setItem('ga_test_passed', 'true'); return true; }
-          return false;
-        });
-    }
-    // Fuente canónica vía RPC SECURITY DEFINER: expone SOLO el booleano, sin
-    // abrir la tabla users a la anon key. Ver migración (get_test_passed).
     return fetch(SB_URL + '/rest/v1/rpc/get_test_passed', {
       method: 'POST',
       headers: { apikey: SB_KEY, Authorization: 'Bearer ' + SB_KEY, 'Content-Type': 'application/json' },
       body: JSON.stringify({ p_email: email })
     })
-      .then(function (res) { return res.ok ? res.json() : null; })
+      .then(function (res) { return res.ok ? res.json() : false; })
       .then(function (val) {
         if (val === true) { localStorage.setItem('ga_test_passed', 'true'); return true; }
-        return checkLegacy();
+        return false;
       })
-      .catch(function () { return checkLegacy().catch(function () { return false; }); });
+      .catch(function () { return false; });
   }
 
   global.GAAuth = {
