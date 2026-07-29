@@ -33,7 +33,7 @@ button{cursor:pointer}
 .brand-sub{font-size:10px;color:var(--muted);letter-spacing:.12em;text-transform:uppercase;margin-top:3px}
 .side-section{display:flex;flex-direction:column;gap:8px}
 .side-label{font-size:10px;color:var(--soft);font-weight:700;text-transform:uppercase;letter-spacing:.12em;padding:0 10px 4px}
-.nav-btn{display:flex;align-items:center;gap:10px;width:100%;border:0;background:transparent;color:var(--muted);font-size:14px;font-weight:500;padding:11px 12px;border-radius:14px;text-align:left;transition:all .18s}
+.nav-btn{display:flex;align-items:center;gap:10px;width:100%;border:0;background:transparent;color:var(--muted);font-size:14px;font-weight:500;padding:11px 12px;border-radius:14px;text-align:left;text-decoration:none;transition:all .18s}
 .nav-btn:hover{background:rgba(26,92,50,.06);color:var(--forest)}
 .nav-btn.active{background:var(--pale);color:var(--forest)}
 .ico{width:22px;height:22px;border-radius:8px;background:rgba(26,92,50,.08);display:inline-flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0}
@@ -317,6 +317,13 @@ button{cursor:pointer}
       <button class="nav-btn" onclick="document.getElementById('herramientas').scrollIntoView({behavior:'smooth'})"><span class="ico"><img src="assets/icons/06-herramientas.svg" alt=""></span>Herramientas</button>
       <button class="nav-btn" onclick="openOnboarding(true)"><span class="ico">✏️</span>Editar cultivo</button>
       <button class="nav-btn" onclick="cerrarSesion()" style="color:var(--red)"><span class="ico" style="background:#fdf0ef">🚪</span>Cerrar sesión</button>
+    </div>
+    <div class="side-section">
+      <div class="side-label">Herramientas</div>
+      <a class="nav-btn" href="/banco-genetica.html"><span class="ico"><img src="assets/icons/11-banco-genetica.svg" alt=""></span>Banco genético</a>
+      <a class="nav-btn" href="/buscador-cannabicultor.html"><span class="ico"><img src="assets/icons/07-buscar-variedad.svg" alt=""></span>Buscar variedad</a>
+      <a class="nav-btn" href="/disenador_sala_cultivo.html"><span class="ico"><img src="assets/icons/08-disenador-sala.svg" alt=""></span>Diseñador de sala</a>
+      <a class="nav-btn" href="/atlas_landrace.html"><span class="ico"><img src="assets/icons/09-mapa-landraces.svg" alt=""></span>Mapa de landraces</a>
     </div>
     <div class="nivel-card">
       <div class="nivel-top">
