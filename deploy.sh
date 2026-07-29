@@ -27,6 +27,8 @@ HTML_FILES=(
   disenador_sala_cultivo.html
   app.html
   atlas_landrace.html
+  banco-genetica.html
+  growers-alliance.html
 )
 
 for file in "${HTML_FILES[@]}"; do
@@ -86,5 +88,25 @@ if [ -d assets/icons ]; then
   for file in assets/icons/*.svg; do
     [ -f "$file" ] || continue
     /bin/cp -f "$file" "$DEPLOYPATH/assets/icons/"
+  done
+fi
+
+# Fichas del Banco Genético: HTML estático hecho a mano en la subcarpeta
+# genetica/ (no es un directorio de generador, así que se copia sin --delete).
+if [ -d genetica ]; then
+  mkdir -p "$DEPLOYPATH/genetica"
+  for file in genetica/*.html; do
+    [ -f "$file" ] || continue
+    /bin/cp -f "$file" "$DEPLOYPATH/genetica/"
+  done
+fi
+
+# Fotos del Banco Genético en la subcarpeta assets/genetica/, que el bucle
+# assets/*.ext de arriba no cubre.
+if [ -d assets/genetica ]; then
+  mkdir -p "$DEPLOYPATH/assets/genetica"
+  for file in assets/genetica/*; do
+    [ -f "$file" ] || continue
+    /bin/cp -f "$file" "$DEPLOYPATH/assets/genetica/"
   done
 fi

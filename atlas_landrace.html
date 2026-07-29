@@ -246,7 +246,7 @@ const LANDRACES = [
   {region:"Myanmar", flag:"🇲🇲 Birmania", lat:21.5, lon:96.0, strains:["Burmese"], note:"Sativa ecuatorial de selva y montaña."},
   {region:"Líbano", flag:"🇱🇧 Valle de la Becá", lat:34.0, lon:36.2, strains:["Lebanese rojo","Lebanese rubio"], note:"Tradición milenaria de hachís en torno a Baalbek."},
   {region:"Turquía", flag:"🇹🇷 Anatolia", lat:39.0, lon:35.0, strains:["Turkish"], note:"Variedades históricas de fibra y resina de Anatolia."},
-  {region:"Marruecos", flag:"🇲🇦 Rif · Ketama", lat:34.9, lon:-4.6, strains:["Ketama","Beldia"], note:"Epicentro mundial del hachís; la Beldia es la landrace local del Rif."},
+  {region:"Marruecos", flag:"🇲🇦 Rif · Ketama", lat:34.9, lon:-4.6, strains:["Ketama","Beldia"], note:"Epicentro mundial del hachís; la Beldia es la landrace local del Rif.", link:{href:"/genetica/beldia-landrace-marruecos.html", label:"Ver Beldia en el Banco Genético"}},
   {region:"Sinaí", flag:"🇪🇬 Egipto", lat:29.5, lon:34.0, strains:["Sinai"], note:"Landrace adaptada al desierto del Sinaí."},
   {region:"Malawi", flag:"🇲🇼 Valle del Rift", lat:-13.5, lon:34.5, strains:["Malawi Gold (Chamba)"], note:"Sativa africana legendaria por su potencia y vigor."},
   {region:"Sudáfrica", flag:"🇿🇦 Durban", lat:-29.85, lon:31.0, strains:["Durban Poison"], note:"Sativa pura de floración temprana, pilar de la hibridación moderna."},
@@ -478,6 +478,7 @@ function openDetail(rec){
     <div class="d-coords">${esc(d.flag||'')} &nbsp;·&nbsp; ${d.lat.toFixed(2)}°, ${d.lon.toFixed(2)}°</div>
     <div class="d-strains">${d.strains.map(s=>`<span class="chip">${esc(s)}</span>`).join('')}</div>
     ${d.note?`<div class="d-note">${esc(d.note)}</div>`:''}
+    ${d.link?`<a href="${esc(d.link.href)}" style="display:inline-block;margin-top:12px;color:var(--gold);font-weight:600;font-size:13px;text-decoration:none;border-bottom:1px solid var(--gold-dim);padding-bottom:2px">${esc(d.link.label)} &rarr;</a>`:''}
     <div class="d-actions">
       <button class="btn" id="dFly">Centrar aquí</button>
       ${rec.custom?'<button class="btn" id="dDel">Eliminar</button>':''}

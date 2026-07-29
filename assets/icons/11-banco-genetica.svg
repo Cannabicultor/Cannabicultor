@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
+  <defs>
+    <radialGradient id="bg" cx="25%" cy="15%" r="90%">
+      <stop offset="0%" stop-color="#2a7a44"/>
+      <stop offset="55%" stop-color="#1a5c32"/>
+      <stop offset="100%" stop-color="#0f3d20"/>
+    </radialGradient>
+    <linearGradient id="glass" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.55"/>
+      <stop offset="45%" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  <rect x="2" y="2" width="116" height="116" rx="26" fill="url(#bg)"/>
+  <path d="M2 30 Q2 2 30 2 L90 2 Q112 4 116 26 Q60 46 2 30Z" fill="url(#glass)"/>
+
+  <!-- Vault ring (genetic bank) with dial ticks -->
+  <g stroke="#f5f7f4" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" fill="none">
+    <circle cx="60" cy="62" r="30"/>
+    <path d="M60 30 V38 M60 86 V94 M28 62 H36 M84 62 H92"/>
+  </g>
+  <!-- Protected seed (genetics) -->
+  <g transform="rotate(18 60 62)">
+    <ellipse cx="60" cy="62" rx="12" ry="17" fill="#f5f7f4"/>
+    <path d="M60 49 C54 55 54 69 60 75" stroke="#1a5c32" stroke-width="3.5" stroke-linecap="round" fill="none"/>
+  </g>
+  <rect x="2" y="2" width="116" height="116" rx="26" fill="none" stroke="#ffffff" stroke-opacity="0.12" stroke-width="1.5"/>
+</svg>
