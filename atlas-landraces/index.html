@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-XS18E0J277"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-XS18E0J277');
+</script>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Atlas de landraces · Fichas | Cannabicultor</title>
+<meta name="description" content="Fichas de landraces fundacionales: origen, tipo, floración, efecto y notas de cultivo. Complemento del Atlas 3D de Cannabicultor.">
+<link rel="canonical" href="https://cannabicultor.com/atlas-landraces/">
+<link rel="icon" href="/assets/icono_cannabicultor.png">
+<style>
+:root{
+  --bg:#0f1419;
+  --card:#1a222d;
+  --card2:#222c38;
+  --line:rgba(255,255,255,.08);
+  --text:#e8edf2;
+  --muted:#8b97a3;
+  --accent:#7cb342;
+  --accent-dim:rgba(124,179,66,.15);
+  --radius:16px;
+  --font:-apple-system,BlinkMacSystemFont,'Segoe UI',Inter,system-ui,sans-serif;
+  --serif:Georgia,'Times New Roman',serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+body{font-family:var(--font);background:var(--bg);color:var(--text);line-height:1.55;-webkit-font-smoothing:antialiased;min-height:100dvh}
+a{color:var(--accent);text-decoration:none}
+a:hover{text-decoration:underline}
+img{max-width:100%;display:block}
+.wrap{max-width:880px;margin:0 auto;padding:0 20px 64px}
+.back{display:inline-flex;align-items:center;gap:8px;min-height:44px;color:var(--muted);font-size:14px;margin:20px 0 8px}
+.back:hover{color:var(--accent);text-decoration:none}
+.hero{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;margin-top:12px}
+.hero-img{aspect-ratio:16/10;background:linear-gradient(145deg,#1a222d,#0f1419 60%,#1e2a1a);position:relative;display:flex;align-items:center;justify-content:center}
+.hero-img img{width:100%;height:100%;object-fit:cover}
+.hero-img .ph{font-size:13px;color:var(--muted);text-align:center;padding:24px}
+.hero-body{padding:24px 24px 28px}
+.flag-row{font-size:13px;color:var(--muted);margin-bottom:8px}
+h1{font-size:clamp(26px,5vw,34px);font-weight:700;letter-spacing:-.03em;line-height:1.15;margin-bottom:10px}
+.lead{color:var(--muted);font-size:15px;max-width:52ch}
+.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin:22px 0 0}
+@media(min-width:560px){.stats{grid-template-columns:repeat(4,1fr)}}
+.stat{background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.stat b{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600;margin-bottom:4px}
+.stat span{font-size:14px;color:var(--text)}
+.chip-tipo{display:inline-block;margin-top:12px;font-size:12px;padding:5px 12px;border-radius:999px;background:var(--accent-dim);color:var(--accent);border:1px solid rgba(124,179,66,.35);font-weight:600}
+.sections{display:grid;gap:14px;margin-top:18px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:20px 22px}
+.card h2{font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:var(--accent);margin-bottom:10px;font-weight:600}
+.card p{color:var(--muted);font-size:15px}
+.site-foot{margin-top:36px;padding-top:20px;border-top:1px solid var(--line);font-size:13px;color:var(--muted);display:flex;flex-wrap:wrap;gap:12px 20px;justify-content:space-between}
+.site-foot a{color:var(--muted)}
+.site-foot a:hover{color:var(--accent)}
+/* index */
+.idx-head{padding:36px 0 20px}
+.idx-head h1{font-size:clamp(28px,6vw,40px);margin-bottom:8px}
+.idx-head p{color:var(--muted);max-width:48ch;font-size:15px}
+.grid{display:grid;grid-template-columns:1fr;gap:12px;margin-top:24px}
+@media(min-width:560px){.grid{grid-template-columns:1fr 1fr}}
+@media(min-width:860px){.grid{grid-template-columns:1fr 1fr 1fr}}
+.tile{display:block;background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:18px 18px 16px;color:inherit;transition:border-color .15s,transform .15s}
+.tile:hover{border-color:rgba(124,179,66,.45);text-decoration:none;transform:translateY(-1px)}
+.tile h2{font-size:17px;font-weight:600;letter-spacing:-.02em;margin-bottom:6px;color:var(--text)}
+.tile .meta{font-size:12px;color:var(--muted);margin-bottom:8px}
+.tile .blurb{font-size:13px;color:var(--muted);line-height:1.45;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.tile .tipo{margin-top:10px;font-size:11px;color:var(--accent);font-weight:600}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="back" href="/atlas_landrace.html">← Volver al Atlas de landraces</a>
+  <header class="idx-head">
+    <h1>Landraces</h1>
+    <p>Fichas de 46 landraces y heirlooms del Atlas. Datos de cultivador, sin postureo: origen, ciclo y qué esperar al cultivarlas.</p>
+  </header>
+  <div class="grid">
+    <a class="tile" href="afghani.html">
+  <div class="meta">🇦🇫 · Afganistán</div>
+  <h2>Afghani</h2>
+  <p class="blurb">La base genética del hachís afgano y de miles de híbridos modernos. Planta de montaña, baja y cargada de resina.</p>
+  <div class="tipo">Indica</div>
+</a><a class="tile" href="mazar-i-sharif.html">
+  <div class="meta">🇦🇫 · Afganistán</div>
+  <h2>Mazar-i-Sharif</h2>
+  <p class="blurb">Landrace del norte afgano, famosa entre coleccionistas y bancos serios de hachís.</p>
+  <div class="tipo">Indica</div>
+</a><a class="tile" href="hindu-kush.html">
+  <div class="meta">🏔️ · Pakistán / Afganistán</div>
+  <h2>Hindu Kush</h2>
+  <p class="blurb">Cuna de las índicas de cordillera. Referencia histórica y botánica del cannabis de montaña.</p>
+  <div class="tipo">Indica</div>
+</a><a class="tile" href="chitral-kush.html">
+  <div class="meta">🇵🇰 · Pakistán</div>
+  <h2>Chitral Kush</h2>
+  <p class="blurb">Índica de alta montaña del noroeste pakistaní, valorada por su color y resina.</p>
+  <div class="tipo">Indica</div>
+</a><a class="tile" href="tirah-valley.html">
+  <div class="meta">🇵🇰 · Pakistán</div>
+  <h2>Tirah Valley</h2>
+  <p class="blurb">Landrace de montaña del noroeste pakistaní, menos popularizada que Chitral pero del mismo corredor.</p>
+  <div class="tipo">Indica</div>
+</a><a class="tile" href="nepalese.html">
+  <div class="meta">🇳🇵 · Nepal</div>
+  <h2>Nepalese</h2>
+  <p class="blurb">Sativas e híbridas de altura; tradición del charas amasado a mano.</p>
+  <div class="tipo">Sativa / híbrido natural</div>
+</a><a class="tile" href="himalaya-gold.html">
+  <div class="meta">🇳🇵 · Nepal</div>
+  <h2>Himalaya Gold</h2>
+  <p class="blurb">Nombre comercial histórico para líneas nepalesas de montaña de aroma y color dorados.</p>
+  <div class="tipo">Sativa</div>
+</a><a class="tile" href="kerala.html">
+  <div class="meta">🇮🇳 · India</div>
+  <h2>Kerala</h2>
+  <p class="blurb">Sativa del sur de la India, parte de la diversidad histórica del subcontinente.</p>
+  <div class="tipo">Sativa</div>
+</a><a class="tile" href="malana-charas.html">
+  <div class="meta">🇮🇳 · India</div>
+  <h2>Malana (charas)</h2>
+  <p class="blurb">El charas de Malana está entre los más reputados del mundo. Planta de pueblo, no de catálogo.</p>
+  <div class="tipo">Sativa / híbrido natural</div>
+</a><a class="tile" href="manipuri.html">
+  <div class="meta">🇮🇳 · India</div>
+  <h2>Manipuri</h2>
+  <p class="blurb">Landrace del noreste indio, menos famosa que Kerala o Malana pero del mismo mapa de diversidad.</p>
+  <div class="tipo">Sativa</div>
+</a><a class="tile" href="thai-thai-stick.html">
+  <div class="meta">🇹🇭 · Tailandia</div>
+  <h2>Thai (Thai Stick)</h2>
+  <p class="blurb">Sativa tropical de ciclo largo y efecto cerebral característico. El &#x27;Thai Stick&#x27; era la forma de comercio clásica.</p>
+  <div class="tipo">Sativa</div>
+</a><a class="tile" href="chocolate-thai.html">
+  <div class="meta">🇹🇭 · Tailandia</div>
+  <h2>Chocolate Thai</h2>
+  <p class="blurb">Línea tailandesa clásica de los 70–80, famosa por el aroma y el efecto limpio.</p>
+  <div class="tipo">Sativa</div>
+</a><a class="tile" href="highland-laotian.html">
+  <div class="meta">🇱🇦 · Laos</div>
+  <h2>Highland Laotian</h2>
+  <p class="blurb">Sativa pura de tierras altas del sudeste asiático, emparentada con el corredor Mekong.</p>
+  <div class="tipo">Sativa</div>
+</a><a class="tile" href="cambodian.html">
+  <div class="meta">🇰🇭 · Camboya</div>
+  <h2>Cambodian</h2>
+  <p class="blurb">Sativa del sudeste asiático, menos hiped que Thai pero del mismo linaje geográfico.</p>
+  <div class="tipo">Sativa</div>
+</a><a class="tile" href="burmese.html">
+  <div class="meta">🇲🇲 · Myanmar</div>
+  <h2>Burmese</h2>
+  <p class="blurb">Sativa de selva y montaña de Myanmar, poco presente en catálogos mainstream.</p>
+  <div class="tipo">Sativa</div>
+</a><a class="tile" href="lebanese-rojo.html">
+  <div class="meta">🇱🇧 · Líbano</div>
+  <h2>Lebanese rojo</h2>
+  <p class="blurb">Landrace del Líbano asociada al hachís rojo histórico de la región.</p>
+  <div class="tipo">Indica / híbrido natural</div>
+</a><a class="tile" href="lebanese-rubio.html">
+  <div class="meta">🇱🇧 · Líbano</div>
+  <h2>Lebanese rubio</h2>
+  <p class="blurb">Tradición milenaria de hachís en la Becá; el rubio es la otra cara del rojo.</p>
+  <div class="tipo">Indica / híbrido natural</div>
+</a><a class="tile" href="turkish.html">
+  <div class="meta">🇹🇷 · Turquía</div>
+  <h2>Turkish</h2>
+  <p class="blurb">Variedades históricas de Anatolia: fibra y resina según el valle.</p>
+  <div class="tipo">Híbrido natural / cáñamo-resina</div>
+</a><a class="tile" href="ketama.html">
+  <div class="meta">🇲🇦 · Marruecos</div>
+  <h2>Ketama</h2>
+  <p class="blurb">Nombre de la zona del Rif asociada al hachís marroquí. Planta de pueblo, no de marketing.</p>
+  <div class="tipo">Indica / híbrido natural</div>
+</a><a class="tile" href="beldia.html">
+  <div class="meta">🇲🇦 · Marruecos</div>
+  <h2>Beldia</h2>
+  <p class="blurb">Epicentro del hachís marroquí; la Beldia es la autóctona del Rif, no un híbrido de catálogo.</p>
+  <div class="tipo">Indica / landrace local</div>
+</a><a class="tile" href="sinai.html">
+  <div class="meta">🇪🇬 · Egipto</div>
+  <h2>Sinai</h2>
+  <p class="blurb">Landrace adaptada al desierto del Sinaí, poco vista en bancos comerciales.</p>
+  <div class="tipo">Híbrido natural / sativa-tending</div>
+</a><a class="tile" href="malawi-gold-chamba.html">
+  <div class="meta">🇲🇼 · Malawi</div>
+  <h2>Malawi Gold (Chamba)</h2>
+  <p class="blurb">Sativa africana legendaria. El &#x27;chamba&#x27; es el nombre local de la hierba de la zona.</p>
+  <div class="tipo">Sativa</div>
+</a><a class="tile" href="durban-poison.html">
+  <div class="meta">🇿🇦 · Sudáfrica</div>
+  <h2>Durban Poison</h2>
+  <p class="blurb">Sativa pura de floración temprana, pilar de la hibridación moderna.</p>
+  <div class="tipo">Sativa</div>
+</a><a class="tile" href="swazi-gold.html">
+  <div class="meta">🇸🇿 · Esuatini</div>
+  <h2>Swazi Gold</h2>
+  <p class="blurb">Sativa de tierras altas de Esuatini (antigua Suazilandia).</p>
+  <div class="tipo">Sativa</div>
+</a><a class="tile" href="congolese.html">
+  <div class="meta">🇨🇩 · R.D. Congo</div>
+  <h2>Congolese</h2>
+  <p class="blurb">Sativa ecuatorial africana de gran altura.</p>
+  <div class="tipo">Sativa</div>
+</a><a class="tile" href="red-congolese.html">
+  <div class="meta">🇨🇩 · R.D. Congo</div>
+  <h2>Red Congolese</h2>
+  <p class="blurb">Sativa ecuatorial africana; nombre clásico en el comercio y la cultura de sativas puras.</p>
+  <div class="tipo">Sativa</div>
+</a><a class="tile" href="nigerian.html">
+  <div class="meta">🇳🇬 · Nigeria</div>
+  <h2>Nigerian</h2>
+  <p class="blurb">Sativa tropical de África occidental.</p>
+  <div class="tipo">Sativa</div>
+</a><a class="tile" href="angolan.html">
+  <div class="meta">🇦🇴 · Angola</div>
+  <h2>Angolan</h2>
+  <p class="blurb">Sativa del altiplano angoleño, poco comercializada.</p>
+  <div class="tipo">Sativa</div>
+</a><a class="tile" href="lambs-bread.html">
+  <div class="meta">🇯🇲 · Jamaica</div>
+  <h2>Lamb&#x27;s Bread</h2>
+  <p class="blurb">Sativa jamaicana ligada a la cultura rastafari. También escrita Lamb&#x27;s Breath.</p>
+  <div class="tipo">Sativa</div>
+</a><a class="tile" href="kings-bread.html">
+  <div class="meta">🇯🇲 · Jamaica</div>
+  <h2>King&#x27;s Bread</h2>
+  <p class="blurb">Hermana cultural de Lamb&#x27;s Bread en la tradición jamaicana.</p>
+  <div class="tipo">Sativa</div>
+</a><a class="tile" href="acapulco-gold.html">
+  <div class="meta">🇲🇽 · México</div>
+  <h2>Acapulco Gold</h2>
+  <p class="blurb">Sativa mexicana mítica. El &#x27;oro de Acapulco&#x27; marcó una generación.</p>
+  <div class="tipo">Sativa</div>
+</a><a class="tile" href="oaxacan.html">
+  <div class="meta">🇲🇽 · México</div>
+  <h2>Oaxacan</h2>
+  <p class="blurb">Sativa clásica de Oaxaca, del mismo mapa mexicano de los 60–70.</p>
+  <div class="tipo">Sativa</div>
+</a><a class="tile" href="michoacan.html">
+  <div class="meta">🇲🇽 · México</div>
+  <h2>Michoacán</h2>
+  <p class="blurb">Landrace mexicana de Michoacán, parte del linaje sativa del Pacífico mexicano.</p>
+  <div class="tipo">Sativa</div>
+</a><a class="tile" href="panama-red.html">
+  <div class="meta">🇵🇦 · Panamá</div>
+  <h2>Panama Red</h2>
+  <p class="blurb">Sativa del istmo, nombre clásico del comercio americano de sativas puras.</p>
+  <div class="tipo">Sativa</div>
+</a><a class="tile" href="santa-marta-gold.html">
+  <div class="meta">🇨🇴 · Colombia</div>
+  <h2>Santa Marta Gold</h2>
+  <p class="blurb">Sativa colombiana de la Sierra Nevada; el &#x27;oro&#x27; de Santa Marta es un clásico.</p>
+  <div class="tipo">Sativa</div>
+</a><a class="tile" href="punto-rojo.html">
+  <div class="meta">🇨🇴 · Colombia</div>
+  <h2>Punto Rojo</h2>
+  <p class="blurb">Nombre regional colombiano asociado a sativas con pistilos rojos y fama histórica.</p>
+  <div class="tipo">Sativa</div>
+</a><a class="tile" href="colombian-gold.html">
+  <div class="meta">🇨🇴 · Colombia</div>
+  <h2>Colombian Gold</h2>
+  <p class="blurb">Sativa colombiana de exportación clásica; el &#x27;oro colombiano&#x27; de los 70.</p>
+  <div class="tipo">Sativa</div>
+</a><a class="tile" href="manga-rosa.html">
+  <div class="meta">🇧🇷 · Brasil</div>
+  <h2>Manga Rosa</h2>
+  <p class="blurb">Sativa tropical del sertão brasileño, nombre popular en la cultura cannábica de Brasil.</p>
+  <div class="tipo">Sativa</div>
+</a><a class="tile" href="brazilian.html">
+  <div class="meta">🇧🇷 · Brasil</div>
+  <h2>Brazilian</h2>
+  <p class="blurb">Nombre genérico para sativas brasileñas de tradición; no es una sola línea única.</p>
+  <div class="tipo">Sativa</div>
+</a><a class="tile" href="yunnan.html">
+  <div class="meta">🇨🇳 · China</div>
+  <h2>Yunnan</h2>
+  <p class="blurb">Yunnan es una región clave en el origen evolutivo del cannabis y del cáñamo asiático.</p>
+  <div class="tipo">Híbrido natural / indica-tending</div>
+</a><a class="tile" href="canamo-asiatico.html">
+  <div class="meta">🇨🇳 · China / Asia oriental</div>
+  <h2>Cáñamo asiático</h2>
+  <p class="blurb">Linaje de cáñamo del este asiático; utilidad agrícola más que recreativa.</p>
+  <div class="tipo">Cáñamo / bajo THC</div>
+</a><a class="tile" href="cannabis-ruderalis.html">
+  <div class="meta">🌿 · Asia Central</div>
+  <h2>Cannabis ruderalis</h2>
+  <p class="blurb">Población silvestre autofloreciente; sin ella no existirían las autos de catálogo.</p>
+  <div class="tipo">Ruderalis</div>
+</a><a class="tile" href="sri-lankan.html">
+  <div class="meta">🇱🇰 · Sri Lanka</div>
+  <h2>Sri Lankan</h2>
+  <p class="blurb">Sativa ecuatorial de Sri Lanka, poco mediática pero coherente con el mapa del Índico.</p>
+  <div class="tipo">Sativa</div>
+</a><a class="tile" href="korean-hemp.html">
+  <div class="meta">🇰🇷 · Corea</div>
+  <h2>Korean hemp</h2>
+  <p class="blurb">Landrace histórica de cáñamo del este asiático.</p>
+  <div class="tipo">Cáñamo / landrace histórica</div>
+</a><a class="tile" href="kona-gold.html">
+  <div class="meta">🇺🇸 · Hawái</div>
+  <h2>Kona Gold</h2>
+  <p class="blurb">Heirloom hawaiano muy estabilizado. Introducido, no nativo en sentido botánico estricto.</p>
+  <div class="tipo">Sativa (heirloom)</div>
+</a><a class="tile" href="maui-wowie.html">
+  <div class="meta">🇺🇸 · Hawái</div>
+  <h2>Maui Wowie</h2>
+  <p class="blurb">Heirloom tropical de Maui; nombre de cultura popular y de cultivadores de isla.</p>
+  <div class="tipo">Sativa (heirloom)</div>
+</a>
+  </div>
+  <footer class="site-foot">
+    <a href="/atlas_landrace.html">Mapa 3D del Atlas</a>
+    <a href="/banco-genetica.html">Banco genético</a>
+    <a href="/">Cannabicultor</a>
+  </footer>
+</div>
+</body>
+</html>
