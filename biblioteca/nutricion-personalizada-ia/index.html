@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nutrición personalizada por fase y variedad con IA | Cannabicultor</title>
+<meta name="description" content="De la tabla genérica al ajuste de nutrición según genética, medio e historial con IA. Guía avanzada Cannabicultor · Julio 2026.">
+<link rel="canonical" href="https://cannabicultor.com/biblioteca/nutricion-personalizada-ia/">
+
+<!-- Open Graph -->
+<meta property="og:type" content="article">
+<meta property="og:title" content="Nutrición personalizada por fase y variedad con IA">
+<meta property="og:description" content="De la tabla genérica al ajuste según genética, medio e historial de cultivo.">
+<meta property="og:url" content="https://cannabicultor.com/biblioteca/nutricion-personalizada-ia/">
+<meta property="og:image" content="https://cannabicultor.com/assets/logo_publico_4.png">
+<meta property="og:locale" content="es_ES">
+<meta property="og:site_name" content="Cannabicultor">
+<meta property="article:published_time" content="2026-07-30T00:00:00+02:00">
+<meta property="article:author" content="Enrique J. Dorta Pulido">
+
+<!-- Twitter Card -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Nutrición personalizada por fase y variedad con IA">
+<meta name="twitter:description" content="De la tabla genérica al ajuste según genética, medio e historial de cultivo.">
+<meta name="twitter:image" content="https://cannabicultor.com/assets/logo_publico_4.png">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Lora:ital,wght@0,400;1,400&display=swap" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Lora:ital,wght@0,400;1,400&display=swap"></noscript>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --white:#ffffff;--bg:#f5f7f4;--bg2:#eef1ec;
+  --forest:#1a5c32;--forest-light:#2a7a44;--forest-pale:#e6f0ea;--forest-pale2:#d0e8d8;
+  --text:#1a1f1c;--text2:#3d453f;--text3:#6b7370;--text4:#9aa19d;--border:#e2e7e1;
+}
+html{scroll-behavior:smooth}
+body{font-family:'Inter',system-ui,-apple-system,sans-serif;color:var(--text);background:var(--white);line-height:1.7;-webkit-font-smoothing:antialiased}
+a{color:var(--forest);text-decoration:none}
+a:hover{text-decoration:underline}
+nav{position:sticky;top:0;z-index:50;background:rgba(255,255,255,.92);backdrop-filter:blur(10px);border-bottom:1px solid var(--border)}
+.ni{max-width:1080px;margin:0 auto;padding:12px 24px;display:flex;align-items:center;justify-content:space-between;gap:16px}
+.nl{display:flex;align-items:center;gap:10px}
+.nl img{height:30px;width:auto}
+.nl-brand{font-size:14px;font-weight:600;color:var(--text)}
+.nl-brand span{color:var(--text4);font-weight:400}
+.nc{background:var(--forest);color:#fff;border:0;padding:9px 18px;border-radius:9px;font-size:13px;font-weight:500;cursor:pointer;font-family:inherit}
+.nc:hover{background:var(--forest-light)}
+.wrap{max-width:760px;margin:0 auto;padding:0 24px}
+.crumbs{font-size:13px;color:var(--text3);padding:20px 0 0}
+.crumbs a{color:var(--text3)}
+.hero{padding:28px 0 48px;border-bottom:1px solid var(--border)}
+.eyebrow{display:inline-block;font-size:11.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--forest);background:var(--forest-pale);padding:6px 13px;border-radius:999px;margin-bottom:18px}
+h1{font-family:'Inter',sans-serif;font-size:clamp(30px,5.4vw,48px);font-weight:600;letter-spacing:-0.04em;line-height:1.07;margin:0 0 16px}
+h1 em{font-family:'Lora',serif;font-style:italic;color:var(--forest);font-weight:400}
+.lead{font-size:clamp(16px,2.2vw,19px);color:var(--text2);line-height:1.65;max-width:640px;margin:0 0 22px}
+.meta{display:flex;flex-wrap:wrap;gap:8px 22px;font-size:13.5px;color:var(--text3);margin:0 0 26px}
+.meta strong{color:var(--text2);font-weight:600}
+.hero-cta{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin:0 0 12px}
+.btn{display:inline-block;background:var(--forest);color:#fff;padding:14px 28px;border-radius:11px;font-weight:500;font-size:16px}
+.btn:hover{background:var(--forest-light);text-decoration:none}
+.btn-ghost{background:transparent;color:var(--forest);border:1px solid var(--forest-pale2);padding:13px 24px}
+.btn-ghost:hover{background:var(--forest-pale);text-decoration:none}
+.micro{font-size:13px;color:var(--text3)}
+section{padding:48px 0;border-bottom:1px solid var(--border)}
+h2{font-size:clamp(24px,3.6vw,32px);font-weight:600;letter-spacing:-0.03em;line-height:1.2;margin:0 0 18px;scroll-margin-top:80px}
+h3{font-size:19px;font-weight:600;letter-spacing:-0.02em;margin:28px 0 10px;color:var(--text)}
+p{margin:0 0 16px;color:var(--text2);font-size:16.5px}
+ul,ol{margin:0 0 16px;padding-left:22px;color:var(--text2)}
+li{margin:0 0 9px;font-size:16.5px}
+strong{color:var(--text);font-weight:600}
+.callout{background:var(--bg);border:1px solid var(--border);border-radius:14px;padding:22px 26px;margin:0 0 8px}
+.callout .k{font-size:11px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--text4);margin-bottom:10px}
+.callout p{font-size:15.5px;color:var(--text2);margin:0 0 12px}
+.callout p:last-child{margin-bottom:0}
+.definicion{background:var(--forest-pale);border-left:3px solid var(--forest);padding:20px 24px;border-radius:0 12px 12px 0;margin:0 0 22px}
+.definicion p{margin:0;font-size:17px;color:var(--text)}
+.pasos{counter-reset:paso;list-style:none;padding:0;margin:20px 0 8px}
+.pasos li{counter-increment:paso;position:relative;padding-left:46px;margin-bottom:14px;font-size:16.5px;color:var(--text2)}
+.pasos li::before{content:counter(paso);position:absolute;left:0;top:1px;width:31px;height:31px;border-radius:50%;background:var(--forest-pale);color:var(--forest);font-weight:600;font-size:14px;display:flex;align-items:center;justify-content:center}
+.ejemplo{border-left:2px solid var(--forest-pale2);padding-left:20px;margin:22px 0}
+.ejemplo .k{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--forest);margin-bottom:8px}
+.ejemplo p{margin:0 0 10px;font-size:16px}
+.ejemplo p:last-child{margin-bottom:0}
+.tools{display:grid;gap:14px;margin-top:22px}
+.tool{background:var(--bg);border:1px solid var(--border);border-radius:14px;padding:20px 22px}
+.tool h3{margin:0 0 8px;font-size:17px}
+.tool p{margin:0;font-size:15.5px}
+.tool a{font-size:14px;font-weight:500}
+.tabla-wrap{overflow-x:auto;margin:20px 0 8px;-webkit-overflow-scrolling:touch}
+table{width:100%;border-collapse:collapse;font-size:15px;min-width:320px}
+th,td{text-align:left;padding:12px 14px;border-bottom:1px solid var(--border);vertical-align:top}
+th{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text4);background:var(--bg)}
+td{color:var(--text2)}
+td:first-child{font-weight:600;color:var(--text)}
+.caso{border-left:2px solid var(--forest-pale2);padding-left:20px;margin:0 0 22px}
+.caso h3{margin:0 0 8px;font-size:17px}
+.caso p{margin:0;font-size:16px}
+.pull{font-family:'Lora',serif;font-size:clamp(19px,2.8vw,24px);font-style:italic;line-height:1.45;color:var(--forest);border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:26px 0;margin:28px 0;text-align:center}
+.final{background:var(--bg);border-radius:18px;padding:40px 32px;text-align:center;margin:48px 0}
+.final h2{margin-bottom:14px}
+.final p{max-width:520px;margin-left:auto;margin-right:auto}
+.legal{font-size:12.5px;color:var(--text4);line-height:1.65;margin:8px 0 36px;padding-top:18px;border-top:1px solid var(--border)}
+footer{border-top:1px solid var(--border);background:var(--bg2);margin-top:0}
+.fi{max-width:760px;margin:0 auto;padding:34px 24px 46px;font-size:13px;color:var(--text3)}
+.fi a{color:var(--text3)}
+.fi .flinks{margin-bottom:14px;display:flex;gap:16px;flex-wrap:wrap}
+.fi .flinks a{font-weight:500}
+@media(max-width:640px){
+  .wrap{padding:0 18px}
+  section{padding:40px 0}
+  .nl-brand span{display:none}
+  .final{padding:32px 22px}
+  .btn{width:100%;text-align:center}
+  .callout{padding:18px 20px}
+}
+</style>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Article",
+      "headline": "Nutrición personalizada por fase y variedad con IA",
+      "description": "De la tabla genérica al ajuste de nutrición según genética, medio e historial con IA. Guía avanzada Cannabicultor · Julio 2026.",
+      "image": "https://cannabicultor.com/assets/logo_publico_4.png",
+      "datePublished": "2026-07-30T00:00:00+02:00",
+      "dateModified": "2026-07-30T00:00:00+02:00",
+      "inLanguage": "es",
+      "author": {"@type": "Person", "name": "Enrique J. Dorta Pulido"},
+      "publisher": {
+        "@type": "Organization",
+        "name": "Cannabicultor",
+        "logo": {"@type": "ImageObject", "url": "https://cannabicultor.com/assets/logo_publico_4.png"}
+      },
+      "mainEntityOfPage": {
+        "@type": "WebPage",
+        "@id": "https://cannabicultor.com/biblioteca/nutricion-personalizada-ia/"
+      }
+    },
+    {
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {"@type": "ListItem", "position": 1, "name": "Inicio", "item": "https://cannabicultor.com/"},
+        {"@type": "ListItem", "position": 2, "name": "Biblioteca", "item": "https://cannabicultor.com/biblioteca/"},
+        {"@type": "ListItem", "position": 3, "name": "Nutrición personalizada", "item": "https://cannabicultor.com/biblioteca/nutricion-personalizada-ia/"}
+      ]
+    }
+  ]
+}
+</script>
+</head>
+<body>
+
+<nav>
+  <div class="ni">
+    <a href="/" class="nl">
+      <img src="/assets/icono_cannabicultor_small.webp" alt="Cannabicultor IA" width="192" height="192" loading="lazy" decoding="async">
+      <div class="nl-brand">Cannabicultor IA <span>/ Growers Alliance</span></div>
+    </a>
+    <button class="nc" onclick="window.location.href='/'">Empieza gratis</button>
+  </div>
+</nav>
+
+<div class="wrap">
+  <nav class="crumbs" aria-label="Ruta de navegación"><a href="/">Inicio</a> › <a href="/biblioteca/">Biblioteca</a> › Guías › Nutrición personalizada</nav>
+
+  <header class="hero">
+    <span class="eyebrow">Guía · Julio 2026</span>
+    <h1>Nutrición personalizada por fase y variedad con <em>IA</em></h1>
+    <p class="lead">De la tabla genérica al ajuste según genética, medio e historial.</p>
+    <div class="meta">
+      <span><strong>Autor:</strong> Enrique J. Dorta Pulido «Ernie» · Growers Alliance / Cannabicultor</span>
+      <span><strong>Publicación:</strong> 30 julio 2026</span>
+      <span><strong>Distribución gratuita</strong></span>
+    </div>
+    <div class="hero-cta">
+      <a class="btn" href="/">Ajustar con el diario IA — Gratis</a>
+      <a class="btn btn-ghost" href="/biblioteca/diagnostico-deficiencias-ia/">Diagnóstico de deficiencias</a>
+    </div>
+    <p class="micro">Solo para mayores de 18 años. Plan Libre disponible sin coste.</p>
+  </header>
+
+<section id="metodologia"><h2>Nota metodológica</h2><div class="callout"><div class="k">Cómo se ha hecho esta guía</div><p>Esta guía explica cómo se aborda la nutrición dentro de Cannabicultor cuando existe memoria de cultivo y datos de genética. No sustituye las tablas de los fabricantes de fertilizantes; las contextualiza.</p></div></section>
+<section id="tablas"><h2>1. El límite de las tablas genéricas</h2><p>Las tablas de nutrición de los fabricantes están diseñadas para un «cultivo medio». Funcionan como punto de partida, pero fallan cuando:</p><ul><li>La genética es especialmente exigente o especialmente tolerante</li><li>El medio (coco, tierra, hidro) cambia la dinámica de nutrientes</li><li>El cultivador tiene un historial de bloqueos o carencias en ciertas ventanas</li><li>La iluminación y el VPD alteran la tasa de absorción</li></ul><p>Seguir la tabla al pie de la letra es mejor que improvisar, pero no es óptimo.</p></section>
+<section id="contexto"><h2>2. Qué añade el contexto</h2><p>Cuando el sistema conoce la variedad (a través del <a href="/buscador-cannabicultor.html">buscador de 44.000+ entradas</a>) y el historial del cultivador, puede:</p><ul><li>Señalar que una sativa de ciclo largo suele necesitar extensión de la fertilización</li><li>Recordar que en el ciclo anterior hubo bloqueo de calcio en semana 6</li><li>Ajustar la recomendación de EC según el medio y la respuesta previa de la planta</li></ul><p>No inventa una fórmula nueva. Prioriza y matiza la existente.</p></section>
+<section id="flujo"><h2>3. Flujo práctico</h2><ol class="pasos"><li>Se registra la genética y el medio.</li><li>Se indica la fase y los valores actuales de EC/pH.</li><li>El sistema sitúa la recomendación dentro del rango habitual y señala desviaciones relevantes según el contexto.</li><li>Si hay historial de problemas, lo incorpora a la priorización.</li></ol></section>
+<section id="limites"><h2>4. Límites</h2><ul><li>Sin datos de drenaje y de respuesta de la planta, cualquier recomendación sigue siendo teórica.</li><li>Las tablas de los fabricantes siguen siendo la base.</li><li>La genética comercial no siempre tiene datos de exigencias nutricionales precisos.</li><li>El sistema no sustituye la observación de la planta.</li></ul></section>
+<section id="conclusion"><h2>5. Conclusión</h2><p>La nutrición personalizada no significa «olvidarse de la tabla». Significa dejar de aplicarla a ciegas. Cuando la herramienta conoce tu variedad, tu medio y tu historial, puede ayudarte a decidir cuándo desviarte de la tabla y cuándo no.</p></section>
+
+  <section id="cierre" style="border-bottom:0">
+    <div class="final">
+      <h2>No olvides la tabla: contextualízala</h2>
+      <p>Registra genética, medio y EC/pH. La herramienta prioriza y matiza; no inventa fórmulas mágicas.</p>
+      <div class="hero-cta" style="justify-content:center;margin-top:22px">
+        <a class="btn" href="/">Empezar diario IA — Gratis</a>
+        <a class="btn btn-ghost" href="/biblioteca/">Volver a la Biblioteca</a>
+      </div>
+    </div>
+    <p class="legal"><strong>Autor:</strong> Enrique J. Dorta Pulido «Ernie» · Growers Alliance / Cannabicultor · cannabicultor.com<br><br><strong>Aviso:</strong> Esta guía tiene fines informativos y educativos. No constituye asesoramiento agronómico personalizado. El uso de la plataforma se rige por sus condiciones de servicio y por la normativa vigente en cada jurisdicción. Solo para mayores de 18 años.</p>
+  </section>
+</div>
+
+<footer>
+  <div class="fi">
+    <div class="flinks">
+      <a href="/">Inicio</a>
+      <a href="/biblioteca/">Biblioteca</a>
+      <a href="/cultivo-con-ia/">Cultivo con IA</a>
+      <a href="/buscador-cannabicultor.html">Buscador de variedades</a>
+      <a href="/disenador_sala_cultivo.html">Diseñador de salas</a>
+      <a href="/contacto.html">Contacto</a>
+    </div>
+    <p>Solo para mayores de 18 años. El cultivo de cannabis está regulado. Consulta la legislación vigente en tu país. Este servicio tiene fines educativos y de asesoramiento responsable.</p>
+    <p style="margin-top:10px"><a href="/aviso-legal.html">Aviso legal</a> · <a href="/privacidad.html">Privacidad</a> · <a href="/cookies.html">Cookies</a> · <a href="/terminos.html">Términos</a></p>
+  </div>
+</footer>
+
+</body>
+</html>

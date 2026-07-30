@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Calcular y optimizar el VPD con IA | Guía – Cannabicultor</title>
+<meta name="description" content="Cómo calcular y optimizar el VPD en tu sala con ayuda de IA: de la fórmula a la decisión práctica según fase y genética. Guía · Julio 2026.">
+<link rel="canonical" href="https://cannabicultor.com/biblioteca/vpd-con-ia/">
+
+<!-- Open Graph -->
+<meta property="og:type" content="article">
+<meta property="og:title" content="Cómo calcular y optimizar el VPD con ayuda de IA">
+<meta property="og:description" content="De la fórmula teórica a la decisión práctica en tu sala, con contexto de fase, genética e historial.">
+<meta property="og:url" content="https://cannabicultor.com/biblioteca/vpd-con-ia/">
+<meta property="og:image" content="https://cannabicultor.com/assets/logo_publico_4.png">
+<meta property="og:locale" content="es_ES">
+<meta property="og:site_name" content="Cannabicultor">
+<meta property="article:published_time" content="2026-07-30T00:00:00+02:00">
+<meta property="article:author" content="Enrique J. Dorta Pulido">
+
+<!-- Twitter Card -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Cómo calcular y optimizar el VPD con ayuda de IA">
+<meta name="twitter:description" content="De la fórmula teórica a la decisión práctica en tu sala, con contexto de fase, genética e historial.">
+<meta name="twitter:image" content="https://cannabicultor.com/assets/logo_publico_4.png">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Lora:ital,wght@0,400;1,400&display=swap" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Lora:ital,wght@0,400;1,400&display=swap"></noscript>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --white:#ffffff;--bg:#f5f7f4;--bg2:#eef1ec;
+  --forest:#1a5c32;--forest-light:#2a7a44;--forest-pale:#e6f0ea;--forest-pale2:#d0e8d8;
+  --text:#1a1f1c;--text2:#3d453f;--text3:#6b7370;--text4:#9aa19d;--border:#e2e7e1;
+}
+html{scroll-behavior:smooth}
+body{font-family:'Inter',system-ui,-apple-system,sans-serif;color:var(--text);background:var(--white);line-height:1.7;-webkit-font-smoothing:antialiased}
+a{color:var(--forest);text-decoration:none}
+a:hover{text-decoration:underline}
+nav{position:sticky;top:0;z-index:50;background:rgba(255,255,255,.92);backdrop-filter:blur(10px);border-bottom:1px solid var(--border)}
+.ni{max-width:1080px;margin:0 auto;padding:12px 24px;display:flex;align-items:center;justify-content:space-between;gap:16px}
+.nl{display:flex;align-items:center;gap:10px}
+.nl img{height:30px;width:auto}
+.nl-brand{font-size:14px;font-weight:600;color:var(--text)}
+.nl-brand span{color:var(--text4);font-weight:400}
+.nc{background:var(--forest);color:#fff;border:0;padding:9px 18px;border-radius:9px;font-size:13px;font-weight:500;cursor:pointer;font-family:inherit}
+.nc:hover{background:var(--forest-light)}
+.wrap{max-width:760px;margin:0 auto;padding:0 24px}
+.crumbs{font-size:13px;color:var(--text3);padding:20px 0 0}
+.crumbs a{color:var(--text3)}
+.hero{padding:28px 0 48px;border-bottom:1px solid var(--border)}
+.eyebrow{display:inline-block;font-size:11.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--forest);background:var(--forest-pale);padding:6px 13px;border-radius:999px;margin-bottom:18px}
+h1{font-family:'Inter',sans-serif;font-size:clamp(30px,5.4vw,48px);font-weight:600;letter-spacing:-0.04em;line-height:1.07;margin:0 0 16px}
+h1 em{font-family:'Lora',serif;font-style:italic;color:var(--forest);font-weight:400}
+.lead{font-size:clamp(16px,2.2vw,19px);color:var(--text2);line-height:1.65;max-width:640px;margin:0 0 22px}
+.meta{display:flex;flex-wrap:wrap;gap:8px 22px;font-size:13.5px;color:var(--text3);margin:0 0 26px}
+.meta strong{color:var(--text2);font-weight:600}
+.hero-cta{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin:0 0 12px}
+.btn{display:inline-block;background:var(--forest);color:#fff;padding:14px 28px;border-radius:11px;font-weight:500;font-size:16px}
+.btn:hover{background:var(--forest-light);text-decoration:none}
+.btn-ghost{background:transparent;color:var(--forest);border:1px solid var(--forest-pale2);padding:13px 24px}
+.btn-ghost:hover{background:var(--forest-pale);text-decoration:none}
+.micro{font-size:13px;color:var(--text3)}
+section{padding:48px 0;border-bottom:1px solid var(--border)}
+h2{font-size:clamp(24px,3.6vw,32px);font-weight:600;letter-spacing:-0.03em;line-height:1.2;margin:0 0 18px;scroll-margin-top:80px}
+h3{font-size:19px;font-weight:600;letter-spacing:-0.02em;margin:28px 0 10px;color:var(--text)}
+p{margin:0 0 16px;color:var(--text2);font-size:16.5px}
+ul,ol{margin:0 0 16px;padding-left:22px;color:var(--text2)}
+li{margin:0 0 9px;font-size:16.5px}
+strong{color:var(--text);font-weight:600}
+.callout{background:var(--bg);border:1px solid var(--border);border-radius:14px;padding:22px 26px;margin:0 0 8px}
+.callout .k{font-size:11px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--text4);margin-bottom:10px}
+.callout p{font-size:15.5px;color:var(--text2);margin:0 0 12px}
+.callout p:last-child{margin-bottom:0}
+.definicion{background:var(--forest-pale);border-left:3px solid var(--forest);padding:20px 24px;border-radius:0 12px 12px 0;margin:0 0 22px}
+.definicion p{margin:0;font-size:17px;color:var(--text)}
+.pasos{counter-reset:paso;list-style:none;padding:0;margin:20px 0 8px}
+.pasos li{counter-increment:paso;position:relative;padding-left:46px;margin-bottom:14px;font-size:16.5px;color:var(--text2)}
+.pasos li::before{content:counter(paso);position:absolute;left:0;top:1px;width:31px;height:31px;border-radius:50%;background:var(--forest-pale);color:var(--forest);font-weight:600;font-size:14px;display:flex;align-items:center;justify-content:center}
+.ejemplo{border-left:2px solid var(--forest-pale2);padding-left:20px;margin:22px 0}
+.ejemplo .k{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--forest);margin-bottom:8px}
+.ejemplo p{margin:0 0 10px;font-size:16px}
+.ejemplo p:last-child{margin-bottom:0}
+.tools{display:grid;gap:14px;margin-top:22px}
+.tool{background:var(--bg);border:1px solid var(--border);border-radius:14px;padding:20px 22px}
+.tool h3{margin:0 0 8px;font-size:17px}
+.tool p{margin:0;font-size:15.5px}
+.tool a{font-size:14px;font-weight:500}
+.tabla-wrap{overflow-x:auto;margin:20px 0 8px;-webkit-overflow-scrolling:touch}
+table{width:100%;border-collapse:collapse;font-size:15px;min-width:320px}
+th,td{text-align:left;padding:12px 14px;border-bottom:1px solid var(--border);vertical-align:top}
+th{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text4);background:var(--bg)}
+td{color:var(--text2)}
+td:first-child{font-weight:600;color:var(--text)}
+.caso{border-left:2px solid var(--forest-pale2);padding-left:20px;margin:0 0 22px}
+.caso h3{margin:0 0 8px;font-size:17px}
+.caso p{margin:0;font-size:16px}
+.pull{font-family:'Lora',serif;font-size:clamp(19px,2.8vw,24px);font-style:italic;line-height:1.45;color:var(--forest);border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:26px 0;margin:28px 0;text-align:center}
+.final{background:var(--bg);border-radius:18px;padding:40px 32px;text-align:center;margin:48px 0}
+.final h2{margin-bottom:14px}
+.final p{max-width:520px;margin-left:auto;margin-right:auto}
+.legal{font-size:12.5px;color:var(--text4);line-height:1.65;margin:8px 0 36px;padding-top:18px;border-top:1px solid var(--border)}
+footer{border-top:1px solid var(--border);background:var(--bg2);margin-top:0}
+.fi{max-width:760px;margin:0 auto;padding:34px 24px 46px;font-size:13px;color:var(--text3)}
+.fi a{color:var(--text3)}
+.fi .flinks{margin-bottom:14px;display:flex;gap:16px;flex-wrap:wrap}
+.fi .flinks a{font-weight:500}
+@media(max-width:640px){
+  .wrap{padding:0 18px}
+  section{padding:40px 0}
+  .nl-brand span{display:none}
+  .final{padding:32px 22px}
+  .btn{width:100%;text-align:center}
+  .callout{padding:18px 20px}
+}
+</style>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Article",
+      "headline": "Cómo calcular y optimizar el VPD con ayuda de IA",
+      "description": "Cómo calcular y optimizar el VPD en tu sala con ayuda de IA: de la fórmula a la decisión práctica según fase y genética. Guía · Julio 2026.",
+      "image": "https://cannabicultor.com/assets/logo_publico_4.png",
+      "datePublished": "2026-07-30T00:00:00+02:00",
+      "dateModified": "2026-07-30T00:00:00+02:00",
+      "inLanguage": "es",
+      "author": {"@type": "Person", "name": "Enrique J. Dorta Pulido"},
+      "publisher": {
+        "@type": "Organization",
+        "name": "Cannabicultor",
+        "logo": {"@type": "ImageObject", "url": "https://cannabicultor.com/assets/logo_publico_4.png"}
+      },
+      "mainEntityOfPage": {
+        "@type": "WebPage",
+        "@id": "https://cannabicultor.com/biblioteca/vpd-con-ia/"
+      }
+    },
+    {
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {"@type": "ListItem", "position": 1, "name": "Inicio", "item": "https://cannabicultor.com/"},
+        {"@type": "ListItem", "position": 2, "name": "Biblioteca", "item": "https://cannabicultor.com/biblioteca/"},
+        {"@type": "ListItem", "position": 3, "name": "VPD con IA", "item": "https://cannabicultor.com/biblioteca/vpd-con-ia/"}
+      ]
+    }
+  ]
+}
+</script>
+</head>
+<body>
+
+<nav>
+  <div class="ni">
+    <a href="/" class="nl">
+      <img src="/assets/icono_cannabicultor_small.webp" alt="Cannabicultor IA" width="192" height="192" loading="lazy" decoding="async">
+      <div class="nl-brand">Cannabicultor IA <span>/ Growers Alliance</span></div>
+    </a>
+    <button class="nc" onclick="window.location.href='/'">Empieza gratis</button>
+  </div>
+</nav>
+
+<div class="wrap">
+  <nav class="crumbs" aria-label="Ruta de navegación"><a href="/">Inicio</a> › <a href="/biblioteca/">Biblioteca</a> › Guías › VPD con IA</nav>
+
+  <header class="hero">
+    <span class="eyebrow">Guía · Julio 2026</span>
+    <h1>Cómo calcular y optimizar el <em>VPD</em> con ayuda de IA</h1>
+    <p class="lead">De la fórmula teórica a la decisión práctica en tu sala.</p>
+    <div class="meta">
+      <span><strong>Autor:</strong> Enrique J. Dorta Pulido «Ernie» · Growers Alliance / Cannabicultor</span>
+      <span><strong>Publicación:</strong> 30 julio 2026</span>
+      <span><strong>Distribución gratuita</strong></span>
+    </div>
+    <div class="hero-cta">
+      <a class="btn" href="/">Calcular con el diseñador</a>
+      <a class="btn btn-ghost" href="/disenador_sala_cultivo.html">Diseñador de salas</a>
+    </div>
+    <p class="micro">Solo para mayores de 18 años. Plan Libre disponible sin coste.</p>
+  </header>
+
+<section id="metodologia"><h2>Nota metodológica</h2><div class="callout"><div class="k">Cómo se ha hecho esta guía</div><p>Esta guía explica cómo se trabaja el VPD (Déficit de Presión de Vapor) dentro del ecosistema de Cannabicultor. No pretende ser un tratado de psicrometría. El objetivo es mostrar cómo pasar de la fórmula a una decisión accionable usando el contexto del cultivo.</p></div></section>
+<section id="que-es"><h2>1. Qué es el VPD y por qué importa</h2><p>El VPD mide la diferencia entre la cantidad de vapor de agua que el aire podría contener y la que realmente contiene. En cultivo de cannabis se usa como indicador de la demanda evaporativa que siente la planta.</p><p>Un VPD demasiado bajo (aire muy húmedo) reduce la transpiración y aumenta el riesgo de hongos.</p><p>Un VPD demasiado alto (aire muy seco) fuerza a la planta a cerrar estomas y puede generar estrés hídrico.</p><p>El valor «ideal» cambia según la fase: más bajo en enraizamiento y floración tardía, más alto en vegetativo vigoroso.</p></section>
+<section id="problema"><h2>2. El problema de calcularlo a mano</h2><p>Calcular VPD requiere:</p><ul><li>Temperatura del aire</li><li>Temperatura de la hoja (o una estimación)</li><li>Humedad relativa</li></ul><p>La mayoría de cultivadores usa la temperatura del aire como aproximación de la temperatura foliar. Eso introduce error. Además, el valor resultante hay que interpretarlo según la fase, la genética y el tipo de iluminación.</p><p>El resultado es que muchos cultivadores o bien ignoran el VPD, o bien lo persiguen de forma rígida sin contexto.</p></section>
+<section id="ia"><h2>3. Cómo ayuda la IA</h2><p>Dentro de Cannabicultor el VPD no se calcula en el vacío. El sistema ya conoce:</p><ul><li>Fase actual del cultivo</li><li>Tipo de iluminación (que afecta a la temperatura foliar)</li><li>Genética (algunas son más sensibles a la humedad)</li><li>Historial de problemas de hongos o estrés hídrico</li></ul><p>Con esos datos puede:</p><ul><li>Calcular el VPD actual a partir de temperatura y humedad que le indiques</li><li>Decirte si estás fuera de rango para tu fase concreta</li><li>Proponer ajustes prioritarios (subir/bajar temperatura o humedad)</li><li>Alertar si tu historial muestra riesgo recurrente en esa ventana</li></ul></section>
+<section id="flujo"><h2>4. Flujo práctico de uso</h2><ol class="pasos"><li>Introduces temperatura y humedad de la sala (o de la zona de las plantas).</li><li>El sistema calcula el VPD y lo sitúa en el rango recomendado para tu fase.</li><li>Si está fuera de rango, te indica la dirección del ajuste más eficiente.</li><li>Si tienes historial de problemas en condiciones similares, lo tiene en cuenta.</li></ol><p>No necesitas memorizar tablas. La herramienta hace el cruce por ti. También puedes usar el <a href="/disenador_sala_cultivo.html">diseñador de salas</a> para dimensionar clima e iluminación.</p></section>
+<section id="limites"><h2>5. Límites</h2><ul><li>La precisión depende de la calidad de tus mediciones.</li><li>La temperatura foliar real no siempre coincide con la del aire.</li><li>El VPD es un indicador, no un objetivo absoluto. Otras variables (riego, nutrición, circulación de aire) siguen siendo críticas.</li></ul></section>
+<section id="conclusion"><h2>6. Conclusión</h2><p>El VPD deja de ser una fórmula abstracta cuando se calcula dentro del contexto de tu cultivo. La IA no inventa la física del vapor de agua. Simplemente evita que tengas que reinterpretar la tabla cada vez que cambias de fase o de genética.</p></section>
+
+  <section id="cierre" style="border-bottom:0">
+    <div class="final">
+      <h2>Trabaja el VPD con contexto</h2>
+      <p>Introduce temperatura y humedad con tu setup registrado. El valor deja de ser abstracto cuando conoce tu fase.</p>
+      <div class="hero-cta" style="justify-content:center;margin-top:22px">
+        <a class="btn" href="/">Empezar diario IA — Gratis</a>
+        <a class="btn btn-ghost" href="/biblioteca/">Volver a la Biblioteca</a>
+      </div>
+    </div>
+    <p class="legal"><strong>Autor:</strong> Enrique J. Dorta Pulido «Ernie» · Growers Alliance / Cannabicultor · cannabicultor.com<br><br><strong>Aviso:</strong> Esta guía tiene fines informativos y educativos. No constituye asesoramiento agronómico personalizado. El uso de la plataforma se rige por sus condiciones de servicio y por la normativa vigente en cada jurisdicción. Solo para mayores de 18 años.</p>
+  </section>
+</div>
+
+<footer>
+  <div class="fi">
+    <div class="flinks">
+      <a href="/">Inicio</a>
+      <a href="/biblioteca/">Biblioteca</a>
+      <a href="/cultivo-con-ia/">Cultivo con IA</a>
+      <a href="/buscador-cannabicultor.html">Buscador de variedades</a>
+      <a href="/disenador_sala_cultivo.html">Diseñador de salas</a>
+      <a href="/contacto.html">Contacto</a>
+    </div>
+    <p>Solo para mayores de 18 años. El cultivo de cannabis está regulado. Consulta la legislación vigente en tu país. Este servicio tiene fines educativos y de asesoramiento responsable.</p>
+    <p style="margin-top:10px"><a href="/aviso-legal.html">Aviso legal</a> · <a href="/privacidad.html">Privacidad</a> · <a href="/cookies.html">Cookies</a> · <a href="/terminos.html">Términos</a></p>
+  </div>
+</footer>
+
+</body>
+</html>
