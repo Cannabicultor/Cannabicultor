@@ -101,6 +101,20 @@ if [ -d genetica ]; then
   done
 fi
 
+# Fichas del Atlas de landraces (HTML estático): /atlas-landraces/*.html
+# Enlazadas desde atlas_landrace.html (chips de nombre de variedad).
+if [ -d atlas-landraces ]; then
+  mkdir -p "$DEPLOYPATH/atlas-landraces"
+  if command -v rsync >/dev/null 2>&1; then
+    rsync -a --delete --include='*/' --include='*.html' --exclude='*' atlas-landraces/ "$DEPLOYPATH/atlas-landraces/"
+  else
+    for file in atlas-landraces/*.html; do
+      [ -f "$file" ] || continue
+      /bin/cp -f "$file" "$DEPLOYPATH/atlas-landraces/"
+    done
+  fi
+fi
+
 # Fotos del Banco Genético en la subcarpeta assets/genetica/, que el bucle
 # assets/*.ext de arriba no cubre.
 if [ -d assets/genetica ]; then
