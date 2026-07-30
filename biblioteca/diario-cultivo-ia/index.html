@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Diario de cultivo con IA | Cómo funciona – Cannabicultor</title>
+<meta name="description" content="Guía: cómo funciona el diario de cultivo con IA de Cannabicultor. Memoria del setup, diagnóstico, alertas preventivas y límites honestos. Julio 2026.">
+<link rel="canonical" href="https://cannabicultor.com/biblioteca/diario-cultivo-ia/">
+
+<!-- Open Graph -->
+<meta property="og:type" content="article">
+<meta property="og:title" content="Cómo funciona el diario de cultivo con IA de Cannabicultor">
+<meta property="og:description" content="La IA que recuerda tu setup, aprende de tus ciclos y te avisa antes de que el problema se te vaya de las manos. Guía completa · Julio 2026.">
+<meta property="og:url" content="https://cannabicultor.com/biblioteca/diario-cultivo-ia/">
+<meta property="og:image" content="https://cannabicultor.com/assets/logo_publico_4.png">
+<meta property="og:locale" content="es_ES">
+<meta property="og:site_name" content="Cannabicultor">
+<meta property="article:published_time" content="2026-07-30T00:00:00+02:00">
+<meta property="article:author" content="Enrique J. Dorta Pulido">
+
+<!-- Twitter Card -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Cómo funciona el diario de cultivo con IA de Cannabicultor">
+<meta name="twitter:description" content="La IA que recuerda tu setup, aprende de tus ciclos y te avisa antes de que el problema se te vaya de las manos. Guía completa · Julio 2026.">
+<meta name="twitter:image" content="https://cannabicultor.com/assets/logo_publico_4.png">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Lora:ital,wght@0,400;1,400&display=swap" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Lora:ital,wght@0,400;1,400&display=swap"></noscript>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --white:#ffffff;--bg:#f5f7f4;--bg2:#eef1ec;
+  --forest:#1a5c32;--forest-light:#2a7a44;--forest-pale:#e6f0ea;--forest-pale2:#d0e8d8;
+  --text:#1a1f1c;--text2:#3d453f;--text3:#6b7370;--text4:#9aa19d;--border:#e2e7e1;
+}
+html{scroll-behavior:smooth}
+body{font-family:'Inter',system-ui,-apple-system,sans-serif;color:var(--text);background:var(--white);line-height:1.7;-webkit-font-smoothing:antialiased}
+a{color:var(--forest);text-decoration:none}
+a:hover{text-decoration:underline}
+
+/* Nav */
+nav{position:sticky;top:0;z-index:50;background:rgba(255,255,255,.92);backdrop-filter:blur(10px);border-bottom:1px solid var(--border)}
+.ni{max-width:1080px;margin:0 auto;padding:12px 24px;display:flex;align-items:center;justify-content:space-between;gap:16px}
+.nl{display:flex;align-items:center;gap:10px}
+.nl img{height:30px;width:auto}
+.nl-brand{font-size:14px;font-weight:600;color:var(--text)}
+.nl-brand span{color:var(--text4);font-weight:400}
+.nc{background:var(--forest);color:#fff;border:0;padding:9px 18px;border-radius:9px;font-size:13px;font-weight:500;cursor:pointer;font-family:inherit}
+.nc:hover{background:var(--forest-light)}
+
+/* Layout */
+.wrap{max-width:760px;margin:0 auto;padding:0 24px}
+.crumbs{font-size:13px;color:var(--text3);padding:20px 0 0}
+.crumbs a{color:var(--text3)}
+
+/* Hero */
+.hero{padding:28px 0 48px;border-bottom:1px solid var(--border)}
+.eyebrow{display:inline-block;font-size:11.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--forest);background:var(--forest-pale);padding:6px 13px;border-radius:999px;margin-bottom:18px}
+h1{font-family:'Inter',sans-serif;font-size:clamp(30px,5.4vw,48px);font-weight:600;letter-spacing:-0.04em;line-height:1.07;margin:0 0 16px}
+h1 em{font-family:'Lora',serif;font-style:italic;color:var(--forest);font-weight:400}
+.lead{font-size:clamp(16px,2.2vw,19px);color:var(--text2);line-height:1.65;max-width:640px;margin:0 0 22px}
+.meta{display:flex;flex-wrap:wrap;gap:8px 22px;font-size:13.5px;color:var(--text3);margin:0 0 26px}
+.meta strong{color:var(--text2);font-weight:600}
+.hero-cta{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin:0 0 12px}
+.btn{display:inline-block;background:var(--forest);color:#fff;padding:14px 28px;border-radius:11px;font-weight:500;font-size:16px}
+.btn:hover{background:var(--forest-light);text-decoration:none}
+.btn-ghost{background:transparent;color:var(--forest);border:1px solid var(--forest-pale2);padding:13px 24px}
+.btn-ghost:hover{background:var(--forest-pale);text-decoration:none}
+.micro{font-size:13px;color:var(--text3)}
+
+/* Contenido */
+section{padding:48px 0;border-bottom:1px solid var(--border)}
+h2{font-size:clamp(24px,3.6vw,32px);font-weight:600;letter-spacing:-0.03em;line-height:1.2;margin:0 0 18px;scroll-margin-top:80px}
+h3{font-size:19px;font-weight:600;letter-spacing:-0.02em;margin:28px 0 10px;color:var(--text)}
+p{margin:0 0 16px;color:var(--text2);font-size:16.5px}
+ul,ol{margin:0 0 16px;padding-left:22px;color:var(--text2)}
+li{margin:0 0 9px;font-size:16.5px}
+strong{color:var(--text);font-weight:600}
+
+.callout{background:var(--bg);border:1px solid var(--border);border-radius:14px;padding:22px 26px;margin:0 0 8px}
+.callout .k{font-size:11px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--text4);margin-bottom:10px}
+.callout p{font-size:15.5px;color:var(--text2);margin:0 0 12px}
+.callout p:last-child{margin-bottom:0}
+
+.definicion{background:var(--forest-pale);border-left:3px solid var(--forest);padding:20px 24px;border-radius:0 12px 12px 0;margin:0 0 22px}
+.definicion p{margin:0;font-size:17px;color:var(--text)}
+
+.pasos{counter-reset:paso;list-style:none;padding:0;margin:20px 0 8px}
+.pasos li{counter-increment:paso;position:relative;padding-left:46px;margin-bottom:14px;font-size:16.5px;color:var(--text2)}
+.pasos li::before{content:counter(paso);position:absolute;left:0;top:1px;width:31px;height:31px;border-radius:50%;background:var(--forest-pale);color:var(--forest);font-weight:600;font-size:14px;display:flex;align-items:center;justify-content:center}
+
+.ejemplo{border-left:2px solid var(--forest-pale2);padding-left:20px;margin:22px 0}
+.ejemplo .k{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--forest);margin-bottom:8px}
+.ejemplo p{margin:0;font-size:16px}
+
+.tools{display:grid;gap:14px;margin-top:22px}
+.tool{background:var(--bg);border:1px solid var(--border);border-radius:14px;padding:20px 22px}
+.tool h3{margin:0 0 8px;font-size:17px}
+.tool p{margin:0;font-size:15.5px}
+.tool a{font-size:14px;font-weight:500}
+
+.pull{font-family:'Lora',serif;font-size:clamp(19px,2.8vw,24px);font-style:italic;line-height:1.45;color:var(--forest);border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:26px 0;margin:28px 0;text-align:center}
+
+.final{background:var(--bg);border-radius:18px;padding:40px 32px;text-align:center;margin:48px 0}
+.final h2{margin-bottom:14px}
+.final p{max-width:520px;margin-left:auto;margin-right:auto}
+
+.legal{font-size:12.5px;color:var(--text4);line-height:1.65;margin:8px 0 36px;padding-top:18px;border-top:1px solid var(--border)}
+
+footer{border-top:1px solid var(--border);background:var(--bg2);margin-top:0}
+.fi{max-width:760px;margin:0 auto;padding:34px 24px 46px;font-size:13px;color:var(--text3)}
+.fi a{color:var(--text3)}
+.fi .flinks{margin-bottom:14px;display:flex;gap:16px;flex-wrap:wrap}
+.fi .flinks a{font-weight:500}
+
+@media(max-width:640px){
+  .wrap{padding:0 18px}
+  section{padding:40px 0}
+  .nl-brand span{display:none}
+  .final{padding:32px 22px}
+  .btn{width:100%;text-align:center}
+  .callout{padding:18px 20px}
+}
+</style>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Article",
+      "headline": "Cómo funciona el diario de cultivo con IA de Cannabicultor",
+      "description": "Guía sobre el diario de cultivo con IA de Cannabicultor: memoria del setup, diagnóstico, alertas preventivas e integración con el resto de herramientas.",
+      "image": "https://cannabicultor.com/assets/logo_publico_4.png",
+      "datePublished": "2026-07-30T00:00:00+02:00",
+      "dateModified": "2026-07-30T00:00:00+02:00",
+      "inLanguage": "es",
+      "author": {
+        "@type": "Person",
+        "name": "Enrique J. Dorta Pulido"
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "Cannabicultor",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://cannabicultor.com/assets/logo_publico_4.png"
+        }
+      },
+      "mainEntityOfPage": {
+        "@type": "WebPage",
+        "@id": "https://cannabicultor.com/biblioteca/diario-cultivo-ia/"
+      }
+    },
+    {
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        { "@type": "ListItem", "position": 1, "name": "Inicio", "item": "https://cannabicultor.com/" },
+        { "@type": "ListItem", "position": 2, "name": "Biblioteca", "item": "https://cannabicultor.com/biblioteca/" },
+        { "@type": "ListItem", "position": 3, "name": "Diario de cultivo con IA", "item": "https://cannabicultor.com/biblioteca/diario-cultivo-ia/" }
+      ]
+    }
+  ]
+}
+</script>
+</head>
+<body>
+
+<nav>
+  <div class="ni">
+    <a href="/" class="nl">
+      <img src="/assets/icono_cannabicultor_small.webp" alt="Cannabicultor IA" width="192" height="192" loading="lazy" decoding="async">
+      <div class="nl-brand">Cannabicultor IA <span>/ Growers Alliance</span></div>
+    </a>
+    <button class="nc" onclick="window.location.href='/'">Empieza gratis</button>
+  </div>
+</nav>
+
+<div class="wrap">
+  <nav class="crumbs" aria-label="Ruta de navegación"><a href="/">Inicio</a> › <a href="/biblioteca/">Biblioteca</a> › Guías › Diario de cultivo con IA</nav>
+
+  <header class="hero">
+    <span class="eyebrow">Guía · Julio 2026</span>
+    <h1>Cómo funciona el diario de cultivo con <em>IA</em> de Cannabicultor</h1>
+    <p class="lead">La inteligencia artificial que recuerda tu setup, aprende de tus ciclos anteriores y te avisa antes de que el problema se te vaya de las manos.</p>
+    <div class="meta">
+      <span><strong>Autor:</strong> Enrique J. Dorta Pulido «Ernie» · Growers Alliance / Cannabicultor</span>
+      <span><strong>Publicación:</strong> 30 julio 2026</span>
+      <span><strong>Distribución gratuita</strong></span>
+    </div>
+    <div class="hero-cta">
+      <a class="btn" href="/">Empezar el diario IA — Gratis</a>
+      <a class="btn btn-ghost" href="/cultivo-con-ia/">Cultivo con IA</a>
+    </div>
+    <p class="micro">Solo para mayores de 18 años. Plan Libre disponible sin coste.</p>
+  </header>
+
+  <section id="metodologia">
+    <h2>Nota metodológica</h2>
+    <div class="callout">
+      <div class="k">Cómo se ha hecho esta guía</div>
+      <p>Esta guía describe el funcionamiento real del diario de cultivo con IA de Cannabicultor tal como existe en julio de 2026. Se basa en la arquitectura del producto, en casos de uso documentados y en la experiencia de cultivadores que ya lo utilizan. No es marketing genérico: explica qué recuerda el sistema, cómo interpreta los datos y dónde están sus límites. Cuando se menciona un ejemplo, se indica si procede de uso real o de escenario ilustrativo.</p>
+      <p>Criterio editorial: evidencia antes que promesa. La IA no sustituye el criterio del cultivador ni garantiza cosechas. Su valor está en la memoria contextual y en la capacidad de anticipar patrones.</p>
+    </div>
+  </section>
+
+  <section id="que-es">
+    <h2>1. Qué es (y qué no es) el diario de cultivo con IA</h2>
+    <div class="definicion">
+      <p>El diario de cultivo con IA es el núcleo de Cannabicultor. No es un chat genérico al que le preguntas «¿por qué se me ponen las hojas amarillas?». Es un sistema que mantiene un <strong>contexto permanente</strong> de tu cultivo y responde en función de ese contexto.</p>
+    </div>
+
+    <h3>Qué sí hace</h3>
+    <ul>
+      <li>Recuerda tu setup (espacio, iluminación, sustrato, genética, fase).</li>
+      <li>Aprende de tus ciclos anteriores.</li>
+      <li>Interpreta síntomas y datos técnicos (VPD, EC, pH, etc.) en relación con tu historial.</li>
+      <li>Emite alertas preventivas cuando detecta patrones repetidos.</li>
+      <li>Explica el porqué de cada recomendación.</li>
+    </ul>
+
+    <h3>Qué no hace</h3>
+    <ul>
+      <li>No ve tu planta si no le envías una foto o una descripción clara.</li>
+      <li>No ejecuta acciones en tu sala (no es automatización).</li>
+      <li>No sustituye tu criterio ni garantiza resultados.</li>
+      <li>No inventa datos: si no tiene información suficiente, lo dice y pregunta.</li>
+    </ul>
+  </section>
+
+  <section id="contexto">
+    <h2>2. Cómo se crea el contexto (el registro inicial)</h2>
+    <p>El proceso es deliberadamente simple. En los primeros minutos el sistema solo necesita lo esencial:</p>
+    <ol class="pasos">
+      <li>Tipo de cultivo (interior / exterior)</li>
+      <li>Dimensiones del espacio (o descripción aproximada)</li>
+      <li>Tipo de iluminación</li>
+      <li>Sustrato o medio de cultivo</li>
+      <li>Variedad (o genética aproximada)</li>
+      <li>Fase actual</li>
+    </ol>
+    <p>No es obligatorio completar todo de golpe. El contexto se va enriqueciendo con cada consulta, cada foto y cada ciclo registrado.</p>
+    <p>Una vez creado, ese contexto <strong>permanece</strong>. No tienes que volver a explicar que cultivas en coco con LED de 600 W o que tu Gorilla Glue Auto va por la semana 4 de floración.</p>
+  </section>
+
+  <section id="memoria">
+    <h2>3. La memoria: el diferencial real</h2>
+    <p>La mayoría de asistentes de cultivo olvidan la conversación anterior. El diario de Cannabicultor no.</p>
+
+    <h3>Qué recuerda</h3>
+    <ul>
+      <li>Configuración del setup actual</li>
+      <li>Historial de cultivos anteriores (éxitos, fallos y patrones)</li>
+      <li>Síntomas ya diagnosticados</li>
+      <li>Ajustes de riego, EC, pH y nutrición que has realizado</li>
+      <li>Datos de genética consultados en la base de 44.000+ variedades</li>
+      <li>Preferencias de respuesta que has mostrado</li>
+    </ul>
+
+    <h3>Ejemplo de valor de la memoria</h3>
+    <div class="ejemplo">
+      <div class="k">Escenario ilustrativo</div>
+      <p>Si en tres ciclos previos has tenido estrés hídrico en agosto, el sistema puede avisarte en el cuarto cultivo <strong>antes</strong> de que el calor llegue. No porque «sepa el tiempo», sino porque ha detectado un patrón en tu propio historial.</p>
+    </div>
+    <p>Esa capacidad de aprendizaje personal es lo que separa un chat genérico de una herramienta de cultivo real.</p>
+  </section>
+
+  <section id="consulta">
+    <h2>4. Cómo se consulta (interacción natural)</h2>
+    <p>Puedes escribir en lenguaje normal:</p>
+    <ul>
+      <li>«¿Subo la EC esta semana?»</li>
+      <li>«Las hojas bajas se están poniendo amarillas desde hace tres días»</li>
+      <li>«Subo foto de la zona afectada»</li>
+    </ul>
+    <p>La IA responde cruzando:</p>
+    <ul>
+      <li>Tu setup actual</li>
+      <li>La fase y la genética</li>
+      <li>Tu historial</li>
+      <li>El conocimiento agronómico base</li>
+    </ul>
+    <p>Si necesita más datos para afinar el diagnóstico (pH de drenaje, peso de la maceta, temperatura nocturna…), los pide. No inventa.</p>
+  </section>
+
+  <section id="diagnostico">
+    <h2>5. Diagnóstico y alertas preventivas</h2>
+
+    <h3>Diagnóstico</h3>
+    <p>Cuando describes un síntoma o envías una foto, el sistema ordena las causas más probables según tu contexto concreto. No da una lista genérica de «posibles carencias». Da una lista <strong>priorizada</strong> por probabilidad en tu situación.</p>
+
+    <h3>Alertas preventivas</h3>
+    <p>Con el tiempo, el sistema puede anticipar:</p>
+    <ul>
+      <li>Momentos críticos de tu calendario personal</li>
+      <li>Riesgos recurrentes (humedad alta + genética sensible a botritis, por ejemplo)</li>
+      <li>Desajustes de nutrición según la duración real de la floración de tu variedad</li>
+    </ul>
+  </section>
+
+  <section id="limites">
+    <h2>6. Límites honestos del sistema</h2>
+    <p>Para que la herramienta sea útil hay que conocer también sus límites:</p>
+    <ul>
+      <li>Depende de la calidad de los datos que le das. Basura dentro = basura fuera.</li>
+      <li>No sustituye la observación directa ni el criterio del cultivador experimentado.</li>
+      <li>Las fotos ayudan, pero no siempre son suficientes por sí solas.</li>
+      <li>No tiene acceso a sensores en tiempo real a menos que tú introduzcas los datos.</li>
+      <li>No es un oráculo: ofrece probabilidades y razonamientos, no certezas absolutas.</li>
+    </ul>
+    <p>Quien lleva décadas cultivando sabe que hay variables que se escapan a cualquier sistema. Cannabicultor está diseñado desde esa conciencia, no desde la promesa de control total.</p>
+  </section>
+
+  <section id="integracion">
+    <h2>7. Cómo se integra con el resto de herramientas</h2>
+    <p>El diario no vive aislado. Se conecta con:</p>
+    <div class="tools">
+      <div class="tool">
+        <h3>Buscador de variedades</h3>
+        <p>Más de 44.000 registros: para ajustar nutrición y tiempos según genética real.</p>
+        <p style="margin-top:10px"><a href="/buscador-cannabicultor.html">Abrir el buscador →</a></p>
+      </div>
+      <div class="tool">
+        <h3>Diseñador de sala</h3>
+        <p>Para validar parámetros de espacio, VPD e iluminación.</p>
+        <p style="margin-top:10px"><a href="/disenador_sala_cultivo.html">Abrir el diseñador →</a></p>
+      </div>
+      <div class="tool">
+        <h3>Atlas de landraces</h3>
+        <p>Cuando se trabaja con genética tradicional.</p>
+        <p style="margin-top:10px"><a href="/atlas_landrace.html">Abrir el atlas →</a></p>
+      </div>
+      <div class="tool">
+        <h3>Comunidad Growers Alliance</h3>
+        <p>Según plan: resultados reales de otros cultivadores que enriquecen el contexto colectivo.</p>
+        <p style="margin-top:10px"><a href="/growers-alliance.html">Conocer la alianza →</a></p>
+      </div>
+    </div>
+    <p style="margin-top:22px">Todo alimenta el mismo contexto personal. Para una visión más amplia del ecosistema, consulta la guía de <a href="/cultivo-con-ia/">cultivo de cannabis con IA</a>.</p>
+  </section>
+
+  <section id="planes">
+    <h2>8. Acceso y planes</h2>
+    <ul>
+      <li>Empezar es gratuito (plan Libre): consultas diarias y memoria básica.</li>
+      <li>Planes de pago desde 9 €/mes: memoria completa, alertas preventivas y acceso ampliado.</li>
+    </ul>
+    <p>No hay letra pequeña de «prueba de 7 días y después te cobramos». El acceso fundador está abierto y el plan gratuito existe de verdad.</p>
+  </section>
+
+  <section id="conclusion" style="border-bottom:0">
+    <h2>Conclusión</h2>
+    <p>El diario de cultivo con IA de Cannabicultor no pretende ser la voz que te dice exactamente qué hacer en cada momento. Pretende ser la memoria que el cultivador tradicional siempre ha tenido que llevar en la cabeza (o en un cuaderno)… pero con la capacidad de cruzar esa memoria con una base de conocimiento agronómico y de detectar patrones que a simple vista se escapan.</p>
+    <p class="pull">Su valor real no está en responder rápido. Está en <em>recordar</em> y en <em>anticipar</em>.</p>
+    <p>Privado ya significa privado en el consumo y en el cultivo personal.<br>La herramienta que recuerda tu cultivo es, simplemente, la siguiente pieza lógica.</p>
+
+    <div class="final">
+      <h2>Empieza tu diario con memoria</h2>
+      <p>Registra tu setup una vez y deja que la IA recuerde tu cultivo en cada consulta. Plan Libre disponible sin coste.</p>
+      <div class="hero-cta" style="justify-content:center;margin-top:22px">
+        <a class="btn" href="/">Crear diario IA — Gratis</a>
+        <a class="btn btn-ghost" href="/biblioteca/">Volver a la Biblioteca</a>
+      </div>
+    </div>
+
+    <p class="legal"><strong>Autor:</strong> Enrique J. Dorta Pulido «Ernie» · Growers Alliance / Cannabicultor · cannabicultor.com<br><br><strong>Aviso:</strong> Esta guía tiene fines informativos y educativos. No constituye asesoramiento agronómico personalizado ni garantiza resultados de cultivo. El uso de la plataforma se rige por sus condiciones de servicio y por la normativa vigente en cada jurisdicción. Solo para mayores de 18 años.</p>
+  </section>
+</div>
+
+<footer>
+  <div class="fi">
+    <div class="flinks">
+      <a href="/">Inicio</a>
+      <a href="/biblioteca/">Biblioteca</a>
+      <a href="/cultivo-con-ia/">Cultivo con IA</a>
+      <a href="/buscador-cannabicultor.html">Buscador de variedades</a>
+      <a href="/disenador_sala_cultivo.html">Diseñador de salas</a>
+      <a href="/contacto.html">Contacto</a>
+    </div>
+    <p>Solo para mayores de 18 años. El cultivo de cannabis está regulado. Consulta la legislación vigente en tu país. Este servicio tiene fines educativos y de asesoramiento responsable.</p>
+    <p style="margin-top:10px"><a href="/aviso-legal.html">Aviso legal</a> · <a href="/privacidad.html">Privacidad</a> · <a href="/cookies.html">Cookies</a> · <a href="/terminos.html">Términos</a></p>
+  </div>
+</footer>
+
+</body>
+</html>
