@@ -115,6 +115,15 @@ footer{border-top:1px solid var(--border);background:var(--bg2);margin-top:0}
   .btn{width:100%;text-align:center}
   .callout{padding:18px 20px}
 }
+
+/* Relacionados */
+.rel{padding:36px 0 8px;border-bottom:1px solid var(--border)}
+.rel h2{font-size:clamp(20px,3vw,26px);margin-bottom:14px}
+.rel-list{list-style:none;padding:0;margin:0;display:grid;gap:10px}
+.rel-list li{margin:0}
+.rel-list a{display:block;background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:14px 16px;font-size:15px;font-weight:500;color:var(--text);line-height:1.35}
+.rel-list a:hover{border-color:var(--forest-pale2);color:var(--forest);text-decoration:none}
+.rel-list a span{display:block;font-size:12.5px;font-weight:400;color:var(--text3);margin-top:4px}
 </style>
 <script type="application/ld+json">
 {
@@ -189,7 +198,17 @@ footer{border-top:1px solid var(--border);background:var(--bg2);margin-top:0}
 <section id="limites"><h2>4. Límites</h2><ul><li>Sin datos de drenaje y de respuesta de la planta, cualquier recomendación sigue siendo teórica.</li><li>Las tablas de los fabricantes siguen siendo la base.</li><li>La genética comercial no siempre tiene datos de exigencias nutricionales precisos.</li><li>El sistema no sustituye la observación de la planta.</li></ul></section>
 <section id="conclusion"><h2>5. Conclusión</h2><p>La nutrición personalizada no significa «olvidarse de la tabla». Significa dejar de aplicarla a ciegas. Cuando la herramienta conoce tu variedad, tu medio y tu historial, puede ayudarte a decidir cuándo desviarte de la tabla y cuándo no.</p></section>
 
-  <section id="cierre" style="border-bottom:0">
+  <section id="relacionados" class="rel">
+  <h2>Sigue leyendo</h2>
+  <ul class="rel-list">
+    <li><a href="/biblioteca/diagnostico-deficiencias-ia/">Diagnóstico de deficiencias<span>Cuando la nutrición se desvía y aparece el síntoma</span></a></li>
+    <li><a href="/biblioteca/elegir-genetica/">Elegir genética según tu sala<span>La genética condiciona el esquema de abonado</span></a></li>
+    <li><a href="/biblioteca/diario-cultivo-ia/">Diario de cultivo con IA<span>Historial de EC, pH y respuesta de la planta</span></a></li>
+    <li><a href="/cultivo-con-ia/">Cultivo de cannabis con IA<span>Guía pilar del ecosistema</span></a></li>
+  </ul>
+</section>
+
+<section id="cierre" style="border-bottom:0">
     <div class="final">
       <h2>No olvides la tabla: contextualízala</h2>
       <p>Registra genética, medio y EC/pH. La herramienta prioriza y matiza; no inventa fórmulas mágicas.</p>

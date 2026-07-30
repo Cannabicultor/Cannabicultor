@@ -115,6 +115,15 @@ footer{border-top:1px solid var(--border);background:var(--bg2);margin-top:0}
   .btn{width:100%;text-align:center}
   .callout{padding:18px 20px}
 }
+
+/* Relacionados */
+.rel{padding:36px 0 8px;border-bottom:1px solid var(--border)}
+.rel h2{font-size:clamp(20px,3vw,26px);margin-bottom:14px}
+.rel-list{list-style:none;padding:0;margin:0;display:grid;gap:10px}
+.rel-list li{margin:0}
+.rel-list a{display:block;background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:14px 16px;font-size:15px;font-weight:500;color:var(--text);line-height:1.35}
+.rel-list a:hover{border-color:var(--forest-pale2);color:var(--forest);text-decoration:none}
+.rel-list a span{display:block;font-size:12.5px;font-weight:400;color:var(--text3);margin-top:4px}
 </style>
 <script type="application/ld+json">
 {
@@ -192,7 +201,17 @@ footer{border-top:1px solid var(--border);background:var(--bg2);margin-top:0}
 <section id="ia"><h2>7. Cómo interviene la IA</h2><p>No evita que cometas el error la primera vez. Pero si lo registras, puede:</p><ul><li>Recordarte el patrón la siguiente vez</li><li>Priorizar diagnósticos según tu historial</li><li>Alertar en ventanas de riesgo conocidas</li></ul></section>
 <section id="conclusion"><h2>8. Conclusión</h2><p>La mayoría de los errores graves en indoor no son exóticos. Son repetitivos. La ventaja de un sistema con memoria es precisamente esa: convertir la repetición en aprendizaje en lugar de en frustración.</p></section>
 
-  <section id="cierre" style="border-bottom:0">
+  <section id="relacionados" class="rel">
+  <h2>Sigue leyendo</h2>
+  <ul class="rel-list">
+    <li><a href="/biblioteca/diagnostico-deficiencias-ia/">Diagnóstico de deficiencias con IA<span>Cuando el error ya se ve en la hoja</span></a></li>
+    <li><a href="/biblioteca/diario-cultivo-ia/">Diario de cultivo con IA<span>Registrar para no repetir fallos</span></a></li>
+    <li><a href="/biblioteca/alertas-preventivas-ia/">Alertas preventivas<span>Avisos antes de que el patrón se repita</span></a></li>
+    <li><a href="/cultivo-con-ia/">Cultivo de cannabis con IA<span>Guía pilar del ecosistema</span></a></li>
+  </ul>
+</section>
+
+<section id="cierre" style="border-bottom:0">
     <div class="final">
       <h2>Convierte la repetición en aprendizaje</h2>
       <p>Registra riegos, síntomas y ajustes. La memoria del sistema solo sirve si hay datos.</p>

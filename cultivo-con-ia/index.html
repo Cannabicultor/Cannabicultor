@@ -115,6 +115,15 @@ strong{color:var(--text);font-weight:600}
 .final h2{margin-bottom:14px}
 .final p{max-width:520px;margin-left:auto;margin-right:auto}
 
+/* Sigue aprendiendo */
+.rel-grid{display:grid;gap:12px;margin-top:22px}
+.rel-item{display:block;background:var(--bg);border:1px solid var(--border);border-radius:14px;padding:18px 20px;transition:border-color .16s,box-shadow .16s}
+.rel-item:hover{border-color:var(--forest-pale2);box-shadow:0 8px 24px rgba(0,0,0,.05);text-decoration:none}
+.rel-item .tag{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--forest);margin-bottom:6px}
+.rel-item .ttl{font-size:16px;font-weight:600;color:var(--text);letter-spacing:-0.02em;line-height:1.3;margin:0 0 4px}
+.rel-item .desc{font-size:14px;color:var(--text3);margin:0;line-height:1.5}
+@media(min-width:640px){.rel-grid{grid-template-columns:1fr 1fr}}
+
 footer{border-top:1px solid var(--border);background:var(--bg2);margin-top:0}
 .fi{max-width:760px;margin:0 auto;padding:34px 24px 46px;font-size:13px;color:var(--text3)}
 .fi a{color:var(--text3)}
@@ -387,7 +396,7 @@ footer{border-top:1px solid var(--border);background:var(--bg2);margin-top:0}
       <div class="tool">
         <h3>Diario de cultivo con IA y memoria</h3>
         <p>El núcleo de la plataforma. Registras tu cultivo y la IA recuerda tu espacio, iluminación, sustrato, genética y fase. A partir de ahí cada respuesta parte de tu realidad, no de una planta teórica. Cuantos más ciclos registras, mejor anticipa lo que suele pasarte.</p>
-        <p>La memoria es lo que separa esta herramienta de un chat convencional. No tendrás que repetir tu configuración en cada consulta, y las respuestas dejan de ser consejos generales para convertirse en indicaciones sobre tu cultivo concreto, con tus limitaciones de espacio y tu equipo.</p>
+        <p>La memoria es lo que separa esta herramienta de un chat convencional. No tendrás que repetir tu configuración en cada consulta, y las respuestas dejan de ser consejos generales para convertirse en indicaciones sobre tu cultivo concreto, con tus limitaciones de espacio y tu equipo. Explicamos el funcionamiento completo en la guía <a href="/biblioteca/diario-cultivo-ia/">cómo funciona el diario de cultivo con IA</a>.</p>
         <a class="more" href="/">Crear tu diario IA gratis →</a>
       </div>
 
@@ -453,12 +462,12 @@ footer{border-top:1px solid var(--border);background:var(--bg2);margin-top:0}
 
     <div class="caso">
       <h3>Diagnóstico a partir de una foto</h3>
-      <p>Cultivador con armario de interior, semana 6 de floración. Detecta manchas necróticas en hojas medias y sube una foto. La IA plantea las causas compatibles —carencia de calcio, bloqueo por pH alto, salpicadura de riego foliar— y le pide dos datos para descartar: pH de drenaje y si ha pulverizado con la luz encendida. Con esa respuesta, el diagnóstico se estrecha a uno.</p>
+      <p>Cultivador con armario de interior, semana 6 de floración. Detecta manchas necróticas en hojas medias y sube una foto. La IA plantea las causas compatibles —carencia de calcio, bloqueo por pH alto, salpicadura de riego foliar— y le pide dos datos para descartar: pH de drenaje y si ha pulverizado con la luz encendida. Con esa respuesta, el diagnóstico se estrecha a uno. Amplía el método en la guía de <a href="/biblioteca/diagnostico-deficiencias-ia/">diagnóstico de deficiencias con IA</a>.</p>
     </div>
 
     <div class="caso">
       <h3>Cálculo de VPD según la fase</h3>
-      <p>Sala de 2×2 m con problemas de humedad en floración tardía. En lugar de dar un número genérico, se calcula el VPD objetivo para esa fase concreta y se traduce a acciones sobre temperatura y humedad. El <a href="/disenador_sala_cultivo.html">diseñador de salas de cultivo</a> permite simularlo antes de tocar nada en la sala.</p>
+      <p>Sala de 2×2 m con problemas de humedad en floración tardía. En lugar de dar un número genérico, se calcula el VPD objetivo para esa fase concreta y se traduce a acciones sobre temperatura y humedad. El <a href="/disenador_sala_cultivo.html">diseñador de salas de cultivo</a> permite simularlo antes de tocar nada en la sala; la guía de <a href="/biblioteca/vpd-con-ia/">VPD con IA</a> detalla el flujo práctico.</p>
     </div>
 
     <div class="caso">
@@ -468,7 +477,7 @@ footer{border-top:1px solid var(--border);background:var(--bg2);margin-top:0}
 
     <div class="caso">
       <h3>Alertas basadas en tu historial</h3>
-      <p>Tres ciclos registrados, tres episodios de estrés hídrico en las mismas fechas de agosto. Al arrancar el cuarto cultivo de exterior, el aviso llega antes del calor, no durante. El patrón lo detecta el historial, no la memoria del cultivador, que suele fallar precisamente en lo que se repite cada temporada.</p>
+      <p>Tres ciclos registrados, tres episodios de estrés hídrico en las mismas fechas de agosto. Al arrancar el cuarto cultivo de exterior, el aviso llega antes del calor, no durante. El patrón lo detecta el historial, no la memoria del cultivador, que suele fallar precisamente en lo que se repite cada temporada. Ver <a href="/biblioteca/alertas-preventivas-ia/">alertas preventivas con IA</a>.</p>
     </div>
 
     <div class="caso">
@@ -528,6 +537,48 @@ footer{border-top:1px solid var(--border);background:var(--bg2);margin-top:0}
         <summary>¿Necesito conocimientos previos para usarla?</summary>
         <p>No. De hecho es donde más se nota: puedes preguntar con tus palabras, sin conocer la terminología técnica, y recibir una explicación clara del porqué. Si ya tienes experiencia, el valor está en otro sitio: en el historial, la comparación entre cultivos y el ahorro de tiempo.</p>
       </details>
+    </div>
+  </section>
+
+  <section id="sigue-aprendiendo">
+    <h2>Sigue aprendiendo</h2>
+    <p>Guías y artículos de la Biblioteca que profundizan en el mismo cluster: memoria, diagnóstico, clima, genética y el modelo del cultivador aumentado.</p>
+    <div class="rel-grid">
+      <a class="rel-item" href="/biblioteca/diario-cultivo-ia/">
+        <div class="tag">Guía</div>
+        <div class="ttl">Diario de cultivo con IA</div>
+        <p class="desc">Cómo se crea el contexto y qué recuerda el sistema.</p>
+      </a>
+      <a class="rel-item" href="/biblioteca/diagnostico-deficiencias-ia/">
+        <div class="tag">Guía</div>
+        <div class="ttl">Diagnóstico de deficiencias</div>
+        <p class="desc">Causas priorizadas con tu historial, no listas genéricas.</p>
+      </a>
+      <a class="rel-item" href="/biblioteca/ia-que-recuerda-tu-cultivo/">
+        <div class="tag">Artículo</div>
+        <div class="ttl">La IA que recuerda tu cultivo</div>
+        <p class="desc">Por qué la memoria cambia las reglas del juego.</p>
+      </a>
+      <a class="rel-item" href="/biblioteca/vpd-con-ia/">
+        <div class="tag">Guía</div>
+        <div class="ttl">VPD con ayuda de IA</div>
+        <p class="desc">De la fórmula a la decisión práctica en tu sala.</p>
+      </a>
+      <a class="rel-item" href="/biblioteca/alertas-preventivas-ia/">
+        <div class="tag">Artículo</div>
+        <div class="ttl">Alertas preventivas</div>
+        <p class="desc">Anticipar problemas a partir de tu propio historial.</p>
+      </a>
+      <a class="rel-item" href="/biblioteca/elegir-genetica/">
+        <div class="tag">Guía</div>
+        <div class="ttl">Elegir genética según tu sala</div>
+        <p class="desc">Filtrar por contexto, no por moda.</p>
+      </a>
+      <a class="rel-item" href="/biblioteca/">
+        <div class="tag">Biblioteca</div>
+        <div class="ttl">Toda la Biblioteca Cannabicultor</div>
+        <p class="desc">Guías, artículos e informes en abierto.</p>
+      </a>
     </div>
   </section>
 
