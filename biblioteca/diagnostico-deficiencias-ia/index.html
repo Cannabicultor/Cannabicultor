@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Diagnóstico de deficiencias con IA | Guía – Cannabicultor</title>
+<meta name="description" content="Cómo la IA diagnostica deficiencias nutricionales en cannabis: contexto, historial, causas priorizadas y límites honestos. Guía Cannabicultor · Julio 2026.">
+<link rel="canonical" href="https://cannabicultor.com/biblioteca/diagnostico-deficiencias-ia/">
+
+<!-- Open Graph -->
+<meta property="og:type" content="article">
+<meta property="og:title" content="Diagnóstico de deficiencias nutricionales con inteligencia artificial">
+<meta property="og:description" content="Cómo la IA interpreta síntomas, cruza tu historial y ordena causas por probabilidad en lugar de darte una lista genérica.">
+<meta property="og:url" content="https://cannabicultor.com/biblioteca/diagnostico-deficiencias-ia/">
+<meta property="og:image" content="https://cannabicultor.com/assets/logo_publico_4.png">
+<meta property="og:locale" content="es_ES">
+<meta property="og:site_name" content="Cannabicultor">
+<meta property="article:published_time" content="2026-07-30T00:00:00+02:00">
+<meta property="article:author" content="Enrique J. Dorta Pulido">
+
+<!-- Twitter Card -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Diagnóstico de deficiencias nutricionales con inteligencia artificial">
+<meta name="twitter:description" content="Cómo la IA interpreta síntomas, cruza tu historial y ordena causas por probabilidad en lugar de darte una lista genérica.">
+<meta name="twitter:image" content="https://cannabicultor.com/assets/logo_publico_4.png">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Lora:ital,wght@0,400;1,400&display=swap" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Lora:ital,wght@0,400;1,400&display=swap"></noscript>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --white:#ffffff;--bg:#f5f7f4;--bg2:#eef1ec;
+  --forest:#1a5c32;--forest-light:#2a7a44;--forest-pale:#e6f0ea;--forest-pale2:#d0e8d8;
+  --text:#1a1f1c;--text2:#3d453f;--text3:#6b7370;--text4:#9aa19d;--border:#e2e7e1;
+}
+html{scroll-behavior:smooth}
+body{font-family:'Inter',system-ui,-apple-system,sans-serif;color:var(--text);background:var(--white);line-height:1.7;-webkit-font-smoothing:antialiased}
+a{color:var(--forest);text-decoration:none}
+a:hover{text-decoration:underline}
+
+/* Nav */
+nav{position:sticky;top:0;z-index:50;background:rgba(255,255,255,.92);backdrop-filter:blur(10px);border-bottom:1px solid var(--border)}
+.ni{max-width:1080px;margin:0 auto;padding:12px 24px;display:flex;align-items:center;justify-content:space-between;gap:16px}
+.nl{display:flex;align-items:center;gap:10px}
+.nl img{height:30px;width:auto}
+.nl-brand{font-size:14px;font-weight:600;color:var(--text)}
+.nl-brand span{color:var(--text4);font-weight:400}
+.nc{background:var(--forest);color:#fff;border:0;padding:9px 18px;border-radius:9px;font-size:13px;font-weight:500;cursor:pointer;font-family:inherit}
+.nc:hover{background:var(--forest-light)}
+
+/* Layout */
+.wrap{max-width:760px;margin:0 auto;padding:0 24px}
+.crumbs{font-size:13px;color:var(--text3);padding:20px 0 0}
+.crumbs a{color:var(--text3)}
+
+/* Hero */
+.hero{padding:28px 0 48px;border-bottom:1px solid var(--border)}
+.eyebrow{display:inline-block;font-size:11.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--forest);background:var(--forest-pale);padding:6px 13px;border-radius:999px;margin-bottom:18px}
+h1{font-family:'Inter',sans-serif;font-size:clamp(30px,5.4vw,48px);font-weight:600;letter-spacing:-0.04em;line-height:1.07;margin:0 0 16px}
+h1 em{font-family:'Lora',serif;font-style:italic;color:var(--forest);font-weight:400}
+.lead{font-size:clamp(16px,2.2vw,19px);color:var(--text2);line-height:1.65;max-width:640px;margin:0 0 22px}
+.meta{display:flex;flex-wrap:wrap;gap:8px 22px;font-size:13.5px;color:var(--text3);margin:0 0 26px}
+.meta strong{color:var(--text2);font-weight:600}
+.hero-cta{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin:0 0 12px}
+.btn{display:inline-block;background:var(--forest);color:#fff;padding:14px 28px;border-radius:11px;font-weight:500;font-size:16px}
+.btn:hover{background:var(--forest-light);text-decoration:none}
+.btn-ghost{background:transparent;color:var(--forest);border:1px solid var(--forest-pale2);padding:13px 24px}
+.btn-ghost:hover{background:var(--forest-pale);text-decoration:none}
+.micro{font-size:13px;color:var(--text3)}
+
+/* Contenido */
+section{padding:48px 0;border-bottom:1px solid var(--border)}
+h2{font-size:clamp(24px,3.6vw,32px);font-weight:600;letter-spacing:-0.03em;line-height:1.2;margin:0 0 18px;scroll-margin-top:80px}
+h3{font-size:19px;font-weight:600;letter-spacing:-0.02em;margin:28px 0 10px;color:var(--text)}
+p{margin:0 0 16px;color:var(--text2);font-size:16.5px}
+ul,ol{margin:0 0 16px;padding-left:22px;color:var(--text2)}
+li{margin:0 0 9px;font-size:16.5px}
+strong{color:var(--text);font-weight:600}
+
+.callout{background:var(--bg);border:1px solid var(--border);border-radius:14px;padding:22px 26px;margin:0 0 8px}
+.callout .k{font-size:11px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--text4);margin-bottom:10px}
+.callout p{font-size:15.5px;color:var(--text2);margin:0 0 12px}
+.callout p:last-child{margin-bottom:0}
+
+.definicion{background:var(--forest-pale);border-left:3px solid var(--forest);padding:20px 24px;border-radius:0 12px 12px 0;margin:0 0 22px}
+.definicion p{margin:0;font-size:17px;color:var(--text)}
+
+.pasos{counter-reset:paso;list-style:none;padding:0;margin:20px 0 8px}
+.pasos li{counter-increment:paso;position:relative;padding-left:46px;margin-bottom:18px;font-size:16.5px;color:var(--text2)}
+.pasos li::before{content:counter(paso);position:absolute;left:0;top:1px;width:31px;height:31px;border-radius:50%;background:var(--forest-pale);color:var(--forest);font-weight:600;font-size:14px;display:flex;align-items:center;justify-content:center}
+.pasos strong{display:block;margin-bottom:4px;color:var(--text)}
+
+.ejemplo{border-left:2px solid var(--forest-pale2);padding-left:20px;margin:22px 0}
+.ejemplo .k{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--forest);margin-bottom:8px}
+.ejemplo p{margin:0 0 10px;font-size:16px}
+.ejemplo p:last-child{margin-bottom:0}
+.ejemplo ol{margin:10px 0 0;padding-left:22px}
+
+.tools{display:grid;gap:14px;margin-top:22px}
+.tool{background:var(--bg);border:1px solid var(--border);border-radius:14px;padding:20px 22px}
+.tool h3{margin:0 0 8px;font-size:17px}
+.tool p{margin:0;font-size:15.5px}
+.tool a{font-size:14px;font-weight:500}
+
+.tabla-wrap{overflow-x:auto;margin:20px 0 8px;-webkit-overflow-scrolling:touch}
+table{width:100%;border-collapse:collapse;font-size:15px;min-width:320px}
+th,td{text-align:left;padding:12px 14px;border-bottom:1px solid var(--border);vertical-align:top}
+th{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text4);background:var(--bg)}
+td{color:var(--text2)}
+td:first-child{font-weight:600;color:var(--text);white-space:nowrap}
+
+.caso{border-left:2px solid var(--forest-pale2);padding-left:20px;margin:0 0 22px}
+.caso h3{margin:0 0 8px;font-size:17px}
+.caso p{margin:0;font-size:16px}
+
+.pull{font-family:'Lora',serif;font-size:clamp(19px,2.8vw,24px);font-style:italic;line-height:1.45;color:var(--forest);border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:26px 0;margin:28px 0;text-align:center}
+
+.final{background:var(--bg);border-radius:18px;padding:40px 32px;text-align:center;margin:48px 0}
+.final h2{margin-bottom:14px}
+.final p{max-width:520px;margin-left:auto;margin-right:auto}
+
+.legal{font-size:12.5px;color:var(--text4);line-height:1.65;margin:8px 0 36px;padding-top:18px;border-top:1px solid var(--border)}
+
+footer{border-top:1px solid var(--border);background:var(--bg2);margin-top:0}
+.fi{max-width:760px;margin:0 auto;padding:34px 24px 46px;font-size:13px;color:var(--text3)}
+.fi a{color:var(--text3)}
+.fi .flinks{margin-bottom:14px;display:flex;gap:16px;flex-wrap:wrap}
+.fi .flinks a{font-weight:500}
+
+@media(max-width:640px){
+  .wrap{padding:0 18px}
+  section{padding:40px 0}
+  .nl-brand span{display:none}
+  .final{padding:32px 22px}
+  .btn{width:100%;text-align:center}
+  .callout{padding:18px 20px}
+  td:first-child{white-space:normal}
+}
+</style>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Article",
+      "headline": "Diagnóstico de deficiencias nutricionales con inteligencia artificial",
+      "description": "Cómo la IA interpreta síntomas, cruza tu historial y ordena causas por probabilidad en el diagnóstico de deficiencias nutricionales del cannabis.",
+      "image": "https://cannabicultor.com/assets/logo_publico_4.png",
+      "datePublished": "2026-07-30T00:00:00+02:00",
+      "dateModified": "2026-07-30T00:00:00+02:00",
+      "inLanguage": "es",
+      "author": {
+        "@type": "Person",
+        "name": "Enrique J. Dorta Pulido"
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "Cannabicultor",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://cannabicultor.com/assets/logo_publico_4.png"
+        }
+      },
+      "mainEntityOfPage": {
+        "@type": "WebPage",
+        "@id": "https://cannabicultor.com/biblioteca/diagnostico-deficiencias-ia/"
+      }
+    },
+    {
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        { "@type": "ListItem", "position": 1, "name": "Inicio", "item": "https://cannabicultor.com/" },
+        { "@type": "ListItem", "position": 2, "name": "Biblioteca", "item": "https://cannabicultor.com/biblioteca/" },
+        { "@type": "ListItem", "position": 3, "name": "Diagnóstico de deficiencias con IA", "item": "https://cannabicultor.com/biblioteca/diagnostico-deficiencias-ia/" }
+      ]
+    }
+  ]
+}
+</script>
+</head>
+<body>
+
+<nav>
+  <div class="ni">
+    <a href="/" class="nl">
+      <img src="/assets/icono_cannabicultor_small.webp" alt="Cannabicultor IA" width="192" height="192" loading="lazy" decoding="async">
+      <div class="nl-brand">Cannabicultor IA <span>/ Growers Alliance</span></div>
+    </a>
+    <button class="nc" onclick="window.location.href='/'">Empieza gratis</button>
+  </div>
+</nav>
+
+<div class="wrap">
+  <nav class="crumbs" aria-label="Ruta de navegación"><a href="/">Inicio</a> › <a href="/biblioteca/">Biblioteca</a> › Guías › Diagnóstico de deficiencias con IA</nav>
+
+  <header class="hero">
+    <span class="eyebrow">Guía · Julio 2026</span>
+    <h1>Diagnóstico de deficiencias nutricionales con <em>inteligencia artificial</em></h1>
+    <p class="lead">Cómo la IA interpreta síntomas, cruza tu historial y ordena causas por probabilidad (en lugar de darte una lista genérica).</p>
+    <div class="meta">
+      <span><strong>Autor:</strong> Enrique J. Dorta Pulido «Ernie» · Growers Alliance / Cannabicultor</span>
+      <span><strong>Publicación:</strong> 30 julio 2026</span>
+      <span><strong>Distribución gratuita</strong></span>
+    </div>
+    <div class="hero-cta">
+      <a class="btn" href="/">Probar el diagnóstico IA — Gratis</a>
+      <a class="btn btn-ghost" href="/biblioteca/diario-cultivo-ia/">Cómo funciona el diario</a>
+    </div>
+    <p class="micro">Solo para mayores de 18 años. Plan Libre disponible sin coste.</p>
+  </header>
+
+  <section id="metodologia">
+    <h2>Nota metodológica</h2>
+    <div class="callout">
+      <div class="k">Cómo se ha hecho esta guía</div>
+      <p>Esta guía explica cómo funciona el diagnóstico de deficiencias en el diario de cultivo con IA de Cannabicultor. Se basa en la lógica real del sistema en julio de 2026 y en la experiencia de cultivadores que ya lo utilizan. No es un manual de carencias clásico ni una lista de síntomas. El objetivo es mostrar <strong>cómo cambia el proceso de diagnóstico</strong> cuando la herramienta recuerda tu setup, tu genética y tu historial.</p>
+      <p>Criterio editorial: evidencia y límites honestos. La IA no «ve» la planta mejor que tú. Interpreta lo que le das y lo cruza con contexto. Si los datos son incompletos o confusos, el diagnóstico también lo será.</p>
+    </div>
+  </section>
+
+  <section id="problema">
+    <h2>1. El problema del diagnóstico clásico</h2>
+    <p>Durante décadas el cultivador ha diagnosticado carencias de dos formas:</p>
+    <ol>
+      <li>Comparando la hoja con fotos de manuales o foros.</li>
+      <li>Preguntando en grupos: «¿qué le pasa a mi planta?».</li>
+    </ol>
+    <p>Ambos métodos tienen el mismo defecto estructural: <strong>no tienen contexto</strong>.</p>
+    <p>Una hoja amarilla en vegetativo con LED de 300 W no es lo mismo que una hoja amarilla en semana 6 de floración con una genética exigente y riego por goteo. La misma foto puede significar cosas distintas según el setup, la fase, el sustrato y el historial del cultivador.</p>
+    <p>El resultado habitual es una lista genérica de posibilidades (nitrógeno, hierro, magnesio, pH, riego…) que el cultivador tiene que ir descartando a ciegas.</p>
+  </section>
+
+  <section id="memoria">
+    <h2>2. Cómo cambia el diagnóstico cuando hay memoria</h2>
+    <div class="definicion">
+      <p>El <a href="/biblioteca/diario-cultivo-ia/">diario de cultivo con IA</a> de Cannabicultor no parte de cero. Cuando le describes un síntoma o le envías una foto, el sistema ya conoce tu contexto y <strong>ordena las causas por probabilidad</strong> en lugar de limitarse a listarlas.</p>
+    </div>
+    <p>Contexto que suele tener el sistema:</p>
+    <ul>
+      <li>Tipo de cultivo (interior / exterior)</li>
+      <li>Iluminación y potencia aproximada</li>
+      <li>Sustrato o medio</li>
+      <li>Genética (o al menos el tipo: índica corta, sativa larga, auto…)</li>
+      <li>Fase actual y día aproximado</li>
+      <li>Historial de carencias o problemas anteriores</li>
+      <li>Ajustes de EC, pH y riego que has ido haciendo</li>
+    </ul>
+
+    <h3>Ejemplo simplificado</h3>
+    <div class="ejemplo">
+      <div class="k">Escenario ilustrativo</div>
+      <p><strong>Usuario:</strong> «Las hojas bajas se están poniendo amarillas desde hace tres días. Estoy en semana 4 de floración.»</p>
+      <p><strong>Sin contexto,</strong> cualquier sistema respondería algo parecido a: «Puede ser nitrógeno, riego excesivo, pH alto, magnesio…»</p>
+      <p><strong>Con contexto</strong> (coco + LED 600 W + genética que ya mostró carencia de Mg en el ciclo anterior), el sistema puede priorizar:</p>
+      <ol>
+        <li>Déficit de magnesio (historial + fase)</li>
+        <li>pH del sustrato drift (común en coco)</li>
+        <li>Riego excesivo / oxigenación (menos probable según tu patrón de riego)</li>
+      </ol>
+      <p style="margin-top:12px">Y además pide el dato que más reduce la incertidumbre: el pH de drenaje o el de la solución.</p>
+    </div>
+  </section>
+
+  <section id="proceso">
+    <h2>3. El proceso real de diagnóstico</h2>
+    <ol class="pasos">
+      <li>
+        <strong>Paso 1 — Descripción o foto</strong>
+        Puedes escribir el síntoma en lenguaje natural o subir una foto (hoja enfocada, luz natural preferible).
+      </li>
+      <li>
+        <strong>Paso 2 — Cruce con el contexto</strong>
+        El sistema no busca «foto más parecida». Cruza síntoma descrito o visible, fase y genética, medio de cultivo, historial personal y datos técnicos que ya tiene (EC, pH, VPD…).
+      </li>
+      <li>
+        <strong>Paso 3 — Lista priorizada + preguntas</strong>
+        En lugar de una lista plana, devuelve causas ordenadas por probabilidad en <em>tu</em> situación y, si hace falta, pregunta el dato que más ayuda a discriminar.
+      </li>
+      <li>
+        <strong>Paso 4 — Recomendación accionable</strong>
+        No se limita a nombrar la carencia. Propone el siguiente paso concreto (ajuste de nutriente, comprobación de pH, cambio de riego…) y explica el porqué.
+      </li>
+    </ol>
+  </section>
+
+  <section id="datos">
+    <h2>4. Qué datos mejoran el diagnóstico</h2>
+    <p>Cuanta más información de calidad le des, más preciso es el resultado. Los datos que más peso suelen tener son:</p>
+    <div class="tabla-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Dato</th>
+            <th>Por qué importa</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Fase y día aproximado</td>
+            <td>Muchas carencias cambian de significado según la etapa</td>
+          </tr>
+          <tr>
+            <td>Tipo de sustrato / medio</td>
+            <td>Coco, tierra y hidro se comportan de forma distinta</td>
+          </tr>
+          <tr>
+            <td>pH de la solución y del drenaje</td>
+            <td>Uno de los discriminadores más potentes</td>
+          </tr>
+          <tr>
+            <td>EC reciente</td>
+            <td>Ayuda a distinguir entre carencia real y bloqueo</td>
+          </tr>
+          <tr>
+            <td>Historial de la misma planta o ciclo anterior</td>
+            <td>Detecta patrones personales</td>
+          </tr>
+          <tr>
+            <td>Genética</td>
+            <td>Algunas variedades son más exigentes en Ca, Mg o micronutrientes</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p>No hace falta rellenar todo de golpe. El sistema va preguntando lo que necesita. Puedes consultar la genética en el <a href="/buscador-cannabicultor.html">buscador de variedades</a> para afinar el contexto.</p>
+  </section>
+
+  <section id="limites">
+    <h2>5. Límites honestos del diagnóstico con IA</h2>
+    <p>Conviene ser claros:</p>
+    <ul>
+      <li><strong>No sustituye la observación directa.</strong> Una foto de mala calidad o una descripción vaga produce un diagnóstico vago.</li>
+      <li><strong>No tiene acceso a sensores en tiempo real</strong> a menos que tú introduzcas los valores.</li>
+      <li><strong>No diagnostica con certeza absoluta.</strong> Trabaja con probabilidades condicionadas a tu contexto.</li>
+      <li><strong>No inventa información.</strong> Si no tiene datos suficientes, lo dice y pregunta.</li>
+      <li><strong>No reemplaza el criterio del cultivador experimentado.</strong> Es una herramienta de apoyo, no un oráculo.</li>
+    </ul>
+    <p>Quien lleva años cultivando sabe que hay variables (microclima local, calidad del agua, lotes de nutrientes, estrés por calor puntual…) que ningún sistema captura del todo. Cannabicultor está diseñado desde esa conciencia.</p>
+  </section>
+
+  <section id="casos">
+    <h2>6. Casos de uso típicos</h2>
+
+    <div class="caso">
+      <h3>Caso 1 — Amarilleo en floración</h3>
+      <p>Síntoma clásico. Con contexto de genética y medio, el sistema suele priorizar entre nitrógeno móvil, magnesio y problemas de pH, y pide el dato que más reduce la duda.</p>
+    </div>
+
+    <div class="caso">
+      <h3>Caso 2 — Manchas necróticas o bordes quemados</h3>
+      <p>Aquí el historial de EC y el tipo de iluminación pesan mucho. Una genética que ya mostró sensibilidad a sales en el ciclo anterior hace que el sistema priorice exceso o bloqueo antes que carencia simple.</p>
+    </div>
+
+    <div class="caso">
+      <h3>Caso 3 — Problema recurrente</h3>
+      <p>Si en tres ciclos previos ha aparecido el mismo síntoma en la misma ventana de tiempo, el sistema puede alertar <strong>antes</strong> de que se manifieste de nuevo. Ese es el valor real de la memoria.</p>
+    </div>
+  </section>
+
+  <section id="integracion">
+    <h2>7. Cómo se integra con el resto del sistema</h2>
+    <p>El diagnóstico no es una función aislada. Se alimenta de:</p>
+    <div class="tools">
+      <div class="tool">
+        <h3>Diario de cultivo</h3>
+        <p>Memoria de setup e historial: la base del diagnóstico con contexto.</p>
+        <p style="margin-top:10px"><a href="/biblioteca/diario-cultivo-ia/">Cómo funciona el diario →</a></p>
+      </div>
+      <div class="tool">
+        <h3>Buscador de variedades</h3>
+        <p>Exigencias conocidas de la genética a partir de más de 44.000 registros.</p>
+        <p style="margin-top:10px"><a href="/buscador-cannabicultor.html">Abrir el buscador →</a></p>
+      </div>
+      <div class="tool">
+        <h3>Datos del cultivador</h3>
+        <p>pH, EC, riegos y fotos que vas introduciendo en cada consulta.</p>
+        <p style="margin-top:10px"><a href="/">Abrir el diario IA →</a></p>
+      </div>
+      <div class="tool">
+        <h3>Comunidad (planes superiores)</h3>
+        <p>Patrones agregados y anónimos que enriquecen el contexto colectivo.</p>
+        <p style="margin-top:10px"><a href="/growers-alliance.html">Conocer Growers Alliance →</a></p>
+      </div>
+    </div>
+    <p style="margin-top:22px">Todo vuelve al mismo contexto personal. Para la visión general del ecosistema, consulta <a href="/cultivo-con-ia/">cultivo de cannabis con IA</a>.</p>
+  </section>
+
+  <section id="conclusion" style="border-bottom:0">
+    <h2>8. Conclusión</h2>
+    <p>El diagnóstico de deficiencias con inteligencia artificial no consiste en «reconocer fotos mejor». Consiste en <strong>dejar de diagnosticar en el vacío</strong>.</p>
+    <p>Cuando la herramienta conoce tu sala, tu genética, tu medio y tu historial, deja de darte la lista genérica de siempre y empieza a ordenar causas por probabilidad real en tu caso. Eso no elimina el trabajo del cultivador, pero sí reduce el tiempo perdido en descartes a ciegas y los errores repetidos ciclo tras ciclo.</p>
+    <p class="pull">La IA no ve la planta por ti.<br>Te ayuda a no olvidar lo que ya sabes de ella.</p>
+
+    <div class="final">
+      <h2>Prueba el diagnóstico con memoria</h2>
+      <p>Describe un síntoma o sube una foto con tu setup registrado. La diferencia es el contexto, no la magia.</p>
+      <div class="hero-cta" style="justify-content:center;margin-top:22px">
+        <a class="btn" href="/">Empezar diario IA — Gratis</a>
+        <a class="btn btn-ghost" href="/biblioteca/">Volver a la Biblioteca</a>
+      </div>
+    </div>
+
+    <p class="legal"><strong>Autor:</strong> Enrique J. Dorta Pulido «Ernie» · Growers Alliance / Cannabicultor · cannabicultor.com<br><br><strong>Aviso:</strong> Esta guía tiene fines informativos y educativos. No constituye diagnóstico agronómico personalizado ni garantiza resultados de cultivo. El uso de la plataforma se rige por sus condiciones de servicio y por la normativa vigente en cada jurisdicción. Solo para mayores de 18 años.</p>
+  </section>
+</div>
+
+<footer>
+  <div class="fi">
+    <div class="flinks">
+      <a href="/">Inicio</a>
+      <a href="/biblioteca/">Biblioteca</a>
+      <a href="/cultivo-con-ia/">Cultivo con IA</a>
+      <a href="/buscador-cannabicultor.html">Buscador de variedades</a>
+      <a href="/disenador_sala_cultivo.html">Diseñador de salas</a>
+      <a href="/contacto.html">Contacto</a>
+    </div>
+    <p>Solo para mayores de 18 años. El cultivo de cannabis está regulado. Consulta la legislación vigente en tu país. Este servicio tiene fines educativos y de asesoramiento responsable.</p>
+    <p style="margin-top:10px"><a href="/aviso-legal.html">Aviso legal</a> · <a href="/privacidad.html">Privacidad</a> · <a href="/cookies.html">Cookies</a> · <a href="/terminos.html">Términos</a></p>
+  </div>
+</footer>
+
+</body>
+</html>
