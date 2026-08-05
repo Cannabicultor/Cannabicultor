@@ -41,7 +41,7 @@ import { fileURLToPath } from 'node:url';
 const SUPABASE_URL = process.env.SUPABASE_URL || 'https://gfyrsrdnvgnhtsuexjkb.supabase.co';
 // Publishable key: segura en cliente (RLS activo). Ya se usa en el buscador.
 const SUPABASE_KEY = process.env.SUPABASE_KEY || 'sb_publishable_FdRmfirvOTAIfZFOcj2ZZg_Vic__TDw';
-const SITE = 'https://cannabicultor.com';
+const SITE = 'https://www.cannabicultor.com';
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const TODAY = new Date().toISOString().slice(0, 10);
 
@@ -269,10 +269,22 @@ footer.ft{border-top:1px solid var(--border);color:var(--text3);font-size:13px;m
 footer.ft a{color:var(--text3)}
 @media(max-width:560px){.varlist{columns:1}.hero img{width:100%;height:auto;aspect-ratio:1}}`;
 
+const GA_SNIPPET = `<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-XS18E0J277"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-XS18E0J277');
+</script>
+`;
+
 function shell({ title, desc, canonical, image, jsonld, bodyHtml }) {
   return `<!DOCTYPE html>
 <html lang="es">
 <head>
+${GA_SNIPPET}
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>${esc(title)}</title>
