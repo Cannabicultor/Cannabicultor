@@ -41,6 +41,13 @@ if [ -f .htaccess ]; then
   /bin/cp -f .htaccess "$DEPLOYPATH/"
 fi
 
+# Favicon raíz (favicon.ico multi-size + apple-touch-icon.png)
+for file in favicon.ico apple-touch-icon.png; do
+  if [ -f "$file" ]; then
+    /bin/cp -f "$file" "$DEPLOYPATH/"
+  fi
+done
+
 for file in sitemap.xml sitemap-static.xml sitemap-breeders.xml sitemap-strains.xml robots.txt; do
   if [ -f "$file" ]; then
     /bin/cp -f "$file" "$DEPLOYPATH/"
