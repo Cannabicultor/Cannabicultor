@@ -67,15 +67,18 @@ h1{font-family:'Inter',sans-serif;font-size:clamp(32px,6vw,52px);font-weight:600
 h1 em{font-family:'Lora',serif;font-style:italic;color:var(--forest);font-weight:400}
 .lead{font-size:clamp(16px,2.2vw,19px);color:var(--text2);line-height:1.65;max-width:680px}
 
-/* Filtros */
+/* Hub por categorías */
 .hub{padding:36px 0 64px}
-.filters{display:flex;gap:9px;flex-wrap:wrap;margin:0 0 28px}
-.chip{border:1px solid var(--forest-pale2);background:#fff;color:var(--text2);padding:8px 16px;border-radius:999px;font-size:13.5px;font-weight:500;cursor:pointer;font-family:inherit;transition:all .16s}
-.chip:hover{background:var(--forest-pale)}
-.chip.active{background:var(--forest);color:#fff;border-color:var(--forest)}
+.cat-block{margin:0 0 52px;padding-bottom:8px}
+.cat-block:last-child{margin-bottom:0}
+.cat-head{display:flex;align-items:baseline;justify-content:space-between;gap:14px 20px;flex-wrap:wrap;margin:0 0 18px}
+.cat-head h2{font-size:clamp(22px,3.2vw,28px);font-weight:600;letter-spacing:-0.03em;line-height:1.2;margin:0;color:var(--text)}
+.cat-more{font-size:14px;font-weight:600;color:var(--forest);white-space:nowrap}
+.cat-more:hover{text-decoration:underline}
 
-/* Grid de cards */
+/* Grid de cards (misma tarjeta visual) */
 .lib-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:18px}
+.lib-grid--latest{grid-template-columns:minmax(280px,420px)}
 .lib-card{display:block;border:1px solid var(--border);border-radius:16px;padding:24px;background:#fff;transition:border-color .18s,box-shadow .18s,transform .18s}
 .lib-card:hover{border-color:var(--forest-pale2);box-shadow:0 12px 34px rgba(0,0,0,.07);transform:translateY(-2px);text-decoration:none}
 .lib-top{display:flex;align-items:center;gap:10px;margin-bottom:14px}
@@ -87,9 +90,9 @@ h1 em{font-family:'Lora',serif;font-style:italic;color:var(--forest);font-weight
 .lib-card .go{font-size:13.5px;font-weight:600;color:var(--forest)}
 
 /* Estado vacío / próximamente */
-.lib-empty{border:1px dashed var(--border);border-radius:16px;padding:52px 28px;text-align:center;background:var(--bg)}
-.lib-empty .big{font-size:36px;margin-bottom:12px}
-.lib-empty p{margin:0;font-size:15.5px;color:var(--text3);max-width:460px;margin:0 auto}
+.lib-empty{border:1px dashed var(--border);border-radius:16px;padding:40px 28px;text-align:center;background:var(--bg);max-width:420px}
+.lib-empty .big{font-size:32px;margin-bottom:10px}
+.lib-empty p{margin:0;font-size:15px;color:var(--text3);max-width:360px;margin:0 auto}
 
 /* Footer */
 footer{border-top:1px solid var(--border);background:var(--bg2);margin-top:0}
@@ -101,6 +104,7 @@ footer{border-top:1px solid var(--border);background:var(--bg2);margin-top:0}
 @media(max-width:640px){
   .wrap{padding:0 18px}
   .nl-brand span{display:none}
+  .lib-grid--latest{grid-template-columns:1fr}
 }
 </style>
 <script type="application/ld+json">
@@ -119,75 +123,7 @@ footer{border-top:1px solid var(--border);background:var(--bg2);margin-top:0}
         "name": "Cannabicultor",
         "url": "https://cannabicultor.com/"
       },
-      "about": ["Cultivo de cannabis", "Mercado del cannabis", "Regulación del cannabis en España"],
-      "hasPart": [
-        {
-          "@type": "Report",
-          "name": "Del barrio al turista, y la vuelta al cultivador",
-          "url": "https://cannabicultor.com/informes/cannabis-del-barrio-al-turista/",
-          "datePublished": "2026-07-23"
-        },
-        {
-          "@type": "Article",
-          "name": "Cómo funciona el diario de cultivo con IA de Cannabicultor",
-          "url": "https://cannabicultor.com/biblioteca/diario-cultivo-ia/",
-          "datePublished": "2026-07-30"
-        },
-        {
-          "@type": "Article",
-          "name": "Diagnóstico de deficiencias nutricionales con inteligencia artificial",
-          "url": "https://cannabicultor.com/biblioteca/diagnostico-deficiencias-ia/",
-          "datePublished": "2026-07-30"
-        },
-        {
-          "@type": "Article",
-          "name": "La IA que recuerda tu cultivo",
-          "url": "https://cannabicultor.com/biblioteca/ia-que-recuerda-tu-cultivo/",
-          "datePublished": "2026-07-30"
-        },
-        {
-          "@type": "Article",
-          "name": "Cómo calcular y optimizar el VPD con ayuda de IA",
-          "url": "https://cannabicultor.com/biblioteca/vpd-con-ia/",
-          "datePublished": "2026-07-30"
-        },
-        {
-          "@type": "Article",
-          "name": "Alertas preventivas: cómo la IA te avisa antes de que sea tarde",
-          "url": "https://cannabicultor.com/biblioteca/alertas-preventivas-ia/",
-          "datePublished": "2026-07-30"
-        },
-        {
-          "@type": "Article",
-          "name": "Elegir la genética correcta según tu sala y experiencia",
-          "url": "https://cannabicultor.com/biblioteca/elegir-genetica/",
-          "datePublished": "2026-07-30"
-        },
-        {
-          "@type": "Article",
-          "name": "Errores más comunes en cultivo indoor que la IA detecta",
-          "url": "https://cannabicultor.com/biblioteca/errores-comunes-indoor-ia/",
-          "datePublished": "2026-07-30"
-        },
-        {
-          "@type": "Article",
-          "name": "Nutrición personalizada por fase y variedad con IA",
-          "url": "https://cannabicultor.com/biblioteca/nutricion-personalizada-ia/",
-          "datePublished": "2026-07-30"
-        },
-        {
-          "@type": "Article",
-          "name": "Landraces: qué son y por qué importan en 2026",
-          "url": "https://cannabicultor.com/biblioteca/landraces/",
-          "datePublished": "2026-07-30"
-        },
-        {
-          "@type": "Article",
-          "name": "Del cultivador tradicional al cultivador aumentado por IA",
-          "url": "https://cannabicultor.com/biblioteca/cultivador-aumentado-ia/",
-          "datePublished": "2026-07-30"
-        }
-      ]
+      "about": ["Cultivo de cannabis", "Mercado del cannabis", "Regulación del cannabis en España"]
     },
     {
       "@type": "BreadcrumbList",
@@ -221,116 +157,15 @@ footer{border-top:1px solid var(--border);background:var(--bg2);margin-top:0}
   </header>
 
   <section class="hub">
-    <div class="filters" role="tablist" aria-label="Filtrar por tipo">
-      <button class="chip active" data-tipo="todos" role="tab">Todos</button>
-      <button class="chip" data-tipo="informes" role="tab">Informes</button>
-      <button class="chip" data-tipo="investigaciones" role="tab">Investigaciones</button>
-      <button class="chip" data-tipo="guias" role="tab">Guías</button>
-      <button class="chip" data-tipo="articulos" role="tab">Artículos</button>
-      <button class="chip" data-tipo="libros" role="tab">Libros</button>
-    </div>
 
-    <div class="lib-grid" id="libGrid">
-      <a class="lib-card" data-tipo="articulos" href="/biblioteca/ia-que-recuerda-tu-cultivo/">
-        <div class="lib-top">
-          <span class="badge">Artículo</span>
-          <span class="lib-date">30 jul 2026</span>
-        </div>
-        <h3>La IA que recuerda tu cultivo</h3>
-        <div class="sub">Por qué cambia las reglas del juego (y por qué no es un chat más)</div>
-        <p>Qué significa realmente que una IA «recuerde»: contexto permanente, priorización y anticipación frente al reinicio constante de un chat genérico.</p>
-        <span class="go">Leer el artículo →</span>
-      </a>
-      <a class="lib-card" data-tipo="guias" href="/biblioteca/vpd-con-ia/">
-        <div class="lib-top">
-          <span class="badge">Guía</span>
-          <span class="lib-date">30 jul 2026</span>
-        </div>
-        <h3>Cómo calcular y optimizar el VPD con ayuda de IA</h3>
-        <div class="sub">De la fórmula teórica a la decisión práctica en tu sala</div>
-        <p>Qué es el VPD, por qué fallan los cálculos a mano y cómo la IA lo interpreta según fase, genética e historial.</p>
-        <span class="go">Leer la guía →</span>
-      </a>
-      <a class="lib-card" data-tipo="articulos" href="/biblioteca/alertas-preventivas-ia/">
-        <div class="lib-top">
-          <span class="badge">Artículo</span>
-          <span class="lib-date">30 jul 2026</span>
-        </div>
-        <h3>Alertas preventivas: cómo la IA te avisa antes de que sea tarde</h3>
-        <div class="sub">Del diagnóstico reactivo a la anticipación basada en tu historial</div>
-        <p>Tipos de alertas, cómo usarlas sin ceder el criterio y los límites honestos de la predicción por patrones personales.</p>
-        <span class="go">Leer el artículo →</span>
-      </a>
-      <a class="lib-card" data-tipo="guias" href="/biblioteca/elegir-genetica/">
-        <div class="lib-top">
-          <span class="badge">Guía</span>
-          <span class="lib-date">30 jul 2026</span>
-        </div>
-        <h3>Elegir la genética correcta según tu sala y experiencia</h3>
-        <div class="sub">Cómo dejar de elegir por moda y empezar a elegir por contexto</div>
-        <p>Variables que importan, criterio práctico de selección y cómo el buscador de 44.000+ variedades ayuda a filtrar.</p>
-        <span class="go">Leer la guía →</span>
-      </a>
-      <a class="lib-card" data-tipo="guias" href="/biblioteca/errores-comunes-indoor-ia/">
-        <div class="lib-top">
-          <span class="badge">Guía</span>
-          <span class="lib-date">30 jul 2026</span>
-        </div>
-        <h3>Errores más comunes en cultivo indoor que la IA detecta</h3>
-        <div class="sub">Los fallos que se repiten ciclo tras ciclo</div>
-        <p>Riego por calendario, EC sin contexto, VPD ignorado, genética incompatible y por qué sin registro no hay aprendizaje.</p>
-        <span class="go">Leer la guía →</span>
-      </a>
-      <a class="lib-card" data-tipo="guias" href="/biblioteca/nutricion-personalizada-ia/">
-        <div class="lib-top">
-          <span class="badge">Guía</span>
-          <span class="lib-date">30 jul 2026</span>
-        </div>
-        <h3>Nutrición personalizada por fase y variedad con IA</h3>
-        <div class="sub">De la tabla genérica al ajuste según genética, medio e historial</div>
-        <p>Límites de las tablas del fabricante y cómo el contexto de la IA prioriza y matiza sin inventar fórmulas mágicas.</p>
-        <span class="go">Leer la guía →</span>
-      </a>
-      <a class="lib-card" data-tipo="articulos" href="/biblioteca/landraces/">
-        <div class="lib-top">
-          <span class="badge">Artículo</span>
-          <span class="lib-date">30 jul 2026</span>
-        </div>
-        <h3>Landraces: qué son y por qué importan en 2026</h3>
-        <div class="sub">Genética tradicional, diversidad y el riesgo de perder el mapa original</div>
-        <p>Qué es una landrace, por qué importa la diversidad genética y cómo se diferencia del híbrido comercial.</p>
-        <span class="go">Leer el artículo →</span>
-      </a>
-      <a class="lib-card" data-tipo="articulos" href="/biblioteca/cultivador-aumentado-ia/">
-        <div class="lib-top">
-          <span class="badge">Artículo</span>
-          <span class="lib-date">30 jul 2026</span>
-        </div>
-        <h3>Del cultivador tradicional al cultivador aumentado por IA</h3>
-        <div class="sub">Qué cambia (y qué no debería cambiar) cuando la IA entra en la sala</div>
-        <p>Posicionamiento de Cannabicultor: la IA recuerda y prioriza; el cultivador observa y decide.</p>
-        <span class="go">Leer el artículo →</span>
-      </a>
-      <a class="lib-card" data-tipo="guias" href="/biblioteca/diagnostico-deficiencias-ia/">
-        <div class="lib-top">
-          <span class="badge">Guía</span>
-          <span class="lib-date">30 jul 2026</span>
-        </div>
-        <h3>Diagnóstico de deficiencias nutricionales con inteligencia artificial</h3>
-        <div class="sub">Cómo la IA ordena causas por probabilidad con tu historial</div>
-        <p>Por qué el diagnóstico clásico falla sin contexto, cómo el diario con memoria prioriza carencias reales y qué datos mejoran el resultado. Guía práctica de Cannabicultor.</p>
-        <span class="go">Leer la guía →</span>
-      </a>
-      <a class="lib-card" data-tipo="guias" href="/biblioteca/diario-cultivo-ia/">
-        <div class="lib-top">
-          <span class="badge">Guía</span>
-          <span class="lib-date">30 jul 2026</span>
-        </div>
-        <h3>Cómo funciona el diario de cultivo con IA de Cannabicultor</h3>
-        <div class="sub">La IA que recuerda tu setup, aprende de tus ciclos y anticipa problemas</div>
-        <p>Qué recuerda el sistema, cómo se crea el contexto, diagnóstico, alertas preventivas y límites honestos. La guía de producto del diario con memoria de Cannabicultor.</p>
-        <span class="go">Leer la guía →</span>
-      </a>
+    <!-- Categoría: Informes -->
+    <div class="cat-block" data-cat="informes">
+      <div class="cat-head">
+        <h2>Informes</h2>
+        <a class="cat-more" href="/biblioteca/informes/">Ver todos los Informes →</a>
+      </div>
+      <div class="lib-grid lib-grid--latest">
+<!-- LIB-LATEST:informes START -->
       <a class="lib-card" data-tipo="informes" href="/informes/cannabis-del-barrio-al-turista/">
         <div class="lib-top">
           <span class="badge">Informe</span>
@@ -341,12 +176,86 @@ footer{border-top:1px solid var(--border);background:var(--bg2);margin-top:0}
         <p>La historia completa de las asociaciones cannábicas españolas —del club de barrio al giro turístico— con testimonios inéditos de cultivadores veteranos y la pieza que falta para cerrar la normalización: el porte.</p>
         <span class="go">Leer el informe →</span>
       </a>
+<!-- LIB-LATEST:informes END -->
+      </div>
     </div>
 
-    <div class="lib-empty" id="libEmpty" hidden>
-      <div class="big">📚</div>
-      <p id="libEmptyText">Próximamente publicaremos más contenidos aquí.</p>
+    <!-- Categoría: Guías -->
+    <div class="cat-block" data-cat="guias">
+      <div class="cat-head">
+        <h2>Guías</h2>
+        <a class="cat-more" href="/biblioteca/guias/">Ver todas las Guías →</a>
+      </div>
+      <div class="lib-grid lib-grid--latest">
+<!-- LIB-LATEST:guias START -->
+      <a class="lib-card" data-tipo="guias" href="/biblioteca/vpd-con-ia/">
+        <div class="lib-top">
+          <span class="badge">Guía</span>
+          <span class="lib-date">30 jul 2026</span>
+        </div>
+        <h3>Cómo calcular y optimizar el VPD con ayuda de IA</h3>
+        <div class="sub">De la fórmula teórica a la decisión práctica en tu sala</div>
+        <p>Qué es el VPD, por qué fallan los cálculos a mano y cómo la IA lo interpreta según fase, genética e historial.</p>
+        <span class="go">Leer la guía →</span>
+      </a>
+<!-- LIB-LATEST:guias END -->
+      </div>
     </div>
+
+    <!-- Categoría: Artículos -->
+    <div class="cat-block" data-cat="articulos">
+      <div class="cat-head">
+        <h2>Artículos</h2>
+        <a class="cat-more" href="/biblioteca/articulos/">Ver todos los Artículos →</a>
+      </div>
+      <div class="lib-grid lib-grid--latest">
+<!-- LIB-LATEST:articulos START -->
+      <a class="lib-card" data-tipo="articulos" href="/biblioteca/growverse-2026-del-sueno-a-la-realidad/">
+        <div class="lib-top">
+          <span class="badge">Artículo</span>
+          <span class="lib-date">10 ago 2026</span>
+        </div>
+        <h3>Growverse 2026: Del sueño a la realidad</h3>
+        <div class="sub">El metaverso cannábico que ya no es promesa</div>
+        <p>Tres años después de su primera aparición en Soft Secrets, Roberto Romagnino vuelve con noticias concretas sobre Growverse 2026 y el salto del sueño a la realidad.</p>
+        <span class="go">Leer el artículo →</span>
+      </a>
+<!-- LIB-LATEST:articulos END -->
+      </div>
+    </div>
+
+    <!-- Categoría: Investigaciones -->
+    <div class="cat-block" data-cat="investigaciones">
+      <div class="cat-head">
+        <h2>Investigaciones</h2>
+        <a class="cat-more" href="/biblioteca/investigaciones/">Ver todas las Investigaciones →</a>
+      </div>
+      <div class="lib-grid lib-grid--latest">
+<!-- LIB-LATEST:investigaciones START -->
+      <div class="lib-empty" data-empty="1">
+        <div class="big">📚</div>
+        <p>Próximamente publicaremos investigaciones aquí.</p>
+      </div>
+<!-- LIB-LATEST:investigaciones END -->
+      </div>
+    </div>
+
+    <!-- Categoría: Libros -->
+    <div class="cat-block" data-cat="libros">
+      <div class="cat-head">
+        <h2>Libros</h2>
+        <a class="cat-more" href="/biblioteca/libros/">Ver todos los Libros →</a>
+      </div>
+      <div class="lib-grid lib-grid--latest">
+<!-- LIB-LATEST:libros START -->
+      <div class="lib-empty" data-empty="1">
+        <div class="big">📚</div>
+        <p>Próximamente publicaremos libros aquí.</p>
+      </div>
+<!-- LIB-LATEST:libros END -->
+      </div>
+    </div>
+
   </section>
 </div>
 
@@ -354,6 +263,7 @@ footer{border-top:1px solid var(--border);background:var(--bg2);margin-top:0}
   <div class="fi">
     <div class="flinks">
       <a href="/">Inicio</a>
+      <a href="/biblioteca/">Biblioteca</a>
       <a href="/cultivo-con-ia/">Cultivo con IA</a>
       <a href="/buscador-cannabicultor.html">Buscador de variedades</a>
       <a href="/disenador_sala_cultivo.html">Diseñador de salas</a>
@@ -364,48 +274,6 @@ footer{border-top:1px solid var(--border);background:var(--bg2);margin-top:0}
     <p style="margin-top:10px"><a href="/aviso-legal.html">Aviso legal</a> · <a href="/privacidad.html">Privacidad</a> · <a href="/cookies.html">Cookies</a> · <a href="/terminos.html">Términos</a></p>
   </div>
 </footer>
-
-<script>
-(function () {
-  var chips = Array.prototype.slice.call(document.querySelectorAll('.chip'));
-  var cards = Array.prototype.slice.call(document.querySelectorAll('.lib-card'));
-  var empty = document.getElementById('libEmpty');
-  var emptyText = document.getElementById('libEmptyText');
-  var LABELS = {
-    investigaciones: 'investigaciones',
-    guias: 'guías',
-    articulos: 'artículos',
-    libros: 'libros',
-    informes: 'informes'
-  };
-
-  function apply(tipo) {
-    var shown = 0;
-    cards.forEach(function (c) {
-      var ok = tipo === 'todos' || c.getAttribute('data-tipo') === tipo;
-      c.style.display = ok ? '' : 'none';
-      if (ok) shown++;
-    });
-    if (shown === 0) {
-      var label = LABELS[tipo] || 'contenidos';
-      emptyText.textContent = 'Próximamente publicaremos ' + label + ' aquí.';
-      empty.hidden = false;
-    } else {
-      empty.hidden = true;
-    }
-  }
-
-  chips.forEach(function (ch) {
-    ch.addEventListener('click', function () {
-      chips.forEach(function (x) { x.classList.remove('active'); });
-      ch.classList.add('active');
-      apply(ch.getAttribute('data-tipo'));
-    });
-  });
-
-  apply('todos');
-})();
-</script>
 
 </body>
 </html>
