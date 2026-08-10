@@ -1,12 +1,12 @@
 /**
- * growers-alliance-ai — snapshot de producción (Cloudflare)
+ * growers-alliance-ai — fuente de verdad del Worker de chat (Cannabicultor)
  *
- * Descargado: 2026-08-10 13:41:36 UTC
- * Worker: growers-alliance-ai
- * Origen: Cloudflare Workers API (script actual en producción)
+ * Snapshot prod 2026-08-10 + fallback multi-proveedor (DeepSeek → Anthropic → OpenAI;
+ * con foto: Anthropic → OpenAI, DeepSeek se omite).
+ * RAG (kb_chunks / match_chunks / Voyage) sin cambios.
  *
- * NO es el entrypoint de wrangler.toml. Solo versionado en git como fuente de verdad.
- * No desplegar desde este archivo sin revisión.
+ * Secrets: ANTHROPIC_API_KEY, OPENAI_API_KEY, DEEPSEEK_API_KEY, JWT_SECRET, …
+ * NO es el main de wrangler.toml (sigue en index.js). Deploy: pegar o apuntar main a este archivo.
  */
 
 /**
@@ -402,6 +402,13 @@ async function brevoSendResetEmail(env, email, token) {
 // =========================================================================
 // CHAT
 // =========================================================================
+const SCOPE_PROMPT = `Eres el asistente de IA de Cannabicultor, especializado exclusivamente en cultivo de cannabis: variedades/genética, cultivo (luz, sustrato, riego, VPD, nutrientes, fertilizantes, plagas, floración, cosecha), diseño de espacios de cultivo, y temas directamente relacionados con la comunidad cultivadora en España.
+
+Si el usuario pregunta algo que NO tiene relación con cultivo de cannabis o el uso de esta plataforma (por ejemplo: reparar un coche, recetas de cocina no relacionadas, tareas de programación ajenas, preguntas generales de cultura, etc.), NO respondas la pregunta. En su lugar, responde brevemente (1-2 frases) indicando que solo puedes ayudar con temas de cultivo de cannabis, y sugiere reformular la pregunta dentro de ese ámbito. No uses el contexto RAG en ese caso, no expliques el motivo con detalle, sé breve.`;
+
+const SCOPE_REJECT_REPLY =
+  'Solo puedo ayudarte con cultivo de cannabis y el uso de Cannabicultor. Reformula tu pregunta en ese ámbito (luz, riego, nutrientes, genética, plagas, sala de cultivo, etc.) y te ayudo.';
+
 const VISION_PROMPT = `
 ANÁLISIS DE FOTOS:
 - Si el usuario envía una imagen, examínala: hojas, manchas, plagas, mohos, deficiencias, estrés.
@@ -409,7 +416,10 @@ ANÁLISIS DE FOTOS:
 - Si la foto no es clara, pide otra mejor. No inventes detalles invisibles.`;
 
 function buildSystemPrompt(perfil, chunks) {
-  let base = `Eres Cannabicultor IA de Growers Alliance. Tono: autoridad con calidez. Tuteo respetuoso.
+  // Scope primero (antes del RAG); el LLM lo ve aunque la heurística no sea concluyente.
+  let base = `${SCOPE_PROMPT}
+
+Eres Cannabicultor IA de Growers Alliance. Tono: autoridad con calidez. Tuteo respetuoso.
 Primera frase responde DIRECTAMENTE. Máx 8-12 líneas. Abre UNA puerta al final.
 NUNCA inventes estudios ni legislación.${VISION_PROMPT}`;
 
@@ -418,7 +428,7 @@ NUNCA inventes estudios ni legislación.${VISION_PROMPT}`;
       const fuente = c.libro_propuesto || 'Base de conocimiento';
       return `[${i + 1}] ${fuente}:\n${c.content}`;
     }).join('\n\n');
-    base += `\n\nCONOCIMIENTO TECNICO RELEVANTE (basa tu respuesta en esto):\n${contexto}\n\nINSTRUCCIONES:\n- Usa el conocimiento anterior cuando sea relevante.\n- Si algun fragmento esta en ingles, sintetizalo en espanol. NUNCA muestres texto en ingles al usuario.\n- Puedes citar la fuente entre parentesis si aporta credibilidad.\n- Si el conocimiento no cubre la pregunta, responde con criterio de cultivador experto.`;
+    base += `\n\nCONOCIMIENTO TECNICO RELEVANTE (basa tu respuesta en esto):\n${contexto}\n\nINSTRUCCIONES:\n- Usa el conocimiento anterior cuando sea relevante.\n- Si la pregunta está fuera del ámbito de cultivo (ver scope arriba), IGNORA este contexto y rechaza en 1-2 frases.\n- Si algun fragmento esta en ingles, sintetizalo en espanol. NUNCA muestres texto en ingles al usuario.\n- Puedes citar la fuente entre parentesis si aporta credibilidad.\n- Si el conocimiento no cubre la pregunta, responde con criterio de cultivador experto.`;
   } else {
     base += `\n\nNOTA INTERNA: No se encontraron documentos especificos en la base de conocimiento para esta consulta. Responde con tu criterio de cultivador experto con 30 anos de experiencia. Se honesto si algo excede tu conocimiento tecnico. No inventes fuentes ni estudios.`;
   }
@@ -426,6 +436,115 @@ NUNCA inventes estudios ni legislación.${VISION_PROMPT}`;
   if (!perfil) return base + '\n\nUsuario en Plan Libre. Sin datos de cultivo registrados.';
   const t = typeof perfil === 'string' ? perfil : JSON.stringify(perfil, null, 2);
   return base + '\n\nPERFIL:\n' + t;
+}
+
+/** Texto del último mensaje de usuario (solo partes text). */
+function extractLastUserText(messages) {
+  const ultimo = [...(messages || [])].reverse().find((m) => m.role === 'user');
+  if (!ultimo) return '';
+  if (Array.isArray(ultimo.content)) {
+    return ultimo.content
+      .filter((p) => p && p.type === 'text')
+      .map((p) => p.text || '')
+      .join(' ')
+      .trim();
+  }
+  return String(ultimo.content || '').trim();
+}
+
+/**
+ * Guarda barata off-topic (keywords/heurística). Sin llamadas de red.
+ * - true  → claramente fuera de ámbito: rechazar sin LLM/RAG
+ * - false → on-topic, saludo, foto, o dudoso: dejar pasar al LLM (+ scope en system)
+ *
+ * Conservadora: solo bloquea si hay señales fuertes off-topic y NINGUNA on-topic.
+ */
+function isClearlyOffTopicCultivo(text, withVision) {
+  // Foto de planta → siempre dejar al modelo de visión
+  if (withVision) return false;
+
+  const raw = String(text || '').trim();
+  if (raw.length < 4) return false;
+
+  const t = raw
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+
+  // Saludos / meta de la plataforma → on-topic
+  if (/^(hola|hey|buenas|buenos dias|buenas tardes|buenas noches|gracias|ok|vale|si|no)\b/.test(t) && t.length < 40) {
+    return false;
+  }
+  if (/\b(cannabicultor|growers?\s*alliance|mi (cuenta|plan|cultivo|perfil)|onboarding|test de (acceso|cultivador))\b/.test(t)) {
+    return false;
+  }
+
+  const onTopic = [
+    'cannabis', 'marihuana', 'marijuana', 'weed', 'cogollo', 'cogollos', 'planta', 'plantas',
+    'cultivo', 'cultivar', 'cultivador', 'indoor', 'outdoor', 'invernadero', 'armario',
+    'sativa', 'indica', 'hibrida', 'hibrido', 'ruderalis', 'autoflor', 'fotoperiodo', 'fotoperiodica',
+    'genetica', 'variedad', 'variedades', 'semilla', 'semillas', 'esqueje', 'esquejes', 'clon',
+    'floracion', 'vegetativo', 'cosecha', 'secado', 'curado', 'trichoma', 'tricoma', 'resina',
+    'luz', 'led', 'hps', 'lumens', 'ppfd', 'dli', 'sustrato', 'coco', 'tierra', 'hydro', 'hidro',
+    'riego', 'regando', 'regar', 'ph', 'ec', 'ppm', 'vpd', 'humedad', 'temperatura',
+    'nutriente', 'nutrientes', 'fertilizante', 'abono', 'npk', 'calmag', 'nitrogeno', 'fosforo', 'potasio',
+    'plaga', 'plagas', 'hongo', 'oidio', 'mildiu', 'trips', 'arana', 'mosca blanca', 'thrips',
+    'maceta', 'macetas', 'sala de cultivo', 'tienda de cultivo', 'grow shop', 'extraccion', 'filtro de carbon',
+    'poda', 'lst', 'scrog', 'sog', 'topping', 'fim', 'deficiencia', 'exceso', 'quemadura',
+    'thc', 'cbd', 'terpeno', 'landrace', 'breeder', 'banco de semillas', 'germinacion', 'plantula',
+  ];
+
+  const offTopic = [
+    // movilidad / hogar ajeno
+    'coche', 'auto ', 'automovil', 'motor', 'aceite de motor', 'neumatico', 'itv', 'matricula',
+    'lavadora', 'nevera', 'aire acondicionado del coche',
+    // cocina genérica (no edibles cannabis)
+    'receta de cocina', 'como cocinar', 'pastel de chocolate', 'paella', 'macarrones',
+    // programación / IT ajeno
+    'javascript', 'typescript', 'python', 'react native', 'kubernetes', 'docker compose',
+    'sql server', 'excel formula', 'powerpoint', 'escribir codigo', 'programar una app',
+    'github actions', 'machine learning tutorial',
+    // cultura / general
+    'quien gano el partido', 'resultado del futbol', 'elecciones presidenciales',
+    'capital de francia', 'traduce este texto al', 'hazme los deberes',
+    'reparar el ordenador', 'windows no arranca', 'iphone no carga',
+    'cita romantica', 'horoscopo', 'loteria',
+  ];
+
+  // Match por palabra (evita que "ec" dispare en "receta", "led" en "problema", etc.)
+  function hasTerm(haystack, term) {
+    const k = term.trim().toLowerCase();
+    if (!k) return false;
+    if (k.includes(' ')) return haystack.includes(k);
+    // palabra completa: límites no alfanuméricos
+    const re = new RegExp(`(?:^|[^a-z0-9])${k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?:[^a-z0-9]|$)`);
+    return re.test(haystack);
+  }
+
+  let onHits = 0;
+  for (const k of onTopic) {
+    if (hasTerm(t, k)) onHits++;
+  }
+  if (onHits > 0) return false;
+
+  let offHits = 0;
+  for (const k of offTopic) {
+    if (hasTerm(t, k)) offHits++;
+  }
+
+  // Patrones de “cómo se repara/hace X” claramente ajenos sin vocabulario de cultivo
+  const offPatterns = [
+    /\b(reparar|arreglar)\s+(el\s+)?(coche|moto|pc|ordenador|lavadora|nevera|movil|iphone)\b/,
+    /\b(receta|cocinar|hornear)\b.*\b(pollo|pasta|arroz|tarta|bizcocho)\b/,
+    /\b(codigo|programa|script)\b.*\b(python|java|javascript|html|css)\b/,
+    /\bquien (es|fue|gano|invento)\b/,
+    /\bcuanto (es|vale)\s+\d+\s*[\+\-\*\/]\s*\d+/,
+  ];
+  const patternHit = offPatterns.some((re) => re.test(t));
+
+  // Solo bloqueo si hay evidencia clara off-topic y cero on-topic
+  if (offHits >= 1 || patternHit) return true;
+  return false;
 }
 
 function normalizeMessages(messages) {
@@ -452,27 +571,125 @@ function hasVision(messages) {
   return messages.some((m) => Array.isArray(m.content) && m.content.some((p) => p.type === 'image'));
 }
 
-async function handleChat(body, env) {
-  const { messages, perfil } = body || {};
-  if (!messages || !Array.isArray(messages) || !messages.length) {
-    return { status: 400, data: { error: 'Faltan mensajes' } };
-  }
-  const anthropicMessages = normalizeMessages(messages);
-  const withVision = hasVision(anthropicMessages);
+/** Timeout por proveedor (ms). Si se agota, se prueba el siguiente. */
+const LLM_PROVIDER_TIMEOUT_MS = 10000;
 
-  let chunks = [];
+/** Mensaje cuando los tres proveedores fallan (controlado, no genérico de parseo). */
+const LLM_ALL_FAILED_USER_MSG =
+  'La IA no está disponible temporalmente. Estamos trabajando en ello; inténtalo de nuevo en unos minutos.';
+
+/**
+ * fetch con AbortController. Abort = timeout o cancelación → lanza Error.
+ */
+async function fetchWithTimeout(url, options, timeoutMs = LLM_PROVIDER_TIMEOUT_MS) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
-    const ultimoMensaje = [...messages].reverse().find(m => m.role === 'user');
-    const textoConsulta = Array.isArray(ultimoMensaje?.content)
-      ? ultimoMensaje.content.filter(p => p.type === 'text').map(p => p.text).join(' ')
-      : (ultimoMensaje?.content || '');
-    if (textoConsulta.trim().length > 3) {
-      const embedding = await generarEmbeddingConsulta(textoConsulta, env);
-      chunks = await buscarChunksRelevantes(embedding, env);
+    return await fetch(url, { ...options, signal: controller.signal });
+  } catch (err) {
+    if (err && (err.name === 'AbortError' || err.message?.includes('abort'))) {
+      throw new Error(`timeout_${timeoutMs}ms`);
     }
-  } catch (_) {}
+    throw err;
+  } finally {
+    clearTimeout(timer);
+  }
+}
 
-  const response = await fetch('https://api.anthropic.com/v1/messages', {
+/**
+ * Convierte mensajes estilo Anthropic (normalizeMessages) → formato OpenAI/DeepSeek.
+ * @param {boolean} includeImages - si false, las imágenes se sustituyen por nota de texto
+ *   (DeepSeek no soporta visión de forma fiable).
+ */
+function messagesToOpenAIFormat(messages, includeImages = true) {
+  return (messages || []).map((msg) => {
+    const role = msg.role === 'assistant' ? 'assistant' : 'user';
+    if (role === 'assistant') {
+      return { role, content: typeof msg.content === 'string' ? msg.content : String(msg.content || '') };
+    }
+    if (!Array.isArray(msg.content)) {
+      return { role: 'user', content: String(msg.content || '') };
+    }
+    const parts = [];
+    for (const part of msg.content) {
+      if (part.type === 'text') {
+        parts.push({ type: 'text', text: part.text || '' });
+      } else if (part.type === 'image' && part.source) {
+        if (includeImages) {
+          const mt = part.source.media_type || 'image/jpeg';
+          const data = part.source.data || '';
+          parts.push({
+            type: 'image_url',
+            image_url: { url: `data:${mt};base64,${data}` },
+          });
+        } else {
+          parts.push({
+            type: 'text',
+            text: '[El usuario adjuntó una foto de planta. No puedo verla en este modo de respaldo; responde a la pregunta de texto y pide otra foto si hace falta.]',
+          });
+        }
+      }
+    }
+    if (parts.length === 0) return { role: 'user', content: '' };
+    if (parts.length === 1 && parts[0].type === 'text') {
+      return { role: 'user', content: parts[0].text };
+    }
+    return { role: 'user', content: parts };
+  });
+}
+
+/** Extrae texto de respuesta Anthropic: content[].text */
+function extractAnthropicText(data) {
+  if (!data || !Array.isArray(data.content)) return null;
+  const texts = data.content
+    .filter((b) => b && (b.type === 'text' || typeof b.text === 'string'))
+    .map((b) => (b.text || '').trim())
+    .filter(Boolean);
+  const joined = texts.join('\n').trim();
+  return joined || null;
+}
+
+/** Extrae texto de respuesta OpenAI: choices[0].message.content */
+function extractOpenAIText(data) {
+  const content = data?.choices?.[0]?.message?.content;
+  if (content == null) return null;
+  if (typeof content === 'string') {
+    const t = content.trim();
+    return t || null;
+  }
+  // Algunos modelos devuelven content como array de partes
+  if (Array.isArray(content)) {
+    const t = content
+      .map((p) => (typeof p === 'string' ? p : p?.text || ''))
+      .join('')
+      .trim();
+    return t || null;
+  }
+  return null;
+}
+
+/** DeepSeek usa el mismo esquema Chat Completions que OpenAI. */
+function extractDeepSeekText(data) {
+  return extractOpenAIText(data);
+}
+
+function logProvider(provider, ok, detail) {
+  console.log(JSON.stringify({
+    event: 'chat_llm_provider',
+    provider,
+    ok: !!ok,
+    detail: detail ? String(detail).slice(0, 400) : undefined,
+    ts: new Date().toISOString(),
+  }));
+}
+
+/**
+ * Anthropic (fallback 1; principal si hay foto). Mismo system + mensajes (visión si aplica).
+ */
+async function callAnthropic(system, messages, withVision, env) {
+  if (!env.ANTHROPIC_API_KEY) throw new Error('missing_ANTHROPIC_API_KEY');
+
+  const response = await fetchWithTimeout('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -482,14 +699,222 @@ async function handleChat(body, env) {
     body: JSON.stringify({
       model: 'claude-sonnet-4-5',
       max_tokens: withVision ? 900 : 600,
-      system: buildSystemPrompt(perfil, chunks),
-      messages: anthropicMessages,
+      system,
+      messages,
     }),
   });
-  if (!response.ok) return { status: 500, data: { error: 'API Error', details: await response.text() } };
-  const data = await response.json();
-  const reply = data.content?.[0]?.text || 'Error al procesar la respuesta.';
-  return { status: 200, data: { reply } };
+
+  const raw = await response.text();
+  if (!response.ok) {
+    throw new Error(`http_${response.status}: ${raw.slice(0, 300)}`);
+  }
+
+  let data;
+  try {
+    data = JSON.parse(raw);
+  } catch {
+    throw new Error('invalid_json_response');
+  }
+
+  const text = extractAnthropicText(data);
+  if (!text) throw new Error('empty_or_unparseable_content');
+  return text;
+}
+
+/**
+ * OpenAI Chat Completions (fallback 2). Misma system prompt (RAG incluido).
+ */
+async function callOpenAI(system, anthropicMessages, withVision, env) {
+  if (!env.OPENAI_API_KEY) throw new Error('missing_OPENAI_API_KEY');
+
+  const openaiMessages = [
+    { role: 'system', content: system },
+    ...messagesToOpenAIFormat(anthropicMessages, /* includeImages */ true),
+  ];
+
+  const response = await fetchWithTimeout('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${env.OPENAI_API_KEY}`,
+    },
+    body: JSON.stringify({
+      model: withVision ? 'gpt-4o' : 'gpt-4o-mini',
+      max_tokens: withVision ? 900 : 600,
+      messages: openaiMessages,
+    }),
+  });
+
+  const raw = await response.text();
+  if (!response.ok) {
+    throw new Error(`http_${response.status}: ${raw.slice(0, 300)}`);
+  }
+
+  let data;
+  try {
+    data = JSON.parse(raw);
+  } catch {
+    throw new Error('invalid_json_response');
+  }
+
+  const text = extractOpenAIText(data);
+  if (!text) throw new Error('empty_or_unparseable_content');
+  return text;
+}
+
+/**
+ * DeepSeek (principal en texto). API compatible OpenAI; base_url distinto.
+ * Sin imágenes en el payload (includeImages=false). Con foto, generateChatReply lo omite.
+ */
+async function callDeepSeek(system, anthropicMessages, env) {
+  if (!env.DEEPSEEK_API_KEY) throw new Error('missing_DEEPSEEK_API_KEY');
+
+  const openaiMessages = [
+    { role: 'system', content: system },
+    ...messagesToOpenAIFormat(anthropicMessages, /* includeImages */ false),
+  ];
+
+  const response = await fetchWithTimeout('https://api.deepseek.com/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${env.DEEPSEEK_API_KEY}`,
+    },
+    body: JSON.stringify({
+      model: 'deepseek-chat',
+      max_tokens: 600,
+      messages: openaiMessages,
+    }),
+  });
+
+  const raw = await response.text();
+  if (!response.ok) {
+    throw new Error(`http_${response.status}: ${raw.slice(0, 300)}`);
+  }
+
+  let data;
+  try {
+    data = JSON.parse(raw);
+  } catch {
+    throw new Error('invalid_json_response');
+  }
+
+  const text = extractDeepSeekText(data);
+  if (!text) throw new Error('empty_or_unparseable_content');
+  return text;
+}
+
+/**
+ * Orquesta DeepSeek (principal) → Anthropic → OpenAI.
+ *
+ * Excepción visión: si hay foto, DeepSeek no soporta imágenes de forma fiable →
+ * se salta y se usa Anthropic (visión) → OpenAI (visión).
+ * Texto-only: DeepSeek primero (nota de imagen no aplica).
+ *
+ * Mismo system (chunks RAG) en todos. Un fallo no impide el siguiente.
+ * @returns {{ reply: string, provider: string }}
+ */
+async function generateChatReply(system, anthropicMessages, withVision, env) {
+  const failures = [];
+
+  // 1) DeepSeek — principal en texto; se omite si hay foto (sin visión fiable)
+  if (withVision) {
+    logProvider('deepseek', false, 'skipped_vision_use_anthropic');
+    failures.push({ provider: 'deepseek', error: 'skipped_vision' });
+  } else {
+    try {
+      const reply = await callDeepSeek(system, anthropicMessages, env);
+      logProvider('deepseek', true);
+      return { reply, provider: 'deepseek' };
+    } catch (err) {
+      const detail = err?.message || String(err);
+      logProvider('deepseek', false, detail);
+      failures.push({ provider: 'deepseek', error: detail });
+    }
+  }
+
+  // 2) Anthropic — fallback 1 (y principal cuando hay foto / visión)
+  try {
+    const reply = await callAnthropic(system, anthropicMessages, withVision, env);
+    logProvider('anthropic', true);
+    return { reply, provider: 'anthropic' };
+  } catch (err) {
+    const detail = err?.message || String(err);
+    logProvider('anthropic', false, detail);
+    failures.push({ provider: 'anthropic', error: detail });
+  }
+
+  // 3) OpenAI — fallback 2 (también con visión si aplica)
+  try {
+    const reply = await callOpenAI(system, anthropicMessages, withVision, env);
+    logProvider('openai', true);
+    return { reply, provider: 'openai' };
+  } catch (err) {
+    const detail = err?.message || String(err);
+    logProvider('openai', false, detail);
+    failures.push({ provider: 'openai', error: detail });
+  }
+
+  logProvider('all', false, failures.map((f) => `${f.provider}:${f.error}`).join(' | '));
+  const err = new Error('all_providers_failed');
+  err.failures = failures;
+  throw err;
+}
+
+async function handleChat(body, env) {
+  const { messages, perfil } = body || {};
+  if (!messages || !Array.isArray(messages) || !messages.length) {
+    return { status: 400, data: { error: 'Faltan mensajes' } };
+  }
+  const anthropicMessages = normalizeMessages(messages);
+  const withVision = hasVision(anthropicMessages);
+  const textoConsulta = extractLastUserText(messages);
+
+  // Guarda barata de scope: off-topic claro → respuesta fija sin RAG ni LLM
+  if (isClearlyOffTopicCultivo(textoConsulta, withVision)) {
+    logProvider('scope_heuristic', true, 'off_topic_rejected');
+    return {
+      status: 200,
+      data: { reply: SCOPE_REJECT_REPLY, provider: 'scope_heuristic' },
+    };
+  }
+
+  // RAG — sin cambios: Voyage embedding + match_chunks
+  let chunks = [];
+  try {
+    if (textoConsulta.trim().length > 3) {
+      const embedding = await generarEmbeddingConsulta(textoConsulta, env);
+      chunks = await buscarChunksRelevantes(embedding, env);
+    }
+  } catch (_) {}
+
+  // System incluye SCOPE_PROMPT al inicio; casos dudosos los resuelve el LLM
+  const system = buildSystemPrompt(perfil, chunks);
+
+  try {
+    const { reply, provider } = await generateChatReply(system, anthropicMessages, withVision, env);
+    // provider en el JSON es opcional para el frontend; útil en logs/cola de diagnóstico
+    return { status: 200, data: { reply, provider } };
+  } catch (err) {
+    if (err?.message === 'all_providers_failed') {
+      return {
+        status: 503,
+        data: {
+          error: LLM_ALL_FAILED_USER_MSG,
+          code: 'llm_all_providers_failed',
+          providers_tried: (err.failures || []).map((f) => f.provider),
+        },
+      };
+    }
+    logProvider('unexpected', false, err?.message || String(err));
+    return {
+      status: 503,
+      data: {
+        error: LLM_ALL_FAILED_USER_MSG,
+        code: 'llm_unexpected_error',
+      },
+    };
+  }
 }
 
 // =========================================================================
