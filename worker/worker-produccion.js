@@ -6,7 +6,7 @@
  * RAG (kb_chunks / match_chunks / Voyage) sin cambios.
  *
  * Secrets: ANTHROPIC_API_KEY, OPENAI_API_KEY, DEEPSEEK_API_KEY, JWT_SECRET, …
- * NO es el main de wrangler.toml (sigue en index.js). Deploy: pegar o apuntar main a este archivo.
+ * Entrypoint de wrangler.toml (main = "worker-produccion.js"). Deploy: npx wrangler deploy.
  */
 
 /**
