@@ -42,69 +42,112 @@
   --text:#1a1f1c;--text2:#3d453f;--text3:#6b7370;--text4:#9aa19d;--border:#e2e7e1;
 }
 html{scroll-behavior:smooth}
-body{font-family:'Inter',system-ui,-apple-system,sans-serif;color:var(--text);background:var(--white);line-height:1.7;-webkit-font-smoothing:antialiased}
+body{font-family:'Inter',system-ui,-apple-system,sans-serif;color:var(--text);background:var(--white);line-height:1.55;-webkit-font-smoothing:antialiased}
 a{color:var(--forest);text-decoration:none}
 a:hover{text-decoration:underline}
 
 /* Nav */
 nav{position:sticky;top:0;z-index:50;background:rgba(255,255,255,.92);backdrop-filter:blur(10px);border-bottom:1px solid var(--border)}
-.ni{max-width:1080px;margin:0 auto;padding:12px 24px;display:flex;align-items:center;justify-content:space-between;gap:16px}
+.ni{max-width:1120px;margin:0 auto;padding:10px 20px;display:flex;align-items:center;justify-content:space-between;gap:16px}
 .nl{display:flex;align-items:center;gap:10px}
-.nl img{height:30px;width:auto}
-.nl-brand{font-size:14px;font-weight:600;color:var(--text)}
+.nl img{height:28px;width:auto}
+.nl-brand{font-size:13.5px;font-weight:600;color:var(--text)}
 .nl-brand span{color:var(--text4);font-weight:400}
-.nc{background:var(--forest);color:#fff;border:0;padding:9px 18px;border-radius:9px;font-size:13px;font-weight:500;cursor:pointer;font-family:inherit}
+.nc{background:var(--forest);color:#fff;border:0;padding:8px 16px;border-radius:9px;font-size:13px;font-weight:500;cursor:pointer;font-family:inherit}
 .nc:hover{background:var(--forest-light)}
 
-/* Layout */
-.wrap{max-width:1080px;margin:0 auto;padding:0 24px}
-.crumbs{font-size:13px;color:var(--text3);padding:20px 0 0}
+/* Layout compacto */
+.wrap{max-width:1120px;margin:0 auto;padding:0 20px}
+.crumbs{font-size:12.5px;color:var(--text3);padding:12px 0 0}
 .crumbs a{color:var(--text3)}
 
-/* Hero */
-.hero{padding:28px 0 40px;border-bottom:1px solid var(--border)}
-h1{font-family:'Inter',sans-serif;font-size:clamp(32px,6vw,52px);font-weight:600;letter-spacing:-0.04em;line-height:1.07;margin:14px 0 18px}
+/* Hero corto */
+.hero{padding:14px 0 16px;border-bottom:1px solid var(--border)}
+h1{font-family:'Inter',sans-serif;font-size:clamp(26px,4.5vw,36px);font-weight:600;letter-spacing:-0.04em;line-height:1.1;margin:6px 0 8px}
 h1 em{font-family:'Lora',serif;font-style:italic;color:var(--forest);font-weight:400}
-.lead{font-size:clamp(16px,2.2vw,19px);color:var(--text2);line-height:1.65;max-width:680px}
+.lead{font-size:clamp(14px,1.8vw,16px);color:var(--text2);line-height:1.5;max-width:640px;margin:0}
 
-/* Hub por categorías */
-.hub{padding:36px 0 64px}
-.cat-block{margin:0 0 52px;padding-bottom:8px}
-.cat-block:last-child{margin-bottom:0}
-.cat-head{display:flex;align-items:baseline;justify-content:space-between;gap:14px 20px;flex-wrap:wrap;margin:0 0 18px}
-.cat-head h2{font-size:clamp(22px,3.2vw,28px);font-weight:600;letter-spacing:-0.03em;line-height:1.2;margin:0;color:var(--text)}
-.cat-more{font-size:14px;font-weight:600;color:var(--forest);white-space:nowrap}
-.cat-more:hover{text-decoration:underline}
+/* Hub: botones arriba + grid de últimas */
+.hub{padding:18px 0 40px}
 
-/* Grid de cards (misma tarjeta visual) */
-.lib-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:18px}
-.lib-grid--latest{grid-template-columns:minmax(280px,420px)}
-.lib-card{display:block;border:1px solid var(--border);border-radius:16px;padding:24px;background:#fff;transition:border-color .18s,box-shadow .18s,transform .18s}
-.lib-card:hover{border-color:var(--forest-pale2);box-shadow:0 12px 34px rgba(0,0,0,.07);transform:translateY(-2px);text-decoration:none}
-.lib-top{display:flex;align-items:center;gap:10px;margin-bottom:14px}
-.badge{display:inline-block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#fff;background:var(--forest);padding:4px 11px;border-radius:999px}
-.lib-date{font-size:12.5px;color:var(--text4);font-weight:500}
-.lib-card h3{font-family:'Inter',sans-serif;font-size:20px;font-weight:600;letter-spacing:-0.02em;line-height:1.25;margin:0 0 6px;color:var(--text)}
-.lib-card .sub{font-size:14px;color:var(--text3);font-style:italic;margin:0 0 12px;font-family:'Lora',serif}
-.lib-card p{font-size:14.5px;color:var(--text2);margin:0 0 16px}
-.lib-card .go{font-size:13.5px;font-weight:600;color:var(--forest)}
+/* Botones de categoría juntos */
+.cat-nav{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 18px;align-items:center}
+.cat-nav .label{font-size:12.5px;font-weight:600;color:var(--text4);text-transform:uppercase;letter-spacing:.06em;margin-right:4px}
+.chip{
+  display:inline-flex;align-items:center;gap:6px;
+  border:1px solid var(--forest-pale2);background:#fff;color:var(--text2);
+  padding:8px 14px;border-radius:999px;font-size:13.5px;font-weight:500;
+  transition:background .15s,border-color .15s,color .15s,box-shadow .15s;
+}
+.chip:hover{background:var(--forest-pale);border-color:var(--forest-pale2);text-decoration:none;color:var(--forest)}
+.chip .n{font-size:11px;font-weight:700;color:var(--forest);background:var(--forest-pale);padding:2px 7px;border-radius:999px}
 
-/* Estado vacío / próximamente */
-.lib-empty{border:1px dashed var(--border);border-radius:16px;padding:40px 28px;text-align:center;background:var(--bg);max-width:420px}
-.lib-empty .big{font-size:32px;margin-bottom:10px}
-.lib-empty p{margin:0;font-size:15px;color:var(--text3);max-width:360px;margin:0 auto}
+/* Grid: una tarjeta por categoría, lado a lado */
+.lib-grid--latest{
+  display:grid;
+  grid-template-columns:repeat(5,1fr);
+  gap:12px;
+  align-items:stretch;
+}
+.latest-slot{min-width:0;display:flex;flex-direction:column}
+.latest-slot > .lib-card,
+.latest-slot > .lib-empty{flex:1}
+
+/* Tarjeta compacta (misma identidad visual, menos aire) */
+.lib-card{
+  display:flex;flex-direction:column;
+  border:1px solid var(--border);border-radius:14px;padding:14px 15px 16px;
+  background:#fff;
+  transition:border-color .18s,box-shadow .18s,transform .18s;
+  height:100%;
+}
+.lib-card:hover{border-color:var(--forest-pale2);box-shadow:0 10px 28px rgba(0,0,0,.07);transform:translateY(-2px);text-decoration:none}
+.lib-top{display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap}
+.badge{display:inline-block;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#fff;background:var(--forest);padding:3px 9px;border-radius:999px}
+.lib-date{font-size:11.5px;color:var(--text4);font-weight:500}
+.lib-card h3{
+  font-family:'Inter',sans-serif;font-size:15.5px;font-weight:600;letter-spacing:-0.02em;
+  line-height:1.28;margin:0 0 6px;color:var(--text);
+  display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;
+}
+.lib-card .sub{
+  font-size:12.5px;color:var(--text3);font-style:italic;margin:0 0 8px;font-family:'Lora',serif;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
+}
+.lib-card p{
+  font-size:13px;color:var(--text2);margin:0 0 12px;line-height:1.45;
+  display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;
+  flex:1;
+}
+.lib-card .go{font-size:12.5px;font-weight:600;color:var(--forest);margin-top:auto}
+
+/* Vacío compacto */
+.lib-empty{
+  border:1px dashed var(--border);border-radius:14px;padding:18px 14px;
+  text-align:center;background:var(--bg);height:100%;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;
+}
+.lib-empty .big{font-size:22px;line-height:1}
+.lib-empty p{margin:0;font-size:12.5px;color:var(--text3);line-height:1.4}
 
 /* Footer */
 footer{border-top:1px solid var(--border);background:var(--bg2);margin-top:0}
-.fi{max-width:1080px;margin:0 auto;padding:34px 24px 46px;font-size:13px;color:var(--text3)}
+.fi{max-width:1120px;margin:0 auto;padding:28px 20px 40px;font-size:12.5px;color:var(--text3)}
 .fi a{color:var(--text3)}
-.fi .flinks{margin-bottom:14px;display:flex;gap:16px;flex-wrap:wrap}
+.fi .flinks{margin-bottom:12px;display:flex;gap:14px;flex-wrap:wrap}
 .fi .flinks a{font-weight:500}
 
-@media(max-width:640px){
-  .wrap{padding:0 18px}
+@media(max-width:1100px){
+  .lib-grid--latest{grid-template-columns:repeat(3,1fr)}
+}
+@media(max-width:720px){
+  .lib-grid--latest{grid-template-columns:repeat(2,1fr)}
   .nl-brand span{display:none}
-  .lib-grid--latest{grid-template-columns:1fr}
+}
+@media(max-width:480px){
+  .wrap{padding:0 14px}
+  .lib-grid--latest{grid-template-columns:1fr;gap:10px}
+  .cat-nav .label{width:100%;margin-bottom:2px}
 }
 </style>
 <script type="application/ld+json">
@@ -153,18 +196,24 @@ footer{border-top:1px solid var(--border);background:var(--bg2);margin-top:0}
 
   <header class="hero">
     <h1>Biblioteca <em>Cannabicultor</em></h1>
-    <p class="lead">Informes, investigaciones, guías y libros sobre cultivo de cannabis, mercado y regulación en España. Conocimiento riguroso y en abierto, para cultivar y entender mejor.</p>
+    <p class="lead">Informes, guías, artículos e investigaciones sobre cultivo, mercado y regulación. Lo último de cada categoría, a un clic.</p>
   </header>
 
   <section class="hub">
+    <!-- Todos los botones de categoría juntos -->
+    <nav class="cat-nav" aria-label="Categorías de la biblioteca">
+      <span class="label">Explorar</span>
+      <a class="chip" href="/biblioteca/informes/">Informes</a>
+      <a class="chip" href="/biblioteca/guias/">Guías</a>
+      <a class="chip" href="/biblioteca/articulos/">Artículos</a>
+      <a class="chip" href="/biblioteca/investigaciones/">Investigaciones</a>
+      <a class="chip" href="/biblioteca/libros/">Libros</a>
+    </nav>
 
-    <!-- Categoría: Informes -->
-    <div class="cat-block" data-cat="informes">
-      <div class="cat-head">
-        <h2>Informes</h2>
-        <a class="cat-more" href="/biblioteca/informes/">Ver todos los Informes →</a>
-      </div>
-      <div class="lib-grid lib-grid--latest">
+    <!-- Última tarjeta de cada categoría, en fila -->
+    <div class="lib-grid lib-grid--latest" id="libLatest">
+
+      <div class="latest-slot" data-cat="informes">
 <!-- LIB-LATEST:informes START -->
       <a class="lib-card" data-tipo="informes" href="/informes/cannabis-del-barrio-al-turista/">
         <div class="lib-top">
@@ -173,20 +222,13 @@ footer{border-top:1px solid var(--border);background:var(--bg2);margin-top:0}
         </div>
         <h3>Del barrio al turista, y la vuelta al cultivador</h3>
         <div class="sub">Auge, fractura y futuro de las asociaciones cannábicas en España</div>
-        <p>La historia completa de las asociaciones cannábicas españolas —del club de barrio al giro turístico— con testimonios inéditos de cultivadores veteranos y la pieza que falta para cerrar la normalización: el porte.</p>
+        <p>La historia completa de las asociaciones cannábicas españolas —del club de barrio al giro turístico— con testimonios de cultivadores veteranos.</p>
         <span class="go">Leer el informe →</span>
       </a>
 <!-- LIB-LATEST:informes END -->
       </div>
-    </div>
 
-    <!-- Categoría: Guías -->
-    <div class="cat-block" data-cat="guias">
-      <div class="cat-head">
-        <h2>Guías</h2>
-        <a class="cat-more" href="/biblioteca/guias/">Ver todas las Guías →</a>
-      </div>
-      <div class="lib-grid lib-grid--latest">
+      <div class="latest-slot" data-cat="guias">
 <!-- LIB-LATEST:guias START -->
       <a class="lib-card" data-tipo="guias" href="/biblioteca/vpd-con-ia/">
         <div class="lib-top">
@@ -200,15 +242,8 @@ footer{border-top:1px solid var(--border);background:var(--bg2);margin-top:0}
       </a>
 <!-- LIB-LATEST:guias END -->
       </div>
-    </div>
 
-    <!-- Categoría: Artículos -->
-    <div class="cat-block" data-cat="articulos">
-      <div class="cat-head">
-        <h2>Artículos</h2>
-        <a class="cat-more" href="/biblioteca/articulos/">Ver todos los Artículos →</a>
-      </div>
-      <div class="lib-grid lib-grid--latest">
+      <div class="latest-slot" data-cat="articulos">
 <!-- LIB-LATEST:articulos START -->
       <a class="lib-card" data-tipo="articulos" href="/biblioteca/growverse-2026-del-sueno-a-la-realidad/">
         <div class="lib-top">
@@ -217,45 +252,31 @@ footer{border-top:1px solid var(--border);background:var(--bg2);margin-top:0}
         </div>
         <h3>Growverse 2026: Del sueño a la realidad</h3>
         <div class="sub">El metaverso cannábico que ya no es promesa</div>
-        <p>Tres años después de su primera aparición en Soft Secrets, Roberto Romagnino vuelve con noticias concretas sobre Growverse 2026 y el salto del sueño a la realidad.</p>
+        <p>Tres años después, Roberto Romagnino vuelve con noticias concretas sobre Growverse 2026 y el salto del sueño a la realidad.</p>
         <span class="go">Leer el artículo →</span>
       </a>
 <!-- LIB-LATEST:articulos END -->
       </div>
-    </div>
 
-    <!-- Categoría: Investigaciones -->
-    <div class="cat-block" data-cat="investigaciones">
-      <div class="cat-head">
-        <h2>Investigaciones</h2>
-        <a class="cat-more" href="/biblioteca/investigaciones/">Ver todas las Investigaciones →</a>
-      </div>
-      <div class="lib-grid lib-grid--latest">
+      <div class="latest-slot" data-cat="investigaciones">
 <!-- LIB-LATEST:investigaciones START -->
       <div class="lib-empty" data-empty="1">
         <div class="big">📚</div>
-        <p>Próximamente publicaremos investigaciones aquí.</p>
+        <p>Investigaciones · próximamente</p>
       </div>
 <!-- LIB-LATEST:investigaciones END -->
       </div>
-    </div>
 
-    <!-- Categoría: Libros -->
-    <div class="cat-block" data-cat="libros">
-      <div class="cat-head">
-        <h2>Libros</h2>
-        <a class="cat-more" href="/biblioteca/libros/">Ver todos los Libros →</a>
-      </div>
-      <div class="lib-grid lib-grid--latest">
+      <div class="latest-slot" data-cat="libros">
 <!-- LIB-LATEST:libros START -->
       <div class="lib-empty" data-empty="1">
         <div class="big">📚</div>
-        <p>Próximamente publicaremos libros aquí.</p>
+        <p>Libros · próximamente</p>
       </div>
 <!-- LIB-LATEST:libros END -->
       </div>
-    </div>
 
+    </div>
   </section>
 </div>
 
@@ -264,14 +285,14 @@ footer{border-top:1px solid var(--border);background:var(--bg2);margin-top:0}
     <div class="flinks">
       <a href="/">Inicio</a>
       <a href="/biblioteca/">Biblioteca</a>
+      <a href="/biblioteca/informes/">Informes</a>
+      <a href="/biblioteca/guias/">Guías</a>
+      <a href="/biblioteca/articulos/">Artículos</a>
       <a href="/cultivo-con-ia/">Cultivo con IA</a>
-      <a href="/buscador-cannabicultor.html">Buscador de variedades</a>
-      <a href="/disenador_sala_cultivo.html">Diseñador de salas</a>
-      <a href="/atlas_landrace.html">Atlas de landraces</a>
       <a href="/contacto.html">Contacto</a>
     </div>
-    <p>Solo para mayores de 18 años. El cultivo de cannabis está regulado. Consulta la legislación vigente en tu país. Este servicio tiene fines educativos y de asesoramiento responsable.</p>
-    <p style="margin-top:10px"><a href="/aviso-legal.html">Aviso legal</a> · <a href="/privacidad.html">Privacidad</a> · <a href="/cookies.html">Cookies</a> · <a href="/terminos.html">Términos</a></p>
+    <p>Solo para mayores de 18 años. El cultivo de cannabis está regulado. Consulta la legislación vigente en tu país.</p>
+    <p style="margin-top:8px"><a href="/aviso-legal.html">Aviso legal</a> · <a href="/privacidad.html">Privacidad</a> · <a href="/cookies.html">Cookies</a> · <a href="/terminos.html">Términos</a></p>
   </div>
 </footer>
 
