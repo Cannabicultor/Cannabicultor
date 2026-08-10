@@ -143,7 +143,13 @@
   <div class="scroll">
     <div class="kicker">Diseñador · Sala de cultivo</div>
     <div class="title">Diseña tu <em>sala de cultivo</em></div>
-    <p class="lead">Ajusta las medidas con los botones. El modelo y los cálculos —aire, luz, VPD, coste y cosecha— se actualizan al instante.</p>
+    <p class="lead" id="lead-text">Ajusta las medidas con los botones. El modelo y los cálculos —aire, luz, VPD, coste y cosecha— se actualizan al instante.</p>
+
+    <!-- MODO: valores ideales (calculadora general) vs mi sala (guardar datos reales) -->
+    <div class="seg" id="modeTabs" style="margin-bottom:14px;">
+      <button data-mode="ideal" class="active">Valores ideales</button>
+      <button data-mode="misala">Mi sala</button>
+    </div>
 
     <!-- VISUAL -->
     <div class="scene-card">
@@ -208,6 +214,25 @@
         <button data-light="hps">HPS</button>
         <button data-light="cmh">CMH/LEC</button>
       </div>
+
+      <div id="misala-watt-row" style="display:none;">
+        <div class="divider"></div>
+        <h2>Potencia real de tu lámpara</h2>
+        <div class="slider-row" style="margin-bottom:0;">
+          <div class="slider-head"><label for="wattreal">Vatios reales</label><span class="readout"><span id="wattreal-val">575</span> <small>W</small></span></div>
+          <input type="range" id="wattreal" min="50" max="2000" step="5" value="575">
+        </div>
+        <p class="note-sm">Si dejas este valor igual al calculado, se usa la estimación estándar del modelo.</p>
+      </div>
+    </div>
+
+    <!-- MI SALA: guardar datos reales del usuario -->
+    <div class="panel" id="misala-card" style="display:none;">
+      <h2>Mi sala</h2>
+      <p class="lead" style="margin-bottom:12px;">Guarda las medidas y el equipo real de tu sala. Se combina con tus parámetros y tu diario para un análisis más profundo.</p>
+      <div id="misala-clima-real" style="margin-bottom:14px;"></div>
+      <button class="chip" id="guardar-misala-btn" style="width:100%;text-align:center;background:var(--forest);color:#fff;border-color:var(--forest);padding:13px;">Guardar mi sala</button>
+      <p class="note-sm" id="misala-status"></p>
     </div>
 
     <!-- RESULTADOS -->
@@ -232,6 +257,11 @@
         <div class="k">Plantas estimadas</div>
         <div class="v"><span id="r-plants">6</span> <small>uds</small></div>
         <div class="note">Estándar 4/m² · SOG hasta <b id="r-plants-sog">17</b></div>
+      </div>
+      <div class="stat" id="clima-ideal-card">
+        <div class="k">Clima ideal · <span id="clima-stagename">floración</span></div>
+        <div class="v"><span id="r-temp-ideal">24</span> <small>°C</small> · <span id="r-rh-ideal">48</span> <small>%</small></div>
+        <div class="note">Temperatura y humedad objetivo para esta etapa y tamaño de sala</div>
       </div>
 
       <div class="vpd-card">
@@ -377,9 +407,97 @@
   function setSeg(wrap,active){Array.prototype.forEach.call(wrap.children,function(c){c.classList.toggle('active',c===active);});}
   Array.prototype.forEach.call($('light').children,function(b){b.onclick=function(){state.light=b.dataset.light;setSeg($('light'),b);update();};});
 
+  // ---- Parámetros reales del usuario (guardados en dashboard/app: PERFIL.temp / PERFIL.hum) ----
+  var PERFIL=null;
+  try{PERFIL=JSON.parse(localStorage.getItem('ga_perfil')||'null');}catch(e){}
+  var misalaClimaReal=$('misala-clima-real');
+  function renderClimaReal(){
+    if(PERFIL&&PERFIL.temp&&PERFIL.hum){
+      state.temp=parseFloat(PERFIL.temp);state.rh=parseFloat(PERFIL.hum);
+      misalaClimaReal.innerHTML='<div class="stat accent"><div class="k">Tus parámetros</div><div class="v">'+fmt(state.temp,1)+' <small>°C</small> · '+fmt(state.rh,0)+' <small>%</small></div><div class="note">Temperatura y humedad de tus parámetros de cultivo</div></div>';
+    }else{
+      misalaClimaReal.innerHTML='<p class="note-sm">Aún no tienes parámetros de cultivo guardados. <a href="dashboard.html" style="color:var(--forest);font-weight:600;">Rellénalos aquí</a> para usar tu temperatura y humedad reales.</p>';
+    }
+  }
+
   // ---- Sliders avanzados ----
   function bind(id,key){$(id).addEventListener('input',function(){state[key]=parseFloat(this.value);update();});}
   bind('temp','temp');bind('rh','rh');bind('leaf','leaf');bind('price','price');
+
+  // ---- Modo: Valores ideales vs Mi sala ----
+  state.mode='ideal';state.wattReal=null;
+  var modeTabs=$('modeTabs'),leadText=$('lead-text'),wattRow=$('misala-watt-row'),misalaCard=$('misala-card');
+  var LEAD_IDEAL='Ajusta las medidas con los botones. El modelo y los cálculos —aire, luz, VPD, coste y cosecha— se actualizan al instante.';
+  var LEAD_MISALA='Aquí usamos la temperatura y humedad de tus parámetros guardados. Ajusta la potencia real de tu lámpara y guarda tu sala cuando esté lista.';
+  Array.prototype.forEach.call(modeTabs.children,function(b){
+    b.onclick=function(){
+      state.mode=b.dataset.mode;
+      setSeg(modeTabs,b);
+      var isMisala=state.mode==='misala';
+      wattRow.style.display=isMisala?'':'none';
+      misalaCard.style.display=isMisala?'':'none';
+      leadText.textContent=isMisala?LEAD_MISALA:LEAD_IDEAL;
+      $('misala-status').textContent='';
+      if(isMisala){
+        renderClimaReal();
+        if(state.wattReal===null){state.wattReal=Math.round(state.w*state.d*LIGHT[state.light].wm2*STAGES[state.stage].lightMult);$('wattreal').value=state.wattReal;$('wattreal-val').textContent=state.wattReal;}
+      }else{
+        // vuelve a los valores ideales de la etapa
+        state.temp=STAGES[state.stage].temp;state.rh=STAGES[state.stage].rh;
+      }
+      update();
+    };
+  });
+  $('wattreal').addEventListener('input',function(){state.wattReal=parseFloat(this.value);$('wattreal-val').textContent=fmt(state.wattReal,0);});
+
+  // ---- Guardar mi sala ----
+  // TODO(Grok Build): sustituir localStorage por llamada al endpoint del Worker (tabla salas_cultivo en Supabase)
+  $('guardar-misala-btn').addEventListener('click',function(){
+    var sala={
+      ancho:state.w,profundidad:state.d,alto:state.h,
+      etapa:state.stage,tipo_luz:state.light,
+      potencia_calculada:Math.round(state.w*state.d*LIGHT[state.light].wm2*STAGES[state.stage].lightMult),
+      potencia_real:state.wattReal,
+      temperatura:state.temp,humedad:state.rh,
+      guardado_en:new Date().toISOString()
+    };
+    try{localStorage.setItem('mi_sala_cannabicultor',JSON.stringify(sala));}catch(e){}
+    $('misala-status').textContent='Sala guardada ✓';
+  });
+
+  // ---- Modo: Valores ideales vs Mi sala ----
+  state.mode='ideal';state.wattReal=null;
+  var modeTabs=$('modeTabs'),leadText=$('lead-text'),wattRow=$('misala-watt-row'),misalaCard=$('misala-card');
+  var LEAD_IDEAL='Ajusta las medidas con los botones. El modelo y los cálculos —aire, luz, VPD, coste y cosecha— se actualizan al instante.';
+  var LEAD_MISALA='Estos son los valores ideales para tu sala. Ajusta la potencia real de tu lámpara si es distinta y guarda tu sala cuando esté lista.';
+  Array.prototype.forEach.call(modeTabs.children,function(b){
+    b.onclick=function(){
+      state.mode=b.dataset.mode;
+      setSeg(modeTabs,b);
+      var isMisala=state.mode==='misala';
+      wattRow.style.display=isMisala?'':'none';
+      misalaCard.style.display=isMisala?'':'none';
+      leadText.textContent=isMisala?LEAD_MISALA:LEAD_IDEAL;
+      $('misala-status').textContent='';
+      if(isMisala&&state.wattReal===null){state.wattReal=Math.round(state.w*state.d*LIGHT[state.light].wm2*STAGES[state.stage].lightMult);$('wattreal').value=state.wattReal;$('wattreal-val').textContent=state.wattReal;}
+    };
+  });
+  $('wattreal').addEventListener('input',function(){state.wattReal=parseFloat(this.value);$('wattreal-val').textContent=fmt(state.wattReal,0);});
+
+  // ---- Guardar mi sala ----
+  // TODO(Grok Build): sustituir localStorage por llamada al endpoint del Worker (tabla salas_cultivo en Supabase)
+  $('guardar-misala-btn').addEventListener('click',function(){
+    var sala={
+      ancho:state.w,profundidad:state.d,alto:state.h,
+      etapa:state.stage,tipo_luz:state.light,
+      potencia_calculada:Math.round(state.w*state.d*LIGHT[state.light].wm2*STAGES[state.stage].lightMult),
+      potencia_real:state.wattReal,
+      temperatura:state.temp,humedad:state.rh,
+      guardado_en:new Date().toISOString()
+    };
+    try{localStorage.setItem('mi_sala_cannabicultor',JSON.stringify(sala));}catch(e){}
+    $('misala-status').textContent='Sala guardada ✓';
+  });
 
   // ---- Acordeón ajustes avanzados ----
   var advToggle=$('adv-toggle'), advBody=$('adv-body');
@@ -430,6 +548,9 @@
     var wattFlor=Math.round(area*lt.wm2),watt=Math.round(area*lt.wm2*st.lightMult);
     $('r-watt').textContent=watt;$('r-watt-flor').textContent=wattFlor;$('r-light-name').textContent=lt.name;
     $('r-plants').textContent=Math.max(1,Math.round(area*4));$('r-plants-sog').textContent=Math.max(1,Math.round(area*12));
+
+    // Clima ideal por etapa (Valores ideales)
+    $('r-temp-ideal').textContent=fmt(st.temp,0);$('r-rh-ideal').textContent=fmt(st.rh,0);$('clima-stagename').textContent=st.label.toLowerCase();
 
     // VPD
     var leafT=s.temp-s.leaf,vpd=svp(leafT)-svp(s.temp)*(s.rh/100);if(vpd<0)vpd=0;
