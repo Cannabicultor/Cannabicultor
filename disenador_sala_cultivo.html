@@ -230,7 +230,7 @@
     <div class="panel" id="misala-card" style="display:none;">
       <h2>Mi sala</h2>
       <p class="lead" style="margin-bottom:12px;">Guarda las medidas y el equipo real de tu sala. Se combina con tus parámetros y tu diario para un análisis más profundo.</p>
-      <div id="misala-clima-real" style="margin-bottom:14px;"></div>
+      <div class="results" id="misala-clima-real" style="margin-bottom:14px;"></div>
       <button class="chip" id="guardar-misala-btn" style="width:100%;text-align:center;background:var(--forest);color:#fff;border-color:var(--forest);padding:13px;">Guardar mi sala</button>
       <p class="note-sm" id="misala-status"></p>
     </div>
@@ -259,9 +259,14 @@
         <div class="note">Estándar 4/m² · SOG hasta <b id="r-plants-sog">17</b></div>
       </div>
       <div class="stat" id="clima-ideal-card">
-        <div class="k">Clima ideal · <span id="clima-stagename">floración</span></div>
-        <div class="v"><span id="r-temp-ideal">24</span> <small>°C</small> · <span id="r-rh-ideal">48</span> <small>%</small></div>
-        <div class="note">Temperatura y humedad objetivo para esta etapa y tamaño de sala</div>
+        <div class="k">Temperatura ideal · <span id="clima-stagename">floración</span></div>
+        <div class="v"><span id="r-temp-ideal">24</span> <small>°C</small></div>
+        <div class="note">Para VPD óptimo en esta etapa</div>
+      </div>
+      <div class="stat" id="humedad-ideal-card">
+        <div class="k">Humedad ideal · <span id="clima-stagename2">floración</span></div>
+        <div class="v"><span id="r-rh-ideal">48</span> <small>%</small></div>
+        <div class="note">Para VPD óptimo en esta etapa</div>
       </div>
 
       <div class="vpd-card">
@@ -346,9 +351,9 @@
   "use strict";
   var STAGES = {
     esquejes:  {label:'Esquejes',    temp:24, rh:68, vpdMin:0.4, vpdMax:0.8,  lightMult:0.35, airMult:0.8,  hours:18, water:1},
-    veg:       {label:'Vegetativo',  temp:25, rh:60, vpdMin:0.9, vpdMax:1.2,  lightMult:0.6,  airMult:0.9,  hours:18, water:3},
-    florini:   {label:'Flor inicial',temp:25, rh:55, vpdMin:1.2, vpdMax:1.45, lightMult:1.0,  airMult:1.1,  hours:12, water:5},
-    floracion: {label:'Floración',   temp:24, rh:48, vpdMin:1.4, vpdMax:1.6,  lightMult:1.0,  airMult:1.15, hours:12, water:6}
+    veg:       {label:'Vegetativo',  temp:25, rh:56, vpdMin:0.9, vpdMax:1.2,  lightMult:0.6,  airMult:0.9,  hours:18, water:3},
+    florini:   {label:'Flor inicial',temp:25, rh:47, vpdMin:1.2, vpdMax:1.45, lightMult:1.0,  airMult:1.1,  hours:12, water:5},
+    floracion: {label:'Floración',   temp:24, rh:38, vpdMin:1.4, vpdMax:1.6,  lightMult:1.0,  airMult:1.15, hours:12, water:6}
   };
   var LIGHT = {
     led:{name:'LED',     wm2:400, airMult:1.0,  gw:[0.5,1.2]},
@@ -356,7 +361,7 @@
     cmh:{name:'CMH/LEC', wm2:480, airMult:1.1,  gw:[0.5,1.0]}
   };
   var PRESETS = [[0.6,0.6,1.4],[0.8,0.8,1.6],[1.0,1.0,2.0],[1.2,1.2,2.0],[1.2,2.4,2.0],[1.5,1.5,2.0],[3.0,3.0,2.5]];
-  var state = {w:1.2,d:1.2,h:2.0,stage:'floracion',light:'led',temp:25,rh:55,leaf:2,price:0.15};
+  var state = {w:1.2,d:1.2,h:2.0,stage:'floracion',light:'led',temp:STAGES.floracion.temp,rh:STAGES.floracion.rh,leaf:2,price:0.15};
   var $ = function(id){return document.getElementById(id);};
   var box=$('box'), scene=$('scene');
 
@@ -411,12 +416,17 @@
   var PERFIL=null;
   try{PERFIL=JSON.parse(localStorage.getItem('ga_perfil')||'null');}catch(e){}
   var misalaClimaReal=$('misala-clima-real');
+  function tieneParams(){return !!(PERFIL&&PERFIL.temp&&PERFIL.hum);}
   function renderClimaReal(){
-    if(PERFIL&&PERFIL.temp&&PERFIL.hum){
-      state.temp=parseFloat(PERFIL.temp);state.rh=parseFloat(PERFIL.hum);
-      misalaClimaReal.innerHTML='<div class="stat accent"><div class="k">Tus parámetros</div><div class="v">'+fmt(state.temp,1)+' <small>°C</small> · '+fmt(state.rh,0)+' <small>%</small></div><div class="note">Temperatura y humedad de tus parámetros de cultivo</div></div>';
+    if(tieneParams()){
+      misalaClimaReal.innerHTML=
+        '<div class="stat"><div class="k">Tu temperatura</div><div class="v">'+fmt(parseFloat(PERFIL.temp),1)+' <small>°C</small></div><div class="note">De tus parámetros de cultivo</div></div>'+
+        '<div class="stat"><div class="k">Tu humedad</div><div class="v">'+fmt(parseFloat(PERFIL.hum),0)+' <small>%</small></div><div class="note">De tus parámetros de cultivo</div></div>';
     }else{
-      misalaClimaReal.innerHTML='<p class="note-sm">Aún no tienes parámetros de cultivo guardados. <a href="dashboard.html" style="color:var(--forest);font-weight:600;">Rellénalos aquí</a> para usar tu temperatura y humedad reales.</p>';
+      misalaClimaReal.innerHTML=
+        '<div class="stat"><div class="k">Tu temperatura</div><div class="v">— <small>°C</small></div><div class="note">Sin dato</div></div>'+
+        '<div class="stat"><div class="k">Tu humedad</div><div class="v">— <small>%</small></div><div class="note">Sin dato</div></div>'+
+        '<div class="note-sm" style="grid-column:1/-1;">Aún no tienes parámetros de cultivo guardados. <a href="dashboard.html" style="color:var(--forest);font-weight:600;">Rellénalos aquí</a> para ver tu VPD real.</div>';
     }
   }
 
@@ -428,7 +438,7 @@
   state.mode='ideal';state.wattReal=null;
   var modeTabs=$('modeTabs'),leadText=$('lead-text'),wattRow=$('misala-watt-row'),misalaCard=$('misala-card');
   var LEAD_IDEAL='Ajusta las medidas con los botones. El modelo y los cálculos —aire, luz, VPD, coste y cosecha— se actualizan al instante.';
-  var LEAD_MISALA='Aquí usamos la temperatura y humedad de tus parámetros guardados. Ajusta la potencia real de tu lámpara y guarda tu sala cuando esté lista.';
+  var LEAD_MISALA='Aquí se usa la temperatura y humedad reales de tus parámetros guardados. Ajusta la potencia real de tu lámpara y guarda tu sala cuando esté lista.';
   Array.prototype.forEach.call(modeTabs.children,function(b){
     b.onclick=function(){
       state.mode=b.dataset.mode;
@@ -440,6 +450,7 @@
       $('misala-status').textContent='';
       if(isMisala){
         renderClimaReal();
+        if(tieneParams()){state.temp=parseFloat(PERFIL.temp);state.rh=parseFloat(PERFIL.hum);}
         if(state.wattReal===null){state.wattReal=Math.round(state.w*state.d*LIGHT[state.light].wm2*STAGES[state.stage].lightMult);$('wattreal').value=state.wattReal;$('wattreal-val').textContent=state.wattReal;}
       }else{
         // vuelve a los valores ideales de la etapa
@@ -458,7 +469,7 @@
       etapa:state.stage,tipo_luz:state.light,
       potencia_calculada:Math.round(state.w*state.d*LIGHT[state.light].wm2*STAGES[state.stage].lightMult),
       potencia_real:state.wattReal,
-      temperatura:state.temp,humedad:state.rh,
+      temperatura:tieneParams()?state.temp:null,humedad:tieneParams()?state.rh:null,
       guardado_en:new Date().toISOString()
     };
     try{localStorage.setItem('mi_sala_cannabicultor',JSON.stringify(sala));}catch(e){}
@@ -549,21 +560,31 @@
     $('r-watt').textContent=watt;$('r-watt-flor').textContent=wattFlor;$('r-light-name').textContent=lt.name;
     $('r-plants').textContent=Math.max(1,Math.round(area*4));$('r-plants-sog').textContent=Math.max(1,Math.round(area*12));
 
-    // Clima ideal por etapa (Valores ideales)
-    $('r-temp-ideal').textContent=fmt(st.temp,0);$('r-rh-ideal').textContent=fmt(st.rh,0);$('clima-stagename').textContent=st.label.toLowerCase();
+    // Clima ideal por etapa (Valores ideales) — solo visible fuera de Mi sala
+    var climaIdealVisible=s.mode!=='misala';
+    $('clima-ideal-card').style.display=climaIdealVisible?'':'none';
+    $('humedad-ideal-card').style.display=climaIdealVisible?'':'none';
+    $('r-temp-ideal').textContent=fmt(st.temp,0);$('r-rh-ideal').textContent=fmt(st.rh,0);
+    $('clima-stagename').textContent=st.label.toLowerCase();$('clima-stagename2').textContent=st.label.toLowerCase();
 
     // VPD
-    var leafT=s.temp-s.leaf,vpd=svp(leafT)-svp(s.temp)*(s.rh/100);if(vpd<0)vpd=0;
-    $('vpd-num').textContent=fmt(vpd,2);$('vpd-stagename').textContent=st.label.toLowerCase();
-    $('vpd-range').textContent=fmt(st.vpdMin,1)+' - '+fmt(st.vpdMax,1);
-    var band=$('vpd-band'),needle=$('vpd-needle');
-    band.style.left=(st.vpdMin/2*100)+'%';band.style.width=((st.vpdMax-st.vpdMin)/2*100)+'%';
-    needle.style.left=(Math.min(vpd,2)/2*100)+'%';
-    var status=$('vpd-status'),num=$('vpd-num'),cls,label;
-    if(vpd>=st.vpdMin&&vpd<=st.vpdMax){cls='vpd-ok';label='Óptimo';num.style.color='var(--forest)';}
-    else if(vpd>=st.vpdMin-0.2&&vpd<=st.vpdMax+0.2){cls='vpd-warn';label=vpd<st.vpdMin?'Algo bajo':'Algo alto';num.style.color='var(--amber)';}
-    else{cls='vpd-bad';label=vpd<st.vpdMin?'Bajo · riesgo hongos':'Alto · estrés hídrico';num.style.color='var(--red)';}
-    status.textContent=label;status.className='vpd-status '+cls;
+    var vpdCard=document.querySelector('.vpd-card');
+    if(s.mode==='misala'&&!tieneParams()){
+      vpdCard.style.display='none';
+    }else{
+      vpdCard.style.display='';
+      var leafT=s.temp-s.leaf,vpd=svp(leafT)-svp(s.temp)*(s.rh/100);if(vpd<0)vpd=0;
+      $('vpd-num').textContent=fmt(vpd,2);$('vpd-stagename').textContent=st.label.toLowerCase();
+      $('vpd-range').textContent=fmt(st.vpdMin,1)+' - '+fmt(st.vpdMax,1);
+      var band=$('vpd-band'),needle=$('vpd-needle');
+      band.style.left=(st.vpdMin/2*100)+'%';band.style.width=((st.vpdMax-st.vpdMin)/2*100)+'%';
+      needle.style.left=(Math.min(vpd,2)/2*100)+'%';
+      var status=$('vpd-status'),num=$('vpd-num'),cls,label;
+      if(vpd>=st.vpdMin&&vpd<=st.vpdMax){cls='vpd-ok';label='Óptimo';num.style.color='var(--forest)';}
+      else if(vpd>=st.vpdMin-0.2&&vpd<=st.vpdMax+0.2){cls='vpd-warn';label=vpd<st.vpdMin?'Algo bajo':'Algo alto';num.style.color='var(--amber)';}
+      else{cls='vpd-bad';label=vpd<st.vpdMin?'Bajo · riesgo hongos':'Alto · estrés hídrico';num.style.color='var(--red)';}
+      status.textContent=label;status.className='vpd-status '+cls;
+    }
 
     // Energía
     var fanW=Math.round(ext*0.13);
