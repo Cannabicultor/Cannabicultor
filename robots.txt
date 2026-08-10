@@ -11,4 +11,4 @@ Disallow: /reset-password.html
 Disallow: /empezar.html
 Disallow: /cannabicultor-repo/
 
-Sitemap: https://cannabicultor.com/sitemap.xml
+Sitemap: https://www.cannabicultor.com/sitemap.xml
