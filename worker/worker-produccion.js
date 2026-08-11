@@ -1011,6 +1011,49 @@ async function handleSavePerfil(body, env) {
   return { status: 200, data: { ok: true } };
 }
 
+/**
+ * POST /perfil/sala — merge del sub-objeto `sala` dentro de perfil_cultivo (jsonb).
+ * Equivalente a:
+ *   UPDATE public."Usuarios"
+ *   SET perfil_cultivo = COALESCE(perfil_cultivo, '{}'::jsonb)
+ *                     || jsonb_build_object('sala', $1::jsonb)
+ *   WHERE email = $2;
+ * No pisa el resto de claves (ec, ph, hum, temp, fase, …). Sin tablas/columnas nuevas.
+ */
+async function handleGuardarSala(body, env, request) {
+  const auth = request.headers.get('Authorization') || '';
+  const token = auth.startsWith('Bearer ') ? auth.slice(7) : '';
+  const claims = await verifyJwt(token, env.JWT_SECRET);
+  if (!claims || !claims.email) return { status: 401, data: { error: 'No autorizado' } };
+
+  const emailBody = String(body.email || '').trim().toLowerCase();
+  const emailClaims = String(claims.email).trim().toLowerCase();
+  const email = emailBody || emailClaims;
+  if (!email || !email.includes('@')) return { status: 400, data: { error: 'Email requerido' } };
+  if (email !== emailClaims) return { status: 403, data: { error: 'Email no coincide con la sesión' } };
+
+  const sala = body.sala;
+  if (!sala || typeof sala !== 'object' || Array.isArray(sala)) {
+    return { status: 400, data: { error: 'Objeto sala requerido' } };
+  }
+
+  const user = await getUserByEmail(env, email);
+  if (!user) return { status: 404, data: { error: 'Usuario no encontrado' } };
+
+  const actual = (user.perfil_cultivo && typeof user.perfil_cultivo === 'object' && !Array.isArray(user.perfil_cultivo))
+    ? user.perfil_cultivo
+    : {};
+  // Solo actualiza la clave `sala`; el resto de perfil_cultivo se conserva
+  const fusionado = { ...actual, sala };
+
+  const res = await updateUser(env, user.id, { perfil_cultivo: fusionado });
+  if (!res.ok) {
+    const msg = res.data?.message || res.data?.error || 'No se pudo guardar la sala';
+    return { status: 500, data: { error: msg } };
+  }
+  return { status: 200, data: { ok: true, sala } };
+}
+
 async function handleLogin(body, env) {
   const email = String(body.email || '').trim().toLowerCase();
   const password = String(body.password || '');
@@ -1296,6 +1339,7 @@ export default {
       }
 
       if (path === '/cultivo/guardar') { const r = await handleGuardarCultivo(body, env, request); return json(r.data, r.status, cors); }
+      if (path === '/perfil/sala') { const r = await handleGuardarSala(body, env, request); return json(r.data, r.status, cors); }
       if (path === '/auth/save-perfil') { const r = await handleSavePerfil(body, env); return json(r.data, r.status, cors); }
       if (path === '/auth/register') { const r = await handleRegister(body, env, request); return json(r.data, r.status, cors); }
       if (path === '/auth/login') { const r = await handleLogin(body, env); return json(r.data, r.status, cors); }

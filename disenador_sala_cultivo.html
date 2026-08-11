@@ -461,53 +461,72 @@
   });
   $('wattreal').addEventListener('input',function(){state.wattReal=parseFloat(this.value);$('wattreal-val').textContent=fmt(state.wattReal,0);});
 
-  // ---- Guardar mi sala ----
-  // TODO(Grok Build): sustituir localStorage por llamada al endpoint del Worker (tabla salas_cultivo en Supabase)
+  // ---- Guardar mi sala → Worker POST /perfil/sala (perfil_cultivo.sala en Supabase) ----
+  var WORKER='https://growers-alliance-ai.enriquedorta.workers.dev';
+  function sessionJwt(){
+    return localStorage.getItem('ga_jwt')||sessionStorage.getItem('ga_jwt')||localStorage.getItem('cc_token')||'';
+  }
+  function sessionEmail(){
+    var e=localStorage.getItem('ga_email')||'';
+    if(e) return e;
+    try{
+      var t=sessionJwt();
+      if(!t) return '';
+      var payload=JSON.parse(atob(t.split('.')[1].replace(/-/g,'+').replace(/_/g,'/')));
+      return payload.email||'';
+    }catch(_){ return ''; }
+  }
   $('guardar-misala-btn').addEventListener('click',function(){
+    var statusEl=$('misala-status');
     var sala={
       ancho:state.w,profundidad:state.d,alto:state.h,
       etapa:state.stage,tipo_luz:state.light,
       potencia_calculada:Math.round(state.w*state.d*LIGHT[state.light].wm2*STAGES[state.stage].lightMult),
       potencia_real:state.wattReal,
-      temperatura:tieneParams()?state.temp:null,humedad:tieneParams()?state.rh:null,
       guardado_en:new Date().toISOString()
     };
+    // Caché local (fallback offline); la fuente de verdad es Supabase vía Worker
     try{localStorage.setItem('mi_sala_cannabicultor',JSON.stringify(sala));}catch(e){}
-    $('misala-status').textContent='Sala guardada ✓';
-  });
 
-  // ---- Modo: Valores ideales vs Mi sala ----
-  state.mode='ideal';state.wattReal=null;
-  var modeTabs=$('modeTabs'),leadText=$('lead-text'),wattRow=$('misala-watt-row'),misalaCard=$('misala-card');
-  var LEAD_IDEAL='Ajusta las medidas con los botones. El modelo y los cálculos —aire, luz, VPD, coste y cosecha— se actualizan al instante.';
-  var LEAD_MISALA='Estos son los valores ideales para tu sala. Ajusta la potencia real de tu lámpara si es distinta y guarda tu sala cuando esté lista.';
-  Array.prototype.forEach.call(modeTabs.children,function(b){
-    b.onclick=function(){
-      state.mode=b.dataset.mode;
-      setSeg(modeTabs,b);
-      var isMisala=state.mode==='misala';
-      wattRow.style.display=isMisala?'':'none';
-      misalaCard.style.display=isMisala?'':'none';
-      leadText.textContent=isMisala?LEAD_MISALA:LEAD_IDEAL;
-      $('misala-status').textContent='';
-      if(isMisala&&state.wattReal===null){state.wattReal=Math.round(state.w*state.d*LIGHT[state.light].wm2*STAGES[state.stage].lightMult);$('wattreal').value=state.wattReal;$('wattreal-val').textContent=state.wattReal;}
-    };
-  });
-  $('wattreal').addEventListener('input',function(){state.wattReal=parseFloat(this.value);$('wattreal-val').textContent=fmt(state.wattReal,0);});
+    var jwt=sessionJwt();
+    var email=sessionEmail();
+    if(!jwt||!email){
+      statusEl.textContent='Inicia sesión para guardar tu sala en la nube.';
+      statusEl.style.color='var(--amber)';
+      return;
+    }
 
-  // ---- Guardar mi sala ----
-  // TODO(Grok Build): sustituir localStorage por llamada al endpoint del Worker (tabla salas_cultivo en Supabase)
-  $('guardar-misala-btn').addEventListener('click',function(){
-    var sala={
-      ancho:state.w,profundidad:state.d,alto:state.h,
-      etapa:state.stage,tipo_luz:state.light,
-      potencia_calculada:Math.round(state.w*state.d*LIGHT[state.light].wm2*STAGES[state.stage].lightMult),
-      potencia_real:state.wattReal,
-      temperatura:state.temp,humedad:state.rh,
-      guardado_en:new Date().toISOString()
-    };
-    try{localStorage.setItem('mi_sala_cannabicultor',JSON.stringify(sala));}catch(e){}
-    $('misala-status').textContent='Sala guardada ✓';
+    statusEl.textContent='Guardando…';
+    statusEl.style.color='var(--muted)';
+    var btn=$('guardar-misala-btn');
+    btn.disabled=true;
+
+    fetch(WORKER+'/perfil/sala',{
+      method:'POST',
+      headers:{
+        'Content-Type':'application/json',
+        'Authorization':'Bearer '+jwt
+      },
+      body:JSON.stringify({email:email,sala:sala})
+    }).then(function(res){
+      return res.json().then(function(data){ return {ok:res.ok,status:res.status,data:data}; });
+    }).then(function(r){
+      if(r.ok&&r.data&&r.data.ok){
+        statusEl.textContent='Sala guardada en tu perfil ✓';
+        statusEl.style.color='var(--forest)';
+      }else if(r.status===401||r.status===403){
+        statusEl.textContent='Sesión caducada. Vuelve a iniciar sesión.';
+        statusEl.style.color='var(--red)';
+      }else{
+        statusEl.textContent=(r.data&&r.data.error)||'No se pudo guardar la sala.';
+        statusEl.style.color='var(--red)';
+      }
+    }).catch(function(){
+      statusEl.textContent='Error de red. Sala guardada solo en este dispositivo.';
+      statusEl.style.color='var(--amber)';
+    }).finally(function(){
+      btn.disabled=false;
+    });
   });
 
   // ---- Acordeón ajustes avanzados ----
