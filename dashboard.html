@@ -320,10 +320,10 @@ button{cursor:pointer}
     </a>
     <div class="side-section">
       <div class="side-label">Dashboard</div>
-      <button class="nav-btn active"><span class="ico">⌘</span>Resumen</button>
-      <button class="nav-btn"><span class="ico"><img src="assets/icons/03-tu-cultivo.svg" alt=""></span>Diario de cultivo</button>
-      <button class="nav-btn"><span class="ico">⚠️</span>Alertas</button>
-      <button class="nav-btn" onclick="document.getElementById('herramientas').scrollIntoView({behavior:'smooth'})"><span class="ico"><img src="assets/icons/06-herramientas.svg" alt=""></span>Herramientas</button>
+      <button type="button" class="nav-btn active" onclick="irAResumen()"><span class="ico">⌘</span>Resumen</button>
+      <button type="button" class="nav-btn" onclick="irADiario()"><span class="ico"><img src="assets/icons/03-tu-cultivo.svg" alt=""></span>Diario de cultivo</button>
+      <button type="button" class="nav-btn"><span class="ico">⚠️</span>Alertas</button>
+      <button type="button" class="nav-btn" onclick="document.getElementById('herramientas').scrollIntoView({behavior:'smooth'})"><span class="ico"><img src="assets/icons/06-herramientas.svg" alt=""></span>Herramientas</button>
       <button class="nav-btn" onclick="openOnboarding(true)"><span class="ico">✏️</span>Editar cultivo</button>
       <button class="nav-btn" onclick="cerrarSesion()" style="color:var(--red)"><span class="ico" style="background:#fdf0ef">🚪</span>Cerrar sesión</button>
     </div>
@@ -684,6 +684,22 @@ function updateChatNote(){
   const left = lim >= 999 ? 'consultas ilimitadas' : `${Math.max(0, lim - PREGUNTAS)} consultas disponibles`;
   const info = NIVEL_INFO[NIVEL] || NIVEL_INFO.libre;
   document.getElementById('chatNote').textContent = `${info.badge} ${info.name} · ${left} · 📷 fotos`;
+}
+
+// ─── NAVEGACIÓN INTERNA (sidebar → secciones) ─────────────────────────────────
+function irAResumen(){
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  document.querySelectorAll('.sidebar .nav-btn').forEach(b => b.classList.remove('active'));
+  const btn = document.querySelector('.sidebar .nav-btn');
+  if(btn) btn.classList.add('active');
+}
+function irADiario(){
+  const el = document.getElementById('diario') || document.getElementById('diarioList');
+  if(el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  document.querySelectorAll('.sidebar .nav-btn').forEach(b => b.classList.remove('active'));
+  const btn = Array.from(document.querySelectorAll('.sidebar .nav-btn')).find(b => /Diario/i.test(b.textContent||''));
+  if(btn) btn.classList.add('active');
+  loadDiario();
 }
 
 // ─── DIARIO + PERFIL (fijos vs lecturas) ───────────────────────────────────────

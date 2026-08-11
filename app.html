@@ -273,7 +273,7 @@
       <div class="vpd-wrap" id="vpdSlot"></div>
 
       <div class="kicker" style="margin-top:18px">Accesos rápidos</div>
-      <div class="tool" onclick="ir('cultivo');setTimeout(function(){document.getElementById('diarioList')?.scrollIntoView({behavior:'smooth'});},80)"><div class="tic"><img src="assets/icons/03-tu-cultivo.svg" alt=""></div><div><b>Diario de cultivo</b><small>Día a día del cultivo</small></div></div>
+      <div class="tool" onclick="irADiario()"><div class="tic"><img src="assets/icons/03-tu-cultivo.svg" alt=""></div><div><b>Diario de cultivo</b><small>Día a día del cultivo</small></div></div>
       <div class="tool" onclick="openChat()"><div class="tic"><img src="assets/icons/04-subir-foto.svg" alt=""></div><div><b>Diagnóstico por foto</b><small>Sube tu planta a la IA</small></div></div>
 
       <!-- elementos ocultos que el script del dashboard espera (resumen IA) -->
@@ -384,7 +384,7 @@
       </div>
 
       <!-- Diario del cultivo ACTUAL -->
-      <div class="kicker" style="margin-top:20px">Diario · cultivo actual</div>
+      <div class="kicker" id="diario" style="margin-top:20px">Diario · cultivo actual</div>
       <div style="display:flex;gap:8px;margin-bottom:10px">
         <button type="button" class="chip" style="flex:1;text-align:center;background:var(--forest);color:#fff;border-color:var(--forest)" onclick="openNuevaEntrada()">+ Nueva entrada</button>
         <button type="button" class="chip" style="flex:1;text-align:center" onclick="openChat()">📷 Foto IA</button>
@@ -424,7 +424,7 @@
     </div>
     <div class="dsep"></div>
     <div class="ditem" onclick="openOnboarding(true)"><span class="di">👤</span> Mi cuenta y cultivo</div>
-    <div class="ditem"><span class="di">📔</span> Archivo de diarios</div>
+    <div class="ditem" onclick="irADiario()"><span class="di">📔</span> Diario de cultivo</div>
     <div class="ditem" onclick="location.href='https://cannabicultor.com'"><span class="di">🌐</span> Volver a la web</div>
     <div class="dsep"></div>
     <div class="ditem" onclick="cerrarSesion()"><span class="di">↩️</span> Cerrar sesión</div>
@@ -565,6 +565,17 @@ function updateChatNote(){
   const left = lim >= 999 ? 'consultas ilimitadas' : `${Math.max(0, lim - PREGUNTAS)} consultas disponibles`;
   const info = NIVEL_INFO[NIVEL] || NIVEL_INFO.libre;
   document.getElementById('chatNote').textContent = `${info.badge} ${info.name} · ${left} · 📷 fotos`;
+}
+
+// ─── IR AL DIARIO (accesos rápidos + drawer) ──────────────────────────────────
+function irADiario(){
+  if(typeof ir === 'function') ir('cultivo');
+  if(typeof cerrarDrawer === 'function') cerrarDrawer();
+  setTimeout(function(){
+    const el = document.getElementById('diario') || document.getElementById('diarioList');
+    if(el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, 80);
+  if(typeof loadDiario === 'function') loadDiario();
 }
 
 // ─── DIARIO + PERFIL (fijos vs lecturas) ───────────────────────────────────────
