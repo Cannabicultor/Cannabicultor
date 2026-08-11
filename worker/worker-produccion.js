@@ -30,7 +30,7 @@ function corsHeaders(request) {
   const allowed = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
   return {
     'Access-Control-Allow-Origin': allowed,
-    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type, Authorization',
   };
 }
@@ -327,6 +327,12 @@ async function guardarDiagnostico(env, { identity, messages, reply }) {
       sessionId: identity.sid || null,
       tipo, imagenRuta, pregunta, respuesta: reply, canal: 'web',
     });
+    // Foto en chat → crea/actualiza entrada del diario (solo usuarios autenticados)
+    if (imagenRuta && identity.email) {
+      try {
+        await upsertDiarioFoto(env, identity.email, imagenRuta, pregunta, reply);
+      } catch (_) { /* no bloquear el diagnóstico */ }
+    }
   } catch (_) {}
 }
 
@@ -1054,6 +1060,187 @@ async function handleGuardarSala(body, env, request) {
   return { status: 200, data: { ok: true, sala } };
 }
 
+// ─── DIARIO DE CULTIVO ────────────────────────────────────────────────────────
+
+const DIARIO_COLS = new Set([
+  'fecha', 'dia_ciclo', 'etapa', 'ph', 'ec', 'temp', 'hum', 'vpd',
+  'riego_litros', 'riego_ph', 'riego_ec', 'runoff_ph', 'runoff_ec',
+  'fertilizantes', 'plagas', 'hongos', 'tratamiento', 'poda', 'trasplante',
+  'foto_url', 'notas',
+]);
+
+function numOrNull(v) {
+  if (v == null || v === '') return null;
+  const n = Number(v);
+  return Number.isFinite(n) ? n : null;
+}
+
+function calcDiaCicloFromPerfil(perfil) {
+  if (!perfil || typeof perfil !== 'object') return null;
+  const fi = (perfil.cultivo && perfil.cultivo.fechaInicio) || perfil.fechaInicio || null;
+  if (!fi) return null;
+  const start = new Date(fi);
+  if (Number.isNaN(start.getTime())) return null;
+  const dias = Math.floor((Date.now() - start.getTime()) / (1000 * 60 * 60 * 24));
+  return Math.max(0, dias);
+}
+
+function fotoUrlPublica(ruta) {
+  if (!ruta) return null;
+  if (/^https?:\/\//i.test(ruta)) return ruta;
+  return `${SUPABASE_URL}/storage/v1/object/public/plantas/${ruta}`;
+}
+
+async function authEmailFromRequest(request, env, bodyEmail) {
+  const auth = request.headers.get('Authorization') || '';
+  const token = auth.startsWith('Bearer ') ? auth.slice(7) : '';
+  const claims = await verifyJwt(token, env.JWT_SECRET);
+  if (!claims || !claims.email) return { error: { status: 401, data: { error: 'No autorizado' } } };
+  const emailClaims = String(claims.email).trim().toLowerCase();
+  const emailBody = String(bodyEmail || '').trim().toLowerCase();
+  const email = emailBody || emailClaims;
+  if (!email || !email.includes('@')) return { error: { status: 400, data: { error: 'Email requerido' } } };
+  if (email !== emailClaims) return { error: { status: 403, data: { error: 'Email no coincide con la sesión' } } };
+  return { email, claims };
+}
+
+/**
+ * POST /diario/entrada — inserta fila en diario_entradas.
+ * dia_ciclo se calcula server-side desde perfil_cultivo.cultivo.fechaInicio.
+ */
+async function handleDiarioEntrada(body, env, request) {
+  const auth = await authEmailFromRequest(request, env, body.email);
+  if (auth.error) return auth.error;
+  const { email } = auth;
+
+  const user = await getUserByEmail(env, email);
+  if (!user) return { status: 404, data: { error: 'Usuario no encontrado' } };
+
+  const perfil = (user.perfil_cultivo && typeof user.perfil_cultivo === 'object') ? user.perfil_cultivo : {};
+  const src = body.entrada && typeof body.entrada === 'object' ? body.entrada : body;
+
+  const fila = { usuario_email: email };
+  for (const k of DIARIO_COLS) {
+    if (src[k] === undefined) continue;
+    if (k === 'fertilizantes') {
+      fila[k] = src[k] == null ? null : (typeof src[k] === 'string' ? src[k] : src[k]);
+      continue;
+    }
+    if (k === 'trasplante') {
+      fila[k] = !!src[k];
+      continue;
+    }
+    if (['ph', 'ec', 'temp', 'hum', 'vpd', 'riego_litros', 'riego_ph', 'riego_ec', 'runoff_ph', 'runoff_ec', 'dia_ciclo'].includes(k)) {
+      fila[k] = numOrNull(src[k]);
+      continue;
+    }
+    if (k === 'fecha') {
+      fila[k] = src[k] || new Date().toISOString().slice(0, 10);
+      continue;
+    }
+    fila[k] = src[k] == null || src[k] === '' ? null : String(src[k]);
+  }
+
+  // dia_ciclo siempre server-side si hay fechaInicio
+  const diaCiclo = calcDiaCicloFromPerfil(perfil);
+  if (diaCiclo != null) fila.dia_ciclo = diaCiclo;
+
+  // etapa por defecto desde perfil
+  if (fila.etapa == null) {
+    const etapa = (perfil.cultivo && perfil.cultivo.fase) || perfil.fase || null;
+    if (etapa) fila.etapa = String(etapa);
+  }
+
+  // Compat: riego textual (Hoy/Ayer) → notas
+  if (src.riego && !fila.notas) {
+    fila.notas = `Último riego: ${src.riego}`;
+  } else if (src.riego && fila.notas) {
+    fila.notas = `${fila.notas} · Último riego: ${src.riego}`;
+  }
+
+  // VPD auto si hay temp+hum y no viene
+  if (fila.vpd == null && fila.temp != null && fila.hum != null) {
+    const t = Number(fila.temp), h = Number(fila.hum);
+    if (Number.isFinite(t) && Number.isFinite(h)) {
+      const svp = 0.6108 * Math.exp(17.27 * t / (t + 237.3));
+      fila.vpd = Number((((100 - h) / 100) * svp).toFixed(3));
+    }
+  }
+
+  if (!fila.fecha) fila.fecha = new Date().toISOString().slice(0, 10);
+
+  const res = await sbRequest(env, 'diario_entradas', {
+    method: 'POST',
+    headers: { Prefer: 'return=representation' },
+    body: JSON.stringify(fila),
+  });
+  if (!res.ok) {
+    const msg = res.data?.message || res.data?.error || 'No se pudo guardar la entrada';
+    return { status: 500, data: { error: msg } };
+  }
+  const row = Array.isArray(res.data) ? res.data[0] : res.data;
+  return { status: 200, data: { ok: true, entrada: row } };
+}
+
+/**
+ * GET /diario/entradas?email=&limit=N
+ * Últimas N filas por fecha desc (default 30, max 100).
+ */
+async function handleListDiario(url, env, request) {
+  const emailQ = url.searchParams.get('email') || '';
+  const auth = await authEmailFromRequest(request, env, emailQ);
+  if (auth.error) return auth.error;
+  const { email } = auth;
+
+  let limit = parseInt(url.searchParams.get('limit') || '30', 10);
+  if (!Number.isFinite(limit) || limit < 1) limit = 30;
+  if (limit > 100) limit = 100;
+
+  const q = `diario_entradas?usuario_email=eq.${encodeURIComponent(email)}&select=*&order=fecha.desc,created_at.desc&limit=${limit}`;
+  const res = await sbRequest(env, q, { method: 'GET' });
+  if (!res.ok) {
+    const msg = res.data?.message || res.data?.error || 'No se pudieron leer las entradas';
+    return { status: 500, data: { error: msg } };
+  }
+  return { status: 200, data: { ok: true, entradas: Array.isArray(res.data) ? res.data : [] } };
+}
+
+/** Foto del chat → inserta o actualiza la entrada de hoy con foto_url. */
+async function upsertDiarioFoto(env, email, imagenRuta, pregunta, reply) {
+  const hoy = new Date().toISOString().slice(0, 10);
+  const fotoUrl = fotoUrlPublica(imagenRuta);
+  const user = await getUserByEmail(env, email);
+  const perfil = (user && user.perfil_cultivo && typeof user.perfil_cultivo === 'object') ? user.perfil_cultivo : {};
+  const diaCiclo = calcDiaCicloFromPerfil(perfil);
+  const etapa = (perfil.cultivo && perfil.cultivo.fase) || perfil.fase || null;
+  const notaFoto = [pregunta, reply ? `IA: ${String(reply).slice(0, 280)}` : null].filter(Boolean).join('\n');
+
+  const q = `diario_entradas?usuario_email=eq.${encodeURIComponent(email)}&fecha=eq.${hoy}&select=id,foto_url,notas&order=created_at.desc&limit=1`;
+  const existing = await sbRequest(env, q, { method: 'GET' });
+  if (existing.ok && Array.isArray(existing.data) && existing.data.length) {
+    const row = existing.data[0];
+    const notas = [row.notas, notaFoto].filter(Boolean).join('\n---\n');
+    await sbRequest(env, `diario_entradas?id=eq.${row.id}`, {
+      method: 'PATCH',
+      headers: { Prefer: 'return=minimal' },
+      body: JSON.stringify({ foto_url: fotoUrl || row.foto_url, notas: notas || null }),
+    });
+    return;
+  }
+  await sbRequest(env, 'diario_entradas', {
+    method: 'POST',
+    headers: { Prefer: 'return=minimal' },
+    body: JSON.stringify({
+      usuario_email: email,
+      fecha: hoy,
+      dia_ciclo: diaCiclo,
+      etapa: etapa ? String(etapa) : null,
+      foto_url: fotoUrl,
+      notas: notaFoto || null,
+    }),
+  });
+}
+
 async function handleLogin(body, env) {
   const email = String(body.email || '').trim().toLowerCase();
   const password = String(body.password || '');
@@ -1289,12 +1476,21 @@ export default {
   async fetch(request, env, ctx) {
     const cors = corsHeaders(request);
     if (request.method === 'OPTIONS') return new Response(null, { headers: cors });
-    if (request.method !== 'POST') return new Response('Method not allowed', { status: 405, headers: cors });
 
     const url = new URL(request.url);
     const path = url.pathname.replace(/\/$/, '') || '/';
 
     try {
+      // GET routes (antes del body JSON)
+      if (request.method === 'GET') {
+        if (path === '/diario/entradas') {
+          const r = await handleListDiario(url, env, request);
+          return json(r.data, r.status, cors);
+        }
+        return new Response('Method not allowed', { status: 405, headers: cors });
+      }
+      if (request.method !== 'POST') return new Response('Method not allowed', { status: 405, headers: cors });
+
       // Admin KB — antes del JSON parsing
       if (path === '/admin/add-libro') {
         const r = await handleAdminAddLibro(request, env, ctx);
@@ -1340,6 +1536,7 @@ export default {
 
       if (path === '/cultivo/guardar') { const r = await handleGuardarCultivo(body, env, request); return json(r.data, r.status, cors); }
       if (path === '/perfil/sala') { const r = await handleGuardarSala(body, env, request); return json(r.data, r.status, cors); }
+      if (path === '/diario/entrada') { const r = await handleDiarioEntrada(body, env, request); return json(r.data, r.status, cors); }
       if (path === '/auth/save-perfil') { const r = await handleSavePerfil(body, env); return json(r.data, r.status, cors); }
       if (path === '/auth/register') { const r = await handleRegister(body, env, request); return json(r.data, r.status, cors); }
       if (path === '/auth/login') { const r = await handleLogin(body, env); return json(r.data, r.status, cors); }

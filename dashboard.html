@@ -365,8 +365,13 @@ button{cursor:pointer}
       </div>
     </div>
 
-    <!-- BRIEFING -->
-    <div class="briefing" id="briefingBox">
+    <!-- BRIEFING: solo al click (mismo patrón que app.html) -->
+    <div id="briefingInicial" style="margin-bottom:18px">
+      <button type="button" onclick="pedirBriefing()" class="btn primary" style="width:100%;display:flex;align-items:center;justify-content:center;gap:10px;padding:16px;font-size:15px">
+        <span style="font-size:19px">🤖</span> Comenzar análisis de cultivo
+      </button>
+    </div>
+    <div class="briefing" id="briefingBox" style="display:none">
       <div class="briefing-ico"><img src="assets/icons/02-onboarding.svg" alt=""></div>
       <div class="briefing-body">
         <div class="briefing-label">Briefing de la IA · Hoy</div>
@@ -519,12 +524,13 @@ button{cursor:pointer}
     <section class="panel" id="diario" style="margin-bottom:18px">
       <div class="section-head">
         <div>
-          <div class="section-title">Diario del cultivo</div>
-          <div class="section-sub">Registro fotográfico de tu cultivo actual</div>
+          <div class="section-title">Diario de cultivo</div>
+          <div class="section-sub">Registro cronológico · lecturas, riegos y fotos</div>
         </div>
+        <button class="btn" type="button" onclick="openNuevaEntrada()">+ Nueva entrada</button>
       </div>
-      <div class="card-body">
-        <div class="diary-empty">Aún no hay entradas. Adjunta una 📷 foto en el chat con la IA y la guardará en tu diario.</div>
+      <div class="card-body" id="diarioList">
+        <div class="diary-empty">Aún no hay entradas. Guarda parámetros de hoy o adjunta una 📷 foto en el chat.</div>
       </div>
     </section>
 
@@ -654,7 +660,7 @@ function init(){
   } else {
     renderDashboard();
     renderVPD();
-    loadBriefing();
+    loadDiario(); // métricas pH/EC/temp/hum desde última entrada
     setTimeout(mostrarCheckin, 2000);
   }
 }
@@ -680,10 +686,165 @@ function updateChatNote(){
   document.getElementById('chatNote').textContent = `${info.badge} ${info.name} · ${left} · 📷 fotos`;
 }
 
+// ─── DIARIO + PERFIL (fijos vs lecturas) ───────────────────────────────────────
+const DIARIO_KEYS = ['ph','ec','temp','hum','riego'];
+let ULTIMA_ENTRADA = null;
+let DIARIO_LIST = [];
+
+function sessionEmail(){ return localStorage.getItem('ga_email') || ''; }
+function buildCultivoFixed(src){
+  src = src || {};
+  return {
+    genetica: src.genetica || '',
+    tipo: src.tipo || '',
+    espacio: src.espacio || '',
+    tipoLuz: src.tipoLuz || '',
+    luz: src.luz || '',
+    sustrato: src.sustrato || '',
+    maceta: src.maceta || '',
+    fechaInicio: src.fechaInicio || (src.cultivo && src.cultivo.fechaInicio) || '',
+    fase: src.fase || (src.cultivo && src.cultivo.fase) || '',
+    semana: src.semana || (src.cultivo && src.cultivo.semana) || '',
+  };
+}
+/** Perfil sin lecturas diarias; anida fijos en .cultivo para el Worker. */
+function perfilParaSync(p){
+  if(!p) return p;
+  const out = {...p};
+  DIARIO_KEYS.forEach(k => delete out[k]);
+  out.cultivo = buildCultivoFixed(out);
+  if(out.cultivo.fechaInicio) out.fechaInicio = out.cultivo.fechaInicio;
+  return out;
+}
+/** Vista de dashboard: fijos de PERFIL + última fila de diario_entradas. */
+function displayPerfil(){
+  const p = {...(PERFIL || {})};
+  if(p.cultivo && typeof p.cultivo === 'object'){
+    Object.keys(p.cultivo).forEach(k => { if(p[k]==null || p[k]==='') p[k] = p.cultivo[k]; });
+  }
+  if(ULTIMA_ENTRADA){
+    if(ULTIMA_ENTRADA.ph != null) p.ph = ULTIMA_ENTRADA.ph;
+    if(ULTIMA_ENTRADA.ec != null) p.ec = ULTIMA_ENTRADA.ec;
+    if(ULTIMA_ENTRADA.temp != null) p.temp = ULTIMA_ENTRADA.temp;
+    if(ULTIMA_ENTRADA.hum != null) p.hum = ULTIMA_ENTRADA.hum;
+    if(ULTIMA_ENTRADA.etapa) p.fase = p.fase || ULTIMA_ENTRADA.etapa;
+    if(ULTIMA_ENTRADA.notas && /Último riego:\s*(.+)/i.test(ULTIMA_ENTRADA.notas)){
+      p.riego = RegExp.$1.trim();
+    }
+    if(ULTIMA_ENTRADA.riego_litros != null) p.riego = p.riego || (ULTIMA_ENTRADA.riego_litros + ' L');
+  }
+  return p;
+}
+async function postDiarioEntrada(entrada){
+  if(!JWT) return null;
+  const res = await fetch(`${WORKER}/diario/entrada`, {
+    method:'POST',
+    headers:{'Content-Type':'application/json','Authorization':'Bearer '+JWT},
+    body: JSON.stringify({ email: sessionEmail(), ...entrada })
+  });
+  if(res.status===401){ logout401(); return null; }
+  const data = await res.json().catch(()=>({}));
+  if(!res.ok || !data.ok) throw new Error(data.error || 'No se pudo guardar la entrada');
+  return data.entrada || null;
+}
+async function loadDiario(){
+  if(!JWT || !sessionEmail()) return;
+  try{
+    const res = await fetch(`${WORKER}/diario/entradas?email=${encodeURIComponent(sessionEmail())}&limit=50`, {
+      headers:{'Authorization':'Bearer '+JWT}
+    });
+    if(res.status===401){ logout401(); return; }
+    const data = await res.json().catch(()=>({}));
+    DIARIO_LIST = Array.isArray(data.entradas) ? data.entradas : [];
+    ULTIMA_ENTRADA = DIARIO_LIST[0] || null;
+  }catch(_){
+    DIARIO_LIST = [];
+    ULTIMA_ENTRADA = null;
+  }
+  renderDiarioList();
+  renderDashboard();
+  renderVPD();
+}
+function renderDiarioList(){
+  const el = document.getElementById('diarioList');
+  if(!el) return;
+  if(!DIARIO_LIST.length){
+    el.innerHTML = '<div class="diary-empty">Aún no hay entradas. Usa «+ Nueva entrada» o adjunta una 📷 foto en el chat.</div>';
+    return;
+  }
+  el.innerHTML = DIARIO_LIST.map(e => {
+    const fecha = e.fecha || '—';
+    const dia = e.dia_ciclo != null ? ` · Día ${e.dia_ciclo}` : '';
+    const metrics = [
+      e.ph!=null?`pH ${e.ph}`:null,
+      e.ec!=null?`EC ${e.ec}`:null,
+      e.temp!=null?`${e.temp}°C`:null,
+      e.hum!=null?`${e.hum}% HR`:null,
+      e.vpd!=null?`VPD ${e.vpd}`:null,
+    ].filter(Boolean).join(' · ');
+    const foto = e.foto_url
+      ? `<a href="${escHtml(e.foto_url)}" target="_blank" rel="noopener" style="display:block;margin-top:8px"><img src="${escHtml(e.foto_url)}" alt="" style="max-width:100%;max-height:140px;border-radius:12px;object-fit:cover"></a>`
+      : '';
+    const notas = e.notas ? `<div style="font-size:13px;color:var(--muted);margin-top:6px;line-height:1.45">${escHtml(String(e.notas).slice(0,240))}</div>` : '';
+    return `<div style="border:1px solid var(--border);border-radius:14px;padding:14px 16px;margin-bottom:10px;background:var(--bg)">
+      <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap">
+        <strong style="font-size:14px">${escHtml(fecha)}${dia}</strong>
+        <span style="font-size:12px;color:var(--soft)">${escHtml(e.etapa||'')}</span>
+      </div>
+      ${metrics?`<div style="font-size:13px;margin-top:6px;font-weight:600;color:var(--forest)">${escHtml(metrics)}</div>`:''}
+      ${notas}${foto}
+    </div>`;
+  }).join('');
+}
+function openNuevaEntrada(){
+  const u = ULTIMA_ENTRADA || {};
+  const overlay = document.createElement('div');
+  overlay.id = 'entradaOverlay';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(10,15,10,.65);backdrop-filter:blur(6px);z-index:2000;display:flex;align-items:flex-end;justify-content:center;padding:16px';
+  overlay.innerHTML = `
+    <div style="background:#fff;border-radius:24px 24px 20px 20px;width:100%;max-width:480px;padding:22px 20px 18px;box-shadow:0 24px 80px rgba(0,0,0,.25)">
+      <div style="font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--soft);margin-bottom:6px">Nueva entrada del diario</div>
+      <div style="font-family:Lora,Georgia,serif;font-size:22px;font-weight:600;margin-bottom:14px">Lecturas de <em style="color:var(--forest)">hoy</em></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+        <div><label class="field-label">pH</label><input class="field-input" type="number" step="0.1" id="ne_ph" value="${u.ph??''}"></div>
+        <div><label class="field-label">EC</label><input class="field-input" type="number" step="0.1" id="ne_ec" value="${u.ec??''}"></div>
+        <div><label class="field-label">Temp °C</label><input class="field-input" type="number" id="ne_temp" value="${u.temp??''}"></div>
+        <div><label class="field-label">Hum %</label><input class="field-input" type="number" id="ne_hum" value="${u.hum??''}"></div>
+      </div>
+      <div style="margin-bottom:12px"><label class="field-label">Riego (litros)</label><input class="field-input" type="number" step="0.1" id="ne_riego_l" placeholder="Opcional"></div>
+      <div style="margin-bottom:16px"><label class="field-label">Notas</label><input class="field-input" id="ne_notas" placeholder="Observaciones, plagas, poda…"></div>
+      <div style="display:flex;gap:10px">
+        <button type="button" class="btn primary" style="flex:1" onclick="guardarNuevaEntrada()">Guardar entrada →</button>
+        <button type="button" class="btn" onclick="document.getElementById('entradaOverlay')?.remove()">Cancelar</button>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+  overlay.addEventListener('click', e => { if(e.target===overlay) overlay.remove(); });
+}
+async function guardarNuevaEntrada(){
+  const entrada = {
+    ph: document.getElementById('ne_ph')?.value,
+    ec: document.getElementById('ne_ec')?.value,
+    temp: document.getElementById('ne_temp')?.value,
+    hum: document.getElementById('ne_hum')?.value,
+    riego_litros: document.getElementById('ne_riego_l')?.value,
+    notas: document.getElementById('ne_notas')?.value,
+    etapa: (PERFIL && (PERFIL.fase || PERFIL.cultivo?.fase)) || null,
+  };
+  try{
+    await postDiarioEntrada(entrada);
+    document.getElementById('entradaOverlay')?.remove();
+    await loadDiario();
+    resetBriefing();
+  }catch(err){
+    alert(err.message || 'Error al guardar');
+  }
+}
+
 // ─── RENDER DASHBOARD ─────────────────────────────────────────────────────────
 function renderDashboard(){
   if(!PERFIL) return;
-  const p = PERFIL;
+  const p = displayPerfil();
   const nombre = p.nombre ? `Cannabicultor ${p.nombre}` : 'Cannabicultor';
   document.getElementById('pageTitle').innerHTML = `${nombre}, <em>tu cultivo</em>`;
   document.getElementById('chatPreviewText').textContent = `Pregunta sobre tu ${p.genetica || 'cultivo'}…`;
@@ -722,14 +883,21 @@ function renderDashboard(){
   document.getElementById('dRiegoSub').textContent  = p.maceta ? `Maceta ${p.maceta}L` : '—';
   document.getElementById('dMaceta').textContent    = p.semana ? `Semana ${p.semana}` : '—';
   document.getElementById('dLuzW').textContent      = p.tipoLuz ? `${p.tipoLuz} ${p.luz ? p.luz+'W' : ''}` : '—';
-  document.getElementById('paramFecha').textContent = `Actualizado: ${new Date(p.ts || Date.now()).toLocaleDateString('es-ES')}`;
+  const ts = ULTIMA_ENTRADA?.fecha || p.ts;
+  document.getElementById('paramFecha').textContent = ts
+    ? `Última lectura: ${new Date(ts).toLocaleDateString('es-ES')}`
+    : 'Sin lecturas en el diario';
 }
 
 function setMetric(key, val, meta, ok, pct){
-  if(val) document.getElementById('m'+key).innerHTML = val + (key==='Ph'?'':key==='Ec'?'<small> mS</small>':key==='Temp'?'<small>°C</small>':'<small>%</small>');
+  const el = document.getElementById('m'+key);
+  if(el){
+    if(val!=null && val!=='') el.innerHTML = val + (key==='Ph'?'':key==='Ec'?'<small> mS</small>':key==='Temp'?'<small>°C</small>':'<small>%</small>');
+    else el.innerHTML = '—';
+  }
   document.getElementById('m'+key+'Meta').textContent = meta;
   document.getElementById('m'+key+'Ok').style.display = ok ? 'flex' : 'none';
-  document.getElementById('m'+key+'Bar').style.width  = pct + '%';
+  document.getElementById('m'+key+'Bar').style.width  = (pct||0) + '%';
 }
 
 // ─── CÁLCULOS ─────────────────────────────────────────────────────────────────
@@ -750,15 +918,29 @@ function ecPct(ec){ return Math.min(100, (parseFloat(ec)/3)*100); }
 function tempPct(t){ return Math.min(100, Math.max(0, ((parseFloat(t)-10)/(40-10))*100)); }
 function humPct(h){ return Math.min(100, parseFloat(h)); }
 
-// ─── BRIEFING IA ──────────────────────────────────────────────────────────────
+// ─── BRIEFING IA (solo al pulsar el botón; no en onload) ─────────────────────
+function pedirBriefing(){
+  document.getElementById('briefingInicial').style.display = 'none';
+  document.getElementById('briefingBox').style.display = 'flex';
+  document.getElementById('briefingText').className = 'briefing-text briefing-loading';
+  document.getElementById('briefingText').textContent = 'Analizando tu cultivo…';
+  loadBriefing();
+}
+function resetBriefing(){
+  const ini = document.getElementById('briefingInicial');
+  const box = document.getElementById('briefingBox');
+  if(ini) ini.style.display = 'block';
+  if(box) box.style.display = 'none';
+}
 async function loadBriefing(){
+  const p = displayPerfil();
   if(!PERFIL){ document.getElementById('briefingText').textContent = 'Configura tu cultivo para recibir el briefing diario.'; return; }
-  const nombre = PERFIL.nombre ? `Cannabicultor ${PERFIL.nombre}` : 'Cannabicultor';
-  const briefingPrompt = `Eres el asistente de Growers Alliance. Saluda al usuario como "${nombre}" y dale un briefing breve (3-4 líneas máximo) sobre su cultivo actual. Sus datos: Genética: ${PERFIL.genetica||'—'}, Fase: ${PERFIL.fase||'—'}, Semana: ${PERFIL.semana||'—'}, Sustrato: ${PERFIL.sustrato||'—'}, pH: ${PERFIL.ph||'—'}, EC: ${PERFIL.ec||'—'}, Temperatura: ${PERFIL.temp||'—'}°C, Humedad: ${PERFIL.hum||'—'}%. Sé específico con sus datos reales. Menciona algo importante que deba vigilar esta semana.`;
+  const nombre = p.nombre ? `Cannabicultor ${p.nombre}` : 'Cannabicultor';
+  const briefingPrompt = `Eres el asistente de Growers Alliance. Saluda al usuario como "${nombre}" y dale un briefing breve (3-4 líneas máximo) sobre su cultivo actual. Sus datos: Genética: ${p.genetica||'—'}, Fase: ${p.fase||'—'}, Semana: ${p.semana||'—'}, Sustrato: ${p.sustrato||'—'}, pH: ${p.ph||'—'}, EC: ${p.ec||'—'}, Temperatura: ${p.temp||'—'}°C, Humedad: ${p.hum||'—'}%. Sé específico con sus datos reales. Menciona algo importante que deba vigilar esta semana.`;
   try{
     const res = await fetch(WORKER,{
       method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+JWT},
-      body: JSON.stringify({messages:[{role:'user',content:briefingPrompt}], perfil:{proyecto:'Cannabicultor IA',plan:NIVEL,email:localStorage.getItem('ga_email')||null,cultivo:PERFIL}})
+      body: JSON.stringify({messages:[{role:'user',content:briefingPrompt}], perfil:{proyecto:'Cannabicultor IA',plan:NIVEL,email:sessionEmail()||null,cultivo:p}})
     });
     if(res.status===401){ logout401(); return; }
     const data = await res.json().catch(()=>({}));
@@ -770,166 +952,188 @@ async function loadBriefing(){
   }
 }
 
-// ─── ONBOARDING ───────────────────────────────────────────────────────────────
+// ─── ONBOARDING / PARÁMETROS (2 pasos: fijos → primera entrada diario) ────────
 let onboardingStep = 0;
+let onboardingMode = 'full'; // 'full' | 'edit' (edit = solo fijos, nunca diario)
 let tmp = {};
-const STEPS = [
-  {
-    kicker:'Paso 1 de 6 · Tu nombre',
-    title:'Hola Cannabicultor.<br><em>¿Cómo te llamamos?</em>',
-    sub:'La IA te saludará siempre como "Cannabicultor [nombre]". Solo se pregunta una vez.',
-    render: () => `<div class="field-group"><label class="field-label">Tu nombre o apodo</label><input class="field-input" id="f_nombre" placeholder="Ej: Enrique, Grower, Master…" value="${PERFIL?.nombre||''}"></div>`,
-    save: () => { tmp.nombre = document.getElementById('f_nombre').value.trim(); }
-  },
-  {
-    kicker:'Paso 2 de 6 · Tu cultivo · Datos fijos',
-    title:'¿Qué estás<br><em>cultivando ahora?</em>',
-    sub:'Estos datos no cambian durante el cultivo.',
-    render: () => `
-      <div class="field-group"><label class="field-label">Nombre de la genética</label><input class="field-input" id="f_genetica" placeholder="Ej: Blue Dream, OG Kush Auto…" value="${PERFIL?.genetica||''}"></div>
-      <div class="field-group"><label class="field-label">Tipo de semilla</label><div class="chip-group" id="chips_tipo">${['Feminizada','Autofloreciente','Regular'].map(t=>`<button class="chip ${PERFIL?.tipo===t?'selected':''}" onclick="selectChip('chips_tipo',this,'${t}')">${t}</button>`).join('')}</div></div>
-      <div class="field-group"><label class="field-label">Espacio de cultivo</label><div class="chip-group" id="chips_espacio">${['Interior','Exterior','Invernadero'].map(t=>`<button class="chip ${PERFIL?.espacio===t?'selected':''}" onclick="selectChip('chips_espacio',this,'${t}')">${t}</button>`).join('')}</div></div>`,
-    save: () => {
-      tmp.genetica = document.getElementById('f_genetica').value.trim();
-      tmp.tipo = document.querySelector('#chips_tipo .selected')?.dataset.val || tmp.tipo;
-      tmp.espacio = document.querySelector('#chips_espacio .selected')?.dataset.val || tmp.espacio;
-    }
-  },
-  {
-    kicker:'Paso 3 de 6 · Setup técnico · Datos fijos',
-    title:'Tu instalación,<br><em>una sola vez.</em>',
-    sub:'Luz, sustrato y maceta.',
-    render: () => `
-      <div class="field-group"><label class="field-label">Tipo de iluminación</label><div class="chip-group" id="chips_luz">${['LED','HPS','CMH/LEC','CFL','Solar'].map(t=>`<button class="chip ${PERFIL?.tipoLuz===t?'selected':''}" onclick="selectChip('chips_luz',this,'${t}')">${t}</button>`).join('')}</div></div>
-      <div class="field-row"><div class="field-group"><label class="field-label">Potencia (W)</label><input class="field-input" type="number" id="f_luz" placeholder="Ej: 600" value="${PERFIL?.luz||''}"></div><div class="field-group"><label class="field-label">Sustrato</label><select class="field-select" id="f_sustrato">${['Tierra','Coco coir','Hidropónico','Fibra de coco','Mix'].map(s=>`<option ${PERFIL?.sustrato===s?'selected':''}>${s}</option>`).join('')}</select></div></div>
-      <div class="field-row"><div class="field-group"><label class="field-label">Maceta (litros)</label><input class="field-input" type="number" id="f_maceta" placeholder="Ej: 11" value="${PERFIL?.maceta||''}"></div><div class="field-group"><label class="field-label">Inicio cultivo</label><input class="field-input" type="date" id="f_fechaInicio" value="${PERFIL?.fechaInicio||''}"><div class="field-hint">La semana se calcula sola</div></div></div>`,
-    save: () => {
-      tmp.tipoLuz = document.querySelector('#chips_luz .selected')?.dataset.val || tmp.tipoLuz;
-      tmp.luz = document.getElementById('f_luz').value;
-      tmp.sustrato = document.getElementById('f_sustrato').value;
-      tmp.maceta = document.getElementById('f_maceta').value;
-      tmp.fechaInicio = document.getElementById('f_fechaInicio').value;
-      if(tmp.fechaInicio){
-        const dias = Math.floor((new Date() - new Date(tmp.fechaInicio)) / (1000*60*60*24));
-        tmp.semana = Math.max(1, Math.ceil(dias/7));
-      }
-    }
-  },
-  {
-    kicker:'Paso 4 de 6 · Parámetros de hoy',
-    title:'¿Cómo están tus<br><em>lecturas de hoy?</em>',
-    sub:'Estos datos los actualizarás cada vez que entres.',
-    render: () => `
-      <div class="field-row"><div class="field-group"><label class="field-label">pH del agua</label><input class="field-input" type="number" step="0.1" id="f_ph" placeholder="Ej: 6.2" value="${PERFIL?.ph||''}"></div><div class="field-group"><label class="field-label">EC (mS/cm)</label><input class="field-input" type="number" step="0.1" id="f_ec" placeholder="Ej: 1.4" value="${PERFIL?.ec||''}"></div></div>
-      <div class="field-row"><div class="field-group"><label class="field-label">Temperatura (°C)</label><input class="field-input" type="number" id="f_temp" placeholder="Ej: 24" value="${PERFIL?.temp||''}"></div><div class="field-group"><label class="field-label">Humedad (%)</label><input class="field-input" type="number" id="f_hum" placeholder="Ej: 55" value="${PERFIL?.hum||''}"></div></div>
-      <div class="field-group"><label class="field-label">Último riego</label><select class="field-select" id="f_riego">${['Hoy','Ayer','Hace 2 días','Hace 3 días','Hace más de 3 días'].map(s=>`<option ${PERFIL?.riego===s?'selected':''}>${s}</option>`).join('')}</select></div>`,
-    save: () => {
-      tmp.ph = document.getElementById('f_ph').value;
-      tmp.ec = document.getElementById('f_ec').value;
-      tmp.temp = document.getElementById('f_temp').value;
-      tmp.hum = document.getElementById('f_hum').value;
-      tmp.riego = document.getElementById('f_riego').value;
-    }
-  },
-  {
-    kicker:'Paso 5 de 6 · Módulo VPD · Opcional',
-    title:'¿Quieres activar<br><em>el módulo VPD?</em>',
-    sub:'El VPD determina si los estomas de tu planta están abiertos.',
-    render: () => `
-      <div style="background:var(--pale);border:1px solid var(--pale2);border-radius:20px;padding:20px;margin-bottom:20px">
-        <div style="font-size:15px;font-weight:700;margin-bottom:6px">💧 VPD — Déficit de Presión de Vapor</div>
-        <div style="font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:16px">Con tu temperatura y humedad, la IA calcula el VPD automáticamente y te avisa si los estomas están cerrados.</div>
-        <div style="display:flex;gap:10px"><button class="chip ${PERFIL?.vpdActivo?'selected':''}" id="vpd_si" onclick="selectVPD(true)" style="flex:1;justify-content:center">✅ Activar VPD</button><button class="chip ${!PERFIL?.vpdActivo?'selected':''}" id="vpd_no" onclick="selectVPD(false)" style="flex:1;justify-content:center">❌ No por ahora</button></div>
-      </div>`,
-    save: () => { tmp.vpdActivo = document.getElementById('vpd_si')?.classList.contains('selected') || false; }
-  },
-  {
-    kicker:'Paso 6 de 6 · Tu experiencia',
-    title:'¿Cómo prefieres tu<br><em>check-in diario?</em>',
-    sub:'Cuando entres al dashboard cada día.',
-    render: () => `
-      <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:20px">
-        <div class="chip ${PERFIL?.checkinMode==='auto'?'selected':''}" id="checkin_auto" onclick="selectCheckin('auto')" style="border-radius:16px;padding:18px;text-align:left;align-items:flex-start;flex-direction:column;gap:6px"><div style="display:flex;align-items:center;gap:10px"><span style="font-size:22px">🔔</span><strong style="font-size:15px">Automático</strong></div><div style="font-size:13px;color:var(--muted);padding-left:32px;line-height:1.5">Al entrar me pregunta pH, EC y novedades.</div></div>
-        <div class="chip ${PERFIL?.checkinMode==='manual'?'selected':''}" id="checkin_manual" onclick="selectCheckin('manual')" style="border-radius:16px;padding:18px;text-align:left;align-items:flex-start;flex-direction:column;gap:6px"><div style="display:flex;align-items:center;gap:10px"><span style="font-size:22px">📋</span><strong style="font-size:15px">Manual</strong></div><div style="font-size:13px;color:var(--muted);padding-left:32px;line-height:1.5">Actualizo cuando yo quiera. Sin interrupciones.</div></div>
-      </div>`,
-    save: () => { tmp.checkinMode = document.getElementById('checkin_auto')?.classList.contains('selected') ? 'auto' : 'manual'; }
-  }
-];
+let tmpEntrada = {};
 
+const STEP_FIJOS = {
+  kicker:'Paso 1 · Tu cultivo',
+  title:'Datos fijos del<br><em>cultivo</em>',
+  sub:'Nombre, genética, setup e inicio. No se guardan pH/EC aquí — van al diario.',
+  render: () => {
+    const p = tmp.nombre!=null ? tmp : (PERFIL||{});
+    const fi = p.fechaInicio || p.cultivo?.fechaInicio || '';
+    return `
+      <div class="field-group"><label class="field-label">Tu nombre o apodo</label><input class="field-input" id="f_nombre" placeholder="Ej: Enrique…" value="${p.nombre||''}"></div>
+      <div class="field-group"><label class="field-label">Genética</label><input class="field-input" id="f_genetica" placeholder="Ej: Blue Dream…" value="${p.genetica||''}"></div>
+      <div class="field-group"><label class="field-label">Tipo de semilla</label><div class="chip-group" id="chips_tipo">${['Feminizada','Autofloreciente','Regular'].map(t=>`<button class="chip ${(p.tipo||'')===t?'selected':''}" onclick="selectChip('chips_tipo',this,'${t}')">${t}</button>`).join('')}</div></div>
+      <div class="field-group"><label class="field-label">Espacio</label><div class="chip-group" id="chips_espacio">${['Interior','Exterior','Invernadero'].map(t=>`<button class="chip ${(p.espacio||'')===t?'selected':''}" onclick="selectChip('chips_espacio',this,'${t}')">${t}</button>`).join('')}</div></div>
+      <div class="field-group"><label class="field-label">Iluminación</label><div class="chip-group" id="chips_luz">${['LED','HPS','CMH/LEC','CFL','Solar'].map(t=>`<button class="chip ${(p.tipoLuz||'')===t?'selected':''}" onclick="selectChip('chips_luz',this,'${t}')">${t}</button>`).join('')}</div></div>
+      <div class="field-row"><div class="field-group"><label class="field-label">Potencia (W)</label><input class="field-input" type="number" id="f_luz" value="${p.luz||''}"></div><div class="field-group"><label class="field-label">Sustrato</label><select class="field-select" id="f_sustrato">${['Tierra','Coco coir','Hidropónico','Fibra de coco','Mix'].map(s=>`<option ${(p.sustrato||'')===s?'selected':''}>${s}</option>`).join('')}</select></div></div>
+      <div class="field-row"><div class="field-group"><label class="field-label">Maceta (L)</label><input class="field-input" type="number" id="f_maceta" value="${p.maceta||''}"></div><div class="field-group"><label class="field-label">Inicio cultivo</label><input class="field-input" type="date" id="f_fechaInicio" value="${fi}"><div class="field-hint">La semana se calcula sola</div></div></div>
+      <div class="field-group"><label class="field-label">Fase actual</label><div class="chip-group" id="chips_fase">${['Esquejes','Vegetativo','Floración','Secado'].map(t=>`<button class="chip ${(p.fase||'')===t?'selected':''}" onclick="selectChip('chips_fase',this,'${t}')">${t}</button>`).join('')}</div></div>
+      <div style="background:var(--pale);border:1px solid var(--pale2);border-radius:16px;padding:14px;margin:12px 0">
+        <div style="font-size:13px;font-weight:700;margin-bottom:8px">💧 Módulo VPD</div>
+        <div style="display:flex;gap:8px"><button class="chip ${p.vpdActivo?'selected':''}" id="vpd_si" onclick="selectVPD(true)" style="flex:1;justify-content:center">Activar</button><button class="chip ${!p.vpdActivo?'selected':''}" id="vpd_no" onclick="selectVPD(false)" style="flex:1;justify-content:center">No</button></div>
+      </div>
+      <div class="field-group"><label class="field-label">Check-in diario</label><div class="chip-group" id="chips_checkin">
+        <button class="chip ${(p.checkinMode||'manual')==='auto'?'selected':''}" id="checkin_auto" onclick="selectCheckin('auto')">Automático</button>
+        <button class="chip ${(p.checkinMode||'manual')==='manual'?'selected':''}" id="checkin_manual" onclick="selectCheckin('manual')">Manual</button>
+      </div></div>`;
+  },
+  save: () => {
+    tmp.nombre = document.getElementById('f_nombre').value.trim();
+    tmp.genetica = document.getElementById('f_genetica').value.trim();
+    tmp.tipo = document.querySelector('#chips_tipo .selected')?.dataset.val || tmp.tipo;
+    tmp.espacio = document.querySelector('#chips_espacio .selected')?.dataset.val || tmp.espacio;
+    tmp.tipoLuz = document.querySelector('#chips_luz .selected')?.dataset.val || tmp.tipoLuz;
+    tmp.luz = document.getElementById('f_luz').value;
+    tmp.sustrato = document.getElementById('f_sustrato').value;
+    tmp.maceta = document.getElementById('f_maceta').value;
+    tmp.fechaInicio = document.getElementById('f_fechaInicio').value;
+    tmp.fase = document.querySelector('#chips_fase .selected')?.dataset.val || tmp.fase;
+    if(tmp.fechaInicio){
+      const dias = Math.floor((new Date() - new Date(tmp.fechaInicio)) / (1000*60*60*24));
+      tmp.semana = Math.max(1, Math.ceil(dias/7));
+    }
+    tmp.vpdActivo = document.getElementById('vpd_si')?.classList.contains('selected') || false;
+    tmp.checkinMode = document.getElementById('checkin_auto')?.classList.contains('selected') ? 'auto' : 'manual';
+    tmp.cultivo = buildCultivoFixed(tmp);
+  }
+};
+const STEP_DIARIO = {
+  kicker:'Paso 2 · Primera entrada',
+  title:'Lecturas de<br><em>hoy</em>',
+  sub:'Se guardan en el diario de cultivo (no en el perfil fijo).',
+  render: () => {
+    const u = ULTIMA_ENTRADA || {};
+    return `
+      <div class="field-row"><div class="field-group"><label class="field-label">pH</label><input class="field-input" type="number" step="0.1" id="f_ph" value="${u.ph??''}"></div><div class="field-group"><label class="field-label">EC</label><input class="field-input" type="number" step="0.1" id="f_ec" value="${u.ec??''}"></div></div>
+      <div class="field-row"><div class="field-group"><label class="field-label">Temp °C</label><input class="field-input" type="number" id="f_temp" value="${u.temp??''}"></div><div class="field-group"><label class="field-label">Hum %</label><input class="field-input" type="number" id="f_hum" value="${u.hum??''}"></div></div>
+      <div class="field-group"><label class="field-label">Último riego</label><select class="field-select" id="f_riego">${['Hoy','Ayer','Hace 2 días','Hace 3 días','Hace más de 3 días'].map(s=>`<option>${s}</option>`).join('')}</select></div>`;
+  },
+  save: () => {
+    tmpEntrada = {
+      ph: document.getElementById('f_ph').value,
+      ec: document.getElementById('f_ec').value,
+      temp: document.getElementById('f_temp').value,
+      hum: document.getElementById('f_hum').value,
+      riego: document.getElementById('f_riego').value,
+      etapa: tmp.fase || null,
+    };
+  }
+};
+
+function activeSteps(){
+  return onboardingMode === 'edit' ? [STEP_FIJOS] : [STEP_FIJOS, STEP_DIARIO];
+}
 function openOnboarding(edit){
   tmp = edit && PERFIL ? {...PERFIL} : {};
+  tmpEntrada = {};
+  onboardingMode = edit ? 'edit' : 'full';
   onboardingStep = 0;
   document.getElementById('modalOverlay').classList.remove('hide');
   renderStep();
 }
 function renderStep(){
-  const s = STEPS[onboardingStep];
-  document.getElementById('stepDots').innerHTML = STEPS.map((_,i)=>`<div class="modal-step-dot ${i===onboardingStep?'active':i<onboardingStep?'done':''}"></div>`).join('');
-  document.getElementById('modalKicker').textContent = s.kicker;
+  const steps = activeSteps();
+  const s = steps[onboardingStep];
+  document.getElementById('stepDots').innerHTML = steps.map((_,i)=>`<div class="modal-step-dot ${i===onboardingStep?'active':i<onboardingStep?'done':''}"></div>`).join('');
+  document.getElementById('modalKicker').textContent = onboardingMode==='edit' ? 'Actualizar parámetros fijos' : s.kicker;
   document.getElementById('modalTitle').innerHTML    = s.title;
   document.getElementById('modalSub').textContent    = s.sub;
   document.getElementById('modalBody').innerHTML     = s.render();
-  document.getElementById('modalProgressText').textContent = `${onboardingStep+1} de ${STEPS.length}`;
+  document.getElementById('modalProgressText').textContent = `${onboardingStep+1} de ${steps.length}`;
   document.querySelectorAll('.chip').forEach(btn => { if(!btn.dataset.val) btn.dataset.val = btn.textContent.trim(); });
-  document.getElementById('modalNext').textContent = onboardingStep === STEPS.length-1 ? 'Guardar y entrar →' : 'Continuar →';
+  document.getElementById('modalNext').textContent = onboardingStep === steps.length-1
+    ? (onboardingMode==='edit' ? 'Guardar parámetros →' : 'Guardar y entrar →')
+    : 'Continuar →';
   document.getElementById('modalSkip').style.display = onboardingStep === 0 ? 'block' : 'none';
 }
-function selectVPD(a){ document.getElementById('vpd_si').classList.toggle('selected',a); document.getElementById('vpd_no').classList.toggle('selected',!a); }
-function selectCheckin(m){ document.getElementById('checkin_auto').classList.toggle('selected',m==='auto'); document.getElementById('checkin_manual').classList.toggle('selected',m==='manual'); }
+function selectVPD(a){ document.getElementById('vpd_si')?.classList.toggle('selected',a); document.getElementById('vpd_no')?.classList.toggle('selected',!a); }
+function selectCheckin(m){ document.getElementById('checkin_auto')?.classList.toggle('selected',m==='auto'); document.getElementById('checkin_manual')?.classList.toggle('selected',m==='manual'); }
 function selectChip(groupId, btn, val){ document.querySelectorAll(`#${groupId} .chip`).forEach(c => c.classList.remove('selected')); btn.classList.add('selected'); btn.dataset.val = val; }
 function nextStep(){
-  STEPS[onboardingStep].save();
-  if(onboardingStep < STEPS.length - 1){ onboardingStep++; renderStep(); }
+  const steps = activeSteps();
+  steps[onboardingStep].save();
+  if(onboardingStep < steps.length - 1){ onboardingStep++; renderStep(); }
   else { saveProfile(); }
 }
-function saveProfile(){
+async function saveProfile(){
   tmp.ts = Date.now();
+  // No persistir lecturas diarias en PERFIL
+  DIARIO_KEYS.forEach(k => delete tmp[k]);
+  tmp.cultivo = buildCultivoFixed(tmp);
   PERFIL = tmp;
   localStorage.setItem('ga_perfil', JSON.stringify(PERFIL));
   document.getElementById('modalOverlay').classList.add('hide');
   syncPerfilSupabase();
   guardarCultivoStats(PERFIL);
+  // Paso 2 (alta): primera entrada del diario
+  if(onboardingMode === 'full' && tmpEntrada && (tmpEntrada.ph || tmpEntrada.ec || tmpEntrada.temp || tmpEntrada.hum || tmpEntrada.riego)){
+    try{ await postDiarioEntrada(tmpEntrada); }catch(_){}
+  }
+  await loadDiario();
   renderDashboard();
   renderVPD();
-  loadBriefing();
+  resetBriefing();
 }
 function skipOnboarding(){ document.getElementById('modalOverlay').classList.add('hide'); }
 
-// ─── SYNC PERFIL → SUPABASE ───────────────────────────────────────────────────
+// ─── SYNC PERFIL → SUPABASE (solo fijos + cultivo; sin ph/ec/temp/hum/riego) ──
 function syncPerfilSupabase(){
-  if(!JWT) return;
+  if(!JWT || !PERFIL) return;
   fetch(`${WORKER}/auth/save-perfil`, {
     method:'POST', headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({ token: JWT, perfil_cultivo: PERFIL })
+    body: JSON.stringify({ token: JWT, perfil_cultivo: perfilParaSync(PERFIL) })
   }).catch(()=>{});
 }
 
 // ─── EDICIÓN INLINE ───────────────────────────────────────────────────────────
 const IE_FIELDS = {
-  ph:{key:'ph'}, ec:{key:'ec'}, temp:{key:'temp'}, hum:{key:'hum'},
-  sustrato:{key:'sustrato'}, genetica:{key:'genetica'}, riego:{key:'riego'}, semana:{key:'semana'}
+  ph:{key:'ph', diario:true}, ec:{key:'ec', diario:true}, temp:{key:'temp', diario:true}, hum:{key:'hum', diario:true},
+  riego:{key:'riego', diario:true},
+  sustrato:{key:'sustrato', diario:false}, genetica:{key:'genetica', diario:false}, semana:{key:'semana', diario:false}
 };
 function openInline(field){
   document.querySelectorAll('.inline-edit').forEach(el=>el.classList.remove('show'));
   const el = document.getElementById('ie_'+field);
   if(!el) return;
   const inp = document.getElementById('ie_'+field+'_val');
-  if(inp && PERFIL && PERFIL[IE_FIELDS[field].key]) inp.value = PERFIL[IE_FIELDS[field].key];
+  const p = displayPerfil();
+  if(inp && p && p[IE_FIELDS[field].key] != null) inp.value = p[IE_FIELDS[field].key];
   el.classList.add('show');
   if(inp && inp.type !== 'select-one') setTimeout(()=>inp.focus(), 50);
 }
 function closeInline(field){ document.getElementById('ie_'+field)?.classList.remove('show'); }
-function saveInline(field){
+async function saveInline(field){
   if(!PERFIL) PERFIL = {};
+  const meta = IE_FIELDS[field];
+  if(!meta) return;
   const inp = document.getElementById('ie_'+field+'_val');
   if(!inp || !inp.value) { closeInline(field); return; }
-  PERFIL[IE_FIELDS[field].key] = inp.value;
-  PERFIL.ts = Date.now();
-  localStorage.setItem('ga_perfil', JSON.stringify(PERFIL));
+  const val = inp.value;
   closeInline(field);
+  if(meta.diario){
+    try{
+      const entrada = { etapa: PERFIL.fase || null };
+      entrada[meta.key] = val;
+      await postDiarioEntrada(entrada);
+      await loadDiario();
+      resetBriefing();
+    }catch(err){ alert(err.message || 'Error al guardar'); }
+    return;
+  }
+  PERFIL[meta.key] = val;
+  PERFIL.ts = Date.now();
+  PERFIL.cultivo = buildCultivoFixed(PERFIL);
+  localStorage.setItem('ga_perfil', JSON.stringify(PERFIL));
   syncPerfilSupabase();
   renderDashboard();
   renderVPD();
+  resetBriefing();
 }
 document.addEventListener('click', (e) => {
   if(e.target.closest('.inline-edit')) return;
@@ -969,9 +1173,10 @@ function showUpgradeModal(){
 function openChat(){
   document.getElementById('chatPanel').classList.add('open');
   if(!document.getElementById('msgs').children.length){
-    const nombre = PERFIL?.nombre ? `Cannabicultor ${PERFIL.nombre}` : 'Cannabicultor';
+    const p = displayPerfil();
+    const nombre = p?.nombre ? `Cannabicultor ${p.nombre}` : 'Cannabicultor';
     const saludo = PERFIL
-      ? `Hola ${nombre}. Estoy al tanto de tu ${PERFIL.genetica||'cultivo'} en semana ${PERFIL.semana||'—'} de ${PERFIL.fase||'cultivo'}. pH ${PERFIL.ph||'—'}, EC ${PERFIL.ec||'—'}. ¿En qué te ayudo hoy? También puedes enviarme una 📷 foto para analizarla.`
+      ? `Hola ${nombre}. Estoy al tanto de tu ${p.genetica||'cultivo'} en semana ${p.semana||'—'} de ${p.fase||'cultivo'}. pH ${p.ph||'—'}, EC ${p.ec||'—'}. ¿En qué te ayudo hoy? También puedes enviarme una 📷 foto para analizarla (se guarda en el diario).`
       : `Hola Cannabicultor. Configura tu cultivo para que pueda ayudarte de forma personalizada. Puedes adjuntar una 📷 foto con el botón de la cámara.`;
     addMsg('ai', saludo);
   }
@@ -1028,11 +1233,13 @@ async function sendMsg(){
   PREGUNTAS++;
   updateChatNote();
 
-  const nombre = PERFIL?.nombre ? `Cannabicultor ${PERFIL.nombre}` : 'Cannabicultor';
-  const perfil = { proyecto:'Cannabicultor IA / Growers Alliance', plan:NIVEL, usuario:nombre, email:localStorage.getItem('ga_email')||null, cultivo:PERFIL || {} };
+  const p = displayPerfil();
+  const nombre = p?.nombre ? `Cannabicultor ${p.nombre}` : 'Cannabicultor';
+  const perfil = { proyecto:'Cannabicultor IA / Growers Alliance', plan:NIVEL, usuario:nombre, email:sessionEmail()||null, cultivo:p || {} };
   const userContent = ChatVision.buildUserContent(text, image);
   const messages = ChatVision.buildApiMessages(MSGS, userContent);
-  MSGS.push({ role:'user', content: text || (image ? 'Analiza esta foto de mi cultivo.' : ''), _hadImage: !!image });
+  const hadImage = !!image;
+  MSGS.push({ role:'user', content: text || (image ? 'Analiza esta foto de mi cultivo.' : ''), _hadImage: hadImage });
 
   btn.disabled = true;
   addTyping();
@@ -1047,6 +1254,8 @@ async function sendMsg(){
     const reply = data.reply || data.content || data.message || 'No pude interpretar la respuesta.';
     MSGS.push({role:'assistant', content:reply});
     addMsg('ai', reply);
+    // Worker crea/actualiza diario_entradas con la foto; refrescamos listado
+    if(hadImage) setTimeout(() => loadDiario(), 1200);
   }catch(e){
     removeTyping();
     addMsg('ai','Error de conexión con la IA.');
@@ -1069,36 +1278,40 @@ function mostrarCheckin(){
   if(!PERFIL || PERFIL.checkinMode !== 'auto') return;
   const hoy = new Date().toDateString();
   if(localStorage.getItem('ga_ultimo_checkin') === hoy) return;
+  const p = displayPerfil();
   const modal = document.createElement('div');
   modal.className = 'checkin-modal';
   modal.id = 'checkinModal';
   const nombre = PERFIL.nombre ? `Cannabicultor ${PERFIL.nombre}` : 'Cannabicultor';
   modal.innerHTML = `
     <div class="checkin-title">🌱 Buenos días, ${nombre}</div>
-    <div class="checkin-sub">Tu ${PERFIL.genetica||'cultivo'} en semana ${PERFIL.semana||'—'}. ¿Cómo están los parámetros hoy?</div>
+    <div class="checkin-sub">Tu ${p.genetica||'cultivo'} en semana ${p.semana||'—'}. ¿Cómo están los parámetros hoy? (se guardan en el diario)</div>
     <div class="checkin-fields">
-      <div class="checkin-field"><label>pH</label><input type="number" step="0.1" id="ci_ph" value="${PERFIL.ph||''}"></div>
-      <div class="checkin-field"><label>EC</label><input type="number" step="0.1" id="ci_ec" value="${PERFIL.ec||''}"></div>
-      <div class="checkin-field"><label>Humedad %</label><input type="number" id="ci_hum" value="${PERFIL.hum||''}"></div>
+      <div class="checkin-field"><label>pH</label><input type="number" step="0.1" id="ci_ph" value="${p.ph||''}"></div>
+      <div class="checkin-field"><label>EC</label><input type="number" step="0.1" id="ci_ec" value="${p.ec||''}"></div>
+      <div class="checkin-field"><label>Humedad %</label><input type="number" id="ci_hum" value="${p.hum||''}"></div>
     </div>
     <div class="checkin-actions"><button class="checkin-save" onclick="guardarCheckin()">Guardar check-in →</button><button class="checkin-skip" onclick="saltarCheckin()">Ahora no</button></div>`;
   document.body.appendChild(modal);
 }
-function guardarCheckin(){
-  const ph = document.getElementById('ci_ph')?.value || PERFIL.ph;
-  const ec = document.getElementById('ci_ec')?.value || PERFIL.ec;
-  const hum = document.getElementById('ci_hum')?.value || PERFIL.hum;
-  if(ph) PERFIL.ph = ph;
-  if(ec) PERFIL.ec = ec;
-  if(hum) PERFIL.hum = hum;
-  PERFIL.ts = Date.now();
-  localStorage.setItem('ga_perfil', JSON.stringify(PERFIL));
+async function guardarCheckin(){
+  const ph = document.getElementById('ci_ph')?.value;
+  const ec = document.getElementById('ci_ec')?.value;
+  const hum = document.getElementById('ci_hum')?.value;
   localStorage.setItem('ga_ultimo_checkin', new Date().toDateString());
-  syncPerfilSupabase();
-  guardarCultivoStats(PERFIL);
   document.getElementById('checkinModal')?.remove();
-  renderDashboard();
-  renderVPD();
+  try{
+    await postDiarioEntrada({
+      ph: ph || undefined,
+      ec: ec || undefined,
+      hum: hum || undefined,
+      etapa: PERFIL?.fase || null,
+    });
+    await loadDiario();
+    resetBriefing();
+  }catch(_){
+    renderDashboard();
+  }
 }
 function saltarCheckin(){
   localStorage.setItem('ga_ultimo_checkin', new Date().toDateString());
@@ -1113,8 +1326,9 @@ function calcVPD(temp, hum){
   return ((100 - h) / 100 * svp).toFixed(2);
 }
 function renderVPD(){
-  if(!PERFIL || !PERFIL.vpdActivo || !PERFIL.temp || !PERFIL.hum) return;
-  const vpd = calcVPD(PERFIL.temp, PERFIL.hum);
+  const p = displayPerfil();
+  if(!PERFIL || !PERFIL.vpdActivo || !p.temp || !p.hum) return;
+  const vpd = calcVPD(p.temp, p.hum);
   if(!vpd) return;
   const v = parseFloat(vpd);
   let cls, label, emoji;
