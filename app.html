@@ -230,6 +230,31 @@
   .vpd-ok{color:#15803d;background:#dcfce7;}
   .vpd-warn{color:#b45309;background:#fef3c7;}
   .vpd-bad{color:#b91c1c;background:#fee2e2;}
+
+  /* Diario · calendario + foto */
+  .diary-toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;margin-bottom:12px}
+  .diary-cal-nav{display:flex;align-items:center;gap:6px;flex:1}
+  .diary-cal-nav button{border:1px solid var(--border2);background:#fff;border-radius:10px;width:34px;height:34px;font-size:16px;cursor:pointer;color:var(--forest);font-weight:700}
+  .diary-cal-nav strong{font-size:13px;font-weight:700;text-transform:capitalize;flex:1;text-align:center}
+  .diary-date-input{border:1.5px solid var(--border2);border-radius:12px;padding:9px 11px;font-size:13px;font-weight:600;width:100%}
+  .diary-cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:12px}
+  .diary-cal-dow{font-size:9px;font-weight:700;color:var(--soft);text-align:center;text-transform:uppercase;padding:3px 0}
+  .diary-cal-day{aspect-ratio:1;border:1px solid transparent;border-radius:9px;background:var(--bg2);font-size:12px;font-weight:600;color:var(--muted);cursor:pointer;position:relative;display:flex;align-items:center;justify-content:center}
+  .diary-cal-day.muted{opacity:.3;cursor:default}
+  .diary-cal-day.has-entry{background:var(--pale);color:var(--forest);border-color:var(--pale2)}
+  .diary-cal-day.has-entry::after{content:'';position:absolute;bottom:3px;width:4px;height:4px;border-radius:50%;background:var(--forest)}
+  .diary-cal-day.selected{background:var(--forest);color:#fff}
+  .diary-cal-day.selected::after{background:#fff}
+  .diary-foto-box{border:1.5px dashed var(--border2);border-radius:14px;padding:12px;background:var(--bg2);text-align:center}
+  .diary-foto-box.has-preview{border-style:solid;border-color:var(--pale2);background:var(--pale)}
+  .diary-foto-box input[type=file]{display:none}
+  .diary-foto-btn{display:inline-flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--border2);border-radius:999px;padding:10px 14px;font-size:13px;font-weight:600;color:var(--forest);cursor:pointer}
+  .diary-foto-preview{margin-top:8px;max-width:100%;max-height:140px;border-radius:12px;object-fit:cover}
+  .diary-foto-clear{margin-top:6px;background:none;border:0;color:var(--soft);font-size:12px;font-weight:600;cursor:pointer;text-decoration:underline}
+  .day-entry-card{border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:10px;background:var(--bg2)}
+  .day-entry-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px 12px;margin-top:8px}
+  .day-entry-grid .k{font-size:10px;font-weight:700;color:var(--soft);text-transform:uppercase;letter-spacing:.06em}
+  .day-entry-grid .v{font-size:14px;font-weight:700;margin-top:2px}
 </style>
 </head>
 <body>
@@ -409,7 +434,16 @@
         <button type="button" class="chip" style="flex:1;text-align:center;background:var(--forest);color:#fff;border-color:var(--forest)" onclick="openNuevaEntrada()">+ Nueva entrada</button>
         <button type="button" class="chip" style="flex:1;text-align:center" onclick="openChat()">📷 Foto IA</button>
       </div>
-      <div id="diarioList"><div class="diary-empty">Aún no hay entradas. Guarda lecturas o sube una foto.</div></div>
+      <div class="diary-toolbar">
+        <div class="diary-cal-nav">
+          <button type="button" onclick="diaryCalShift(-1)" aria-label="Mes anterior">‹</button>
+          <strong id="diaryCalLabel">—</strong>
+          <button type="button" onclick="diaryCalShift(1)" aria-label="Mes siguiente">›</button>
+        </div>
+        <input class="diary-date-input" type="date" id="diaryDatePicker" onchange="onDiaryDatePick(this.value)" style="flex:1;min-width:140px">
+      </div>
+      <div class="diary-cal-grid" id="diaryCalGrid"></div>
+      <div id="diarioList"><div class="diary-empty">Aún no hay entradas. Guarda lecturas o elige un día.</div></div>
     </div>
 
   </div>
@@ -652,6 +686,11 @@ function displayPerfil(){
   }
   return p;
 }
+let DIARIO_FECHAS = new Set();
+let diaryCalMonth = new Date();
+diaryCalMonth.setDate(1);
+let diaryFotoPending = {};
+
 async function postDiarioEntrada(entrada){
   if(!JWT) return null;
   const res = await fetch(`${WORKER}/diario/entrada`, {
@@ -664,52 +703,150 @@ async function postDiarioEntrada(entrada){
   if(!res.ok || !data.ok) throw new Error(data.error || 'No se pudo guardar la entrada');
   return data.entrada || null;
 }
+async function fetchDiario({ fecha, limit } = {}){
+  if(!JWT || !sessionEmail()) return { entradas: [], fechas: [] };
+  const q = new URLSearchParams({ email: sessionEmail(), limit: String(limit || 100) });
+  if(fecha) q.set('fecha', fecha);
+  const res = await fetch(`${WORKER}/diario/entradas?${q}`, {
+    headers:{'Authorization':'Bearer '+JWT}
+  });
+  if(res.status===401){ logout401(); return { entradas: [], fechas: [] }; }
+  const data = await res.json().catch(()=>({}));
+  return {
+    entradas: Array.isArray(data.entradas) ? data.entradas : [],
+    fechas: Array.isArray(data.fechas) ? data.fechas : [],
+  };
+}
 async function loadDiario(){
-  if(!JWT || !sessionEmail()) return;
   try{
-    const res = await fetch(`${WORKER}/diario/entradas?email=${encodeURIComponent(sessionEmail())}&limit=50`, {
-      headers:{'Authorization':'Bearer '+JWT}
-    });
-    if(res.status===401){ logout401(); return; }
-    const data = await res.json().catch(()=>({}));
-    DIARIO_LIST = Array.isArray(data.entradas) ? data.entradas : [];
+    const data = await fetchDiario({ limit: 120 });
+    DIARIO_LIST = data.entradas;
     ULTIMA_ENTRADA = DIARIO_LIST[0] || null;
+    DIARIO_FECHAS = new Set(data.fechas.length ? data.fechas : DIARIO_LIST.map(e => e.fecha).filter(Boolean));
   }catch(_){
     DIARIO_LIST = [];
     ULTIMA_ENTRADA = null;
+    DIARIO_FECHAS = new Set();
   }
+  renderDiaryCalendar();
   renderDiarioList();
   renderDashboard();
   renderVPD();
+}
+function diaryCalShift(delta){
+  diaryCalMonth = new Date(diaryCalMonth.getFullYear(), diaryCalMonth.getMonth() + delta, 1);
+  renderDiaryCalendar();
+}
+function onDiaryDatePick(val){ if(val) openDiaConsulta(val); }
+function renderDiaryCalendar(){
+  const grid = document.getElementById('diaryCalGrid');
+  const label = document.getElementById('diaryCalLabel');
+  if(!grid) return;
+  const y = diaryCalMonth.getFullYear();
+  const m = diaryCalMonth.getMonth();
+  if(label) label.textContent = diaryCalMonth.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
+  const firstDow = (new Date(y, m, 1).getDay() + 6) % 7;
+  const daysInMonth = new Date(y, m + 1, 0).getDate();
+  const dows = ['L','M','X','J','V','S','D'];
+  let html = dows.map(d => `<div class="diary-cal-dow">${d}</div>`).join('');
+  for(let i = 0; i < firstDow; i++) html += `<div class="diary-cal-day muted"></div>`;
+  const today = new Date().toISOString().slice(0, 10);
+  for(let d = 1; d <= daysInMonth; d++){
+    const iso = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const has = DIARIO_FECHAS.has(iso);
+    const cls = ['diary-cal-day', has ? 'has-entry' : '', iso === today ? 'selected' : ''].filter(Boolean).join(' ');
+    html += `<button type="button" class="${cls}" data-fecha="${iso}" onclick="openDiaConsulta('${iso}')">${d}</button>`;
+  }
+  grid.innerHTML = html;
+  const picker = document.getElementById('diaryDatePicker');
+  if(picker && !picker.value) picker.value = today;
 }
 function renderDiarioList(){
   const el = document.getElementById('diarioList');
   if(!el) return;
   if(!DIARIO_LIST.length){
-    el.innerHTML = '<div class="diary-empty">Aún no hay entradas. Usa «+ Nueva entrada» o adjunta una 📷 foto.</div>';
+    el.innerHTML = '<div class="diary-empty">Aún no hay entradas. Usa «+ Nueva entrada» o elige un día.</div>';
     return;
   }
-  el.innerHTML = DIARIO_LIST.map(e => {
-    const fecha = e.fecha || '—';
-    const dia = e.dia_ciclo != null ? ` · Día ${e.dia_ciclo}` : '';
+  const byDate = {};
+  DIARIO_LIST.forEach(e => {
+    const f = e.fecha || '—';
+    if(!byDate[f]) byDate[f] = [];
+    byDate[f].push(e);
+  });
+  const fechas = Object.keys(byDate).sort().reverse().slice(0, 12);
+  el.innerHTML = fechas.map(fecha => {
+    const items = byDate[fecha];
+    const head = items[0];
     const metrics = [
-      e.ph!=null?`pH ${e.ph}`:null,
-      e.ec!=null?`EC ${e.ec}`:null,
-      e.temp!=null?`${e.temp}°C`:null,
-      e.hum!=null?`${e.hum}% HR`:null,
+      head.ph!=null?`pH ${head.ph}`:null,
+      head.ec!=null?`EC ${head.ec}`:null,
+      head.temp!=null?`${head.temp}°C`:null,
+      head.hum!=null?`${head.hum}%`:null,
     ].filter(Boolean).join(' · ');
-    const foto = e.foto_url
-      ? `<a href="${escHtml(e.foto_url)}" target="_blank" rel="noopener" style="display:block;margin-top:8px"><img src="${escHtml(e.foto_url)}" alt="" style="max-width:100%;max-height:120px;border-radius:12px;object-fit:cover"></a>`
-      : '';
-    const notas = e.notas ? `<div style="font-size:12.5px;color:var(--muted);margin-top:6px">${escHtml(String(e.notas).slice(0,200))}</div>` : '';
-    return `<div style="border:1px solid var(--border);border-radius:14px;padding:12px 14px;margin-bottom:8px;background:var(--card)">
-      <div style="display:flex;justify-content:space-between;gap:8px"><strong style="font-size:13.5px">${escHtml(fecha)}${dia}</strong><span style="font-size:11px;color:var(--soft)">${escHtml(e.etapa||'')}</span></div>
+    const n = items.length;
+    const fotos = items.filter(e => e.foto_url).length;
+    return `<button type="button" onclick="openDiaConsulta('${fecha}')" style="width:100%;text-align:left;border:1px solid var(--border);border-radius:14px;padding:12px 14px;margin-bottom:8px;background:var(--card);cursor:pointer">
+      <div style="display:flex;justify-content:space-between;gap:8px"><strong style="font-size:13.5px">${escHtml(fecha)}</strong><span style="font-size:11px;color:var(--soft)">${n} reg.${fotos?` · ${fotos}📷`:''} →</span></div>
       ${metrics?`<div style="font-size:12.5px;margin-top:5px;font-weight:600;color:var(--forest)">${escHtml(metrics)}</div>`:''}
-      ${notas}${foto}
-    </div>`;
+    </button>`;
   }).join('');
 }
-/** Formulario unificado de lecturas (paso 2 + nueva entrada). Prefijo: 'f' | 'ne' */
+function dayEntryHtml(e){
+  const cell = (k, v) => v==null||v==='' ? '' : `<div><div class="k">${k}</div><div class="v">${escHtml(String(v))}</div></div>`;
+  const fert = e.fertilizantes != null ? (typeof e.fertilizantes === 'string' ? e.fertilizantes : JSON.stringify(e.fertilizantes)) : null;
+  return `<div class="day-entry-card">
+    <div style="font-size:11px;color:var(--soft);font-weight:600">${e.created_at ? new Date(e.created_at).toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'}) : ''}${e.etapa?` · ${escHtml(e.etapa)}`:''}</div>
+    <div class="day-entry-grid">
+      ${cell('pH', e.ph)}${cell('EC', e.ec)}${cell('Temp °C', e.temp)}${cell('Hum %', e.hum)}
+      ${cell('VPD', e.vpd)}${cell('Riego (L)', e.riego_litros)}
+      ${cell('Fertilizantes', fert)}${cell('Plagas', e.plagas)}
+      ${cell('Hongos', e.hongos)}${cell('Tratamiento', e.tratamiento)}
+      ${cell('Poda', e.poda)}${cell('Trasplante', e.trasplante ? 'Sí' : null)}
+    </div>
+    ${e.notas?`<div style="margin-top:10px;font-size:13px;line-height:1.45;color:var(--muted)">${escHtml(String(e.notas))}</div>`:''}
+    ${e.foto_url?`<a href="${escHtml(e.foto_url)}" target="_blank" rel="noopener"><img src="${escHtml(e.foto_url)}" alt="" class="diary-foto-preview" style="margin-top:10px;display:block"></a>`:''}
+  </div>`;
+}
+async function openDiaConsulta(fecha){
+  if(!fecha) return;
+  const picker = document.getElementById('diaryDatePicker');
+  if(picker) picker.value = fecha;
+  document.getElementById('diaConsultaOverlay')?.remove();
+  const host = document.querySelector('.app') || document.body;
+  const overlay = document.createElement('div');
+  overlay.id = 'diaConsultaOverlay';
+  overlay.className = 'diary-sheet-overlay';
+  overlay.innerHTML = `
+    <div class="diary-sheet" role="dialog">
+      <div class="modal-handle" aria-hidden="true"></div>
+      <div class="modal-hero">
+        <div class="modal-hero-content">
+          <div class="modal-kicker">Consulta del diario</div>
+          <h2 class="modal-title">${escHtml(fecha)}</h2>
+          <p class="modal-sub">Entradas y fotos de este día</p>
+        </div>
+      </div>
+      <div class="modal-body" id="diaConsultaBody"><div style="color:var(--muted);font-size:14px">Cargando…</div></div>
+      <div class="modal-footer">
+        <button type="button" class="modal-btn-next" onclick="document.getElementById('diaConsultaOverlay')?.remove();openNuevaEntrada()">+ Nueva entrada</button>
+        <button type="button" class="modal-btn-skip" onclick="document.getElementById('diaConsultaOverlay')?.remove()">Cerrar</button>
+      </div>
+    </div>`;
+  host.appendChild(overlay);
+  overlay.addEventListener('click', e => { if(e.target===overlay) overlay.remove(); });
+  try{
+    const data = await fetchDiario({ fecha, limit: 50 });
+    const body = document.getElementById('diaConsultaBody');
+    if(!body) return;
+    body.innerHTML = data.entradas.length
+      ? data.entradas.map(dayEntryHtml).join('')
+      : '<div class="diary-empty">Sin registro este día</div>';
+  }catch(_){
+    const body = document.getElementById('diaConsultaBody');
+    if(body) body.innerHTML = '<div class="diary-empty">No se pudo cargar el día.</div>';
+  }
+}
 function renderLecturasFields(prefix, vals){
   vals = vals || {};
   const v = (k) => (vals[k] != null && vals[k] !== '' ? vals[k] : '');
@@ -724,10 +861,53 @@ function renderLecturasFields(prefix, vals){
       <div class="field-group"><label class="field-label" for="${p}_hum">Hum %</label><input class="field-input" type="number" inputmode="decimal" id="${p}_hum" value="${v('hum')}" placeholder="Ej: 55"></div>
     </div>
     <div class="field-group"><label class="field-label" for="${p}_riego_l">Riego (L)</label><input class="field-input" type="number" step="0.1" inputmode="decimal" id="${p}_riego_l" value="${v('riego_litros')}" placeholder="Litros de agua"></div>
-    <div class="field-group"><label class="field-label" for="${p}_notas">Notas</label><textarea class="field-textarea" id="${p}_notas" rows="3" placeholder="Observaciones, plagas, poda…">${v('notas')}</textarea></div>`;
+    <div class="field-group"><label class="field-label" for="${p}_notas">Notas</label><textarea class="field-textarea" id="${p}_notas" rows="3" placeholder="Observaciones, plagas, poda…">${v('notas')}</textarea></div>
+    <div class="field-group">
+      <label class="field-label">Foto del cultivo</label>
+      <div class="diary-foto-box" id="${p}_foto_box">
+        <input type="file" id="${p}_foto" accept="image/jpeg,image/png,image/webp,image/*" onchange="onDiarioFotoChange('${p}', this)">
+        <button type="button" class="diary-foto-btn" onclick="document.getElementById('${p}_foto').click()">📷 Añadir foto</button>
+        <div id="${p}_foto_hint" style="font-size:12px;color:var(--soft);margin-top:8px">JPG o PNG · se guarda con la entrada</div>
+        <img id="${p}_foto_preview" class="diary-foto-preview" alt="" style="display:none">
+        <button type="button" class="diary-foto-clear" id="${p}_foto_clear" style="display:none" onclick="clearDiarioFoto('${p}')">Quitar foto</button>
+      </div>
+    </div>`;
+}
+async function onDiarioFotoChange(prefix, input){
+  const file = input.files && input.files[0];
+  if(!file) return;
+  try{
+    if(!window.ChatVision || !ChatVision.compressFile) throw new Error('Compresión no disponible');
+    const img = await ChatVision.compressFile(file);
+    diaryFotoPending[prefix] = img;
+    const prev = document.getElementById(prefix+'_foto_preview');
+    const clear = document.getElementById(prefix+'_foto_clear');
+    const box = document.getElementById(prefix+'_foto_box');
+    const hint = document.getElementById(prefix+'_foto_hint');
+    if(prev){ prev.src = img.previewUrl; prev.style.display = 'block'; }
+    if(clear) clear.style.display = 'inline';
+    if(box) box.classList.add('has-preview');
+    if(hint) hint.textContent = 'Foto lista · se subirá al guardar';
+  }catch(err){
+    clearDiarioFoto(prefix);
+    alert(err.message || 'No se pudo cargar la imagen');
+  }
+}
+function clearDiarioFoto(prefix){
+  delete diaryFotoPending[prefix];
+  const input = document.getElementById(prefix+'_foto');
+  if(input) input.value = '';
+  const prev = document.getElementById(prefix+'_foto_preview');
+  const clear = document.getElementById(prefix+'_foto_clear');
+  const box = document.getElementById(prefix+'_foto_box');
+  const hint = document.getElementById(prefix+'_foto_hint');
+  if(prev){ prev.removeAttribute('src'); prev.style.display = 'none'; }
+  if(clear) clear.style.display = 'none';
+  if(box) box.classList.remove('has-preview');
+  if(hint) hint.textContent = 'JPG o PNG · se guarda con la entrada';
 }
 function readLecturasFields(prefix){
-  return {
+  const base = {
     ph: document.getElementById(prefix+'_ph')?.value,
     ec: document.getElementById(prefix+'_ec')?.value,
     temp: document.getElementById(prefix+'_temp')?.value,
@@ -735,10 +915,17 @@ function readLecturasFields(prefix){
     riego_litros: document.getElementById(prefix+'_riego_l')?.value,
     notas: document.getElementById(prefix+'_notas')?.value,
   };
+  const foto = diaryFotoPending[prefix];
+  if(foto && foto.data){
+    base.foto_base64 = foto.data;
+    base.foto_media_type = foto.media_type || 'image/jpeg';
+  }
+  return base;
 }
 function openNuevaEntrada(){
   const u = ULTIMA_ENTRADA || {};
   document.getElementById('entradaOverlay')?.remove();
+  clearDiarioFoto('ne');
   const host = document.querySelector('.app') || document.body;
   const overlay = document.createElement('div');
   overlay.id = 'entradaOverlay';
@@ -772,6 +959,7 @@ async function guardarNuevaEntrada(){
   };
   try{
     await postDiarioEntrada(entrada);
+    clearDiarioFoto('ne');
     document.getElementById('entradaOverlay')?.remove();
     await loadDiario();
     resetBriefing();
@@ -1000,8 +1188,9 @@ async function saveProfile(){
   document.getElementById('modalOverlay').classList.add('hide');
   syncPerfilSupabase();
   guardarCultivoStats(PERFIL);
-  if(onboardingMode === 'full' && tmpEntrada && (tmpEntrada.ph || tmpEntrada.ec || tmpEntrada.temp || tmpEntrada.hum || tmpEntrada.riego_litros || tmpEntrada.notas)){
+  if(onboardingMode === 'full' && tmpEntrada && (tmpEntrada.ph || tmpEntrada.ec || tmpEntrada.temp || tmpEntrada.hum || tmpEntrada.riego_litros || tmpEntrada.notas || tmpEntrada.foto_base64)){
     try{ await postDiarioEntrada(tmpEntrada); }catch(_){}
+    clearDiarioFoto('f');
   }
   await loadDiario();
   renderDashboard();

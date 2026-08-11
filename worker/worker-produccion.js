@@ -1169,6 +1169,21 @@ async function handleDiarioEntrada(body, env, request) {
 
   if (!fila.fecha) fila.fecha = new Date().toISOString().slice(0, 10);
 
+  // Foto adjunta desde el formulario (base64 JPEG) → Storage plantas/
+  const fotoB64 = body.foto_base64 || src.foto_base64 || null;
+  if (fotoB64 && typeof fotoB64 === 'string' && !fila.foto_url) {
+    try {
+      const raw = fotoB64.includes(',') ? fotoB64.split(',')[1] : fotoB64;
+      let bytes = b64ToBytes(raw);
+      if (esJpeg(bytes)) bytes = limpiarMetadatosJpeg(bytes);
+      const ruta = `${email}/${crypto.randomUUID()}.jpg`;
+      await subirFotoStorage(env, bytes, ruta);
+      fila.foto_url = fotoUrlPublica(ruta);
+    } catch (err) {
+      return { status: 500, data: { error: 'No se pudo subir la foto: ' + (err.message || 'error') } };
+    }
+  }
+
   const res = await sbRequest(env, 'diario_entradas', {
     method: 'POST',
     headers: { Prefer: 'return=representation' },
@@ -1184,7 +1199,8 @@ async function handleDiarioEntrada(body, env, request) {
 
 /**
  * GET /diario/entradas?email=&limit=N
- * Últimas N filas por fecha desc (default 30, max 100).
+ * GET /diario/entradas?email=&fecha=YYYY-MM-DD  → filtro exacto por día
+ * Últimas N filas por fecha desc (default 30, max 200).
  */
 async function handleListDiario(url, env, request) {
   const emailQ = url.searchParams.get('email') || '';
@@ -1192,17 +1208,27 @@ async function handleListDiario(url, env, request) {
   if (auth.error) return auth.error;
   const { email } = auth;
 
-  let limit = parseInt(url.searchParams.get('limit') || '30', 10);
-  if (!Number.isFinite(limit) || limit < 1) limit = 30;
-  if (limit > 100) limit = 100;
+  const fecha = (url.searchParams.get('fecha') || '').trim();
+  const fechaOk = /^\d{4}-\d{2}-\d{2}$/.test(fecha);
 
-  const q = `diario_entradas?usuario_email=eq.${encodeURIComponent(email)}&select=*&order=fecha.desc,created_at.desc&limit=${limit}`;
+  let limit = parseInt(url.searchParams.get('limit') || (fechaOk ? '50' : '30'), 10);
+  if (!Number.isFinite(limit) || limit < 1) limit = 30;
+  if (limit > 200) limit = 200;
+
+  let q = `diario_entradas?usuario_email=eq.${encodeURIComponent(email)}&select=*&order=fecha.desc,created_at.desc&limit=${limit}`;
+  if (fechaOk) {
+    q = `diario_entradas?usuario_email=eq.${encodeURIComponent(email)}&fecha=eq.${encodeURIComponent(fecha)}&select=*&order=created_at.desc&limit=${limit}`;
+  }
+
   const res = await sbRequest(env, q, { method: 'GET' });
   if (!res.ok) {
     const msg = res.data?.message || res.data?.error || 'No se pudieron leer las entradas';
     return { status: 500, data: { error: msg } };
   }
-  return { status: 200, data: { ok: true, entradas: Array.isArray(res.data) ? res.data : [] } };
+  const entradas = Array.isArray(res.data) ? res.data : [];
+  // Fechas con al menos una entrada (para resaltar en el calendario del cliente)
+  const fechas = [...new Set(entradas.map((e) => e.fecha).filter(Boolean))];
+  return { status: 200, data: { ok: true, entradas, fechas, fecha: fechaOk ? fecha : null } };
 }
 
 /** Foto del chat → inserta o actualiza la entrada de hoy con foto_url. */
