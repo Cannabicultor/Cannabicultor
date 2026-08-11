@@ -15,8 +15,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
-<title>Cannabicultor | IA que recuerda tu cultivo de cannabis</title>
-<meta name="description" content="La IA de cultivo de cannabis que recuerda tu setup, genética e historial. Diagnósticos personalizados 24/7, alertas preventivas y guía paso a paso. Empieza gratis.">
+<title>Cannabicultor | Diario de Cultivo con IA</title>
+<meta name="description" content="Tu Diario de Cultivo con IA: registra tu setup, genética e historial. Diagnósticos personalizados 24/7, alertas preventivas y guía paso a paso. Empieza gratis.">
 <link rel="canonical" href="https://www.cannabicultor.com/">
 <link rel="preload" as="image" href="assets/icono_cannabicultor.webp">
 
@@ -122,6 +122,14 @@ nav{position:fixed;top:0;left:0;right:0;z-index:500;background:rgba(255,255,255,
 .btn-secondary:hover{border-color:var(--forest);background:var(--forest-pale)}
 .hero-stats{display:flex;gap:56px;justify-content:center;flex-wrap:wrap;opacity:0;animation:fadeUp .8s .6s forwards}
 .stat{text-align:center}
+
+/* ── QUICKSTART ── */
+.quickstart{display:flex;align-items:center;justify-content:center;gap:14px;flex-wrap:wrap;margin-bottom:40px;opacity:0;animation:fadeUp .8s .52s forwards}
+.qs-step{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:500;color:var(--text2);background:var(--forest-pale);border:1px solid var(--forest-pale2);padding:8px 16px 8px 8px;border-radius:24px}
+.qs-step.qs-final{background:var(--forest);color:#fff;border-color:var(--forest)}
+.qs-num{width:20px;height:20px;border-radius:50%;background:var(--forest);color:#fff;font-size:11px;font-weight:600;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.qs-step.qs-final .qs-num{background:#fff;color:var(--forest)}
+.qs-arrow{color:var(--text4);font-size:14px}
 .stat-num{font-size:36px;font-weight:300;color:var(--text);letter-spacing:-0.04em;line-height:1}
 .stat-num strong{font-weight:600;color:var(--forest)}
 .stat-label{font-size:11px;color:var(--text4);margin-top:4px;letter-spacing:0.02em}
@@ -215,6 +223,22 @@ nav{position:fixed;top:0;left:0;right:0;z-index:500;background:rgba(255,255,255,
 .alert-text{font-size:11px;color:#7a5a10;line-height:1.5}
 .dashboard-row2{padding:0 20px 20px;display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
 
+/* ── HERRAMIENTAS ── */
+.tools-bg{background:var(--white)}
+.tools-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-top:48px}
+.tools-grid .tool-card:last-child:nth-child(3n+2){grid-column:2 / span 1}
+.tool-card{background:var(--white);border:1px solid var(--border);border-radius:var(--R);overflow:hidden;transition:all .22s;display:flex;flex-direction:column}
+.tool-card:hover{box-shadow:var(--shadow2);transform:translateY(-3px);border-color:var(--forest-pale2)}
+.tool-shot{aspect-ratio:16/10;background:var(--bg);display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;border-bottom:1px solid var(--border)}
+.tool-shot img{width:100%;height:100%;object-fit:cover}
+.tool-shot-icon{font-size:34px;opacity:.85}
+.tool-badge{position:absolute;top:10px;right:10px;background:rgba(255,255,255,.92);color:var(--forest);font-size:10px;font-weight:600;padding:4px 10px;border-radius:12px;letter-spacing:.02em;border:1px solid var(--forest-pale2)}
+.tool-body{padding:20px 22px 22px;display:flex;flex-direction:column;flex:1}
+.tool-title{font-size:15px;font-weight:600;color:var(--text);letter-spacing:-0.01em;margin-bottom:6px;display:flex;align-items:center;gap:8px}
+.tool-desc{font-size:12.5px;color:var(--text3);line-height:1.65;margin-bottom:16px;flex:1}
+.tool-link{font-size:12.5px;font-weight:600;color:var(--forest);text-decoration:none;display:inline-flex;align-items:center;gap:6px}
+.tool-link:hover{gap:9px}
+
 /* ── HOW IT WORKS ── */
 .how-bg{background:var(--bg)}
 .steps{display:grid;grid-template-columns:repeat(4,1fr);gap:2px;margin-top:48px;background:var(--border)}
@@ -301,6 +325,7 @@ footer{padding:32px 0;background:var(--white);border-top:1px solid var(--border)
   .screen-body{grid-template-columns:1fr}
   .screen-sidebar{display:none}
   .screen-metrics{grid-template-columns:repeat(3,1fr)}
+  .tools-grid{grid-template-columns:repeat(2,1fr)}
 }
 @media(max-width:768px){
   .ni,.si,.footer-inner,.legal-band .si{padding-left:20px;padding-right:20px}
@@ -310,6 +335,10 @@ footer{padding:32px 0;background:var(--white);border-top:1px solid var(--border)
   .plans-grid{grid-template-columns:1fr}
   .steps{grid-template-columns:1fr}
   .dashboard-grid,.dashboard-row2{grid-template-columns:repeat(2,1fr)}
+  .tools-grid{grid-template-columns:1fr}
+  .quickstart{gap:8px}
+  .qs-step{font-size:12px;padding:7px 12px 7px 6px}
+  .qs-arrow{display:none}
   .form-row{flex-direction:column}
   .form-input{border-right:1.5px solid var(--border2);border-bottom:none;border-radius:12px 12px 0 0}
   .form-submit{border-radius:0 0 12px 12px;padding:14px}
@@ -326,7 +355,7 @@ footer{padding:32px 0;background:var(--white);border-top:1px solid var(--border)
       "@id": "https://www.cannabicultor.com/#organization",
       "name": "Cannabicultor",
       "url": "https://www.cannabicultor.com/",
-      "description": "Guía de cultivo de cannabis impulsada por inteligencia artificial. La IA que recuerda tu cultivo.",
+      "description": "Diario de Cultivo con IA para cannabis, respaldado por una base de datos de más de 44.000 variedades.",
       "sameAs": []
     },
     {
@@ -334,7 +363,7 @@ footer{padding:32px 0;background:var(--white);border-top:1px solid var(--border)
       "@id": "https://www.cannabicultor.com/#website",
       "url": "https://www.cannabicultor.com/",
       "name": "Cannabicultor",
-      "description": "La IA que recuerda tu cultivo de cannabis",
+      "description": "Diario de Cultivo con IA para cannabis",
       "publisher": {
         "@id": "https://www.cannabicultor.com/#organization"
       },
@@ -349,9 +378,9 @@ footer{padding:32px 0;background:var(--white);border-top:1px solid var(--border)
         "@type": "Offer",
         "price": "0",
         "priceCurrency": "EUR",
-        "description": "Plan gratuito disponible. Planes de pago desde 9 €/mes."
+        "description": "Plan gratuito disponible."
       },
-      "description": "Inteligencia artificial que recuerda el setup, genética e historial de tu cultivo de cannabis y ofrece diagnósticos y alertas personalizadas.",
+      "description": "Diario de Cultivo con IA que registra el setup, genética e historial de tu cultivo de cannabis y ofrece diagnósticos y alertas personalizadas.",
       "url": "https://www.cannabicultor.com/"
     }
   ]
@@ -369,10 +398,10 @@ footer{padding:32px 0;background:var(--white);border-top:1px solid var(--border)
     </a>
     <div class="nav-links">
       <a href="/cultivo-con-ia/">Cultivo con IA</a>
+      <a href="#herramientas">Herramientas</a>
       <a href="/biblioteca/">Biblioteca</a>
       <a href="#demo">Funciones</a>
       <a href="#como-funciona">Cómo funciona</a>
-      <a href="#planes">Planes</a>
       <a href="#growers">Growers Alliance</a>
     </div>
     <div class="nav-actions">
@@ -387,19 +416,25 @@ footer{padding:32px 0;background:var(--white);border-top:1px solid var(--border)
   <div class="hero-bg"></div>
   <img src="assets/icono_cannabicultor.webp" alt="" class="hero-icon" width="900" height="900" fetchpriority="high" decoding="async">
   <div class="hero-eyebrow">Alianza Global de Cannabicultores</div>
-  <h1 class="hero-h1">La IA que recuerda<br><em>tu cultivo</em></h1>
+  <h1 class="hero-h1">Tu <em>Diario de Cultivo</em></h1>
   <div class="hero-badge"><span class="hero-badge-dot"></span>Sistema de IA activo · Acceso fundador abierto</div>
-  <p class="hero-sub">Aprende de tu setup, recuerda tu historial y te guía paso a paso. La base de conocimiento más completa sobre cultivo avanzado.</p>
+  <p class="hero-sub">Registra tu cultivo, recibe diagnósticos con IA y accede a la mayor base de conocimiento sobre cultivo avanzado en español.</p>
   <div class="hero-cta">
-    <button class="btn-primary" onclick="window.location.href='/register.html'">Reservar plaza fundador</button>
-    <button class="btn-secondary" onclick="document.getElementById('como-funciona').scrollIntoView({behavior:'smooth'})">Ver cómo funciona</button>
+    <button class="btn-primary" onclick="window.location.href='/register.html'">Empieza tu diario gratis</button>
+    <button class="btn-secondary" onclick="document.getElementById('herramientas').scrollIntoView({behavior:'smooth'})">Ver herramientas</button>
     <p class="hero-login-hint">¿Ya tienes cuenta? <a href="/login.html">Inicia sesión</a></p>
   </div>
+  <div class="quickstart">
+    <div class="qs-step"><span class="qs-num">1</span>Test rápido</div>
+    <div class="qs-arrow">→</div>
+    <div class="qs-step"><span class="qs-num">2</span>Tus parámetros</div>
+    <div class="qs-arrow">→</div>
+    <div class="qs-step qs-final"><span class="qs-num">3</span>Tu diario</div>
+  </div>
   <div class="hero-stats">
-    <div class="stat"><div class="stat-num"><strong>+150</strong></div><div class="stat-label">Años de experiencia combinada</div></div>
+    <div class="stat"><div class="stat-num"><strong>44.000+</strong></div><div class="stat-label">Variedades en base de datos</div></div>
     <div class="stat"><div class="stat-num"><strong>24/7</strong></div><div class="stat-label">Asistencia IA</div></div>
     <div class="stat"><div class="stat-num"><strong>100%</strong></div><div class="stat-label">Basado en evidencia</div></div>
-    <div class="stat"><div class="stat-num"><strong>4</strong></div><div class="stat-label">Continentes</div></div>
   </div>
 
   <!-- Hero screenshot -->
@@ -409,14 +444,13 @@ footer{padding:32px 0;background:var(--white);border-top:1px solid var(--border)
         <div class="dot" style="background:#ff5f57"></div>
         <div class="dot" style="background:#febc2e"></div>
         <div class="dot" style="background:#28c840"></div>
-        <span class="screen-url">cannabicultor.com/dashboard</span>
+        <span class="screen-url">cannabicultor.com/diario</span>
       </div>
       <div class="screen-body">
         <div class="screen-sidebar">
-          <div class="screen-nav-item active">📊 Resumen</div>
-          <div class="screen-nav-item">🌱 Mi cultivo</div>
-          <div class="screen-nav-item">📋 Historial</div>
-          <div class="screen-nav-item">🧠 Diagnóstico IA</div>
+          <div class="screen-nav-item active">📔 Diario</div>
+          <div class="screen-nav-item">✅ Test</div>
+          <div class="screen-nav-item">⚙️ Parámetros</div>
           <div class="screen-nav-item">🧬 Genética</div>
           <div class="screen-nav-item">⚠️ Alertas</div>
         </div>
@@ -457,12 +491,85 @@ footer{padding:32px 0;background:var(--white);border-top:1px solid var(--border)
 
 <div class="dv"></div>
 
+<!-- HERRAMIENTAS -->
+<section class="sec tools-bg reveal" id="herramientas">
+  <div class="si">
+    <div class="section-eyebrow">Todo lo que tienes dentro</div>
+    <h2 class="section-title">Más que un <em>diario</em></h2>
+    <p class="section-sub">El diario es la puerta de entrada. Detrás hay un ecosistema completo de herramientas y conocimiento para cultivar mejor.</p>
+    <div class="tools-grid">
+
+      <div class="tool-card">
+        <div class="tool-shot">
+          <img src="assets/shot-diario.png" alt="Diario de Cultivo — pantalla de inicio" style="object-position:top">
+          <span class="tool-badge">Núcleo</span>
+        </div>
+        <div class="tool-body">
+          <div class="tool-title">Diario de Cultivo IA</div>
+          <p class="tool-desc">Registra parámetros día a día. La IA analiza tu historial, detecta desviaciones y te avisa antes de que haya un problema.</p>
+          <a href="/register.html" class="tool-link">Probar gratis →</a>
+        </div>
+      </div>
+
+      <div class="tool-card">
+        <div class="tool-shot">
+          <img src="assets/shot-variedades.png" alt="Buscador genético — variedades y breeders" style="object-position:top">
+        </div>
+        <div class="tool-body">
+          <div class="tool-title">Base de Variedades y Breeders</div>
+          <p class="tool-desc">+44.000 variedades documentadas con genética, breeder, efectos y datos de cultivo. Busca, compara y elige.</p>
+          <a href="/buscador-cannabicultor.html" class="tool-link">Explorar base de datos →</a>
+        </div>
+      </div>
+
+      <div class="tool-card">
+        <div class="tool-shot">
+          <img src="assets/shot-sala.png" alt="Diseñador de sala de cultivo" style="object-position:top">
+        </div>
+        <div class="tool-body">
+          <div class="tool-title">Diseñador de Sala de Cultivo</div>
+          <p class="tool-desc">Calcula luz, VPD, ventilación y distribución óptima de tu espacio antes de montar el cultivo.</p>
+          <a href="/disenador_sala_cultivo.html" class="tool-link">Diseñar mi sala →</a>
+        </div>
+      </div>
+
+      <div class="tool-card">
+        <div class="tool-shot">
+          <!-- reemplazar por <img src="assets/shot-foto.jpg" alt=""> -->
+          <span class="tool-shot-icon">📸</span>
+          <span class="tool-badge">IA visión</span>
+        </div>
+        <div class="tool-body">
+          <div class="tool-title">Análisis de Foto con IA</div>
+          <p class="tool-desc">Sube una foto de tu planta y la IA identifica deficiencias, plagas o estrés, con recomendación inmediata.</p>
+          <a href="/register.html" class="tool-link">Analizar una foto →</a>
+        </div>
+      </div>
+
+      <div class="tool-card">
+        <div class="tool-shot">
+          <img src="assets/shot-biblioteca.png" alt="Biblioteca Cannabicultor con IA" style="object-position:top">
+          <span class="tool-badge">RAG</span>
+        </div>
+        <div class="tool-body">
+          <div class="tool-title">Biblioteca con IA (RAG)</div>
+          <p class="tool-desc">IA entrenada sobre libros técnicos, investigaciones científicas y guías de cultivo real — no inventa, cita la fuente.</p>
+          <a href="/biblioteca/" class="tool-link">Consultar biblioteca →</a>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<div class="dv"></div>
+
 <!-- CHAT DEMO -->
 <section class="sec chat-bg reveal" id="demo">
   <div class="si">
     <div class="section-eyebrow">Demo en vivo</div>
-    <h2 class="section-title">La IA que <em>recuerda</em> tu cultivo</h2>
-    <p class="section-sub">No repites el contexto en cada consulta. El sistema sabe quién eres, qué cultivas y cómo lo haces.</p>
+    <h2 class="section-title">IA entrenada con <em>conocimiento real</em></h2>
+    <p class="section-sub">No improvisa. Responde con tu contexto y con una base de libros técnicos e investigaciones científicas (RAG).</p>
     <div class="chat-wrap">
       <div class="chat-window">
         <div class="chat-header">
@@ -497,8 +604,8 @@ footer{padding:32px 0;background:var(--white);border-top:1px solid var(--border)
 <!-- DASHBOARD -->
 <section class="sec reveal">
   <div class="si">
-    <div class="section-eyebrow">Panel de control</div>
-    <h2 class="section-title">Tu cultivo <em>día a día</em></h2>
+    <div class="section-eyebrow">Tu diario</div>
+    <h2 class="section-title">Cultivo <em>día a día</em></h2>
     <p class="section-sub">Registra los parámetros de tu cultivo. La IA analiza tu historial y te avisa antes de que haya un problema.</p>
     <div class="dashboard-wrap">
       <div class="dashboard-header">
@@ -605,91 +712,6 @@ footer{padding:32px 0;background:var(--white);border-top:1px solid var(--border)
 
 <div class="dv"></div>
 
-<!-- PLANS -->
-<section class="sec plans-bg reveal" id="planes">
-  <div class="si">
-    <div class="section-eyebrow">Planes</div>
-    <h2 class="section-title">Elige tu nivel de <em>inteligencia</em></h2>
-    <p class="section-sub">La diferencia no es solo el precio. Es cuánto sabe la IA de ti.</p>
-    <div class="plans-grid">
-      <div class="plan-card">
-        <div class="plan-name">Libre</div>
-        <div class="plan-price">0<sup>€</sup> <span>/mes</span></div>
-        <div class="plan-tagline">Acceso básico</div>
-        <div class="plan-desc">Cargas el contexto de tu cultivo manualmente en cada sesión.</div>
-        <ul class="plan-features">
-          <li>2 preguntas al día</li>
-          <li>Calendario básico</li>
-          <li class="off">Memoria de tu setup</li>
-          <li class="off">Comunidad privada</li>
-          <li class="off">Historial de cultivos</li>
-        </ul>
-        <button class="plan-btn" onclick="window.location.href='/register.html'">Solicitar acceso</button>
-      </div>
-      <div class="plan-card">
-        <div class="plan-badge">Fundador</div>
-        <div class="plan-name">Semilla</div>
-        <div class="plan-price">0<sup>€</sup> <span>/mes</span></div>
-        <div class="plan-tagline">Memoria IA básica</div>
-        <div class="plan-desc">Precio fundador. La IA recuerda tu tipo de cultivo, espacio e iluminación.</div>
-        <ul class="plan-features">
-          <li>5 preguntas al día</li>
-          <li>Calendario personalizado</li>
-          <li>Memoria: cultivo, espacio, luz</li>
-          <li>Solo lectura comunidad</li>
-          <li class="off">Historial de cultivos</li>
-        </ul>
-        <button class="plan-btn" onclick="window.location.href='/register.html'">Solicitar acceso</button>
-      </div>
-      <div class="plan-card featured">
-        <div class="plan-badge">Más popular</div>
-        <div class="plan-name">Cultivador</div>
-        <div class="plan-price"><sup>€</sup>9 <span>/mes</span></div>
-        <div class="plan-tagline">Memoria IA completa</div>
-        <div class="plan-desc">La IA conoce tu setup completo: sustrato, nutrientes, genética y legislación de tu país.</div>
-        <ul class="plan-features">
-          <li>Chat ilimitado</li>
-          <li>Calendario completo con alertas</li>
-          <li>Memoria total del cultivo</li>
-          <li>Comunidad completa</li>
-          <li>Últimos 3 cultivos</li>
-        </ul>
-        <button class="plan-btn featured-btn" onclick="window.location.href='/register.html'">Solicitar acceso</button>
-      </div>
-      <div class="plan-card">
-        <div class="plan-name">Master</div>
-        <div class="plan-price"><sup>€</sup>19 <span>/mes</span></div>
-        <div class="plan-tagline">Memoria IA + Aprendizaje</div>
-        <div class="plan-desc">Historial completo, anticipa problemas y adapta todo a tus preferencias.</div>
-        <ul class="plan-features">
-          <li>Todo lo del plan Cultivador</li>
-          <li>10 semillas cada trimestre</li>
-          <li>Sesión mensual en directo</li>
-          <li>Historial completo</li>
-          <li>Alertas legales por país</li>
-        </ul>
-        <button class="plan-btn" onclick="window.location.href='/register.html'">Solicitar acceso</button>
-      </div>
-      <div class="plan-card">
-        <div class="plan-name">Genetista</div>
-        <div class="plan-price"><sup>€</sup>47 <span>/mes</span></div>
-        <div class="plan-tagline">Acceso VIP</div>
-        <div class="plan-desc">Lo más alto: genéticas premium, clones elite y sesiones privadas con el equipo.</div>
-        <ul class="plan-features">
-          <li>Todo lo del plan Master</li>
-          <li>5 semillas premium + 1 clon elite/mes</li>
-          <li>Sesión privada mensual</li>
-          <li>Acceso VIP a eventos y betas</li>
-          <li>20% descuento almacén</li>
-        </ul>
-        <button class="plan-btn" onclick="window.location.href='/register.html'">Solicitar acceso</button>
-      </div>
-    </div>
-  </div>
-</section>
-
-<div class="dv"></div>
-
 <!-- FOUNDER / GROWERS ALLIANCE -->
 <section class="sec founder-bg reveal" id="growers">
   <div class="si">
@@ -702,15 +724,14 @@ footer{padding:32px 0;background:var(--white);border-top:1px solid var(--border)
         <div class="founder-name">Growers Alliance</div>
         <div class="founder-subtitle">Referentes de la industria del cultivo a nivel mundial</div>
         <p class="founder-body">
-          Growers Alliance no es el proyecto de una persona. Es la unión de un grupo selecto de profesionales con décadas de experiencia real en la industria del cultivo avanzado — <strong>fundadores de bancos de semillas de referencia internacional, impulsores de los primeros cannabis clubs en Europa, desarrolladores de negocios cannábicos en cuatro continentes y expertos en legislación, genética y tecnología aplicada al cultivo</strong>.<br><br>
-          Juntos representamos más de 150 años de experiencia acumulada. Hemos cometido todos los errores posibles, navegado los marcos legales más complejos del mundo y construido algunas de las comunidades más respetadas de la historia reciente.<br><br>
-          Ahora, ese mismo conocimiento está en tus manos: <strong>alimentando una IA con toda nuestra experiencia combinada</strong>. La mayor base de conocimiento sobre cultivo avanzado jamás construida, potenciada con inteligencia artificial moderna.
+          Growers Alliance no es el proyecto de una persona. Es la unión de un grupo selecto de profesionales con experiencia real en la industria del cultivo avanzado — <strong>fundadores de bancos de semillas de referencia internacional, impulsores de los primeros cannabis clubs en Europa, y expertos en legislación, genética y tecnología aplicada al cultivo</strong>.<br><br>
+          Hemos cometido todos los errores posibles, navegado los marcos legales más complejos del mundo y construido algunas de las comunidades más respetadas de la historia reciente.<br><br>
+          Ahora, ese mismo conocimiento está en tus manos: <strong>alimentando una IA con toda nuestra experiencia combinada</strong>, respaldada por una base de datos de <strong>+44.000 variedades</strong>. La mayor base de conocimiento sobre cultivo avanzado jamás construida, potenciada con inteligencia artificial moderna.
         </p>
         <div class="founder-tags">
+          <span class="founder-tag">🌱 +44.000 variedades</span>
+          <span class="founder-tag">📊 Datos de encuestas reales</span>
           <span class="founder-tag">🇪🇸 España</span>
-          <span class="founder-tag">🇺🇸 Estados Unidos</span>
-          <span class="founder-tag">🌎 América del Sur</span>
-          <span class="founder-tag">🇹🇭 Tailandia</span>
         </div>
       </div>
     </div>
