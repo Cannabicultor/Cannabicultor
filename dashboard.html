@@ -16,12 +16,12 @@
 <meta name="robots" content="noindex, nofollow">
 <title>Cannabicultor IA — Dashboard</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Lora:ital,wght@0,400;0,600;1,400;1,600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Lora:ital,wght@0,400;0,600;1,400;1,600&family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500;1,600&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
   --bg:#f5f7f4;--bg2:#eef1ec;--card:#fff;
-  --forest:#1a5c32;--forest2:#2a7a44;
+  --forest:#1a5c32;--forest2:#2a7a44;--brand-dark:#0F3020;
   --pale:#e6f0ea;--pale2:#d0e8d8;
   --text:#151515;--muted:#6f746f;--soft:#9aa09a;
   --border:rgba(0,0,0,.075);--border2:rgba(0,0,0,.12);
@@ -173,40 +173,48 @@ button{cursor:pointer}
 #photoInput{display:none}
 
 /* MODAL ONBOARDING */
-.modal-overlay{position:fixed;inset:0;background:rgba(10,15,10,.7);backdrop-filter:blur(8px);z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px;animation:fadeIn .3s ease}
+.modal-overlay{position:fixed;inset:0;background:rgba(10,15,10,.72);backdrop-filter:blur(8px);z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px;animation:fadeIn .3s ease}
 @keyframes fadeIn{from{opacity:0}to{opacity:1}}
 .modal-overlay.hide{display:none}
-.modal{background:#fff;border-radius:28px;box-shadow:0 40px 120px rgba(0,0,0,.3);width:100%;max-width:560px;max-height:90vh;overflow-y:auto;animation:slideUp .35s ease}
+.modal{background:#fff;border-radius:28px;box-shadow:0 40px 120px rgba(0,0,0,.3);width:100%;max-width:560px;max-height:90vh;overflow-y:auto;animation:slideUp .35s ease;display:flex;flex-direction:column}
 @keyframes slideUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
-.modal-hero{background:linear-gradient(to bottom,var(--forest),var(--forest2));padding:32px 32px 24px;border-radius:28px 28px 0 0;position:relative;overflow:hidden}
+.modal-handle{display:none;width:40px;height:4px;border-radius:999px;background:rgba(0,0,0,.12);margin:10px auto 0;flex-shrink:0}
+.modal-hero{background:var(--brand-dark);padding:28px 32px 22px;border-radius:28px 28px 0 0;position:relative;overflow:hidden;flex-shrink:0}
 .modal-hero-content{position:relative;z-index:1}
-.modal-step-indicator{display:flex;gap:6px;margin-bottom:20px}
+.modal-step-indicator{display:flex;gap:6px;margin-bottom:18px}
 .modal-step-dot{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.3);transition:all .3s}
 .modal-step-dot.active{width:20px;border-radius:3px;background:#fff}
 .modal-step-dot.done{background:rgba(255,255,255,.6)}
-.modal-kicker{font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.6);margin-bottom:8px}
-.modal-title{font-family:Lora,Georgia,serif;font-size:26px;font-weight:600;color:#fff;line-height:1.2;letter-spacing:-.03em}
-.modal-title em{color:#7dd4a0;font-style:italic}
-.modal-sub{font-size:14px;color:rgba(255,255,255,.7);margin-top:8px;line-height:1.5}
-.modal-body{padding:28px 32px 32px}
-.field-group{margin-bottom:20px}
-.field-label{font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;display:block}
-.field-input{width:100%;border:1.5px solid var(--border2);border-radius:12px;padding:12px 14px;font-size:15px;color:var(--text);outline:none;transition:border-color .18s;background:#fff}
-.field-input:focus{border-color:var(--forest)}
-.field-select{width:100%;border:1.5px solid var(--border2);border-radius:12px;padding:12px 14px;font-size:15px;color:var(--text);outline:none;background:#fff;cursor:pointer}
-.field-select:focus{border-color:var(--forest)}
+.modal-kicker{font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.62);margin-bottom:8px}
+.modal-title{font-family:'Playfair Display',Lora,Georgia,serif;font-size:26px;font-weight:600;color:#fff;line-height:1.2;letter-spacing:-.02em}
+.modal-title em{color:#9ed4b0;font-style:italic;font-weight:500}
+.modal-sub{font-size:14px;color:rgba(255,255,255,.72);margin-top:8px;line-height:1.5}
+.modal-body{padding:24px 32px 8px;flex:1}
+/* Labels SIEMPRE encima del input — nunca inline */
+.field-group{margin-bottom:16px;display:block;min-width:0}
+.field-label{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin:0 0 8px;display:block;line-height:1.2}
+.field-input,.field-select,.field-textarea{display:block;width:100%;border:1.5px solid var(--border2);border-radius:12px;padding:12px 14px;font-size:15px;color:var(--text);outline:none;transition:border-color .18s;background:#fff;font-family:inherit;box-sizing:border-box}
+.field-input:focus,.field-select:focus,.field-textarea:focus{border-color:var(--forest)}
+.field-textarea{min-height:72px;resize:vertical;line-height:1.45}
+.field-select{cursor:pointer}
 .field-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.field-hint{font-size:12px;color:var(--soft);margin-top:5px}
+.field-row .field-group{margin-bottom:16px}
+.field-hint{font-size:12px;color:var(--soft);margin-top:5px;display:block}
 .chip-group{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
 .chip{border:1.5px solid var(--border2);background:#fff;border-radius:999px;padding:9px 16px;font-size:13px;font-weight:600;color:var(--muted);cursor:pointer;transition:all .18s}
 .chip:hover{border-color:var(--forest);color:var(--forest)}
 .chip.selected{border-color:var(--forest);background:var(--pale);color:var(--forest)}
-.modal-footer{padding:0 32px 28px;display:flex;align-items:center;justify-content:space-between;gap:12px}
-.modal-btn-next{background:var(--forest);color:#fff;border:0;border-radius:999px;padding:14px 28px;font-size:15px;font-weight:700;transition:all .18s}
+.modal-footer{padding:12px 32px 28px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-shrink:0}
+.modal-btn-next{background:var(--forest);color:#fff;border:0;border-radius:999px;padding:14px 28px;font-size:15px;font-weight:700;transition:all .18s;cursor:pointer}
 .modal-btn-next:hover{background:var(--forest2);transform:translateY(-1px)}
-.modal-btn-skip{background:transparent;border:0;color:var(--soft);font-size:13px;font-weight:600;padding:8px}
+.modal-btn-skip{background:transparent;border:0;color:var(--soft);font-size:13px;font-weight:600;padding:8px;cursor:pointer}
 .modal-btn-skip:hover{color:var(--muted)}
 .modal-progress-text{font-size:13px;color:var(--soft);font-weight:600}
+/* Sheet diario (nueva entrada) — mismo lenguaje visual que onboarding */
+.diary-sheet-overlay{position:fixed;inset:0;background:rgba(10,15,10,.72);backdrop-filter:blur(8px);z-index:2000;display:flex;align-items:center;justify-content:center;padding:20px;animation:fadeIn .25s ease}
+.diary-sheet{background:#fff;border-radius:28px;box-shadow:0 40px 120px rgba(0,0,0,.3);width:100%;max-width:520px;max-height:90vh;overflow-y:auto;animation:slideUp .3s ease;display:flex;flex-direction:column}
+.diary-sheet .modal-hero{border-radius:28px 28px 0 0}
+.diary-sheet .modal-footer{justify-content:flex-end}
 
 /* EDICIÓN INLINE */
 .editable{cursor:pointer;position:relative;transition:all .18s}
@@ -273,14 +281,19 @@ button{cursor:pointer}
   .metrics{grid-template-columns:1fr}
   .detail-grid{grid-template-columns:1fr}
   .tools-grid{grid-template-columns:1fr}
+  .modal-overlay,.diary-sheet-overlay{align-items:flex-end;padding:0;justify-content:center}
+  .modal,.diary-sheet{max-width:100%;border-radius:22px 22px 0 0;max-height:92dvh;animation:sheetUp .32s ease}
+  @keyframes sheetUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+  .modal-handle{display:block}
+  .modal-hero,.diary-sheet .modal-hero{border-radius:22px 22px 0 0;padding:18px 20px 16px}
+  .modal-body{padding:18px 20px 6px}
+  .modal-footer{padding:10px 20px calc(18px + env(safe-area-inset-bottom));flex-wrap:wrap}
+  .modal-btn-next{flex:1;text-align:center;width:100%}
+  .field-row{grid-template-columns:1fr}
+  .modal-title{font-size:22px}
   .chat-panel{inset:0;width:100%;height:100%;border-radius:0;border:0}
   .chat-launch{bottom:14px}
   .chat-preview{display:none}
-  .modal{border-radius:20px}
-  .modal-hero{padding:24px 24px 20px;border-radius:20px 20px 0 0}
-  .modal-body{padding:20px 24px 24px}
-  .modal-footer{padding:0 24px 24px}
-  .field-row{grid-template-columns:1fr}
 }
 </style>
 </head>
@@ -289,6 +302,7 @@ button{cursor:pointer}
 <!-- MODAL ONBOARDING -->
 <div class="modal-overlay hide" id="modalOverlay">
   <div class="modal" id="modal">
+    <div class="modal-handle" aria-hidden="true"></div>
     <div class="modal-hero">
       <div class="modal-hero-content">
         <div class="modal-step-indicator" id="stepDots"></div>
@@ -300,7 +314,7 @@ button{cursor:pointer}
     <div class="modal-body" id="modalBody"></div>
     <div class="modal-footer">
       <button class="modal-btn-skip" id="modalSkip" onclick="skipOnboarding()">Omitir por ahora</button>
-      <div style="display:flex;align-items:center;gap:14px">
+      <div style="display:flex;align-items:center;gap:14px;flex:1;justify-content:flex-end">
         <span class="modal-progress-text" id="modalProgressText"></span>
         <button class="modal-btn-next" id="modalNext" onclick="nextStep()">Continuar →</button>
       </div>
@@ -812,26 +826,56 @@ function renderDiarioList(){
     </div>`;
   }).join('');
 }
+/** Formulario unificado de lecturas (paso 2 + nueva entrada). Prefijo de ids: 'f' | 'ne' */
+function renderLecturasFields(prefix, vals){
+  vals = vals || {};
+  const v = (k) => (vals[k] != null && vals[k] !== '' ? vals[k] : '');
+  const p = prefix;
+  return `
+    <div class="field-row">
+      <div class="field-group"><label class="field-label" for="${p}_ph">pH</label><input class="field-input" type="number" step="0.1" inputmode="decimal" id="${p}_ph" value="${v('ph')}" placeholder="Ej: 6.2"></div>
+      <div class="field-group"><label class="field-label" for="${p}_ec">EC</label><input class="field-input" type="number" step="0.1" inputmode="decimal" id="${p}_ec" value="${v('ec')}" placeholder="Ej: 1.4"></div>
+    </div>
+    <div class="field-row">
+      <div class="field-group"><label class="field-label" for="${p}_temp">Temp °C</label><input class="field-input" type="number" inputmode="decimal" id="${p}_temp" value="${v('temp')}" placeholder="Ej: 24"></div>
+      <div class="field-group"><label class="field-label" for="${p}_hum">Hum %</label><input class="field-input" type="number" inputmode="decimal" id="${p}_hum" value="${v('hum')}" placeholder="Ej: 55"></div>
+    </div>
+    <div class="field-group"><label class="field-label" for="${p}_riego_l">Riego (L)</label><input class="field-input" type="number" step="0.1" inputmode="decimal" id="${p}_riego_l" value="${v('riego_litros')}" placeholder="Litros de agua"></div>
+    <div class="field-group"><label class="field-label" for="${p}_notas">Notas</label><textarea class="field-textarea" id="${p}_notas" rows="3" placeholder="Observaciones, plagas, poda…">${v('notas')}</textarea></div>`;
+}
+function readLecturasFields(prefix){
+  return {
+    ph: document.getElementById(prefix+'_ph')?.value,
+    ec: document.getElementById(prefix+'_ec')?.value,
+    temp: document.getElementById(prefix+'_temp')?.value,
+    hum: document.getElementById(prefix+'_hum')?.value,
+    riego_litros: document.getElementById(prefix+'_riego_l')?.value,
+    notas: document.getElementById(prefix+'_notas')?.value,
+  };
+}
 function openNuevaEntrada(){
   const u = ULTIMA_ENTRADA || {};
+  document.getElementById('entradaOverlay')?.remove();
   const overlay = document.createElement('div');
   overlay.id = 'entradaOverlay';
-  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(10,15,10,.65);backdrop-filter:blur(6px);z-index:2000;display:flex;align-items:flex-end;justify-content:center;padding:16px';
+  overlay.className = 'diary-sheet-overlay';
   overlay.innerHTML = `
-    <div style="background:#fff;border-radius:24px 24px 20px 20px;width:100%;max-width:480px;padding:22px 20px 18px;box-shadow:0 24px 80px rgba(0,0,0,.25)">
-      <div style="font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--soft);margin-bottom:6px">Nueva entrada del diario</div>
-      <div style="font-family:Lora,Georgia,serif;font-size:22px;font-weight:600;margin-bottom:14px">Lecturas de <em style="color:var(--forest)">hoy</em></div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
-        <div><label class="field-label">pH</label><input class="field-input" type="number" step="0.1" id="ne_ph" value="${u.ph??''}"></div>
-        <div><label class="field-label">EC</label><input class="field-input" type="number" step="0.1" id="ne_ec" value="${u.ec??''}"></div>
-        <div><label class="field-label">Temp °C</label><input class="field-input" type="number" id="ne_temp" value="${u.temp??''}"></div>
-        <div><label class="field-label">Hum %</label><input class="field-input" type="number" id="ne_hum" value="${u.hum??''}"></div>
+    <div class="diary-sheet" role="dialog" aria-labelledby="ne_title">
+      <div class="modal-handle" aria-hidden="true"></div>
+      <div class="modal-hero">
+        <div class="modal-hero-content">
+          <div class="modal-kicker">Nueva entrada · Diario</div>
+          <h2 class="modal-title" id="ne_title">Lecturas de <em>hoy</em></h2>
+          <p class="modal-sub">Se guardan en el diario de cultivo, no en el perfil fijo.</p>
+        </div>
       </div>
-      <div style="margin-bottom:12px"><label class="field-label">Riego (litros)</label><input class="field-input" type="number" step="0.1" id="ne_riego_l" placeholder="Opcional"></div>
-      <div style="margin-bottom:16px"><label class="field-label">Notas</label><input class="field-input" id="ne_notas" placeholder="Observaciones, plagas, poda…"></div>
-      <div style="display:flex;gap:10px">
-        <button type="button" class="btn primary" style="flex:1" onclick="guardarNuevaEntrada()">Guardar entrada →</button>
-        <button type="button" class="btn" onclick="document.getElementById('entradaOverlay')?.remove()">Cancelar</button>
+      <div class="modal-body">${renderLecturasFields('ne', {
+        ph: u.ph, ec: u.ec, temp: u.temp, hum: u.hum,
+        riego_litros: u.riego_litros, notas: ''
+      })}</div>
+      <div class="modal-footer">
+        <button type="button" class="modal-btn-skip" onclick="document.getElementById('entradaOverlay')?.remove()">Cancelar</button>
+        <button type="button" class="modal-btn-next" onclick="guardarNuevaEntrada()">Guardar entrada →</button>
       </div>
     </div>`;
   document.body.appendChild(overlay);
@@ -839,12 +883,7 @@ function openNuevaEntrada(){
 }
 async function guardarNuevaEntrada(){
   const entrada = {
-    ph: document.getElementById('ne_ph')?.value,
-    ec: document.getElementById('ne_ec')?.value,
-    temp: document.getElementById('ne_temp')?.value,
-    hum: document.getElementById('ne_hum')?.value,
-    riego_litros: document.getElementById('ne_riego_l')?.value,
-    notas: document.getElementById('ne_notas')?.value,
+    ...readLecturasFields('ne'),
     etapa: (PERFIL && (PERFIL.fase || PERFIL.cultivo?.fase)) || null,
   };
   try{
@@ -1023,22 +1062,9 @@ const STEP_DIARIO = {
   kicker:'Paso 2 · Primera entrada',
   title:'Lecturas de<br><em>hoy</em>',
   sub:'Se guardan en el diario de cultivo (no en el perfil fijo).',
-  render: () => {
-    const u = ULTIMA_ENTRADA || {};
-    return `
-      <div class="field-row"><div class="field-group"><label class="field-label">pH</label><input class="field-input" type="number" step="0.1" id="f_ph" value="${u.ph??''}"></div><div class="field-group"><label class="field-label">EC</label><input class="field-input" type="number" step="0.1" id="f_ec" value="${u.ec??''}"></div></div>
-      <div class="field-row"><div class="field-group"><label class="field-label">Temp °C</label><input class="field-input" type="number" id="f_temp" value="${u.temp??''}"></div><div class="field-group"><label class="field-label">Hum %</label><input class="field-input" type="number" id="f_hum" value="${u.hum??''}"></div></div>
-      <div class="field-group"><label class="field-label">Último riego</label><select class="field-select" id="f_riego">${['Hoy','Ayer','Hace 2 días','Hace 3 días','Hace más de 3 días'].map(s=>`<option>${s}</option>`).join('')}</select></div>`;
-  },
+  render: () => renderLecturasFields('f', ULTIMA_ENTRADA || {}),
   save: () => {
-    tmpEntrada = {
-      ph: document.getElementById('f_ph').value,
-      ec: document.getElementById('f_ec').value,
-      temp: document.getElementById('f_temp').value,
-      hum: document.getElementById('f_hum').value,
-      riego: document.getElementById('f_riego').value,
-      etapa: tmp.fase || null,
-    };
+    tmpEntrada = { ...readLecturasFields('f'), etapa: tmp.fase || null };
   }
 };
 
@@ -1066,6 +1092,10 @@ function renderStep(){
   document.getElementById('modalNext').textContent = onboardingStep === steps.length-1
     ? (onboardingMode==='edit' ? 'Guardar parámetros →' : 'Guardar y entrar →')
     : 'Continuar →';
+  // Kicker canónico del paso 2
+  if(onboardingMode==='full' && onboardingStep===1){
+    document.getElementById('modalKicker').textContent = 'Paso 2 · Primera entrada';
+  }
   document.getElementById('modalSkip').style.display = onboardingStep === 0 ? 'block' : 'none';
 }
 function selectVPD(a){ document.getElementById('vpd_si')?.classList.toggle('selected',a); document.getElementById('vpd_no')?.classList.toggle('selected',!a); }
@@ -1088,7 +1118,7 @@ async function saveProfile(){
   syncPerfilSupabase();
   guardarCultivoStats(PERFIL);
   // Paso 2 (alta): primera entrada del diario
-  if(onboardingMode === 'full' && tmpEntrada && (tmpEntrada.ph || tmpEntrada.ec || tmpEntrada.temp || tmpEntrada.hum || tmpEntrada.riego)){
+  if(onboardingMode === 'full' && tmpEntrada && (tmpEntrada.ph || tmpEntrada.ec || tmpEntrada.temp || tmpEntrada.hum || tmpEntrada.riego_litros || tmpEntrada.notas)){
     try{ await postDiarioEntrada(tmpEntrada); }catch(_){}
   }
   await loadDiario();

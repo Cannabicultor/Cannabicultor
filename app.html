@@ -15,11 +15,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="robots" content="noindex, nofollow">
 <title>Cannabicultor · App</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Lora:ital,wght@0,400;0,600;1,400;1,600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Lora:ital,wght@0,400;0,600;1,400;1,600&family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500;1,600&display=swap" rel="stylesheet">
 <style>
   :root{
     --bg:#f5f7f4;--bg2:#eef1ec;--card:#fff;
-    --forest:#1a5c32;--forest2:#2a7a44;
+    --forest:#1a5c32;--forest2:#2a7a44;--brand-dark:#0F3020;
     --pale:#e8f0ea;--pale2:#d4e4d9;
     --text:#151515;--muted:#6f746f;--soft:#9aa09a;
     --border:rgba(0,0,0,.075);--border2:rgba(0,0,0,.12);
@@ -185,27 +185,47 @@
   .typing span:nth-child(2){animation-delay:.2s;}.typing span:nth-child(3){animation-delay:.4s;}
   @keyframes blink{0%,60%,100%{opacity:.3;}30%{opacity:1;}}
 
-  /* Modal onboarding/editar (reusa lógica) */
-  .modal-overlay{position:absolute;inset:0;background:rgba(0,0,0,.5);z-index:60;display:flex;align-items:flex-end;justify-content:center;transition:.25s;}
+  /* Modal onboarding — paridad visual con dashboard (hero marca + sheet mobile) */
+  .modal-overlay{position:absolute;inset:0;background:rgba(10,15,10,.72);backdrop-filter:blur(8px);z-index:80;display:flex;align-items:flex-end;justify-content:center;transition:opacity .25s;}
   .modal-overlay.hide{opacity:0;pointer-events:none;}
-  .modal{background:#fff;border-radius:22px 22px 0 0;width:100%;max-width:480px;padding:24px 20px calc(24px + env(safe-area-inset-bottom));max-height:88dvh;overflow-y:auto;}
-  .modal-kicker{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--forest);margin-bottom:6px;}
-  .modal-title{font-family:Lora,serif;font-size:23px;font-weight:600;line-height:1.15;margin-bottom:16px;}
-  .modal-title em{color:var(--forest);font-style:italic;font-weight:400;}
-  .chip-group{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px;}
-  .chip{border:1px solid var(--border2);background:#fff;border-radius:12px;padding:11px 14px;font-size:14px;cursor:pointer;transition:.15s;}
-  .chip.selected{background:var(--pale);border-color:var(--forest);color:var(--forest);font-weight:600;}
-  .modal input[type=text],.modal input[type=number],.modal select{width:100%;padding:12px;border:1px solid var(--border2);border-radius:12px;font-size:15px;margin-bottom:10px;}
-  .modal-next{width:100%;background:var(--forest);color:#fff;border:none;border-radius:14px;padding:14px;font-size:15px;font-weight:600;cursor:pointer;margin-top:8px;}
-  .modal-skip{display:block;width:100%;text-align:center;color:var(--muted);background:none;border:none;font-size:13px;margin-top:10px;cursor:pointer;}
+  .modal{background:#fff;border-radius:22px 22px 0 0;width:100%;max-width:480px;max-height:92dvh;overflow-y:auto;display:flex;flex-direction:column;box-shadow:0 -12px 48px rgba(0,0,0,.2);animation:sheetUp .32s ease;}
+  @keyframes sheetUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+  .modal-handle{display:block;width:40px;height:4px;border-radius:999px;background:rgba(0,0,0,.14);margin:10px auto 0;flex-shrink:0}
+  .modal-hero{background:var(--brand-dark);padding:18px 20px 16px;flex-shrink:0}
+  .modal-hero-content{position:relative;z-index:1}
+  .modal-step-indicator{display:flex;gap:6px;margin-bottom:14px}
+  .modal-step-dot{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.3);transition:all .3s}
+  .modal-step-dot.active{width:20px;border-radius:3px;background:#fff}
+  .modal-step-dot.done{background:rgba(255,255,255,.55)}
+  .modal-kicker{font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.62);margin-bottom:8px}
+  .modal-title{font-family:'Playfair Display',Lora,Georgia,serif;font-size:22px;font-weight:600;color:#fff;line-height:1.2;letter-spacing:-.02em;margin:0}
+  .modal-title em{color:#9ed4b0;font-style:italic;font-weight:500}
+  .modal-sub{font-size:13px;color:rgba(255,255,255,.72);margin-top:8px;line-height:1.5}
+  .modal-body{padding:18px 20px 6px;flex:1}
+  /* Labels SIEMPRE encima — evita bug "pH6" / "EC1" pegados */
+  .field-group{margin-bottom:14px;display:block;min-width:0}
+  .field-label{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin:0 0 8px;display:block;line-height:1.2}
+  .field-input,.field-select,.field-textarea{display:block;width:100%;border:1.5px solid var(--border2);border-radius:12px;padding:12px 14px;font-size:15px;color:var(--text);outline:none;background:#fff;font-family:inherit;box-sizing:border-box}
+  .field-input:focus,.field-select:focus,.field-textarea:focus{border-color:var(--forest)}
+  .field-textarea{min-height:72px;resize:vertical;line-height:1.45}
+  .field-row{display:grid;grid-template-columns:1fr;gap:0}
+  .field-hint{font-size:12px;color:var(--soft);margin-top:5px;display:block}
+  .chip-group{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px;margin-bottom:4px}
+  .chip{border:1.5px solid var(--border2);background:#fff;border-radius:999px;padding:10px 14px;font-size:13px;font-weight:600;color:var(--muted);cursor:pointer;transition:.15s}
+  .chip.selected{background:var(--pale);border-color:var(--forest);color:var(--forest)}
+  .modal-footer{padding:10px 20px calc(16px + env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:8px;flex-shrink:0}
+  .modal-btn-next,.modal-next{width:100%;background:var(--forest);color:#fff;border:0;border-radius:999px;padding:15px 24px;font-size:15px;font-weight:700;cursor:pointer}
+  .modal-btn-skip,.modal-skip{width:100%;background:transparent;border:0;color:var(--soft);font-size:13px;font-weight:600;padding:8px;cursor:pointer;text-align:center}
+  .modal-progress-text{display:none}
+  /* Sheet nueva entrada — mismo componente */
+  .diary-sheet-overlay{position:absolute;inset:0;background:rgba(10,15,10,.72);backdrop-filter:blur(8px);z-index:90;display:flex;align-items:flex-end;justify-content:center}
+  .diary-sheet{background:#fff;border-radius:22px 22px 0 0;width:100%;max-width:480px;max-height:92dvh;overflow-y:auto;display:flex;flex-direction:column;box-shadow:0 -12px 48px rgba(0,0,0,.2);animation:sheetUp .32s ease}
+  .diary-sheet .modal-footer{flex-direction:column-reverse}
 
   /* Upgrade modal */
   .upgrade-overlay{position:absolute;inset:0;background:rgba(0,0,0,.5);z-index:60;display:flex;align-items:center;justify-content:center;padding:20px;}
   .upgrade-overlay.hide{display:none;}
 
-  .modal-step-dot{flex:1;height:4px;border-radius:3px;background:var(--bg2);}
-  .modal-step-dot.active{background:var(--forest);}
-  .modal-step-dot.done{background:var(--pale2);}
   .vpd-badge{font-size:11px;font-weight:600;border-radius:8px;padding:5px 9px;}
   .vpd-ok{color:#15803d;background:#dcfce7;}
   .vpd-warn{color:#b45309;background:#fef3c7;}
@@ -458,17 +478,24 @@
     </div>
   </div>
 
-  <!-- Modal (onboarding/editar) - lo rellena renderStep() del script reusado -->
+  <!-- Modal onboarding — misma estructura que dashboard (hero #0F3020 + sheet) -->
   <div class="modal-overlay hide" id="modalOverlay">
-    <div class="modal">
-      <div id="stepDots" style="display:flex;gap:5px;margin-bottom:10px"></div>
-      <div class="modal-kicker" id="modalKicker">Paso</div>
-      <h2 class="modal-title" id="modalTitle">Configura tu cultivo</h2>
-      <div id="modalSub" style="font-size:13px;color:var(--muted);margin:-8px 0 14px"></div>
-      <div id="modalBody"></div>
-      <div id="modalProgressText" style="display:none"></div>
-      <button class="modal-next" id="modalNext" onclick="nextStep()">Siguiente</button>
-      <button class="modal-skip" id="modalSkip" onclick="skipOnboarding()">Ahora no</button>
+    <div class="modal" id="modal">
+      <div class="modal-handle" aria-hidden="true"></div>
+      <div class="modal-hero">
+        <div class="modal-hero-content">
+          <div class="modal-step-indicator" id="stepDots"></div>
+          <div class="modal-kicker" id="modalKicker">Paso</div>
+          <h2 class="modal-title" id="modalTitle">Configura tu cultivo</h2>
+          <p class="modal-sub" id="modalSub"></p>
+        </div>
+      </div>
+      <div class="modal-body" id="modalBody"></div>
+      <div class="modal-footer">
+        <button type="button" class="modal-btn-next" id="modalNext" onclick="nextStep()">Continuar →</button>
+        <button type="button" class="modal-btn-skip" id="modalSkip" onclick="skipOnboarding()">Ahora no</button>
+        <span class="modal-progress-text" id="modalProgressText"></span>
+      </div>
     </div>
   </div>
 
@@ -682,39 +709,65 @@ function renderDiarioList(){
     </div>`;
   }).join('');
 }
+/** Formulario unificado de lecturas (paso 2 + nueva entrada). Prefijo: 'f' | 'ne' */
+function renderLecturasFields(prefix, vals){
+  vals = vals || {};
+  const v = (k) => (vals[k] != null && vals[k] !== '' ? vals[k] : '');
+  const p = prefix;
+  return `
+    <div class="field-row">
+      <div class="field-group"><label class="field-label" for="${p}_ph">pH</label><input class="field-input" type="number" step="0.1" inputmode="decimal" id="${p}_ph" value="${v('ph')}" placeholder="Ej: 6.2"></div>
+      <div class="field-group"><label class="field-label" for="${p}_ec">EC</label><input class="field-input" type="number" step="0.1" inputmode="decimal" id="${p}_ec" value="${v('ec')}" placeholder="Ej: 1.4"></div>
+    </div>
+    <div class="field-row">
+      <div class="field-group"><label class="field-label" for="${p}_temp">Temp °C</label><input class="field-input" type="number" inputmode="decimal" id="${p}_temp" value="${v('temp')}" placeholder="Ej: 24"></div>
+      <div class="field-group"><label class="field-label" for="${p}_hum">Hum %</label><input class="field-input" type="number" inputmode="decimal" id="${p}_hum" value="${v('hum')}" placeholder="Ej: 55"></div>
+    </div>
+    <div class="field-group"><label class="field-label" for="${p}_riego_l">Riego (L)</label><input class="field-input" type="number" step="0.1" inputmode="decimal" id="${p}_riego_l" value="${v('riego_litros')}" placeholder="Litros de agua"></div>
+    <div class="field-group"><label class="field-label" for="${p}_notas">Notas</label><textarea class="field-textarea" id="${p}_notas" rows="3" placeholder="Observaciones, plagas, poda…">${v('notas')}</textarea></div>`;
+}
+function readLecturasFields(prefix){
+  return {
+    ph: document.getElementById(prefix+'_ph')?.value,
+    ec: document.getElementById(prefix+'_ec')?.value,
+    temp: document.getElementById(prefix+'_temp')?.value,
+    hum: document.getElementById(prefix+'_hum')?.value,
+    riego_litros: document.getElementById(prefix+'_riego_l')?.value,
+    notas: document.getElementById(prefix+'_notas')?.value,
+  };
+}
 function openNuevaEntrada(){
   const u = ULTIMA_ENTRADA || {};
+  document.getElementById('entradaOverlay')?.remove();
+  const host = document.querySelector('.app') || document.body;
   const overlay = document.createElement('div');
   overlay.id = 'entradaOverlay';
-  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(10,15,10,.65);z-index:2000;display:flex;align-items:flex-end;justify-content:center;padding:12px';
+  overlay.className = 'diary-sheet-overlay';
   overlay.innerHTML = `
-    <div style="background:#fff;border-radius:22px;width:100%;max-width:480px;padding:18px 16px;box-shadow:0 24px 80px rgba(0,0,0,.25)">
-      <div style="font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--soft);margin-bottom:4px">Nueva entrada</div>
-      <div style="font-family:Lora,Georgia,serif;font-size:20px;font-weight:600;margin-bottom:12px">Lecturas de <em style="color:var(--forest)">hoy</em></div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
-        <div><label class="field-label">pH</label><input class="field-input" type="number" step="0.1" id="ne_ph" value="${u.ph??''}"></div>
-        <div><label class="field-label">EC</label><input class="field-input" type="number" step="0.1" id="ne_ec" value="${u.ec??''}"></div>
-        <div><label class="field-label">Temp °C</label><input class="field-input" type="number" id="ne_temp" value="${u.temp??''}"></div>
-        <div><label class="field-label">Hum %</label><input class="field-input" type="number" id="ne_hum" value="${u.hum??''}"></div>
+    <div class="diary-sheet" role="dialog" aria-labelledby="ne_title">
+      <div class="modal-handle" aria-hidden="true"></div>
+      <div class="modal-hero">
+        <div class="modal-hero-content">
+          <div class="modal-kicker">Nueva entrada · Diario</div>
+          <h2 class="modal-title" id="ne_title">Lecturas de <em>hoy</em></h2>
+          <p class="modal-sub">Se guardan en el diario de cultivo, no en el perfil fijo.</p>
+        </div>
       </div>
-      <div style="margin-bottom:10px"><label class="field-label">Riego (L)</label><input class="field-input" type="number" step="0.1" id="ne_riego_l"></div>
-      <div style="margin-bottom:14px"><label class="field-label">Notas</label><input class="field-input" id="ne_notas" placeholder="Observaciones…"></div>
-      <div style="display:flex;gap:8px">
-        <button type="button" class="btn primary" style="flex:1" onclick="guardarNuevaEntrada()">Guardar →</button>
-        <button type="button" class="btn" onclick="document.getElementById('entradaOverlay')?.remove()">Cancelar</button>
+      <div class="modal-body">${renderLecturasFields('ne', {
+        ph: u.ph, ec: u.ec, temp: u.temp, hum: u.hum,
+        riego_litros: u.riego_litros, notas: ''
+      })}</div>
+      <div class="modal-footer">
+        <button type="button" class="modal-btn-next" onclick="guardarNuevaEntrada()">Guardar entrada →</button>
+        <button type="button" class="modal-btn-skip" onclick="document.getElementById('entradaOverlay')?.remove()">Cancelar</button>
       </div>
     </div>`;
-  document.body.appendChild(overlay);
+  host.appendChild(overlay);
   overlay.addEventListener('click', e => { if(e.target===overlay) overlay.remove(); });
 }
 async function guardarNuevaEntrada(){
   const entrada = {
-    ph: document.getElementById('ne_ph')?.value,
-    ec: document.getElementById('ne_ec')?.value,
-    temp: document.getElementById('ne_temp')?.value,
-    hum: document.getElementById('ne_hum')?.value,
-    riego_litros: document.getElementById('ne_riego_l')?.value,
-    notas: document.getElementById('ne_notas')?.value,
+    ...readLecturasFields('ne'),
     etapa: (PERFIL && (PERFIL.fase || PERFIL.cultivo?.fase)) || null,
   };
   try{
@@ -894,22 +947,9 @@ const STEP_DIARIO = {
   kicker:'Paso 2 · Primera entrada',
   title:'Lecturas de<br><em>hoy</em>',
   sub:'Se guardan en el diario de cultivo (no en el perfil fijo).',
-  render: () => {
-    const u = ULTIMA_ENTRADA || {};
-    return `
-      <div class="field-row"><div class="field-group"><label class="field-label">pH</label><input class="field-input" type="number" step="0.1" id="f_ph" value="${u.ph??''}"></div><div class="field-group"><label class="field-label">EC</label><input class="field-input" type="number" step="0.1" id="f_ec" value="${u.ec??''}"></div></div>
-      <div class="field-row"><div class="field-group"><label class="field-label">Temp °C</label><input class="field-input" type="number" id="f_temp" value="${u.temp??''}"></div><div class="field-group"><label class="field-label">Hum %</label><input class="field-input" type="number" id="f_hum" value="${u.hum??''}"></div></div>
-      <div class="field-group"><label class="field-label">Último riego</label><select class="field-select" id="f_riego">${['Hoy','Ayer','Hace 2 días','Hace 3 días','Hace más de 3 días'].map(s=>`<option>${s}</option>`).join('')}</select></div>`;
-  },
+  render: () => renderLecturasFields('f', ULTIMA_ENTRADA || {}),
   save: () => {
-    tmpEntrada = {
-      ph: document.getElementById('f_ph').value,
-      ec: document.getElementById('f_ec').value,
-      temp: document.getElementById('f_temp').value,
-      hum: document.getElementById('f_hum').value,
-      riego: document.getElementById('f_riego').value,
-      etapa: tmp.fase || null,
-    };
+    tmpEntrada = { ...readLecturasFields('f'), etapa: tmp.fase || null };
   }
 };
 
@@ -938,6 +978,9 @@ function renderStep(){
     ? (onboardingMode==='edit' ? 'Guardar parámetros →' : 'Guardar y entrar →')
     : 'Continuar →';
   document.getElementById('modalSkip').style.display = onboardingStep === 0 ? 'block' : 'none';
+  if(onboardingMode==='full' && onboardingStep===1){
+    document.getElementById('modalKicker').textContent = 'Paso 2 · Primera entrada';
+  }
 }
 function selectVPD(a){ document.getElementById('vpd_si')?.classList.toggle('selected',a); document.getElementById('vpd_no')?.classList.toggle('selected',!a); }
 function selectCheckin(m){ document.getElementById('checkin_auto')?.classList.toggle('selected',m==='auto'); document.getElementById('checkin_manual')?.classList.toggle('selected',m==='manual'); }
@@ -957,7 +1000,7 @@ async function saveProfile(){
   document.getElementById('modalOverlay').classList.add('hide');
   syncPerfilSupabase();
   guardarCultivoStats(PERFIL);
-  if(onboardingMode === 'full' && tmpEntrada && (tmpEntrada.ph || tmpEntrada.ec || tmpEntrada.temp || tmpEntrada.hum || tmpEntrada.riego)){
+  if(onboardingMode === 'full' && tmpEntrada && (tmpEntrada.ph || tmpEntrada.ec || tmpEntrada.temp || tmpEntrada.hum || tmpEntrada.riego_litros || tmpEntrada.notas)){
     try{ await postDiarioEntrada(tmpEntrada); }catch(_){}
   }
   await loadDiario();
