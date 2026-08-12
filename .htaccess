@@ -1,6 +1,6 @@
 # Legacy analytics URL (file blocked on host; redirect to trafico.html)
 # Domain preference: HTTPS + WWW (preferred host for Google Search Console)
-# Legacy atlas URLs → canonical clean path /atlas-landraces/
+# Legacy atlas (guion) URL → canonical clean path /atlas-landraces/
 <IfModule mod_rewrite.c>
   RewriteEngine On
 
@@ -14,8 +14,6 @@
 
   RewriteRule ^analytics\.html$ /trafico.html [R=301,L]
 
-  # Redirect de la URL antigua del Atlas a la versión limpia
-  RewriteRule ^atlas_landrace\.html$ https://www.cannabicultor.com/atlas-landraces/ [L,R=301]
   # Legacy atlas (guion) → misma versión canónica limpia
   RewriteRule ^atlas-landrace\.html$ https://www.cannabicultor.com/atlas-landraces/ [L,R=301]
 </IfModule>
