@@ -250,16 +250,6 @@ button{cursor:pointer}
 .ico img{width:100%;height:100%;display:block;border-radius:7px}
 .briefing-ico img{width:100%;height:100%;display:block;border-radius:11px}
 
-/* Herramientas — grid de tarjetas (misma familia visual que app.html) */
-.tools-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
-.tool-card{display:flex;align-items:center;gap:13px;background:#fff;border:1px solid var(--border);border-radius:18px;padding:14px 15px;text-decoration:none;color:var(--text);transition:border-color .18s,box-shadow .18s,transform .18s}
-.tool-card:hover{border-color:var(--pale2);box-shadow:var(--shadow);transform:translateY(-1px)}
-.tool-card.soon{opacity:.55}
-.tool-ic{width:42px;height:42px;border-radius:12px;overflow:hidden;flex-shrink:0;display:flex;align-items:center;justify-content:center}
-.tool-ic img{width:100%;height:100%;display:block}
-.tool-tx b{display:block;font-size:15px;font-weight:600;letter-spacing:-.02em}
-.tool-tx small{font-size:12px;color:var(--muted)}
-.tool-soon-tag{margin-left:auto;font-size:10px;font-weight:700;color:var(--soft);text-transform:uppercase;letter-spacing:.06em;white-space:nowrap}
 .diary-empty{border:1px dashed var(--border2);border-radius:16px;padding:36px 24px;text-align:center;color:var(--muted);font-size:14.5px;background:var(--bg)}
 /* Diario · calendario */
 .diary-toolbar{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid var(--border)}
@@ -298,7 +288,6 @@ button{cursor:pointer}
   .hero{grid-template-columns:1fr}
   .metrics{grid-template-columns:repeat(2,1fr)}
   .detail-grid{grid-template-columns:repeat(2,1fr)}
-  .tools-grid{grid-template-columns:repeat(2,1fr)}
   .chat-launch{left:50%;width:calc(100vw - 28px)}
   .page-title{font-size:26px}
   .status,.top-actions .btn.ghost{display:none}
@@ -306,7 +295,6 @@ button{cursor:pointer}
 @media(max-width:560px){
   .metrics{grid-template-columns:1fr}
   .detail-grid{grid-template-columns:1fr}
-  .tools-grid{grid-template-columns:1fr}
   .modal-overlay,.diary-sheet-overlay{align-items:flex-end;padding:0;justify-content:center}
   .modal,.diary-sheet{max-width:100%;border-radius:22px 22px 0 0;max-height:92dvh;animation:sheetUp .32s ease}
   @keyframes sheetUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
@@ -363,16 +351,17 @@ button{cursor:pointer}
       <button type="button" class="nav-btn active" onclick="irAResumen()"><span class="ico">⌘</span>Resumen</button>
       <button type="button" class="nav-btn" onclick="irADiario()"><span class="ico"><img src="assets/icons/03-tu-cultivo.svg" alt=""></span>Diario de cultivo</button>
       <button type="button" class="nav-btn"><span class="ico">⚠️</span>Alertas</button>
-      <button type="button" class="nav-btn" onclick="document.getElementById('herramientas').scrollIntoView({behavior:'smooth'})"><span class="ico"><img src="assets/icons/06-herramientas.svg" alt=""></span>Herramientas</button>
       <button class="nav-btn" onclick="openOnboarding(true)"><span class="ico">✏️</span>Editar cultivo</button>
       <button class="nav-btn" onclick="cerrarSesion()" style="color:var(--red)"><span class="ico" style="background:#fdf0ef">🚪</span>Cerrar sesión</button>
     </div>
     <div class="side-section">
       <div class="side-label">Herramientas</div>
       <a class="nav-btn" href="/banco-genetica.html"><span class="ico"><img src="assets/icons/11-banco-genetica.svg" alt=""></span>Banco genético</a>
-      <a class="nav-btn" href="/buscador-cannabicultor.html"><span class="ico"><img src="assets/icons/07-buscar-variedad.svg" alt=""></span>Buscar variedad</a>
-      <a class="nav-btn" href="/disenador_sala_cultivo.html"><span class="ico"><img src="assets/icons/08-disenador-sala.svg" alt=""></span>Diseñador de sala</a>
+      <a class="nav-btn" href="buscador-cannabicultor.html"><span class="ico"><img src="assets/icons/07-buscar-variedad.svg" alt=""></span>Buscar variedad</a>
+      <a class="nav-btn" href="disenador_sala_cultivo.html"><span class="ico"><img src="assets/icons/08-disenador-sala.svg" alt=""></span>Diseñador de sala</a>
       <a class="nav-btn" href="/atlas_landrace.html"><span class="ico"><img src="assets/icons/09-mapa-landraces.svg" alt=""></span>Mapa de landraces</a>
+      <a class="nav-btn" href="/cultivo-con-ia/"><span class="ico"><img src="assets/icons/01-analisis-briefing.svg" alt=""></span>Guía Cultivo con IA</a>
+      <a class="nav-btn" href="/biblioteca/"><span class="ico"><img src="assets/icons/10-biblioteca.svg" alt=""></span>Biblioteca</a>
     </div>
     <div class="nivel-card">
       <div class="nivel-top">
@@ -584,40 +573,6 @@ button{cursor:pointer}
         <div class="diary-cal-grid" id="diaryCalGrid"></div>
         <div id="diarioList">
           <div class="diary-empty">Aún no hay entradas. Usa «+ Nueva entrada» o adjunta una 📷 foto.</div>
-        </div>
-      </div>
-    </section>
-
-    <!-- HERRAMIENTAS -->
-    <section class="panel" id="herramientas" style="margin-bottom:18px">
-      <div class="section-head">
-        <div>
-          <div class="section-title">Herramientas</div>
-          <div class="section-sub">Todo tu instrumental de cultivo, en un sitio</div>
-        </div>
-      </div>
-      <div class="card-body">
-        <div class="tools-grid">
-          <a class="tool-card" href="buscador-cannabicultor.html">
-            <span class="tool-ic"><img src="assets/icons/07-buscar-variedad.svg" alt=""></span>
-            <span class="tool-tx"><b>Buscador de variedades</b><small>Variedades y breeders · en vivo</small></span>
-          </a>
-          <a class="tool-card" href="disenador_sala_cultivo.html">
-            <span class="tool-ic"><img src="assets/icons/08-disenador-sala.svg" alt=""></span>
-            <span class="tool-tx"><b>Diseñador de salas</b><small>Mide, calcula y equipa</small></span>
-          </a>
-          <a class="tool-card" href="/atlas_landrace.html">
-            <span class="tool-ic"><img src="assets/icons/09-mapa-landraces.svg" alt=""></span>
-            <span class="tool-tx"><b>Mapa de landraces</b><small>Gira el globo y descubre el origen de cada variedad</small></span>
-          </a>
-          <a class="tool-card" href="/cultivo-con-ia/">
-            <span class="tool-ic"><img src="assets/icons/01-analisis-briefing.svg" alt=""></span>
-            <span class="tool-tx"><b>Guía Cultivo con IA</b><small>Aprende a cultivar paso a paso</small></span>
-          </a>
-          <a class="tool-card" href="/biblioteca/">
-            <span class="tool-ic"><img src="assets/icons/10-biblioteca.svg" alt=""></span>
-            <span class="tool-tx"><b>Biblioteca</b><small>Informes, investigaciones, guías y libros</small></span>
-          </a>
         </div>
       </div>
     </section>
