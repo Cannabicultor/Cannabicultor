@@ -348,7 +348,7 @@ button{cursor:pointer}
     </a>
     <div class="side-section">
       <div class="side-label">Dashboard</div>
-      <button type="button" class="nav-btn active" onclick="irAResumen()"><span class="ico">⌘</span>Resumen</button>
+      <a class="nav-btn active" href="#resumen" onclick="irAResumen(); return false;"><span class="ico">⌘</span>Resumen</a>
       <button type="button" class="nav-btn" onclick="irADiario()"><span class="ico"><img src="assets/icons/03-tu-cultivo.svg" alt=""></span>Diario de cultivo</button>
       <button type="button" class="nav-btn"><span class="ico">⚠️</span>Alertas</button>
       <button class="nav-btn" onclick="openOnboarding(true)"><span class="ico">✏️</span>Editar cultivo</button>
@@ -394,7 +394,8 @@ button{cursor:pointer}
       </div>
     </div>
 
-    <!-- BRIEFING: solo al click (mismo patrón que app.html) -->
+    <!-- BRIEFING: solo al click (mismo patrón que app.html) · id=resumen = ancla del menú -->
+    <div id="resumen">
     <div id="briefingInicial" style="margin-bottom:18px">
       <button type="button" onclick="pedirBriefing()" class="btn primary" style="width:100%;display:flex;align-items:center;justify-content:center;gap:10px;padding:16px;font-size:15px">
         <span style="font-size:19px">🤖</span> Comenzar análisis de cultivo
@@ -449,6 +450,7 @@ button{cursor:pointer}
         </div>
       </div>
     </section>
+    </div><!-- /#resumen -->
 
     <!-- METRICS -->
     <div class="metrics">
@@ -697,9 +699,13 @@ function updateChatNote(){
 
 // ─── NAVEGACIÓN INTERNA (sidebar → secciones) ─────────────────────────────────
 function irAResumen(){
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+  // El scroll real está en .main (body es overflow:hidden), no en window
+  const main = document.querySelector('.main');
+  const el = document.getElementById('resumen');
+  if(main) main.scrollTo({ top: 0, behavior: 'smooth' });
+  else if(el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
   document.querySelectorAll('.sidebar .nav-btn').forEach(b => b.classList.remove('active'));
-  const btn = document.querySelector('.sidebar .nav-btn');
+  const btn = Array.from(document.querySelectorAll('.sidebar .nav-btn')).find(b => /Resumen/i.test(b.textContent||''));
   if(btn) btn.classList.add('active');
 }
 function irADiario(){
