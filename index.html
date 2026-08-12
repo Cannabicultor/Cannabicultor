@@ -228,14 +228,19 @@ nav{position:fixed;top:0;left:0;right:0;z-index:500;background:rgba(255,255,255,
 .tools-chips{display:flex;flex-direction:column;gap:12px;margin-top:44px;max-width:720px}
 .tool-chip{display:flex;align-items:center;gap:16px;background:var(--white);border:1.5px solid var(--border2);border-radius:100px;padding:14px 20px;text-decoration:none;transition:all .22s}
 .tool-chip:hover{border-color:var(--forest);background:var(--forest-pale);transform:translateX(4px)}
+.tool-chip--static{cursor:default}
+.tool-chip--static:hover{border-color:var(--border2);background:var(--white);transform:none}
 .chip-icon{flex-shrink:0;width:40px;height:40px;background:var(--bg);border-radius:50%;display:flex;align-items:center;justify-content:center}
 .chip-icon img{width:22px;height:22px;object-fit:contain}
+.chip-icon--logo img{width:28px;height:28px}
 .tool-chip:hover .chip-icon{background:var(--white)}
+.tool-chip--static:hover .chip-icon{background:var(--bg)}
 .chip-text{display:flex;flex-direction:column;gap:2px;flex:1;min-width:0}
 .chip-title{font-size:14.5px;font-weight:600;color:var(--text);letter-spacing:-0.01em}
 .chip-sub{font-size:12.5px;color:var(--text3)}
 .chip-badge{font-size:10px;font-weight:600;letter-spacing:.03em;color:var(--forest);background:var(--forest-pale2);padding:4px 10px;border-radius:10px;flex-shrink:0;white-space:nowrap}
 .tool-chip:hover .chip-badge{background:var(--white)}
+.tool-chip--static:hover .chip-badge{background:var(--forest-pale2)}
 .chip-arrow{font-size:16px;color:var(--text4);flex-shrink:0;transition:transform .22s}
 .tool-chip:hover .chip-arrow{transform:translateX(3px);color:var(--forest)}
 
@@ -565,6 +570,15 @@ footer{padding:32px 0;background:var(--white);border-top:1px solid var(--border)
         <span class="chip-badge">RAG</span>
         <span class="chip-arrow">→</span>
       </a>
+
+      <div class="tool-chip tool-chip--static" role="note" aria-label="Genética de la Alianza: solo para miembros">
+        <span class="chip-icon chip-icon--logo"><img src="assets/logo_publico_4.webp" alt="" width="28" height="28"></span>
+        <span class="chip-text">
+          <span class="chip-title">Genética de la Alianza</span>
+          <span class="chip-sub">Genéticas exclusivas solo para miembros de la Alianza</span>
+        </span>
+        <span class="chip-badge">Solo para miembros</span>
+      </div>
 
     </div>
   </div>
