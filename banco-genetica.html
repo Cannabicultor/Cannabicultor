@@ -194,6 +194,8 @@ section.block{padding:36px 0}
 .idx-hero .kicker{margin-bottom:18px}
 .idx-hero h1{font-size:44px}
 .idx-hero h1 em{font-style:italic;color:var(--forest)}
+.idx-hero-logo{margin:0 auto 18px;line-height:0}
+.idx-hero-logo img{display:block;margin:0 auto;width:min(280px,68vw);height:auto;mix-blend-mode:multiply;filter:drop-shadow(0 4px 24px rgba(0,0,0,.12))}
 .idx-hero p{font-size:16.5px;color:var(--muted);margin-top:16px;line-height:1.6}
 .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;padding:38px 0}
 @media(max-width:900px){.grid{grid-template-columns:repeat(2,1fr)}}
@@ -246,6 +248,7 @@ section.block{padding:36px 0}
   .hero{grid-template-columns:1fr;gap:24px;padding-top:28px}
   h1{font-size:31px}
   .idx-hero h1,.ga-hero h1{font-size:33px}
+  .idx-hero-logo img{width:min(220px,65vw)}
 }
 </style>
 </head>
@@ -262,6 +265,9 @@ section.block{padding:36px 0}
 <main class="wrap">
   <section class="idx-hero">
     <span class="kicker">Banco Genético · Nuestra genética</span>
+    <div class="idx-hero-logo" aria-hidden="true">
+      <img src="/assets/logo_publico_4.webp" alt="" width="600" height="600" decoding="async">
+    </div>
     <h1><em>Banco Genético de la Alianza</em></h1>
     <p>6 variedades cultivadas y seleccionadas por Cannabicultor. Reservadas a miembros de Growers Alliance.</p>
   </section>
