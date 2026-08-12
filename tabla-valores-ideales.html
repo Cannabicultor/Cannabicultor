@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Valores ideales por etapa · Cannabicultor</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Lora:ital,wght@0,400;0,600;1,400;1,600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#f5f7f4;--bg2:#eef1ec;--card:#fff;
+    --forest:#1a5c32;--forest2:#2a7a44;
+    --pale:#e8f0ea;--pale2:#d4e4d9;
+    --text:#151515;--muted:#6f746f;--soft:#9aa09a;
+    --border:rgba(0,0,0,.075);--border2:rgba(0,0,0,.12);
+    --r:20px;--shadow:0 1px 3px rgba(0,0,0,.04);
+    --gold:#c9a24b;--gold-bg:#faf3e2;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;}
+  body{background:var(--bg);color:var(--text);font-family:Inter,-apple-system,sans-serif;-webkit-font-smoothing:antialiased;}
+  .app{max-width:480px;margin:0 auto;min-height:100vh;background:var(--bg);position:relative;padding-bottom:calc(28px + env(safe-area-inset-bottom));}
+
+  .top{display:flex;align-items:center;gap:9px;padding:16px 18px 4px;}
+  .top .mark{width:30px;height:30px;border-radius:50%;background:var(--forest);color:#fff;display:flex;align-items:center;justify-content:center;font-family:Lora,serif;font-weight:700;font-size:14px;}
+  .top b{font-family:Lora,Georgia,serif;font-size:16px;font-weight:600;}
+  .top span{font-size:11px;color:var(--soft);margin-left:auto;letter-spacing:.06em;text-transform:uppercase;font-weight:600;}
+
+  .scroll{padding:6px 16px 12px;}
+  .kicker{font-size:11px;font-weight:700;letter-spacing:.12em;color:var(--forest);text-transform:uppercase;margin:10px 2px 4px;}
+  .title{font-family:Lora,Georgia,serif;font-size:25px;line-height:1.15;letter-spacing:-.02em;font-weight:600;margin-bottom:4px;}
+  .title em{color:var(--forest);font-style:italic;font-weight:400;}
+  .lead{font-size:13px;color:var(--muted);line-height:1.5;margin-bottom:18px;}
+
+  /* ===== Leyenda ambiente/sustrato ===== */
+  .legend{display:flex;gap:14px;margin-bottom:16px;padding:0 2px;}
+  .legend .li{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted);font-weight:600;}
+  .legend .dot{width:8px;height:8px;border-radius:50%;}
+  .dot.amb{background:var(--forest);}
+  .dot.sub{background:var(--gold);}
+
+  /* ===== Tarjeta de etapa ===== */
+  .etapa{background:var(--card);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--shadow);margin-bottom:14px;overflow:hidden;}
+  .etapa-head{padding:15px 17px 13px;border-bottom:1px solid var(--border);}
+  .etapa-name{font-family:Lora,Georgia,serif;font-size:18px;font-weight:600;color:var(--text);}
+  .etapa-sub{font-size:11.5px;color:var(--soft);margin-top:2px;}
+
+  /* Ambiente: fila de 4 chips */
+  .amb-row{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);}
+  .amb-cell{background:var(--pale);padding:11px 6px;text-align:center;}
+  .amb-cell .k{font-size:9.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--forest);font-weight:700;margin-bottom:3px;}
+  .amb-cell .v{font-family:Lora,serif;font-size:15px;font-weight:700;color:var(--text);line-height:1.1;}
+  .amb-cell .v small{font-size:10px;font-weight:600;color:var(--muted);}
+
+  /* Sustrato: tabla 3 filas */
+  .sub-table{padding:4px 0 2px;}
+  .sub-title{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--gold);padding:10px 17px 6px;}
+  .sub-row{display:grid;grid-template-columns:1fr 1fr 1fr;align-items:center;padding:9px 17px;border-top:1px solid var(--border);}
+  .sub-row:first-of-type{border-top:none;}
+  .sub-row .name{font-size:13px;font-weight:600;color:var(--text);}
+  .sub-row .metric{text-align:right;}
+  .sub-row .metric .k{font-size:9.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.03em;}
+  .sub-row .metric .v{font-family:Lora,serif;font-size:14px;font-weight:600;color:var(--forest2);}
+
+  .foot-note{background:var(--gold-bg);border:1px solid rgba(201,162,75,.35);border-radius:14px;padding:13px 15px;margin-top:6px;font-size:12px;color:#6b5720;line-height:1.5;}
+  .foot-note b{color:#4a3c14;}
+
+  .cta{display:block;text-align:center;background:var(--forest);color:#fff;font-weight:700;font-size:13.5px;padding:14px;border-radius:14px;margin-top:16px;text-decoration:none;box-shadow:var(--shadow);}
+  .cta small{display:block;font-weight:500;opacity:.85;font-size:11px;margin-top:2px;}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="top">
+    <div class="mark">C</div>
+    <b>Cannabicultor</b>
+    <span>Referencia</span>
+  </div>
+
+  <div class="scroll">
+    <div class="kicker">Guía técnica</div>
+    <div class="title">Valores <em>ideales</em> por etapa</div>
+    <p class="lead">Temperatura, humedad y VPD son iguales para cualquier sustrato. pH y EC cambian según cultives en tierra, coco o hidro. Rangos orientativos — ajusta según tu genética y tu sala.</p>
+
+    <div class="legend">
+      <div class="li"><span class="dot amb"></span>Ambiente (igual en todos)</div>
+      <div class="li"><span class="dot sub"></span>Sustrato (pH / EC)</div>
+    </div>
+
+    <!-- ESQUEJES -->
+    <div class="etapa">
+      <div class="etapa-head">
+        <div class="etapa-name">Esquejes</div>
+        <div class="etapa-sub">Enraizamiento · 10–14 días</div>
+      </div>
+      <div class="amb-row">
+        <div class="amb-cell"><div class="k">Temp</div><div class="v">24<small>°C</small></div></div>
+        <div class="amb-cell"><div class="k">Humedad</div><div class="v">70–80<small>%</small></div></div>
+        <div class="amb-cell"><div class="k">VPD</div><div class="v">0.4–0.8<small>kPa</small></div></div>
+        <div class="amb-cell"><div class="k">CO₂</div><div class="v">~400<small>ppm</small></div></div>
+      </div>
+      <div class="sub-table">
+        <div class="sub-title">Sustrato</div>
+        <div class="sub-row"><div class="name">Tierra</div><div class="metric"><div class="k">pH</div><div class="v">6.0–6.5</div></div><div class="metric"><div class="k">EC</div><div class="v">0.4–0.8</div></div></div>
+        <div class="sub-row"><div class="name">Coco</div><div class="metric"><div class="k">pH</div><div class="v">5.5–6.0</div></div><div class="metric"><div class="k">EC</div><div class="v">0.3–0.6</div></div></div>
+        <div class="sub-row"><div class="name">Hidro</div><div class="metric"><div class="k">pH</div><div class="v">5.5–5.8</div></div><div class="metric"><div class="k">EC</div><div class="v">0.3–0.5</div></div></div>
+      </div>
+    </div>
+
+    <!-- VEGETATIVO -->
+    <div class="etapa">
+      <div class="etapa-head">
+        <div class="etapa-name">Vegetativo</div>
+        <div class="etapa-sub">Crecimiento · 18h luz</div>
+      </div>
+      <div class="amb-row">
+        <div class="amb-cell"><div class="k">Temp</div><div class="v">25<small>°C</small></div></div>
+        <div class="amb-cell"><div class="k">Humedad</div><div class="v">60<small>%</small></div></div>
+        <div class="amb-cell"><div class="k">VPD</div><div class="v">0.9–1.2<small>kPa</small></div></div>
+        <div class="amb-cell"><div class="k">CO₂</div><div class="v">400–800<small>ppm</small></div></div>
+      </div>
+      <div class="sub-table">
+        <div class="sub-title">Sustrato</div>
+        <div class="sub-row"><div class="name">Tierra</div><div class="metric"><div class="k">pH</div><div class="v">6.0–6.8</div></div><div class="metric"><div class="k">EC</div><div class="v">1.0–1.6</div></div></div>
+        <div class="sub-row"><div class="name">Coco</div><div class="metric"><div class="k">pH</div><div class="v">5.5–6.3</div></div><div class="metric"><div class="k">EC</div><div class="v">1.2–1.8</div></div></div>
+        <div class="sub-row"><div class="name">Hidro</div><div class="metric"><div class="k">pH</div><div class="v">5.5–6.0</div></div><div class="metric"><div class="k">EC</div><div class="v">1.2–1.6</div></div></div>
+      </div>
+    </div>
+
+    <!-- FLOR INICIAL -->
+    <div class="etapa">
+      <div class="etapa-head">
+        <div class="etapa-name">Flor inicial</div>
+        <div class="etapa-sub">Estiramiento · 12h luz</div>
+      </div>
+      <div class="amb-row">
+        <div class="amb-cell"><div class="k">Temp</div><div class="v">25<small>°C</small></div></div>
+        <div class="amb-cell"><div class="k">Humedad</div><div class="v">55<small>%</small></div></div>
+        <div class="amb-cell"><div class="k">VPD</div><div class="v">1.2–1.45<small>kPa</small></div></div>
+        <div class="amb-cell"><div class="k">CO₂</div><div class="v">800–1200<small>ppm</small></div></div>
+      </div>
+      <div class="sub-table">
+        <div class="sub-title">Sustrato</div>
+        <div class="sub-row"><div class="name">Tierra</div><div class="metric"><div class="k">pH</div><div class="v">6.0–6.8</div></div><div class="metric"><div class="k">EC</div><div class="v">1.4–1.8</div></div></div>
+        <div class="sub-row"><div class="name">Coco</div><div class="metric"><div class="k">pH</div><div class="v">5.5–6.3</div></div><div class="metric"><div class="k">EC</div><div class="v">1.6–2.0</div></div></div>
+        <div class="sub-row"><div class="name">Hidro</div><div class="metric"><div class="k">pH</div><div class="v">5.5–6.0</div></div><div class="metric"><div class="k">EC</div><div class="v">1.6–2.0</div></div></div>
+      </div>
+    </div>
+
+    <!-- FLORACIÓN -->
+    <div class="etapa">
+      <div class="etapa-head">
+        <div class="etapa-name">Floración</div>
+        <div class="etapa-sub">Engorde · reducir EC al final</div>
+      </div>
+      <div class="amb-row">
+        <div class="amb-cell"><div class="k">Temp</div><div class="v">24<small>°C</small></div></div>
+        <div class="amb-cell"><div class="k">Humedad</div><div class="v">48<small>%</small></div></div>
+        <div class="amb-cell"><div class="k">VPD</div><div class="v">1.4–1.6<small>kPa</small></div></div>
+        <div class="amb-cell"><div class="k">CO₂</div><div class="v">800–1000<small>ppm</small></div></div>
+      </div>
+      <div class="sub-table">
+        <div class="sub-title">Sustrato</div>
+        <div class="sub-row"><div class="name">Tierra</div><div class="metric"><div class="k">pH</div><div class="v">6.0–6.8</div></div><div class="metric"><div class="k">EC</div><div class="v">1.6–2.0*</div></div></div>
+        <div class="sub-row"><div class="name">Coco</div><div class="metric"><div class="k">pH</div><div class="v">5.5–6.3</div></div><div class="metric"><div class="k">EC</div><div class="v">1.8–2.4*</div></div></div>
+        <div class="sub-row"><div class="name">Hidro</div><div class="metric"><div class="k">pH</div><div class="v">5.5–6.0</div></div><div class="metric"><div class="k">EC</div><div class="v">1.8–2.2*</div></div></div>
+      </div>
+    </div>
+
+    <div class="foot-note">
+      <b>Rangos orientativos, no promesas.</b> Genética, clima de tu zona y calidad del agua mueven estos números. *EC de floración: baja hacia el extremo inferior en las últimas 2 semanas (lavado de raíces).
+    </div>
+
+    <a class="cta" href="/app.html">
+      Registra tus valores en el Diario de Cultivo
+      <small>La app te avisa si algo se sale de rango</small>
+    </a>
+  </div>
+
+</div>
+</body>
+</html>
