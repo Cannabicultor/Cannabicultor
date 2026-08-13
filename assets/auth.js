@@ -1,7 +1,7 @@
 (function (global) {
   'use strict';
 
-  var SESSION_KEYS = ['ga_jwt', 'ga_email', 'ga_nivel', 'ga_test_passed', 'ga_chat_date', 'ga_chat_count'];
+  var SESSION_KEYS = ['ga_jwt', 'ga_email', 'ga_nivel', 'ga_test_passed', 'ga_chat_date', 'ga_chat_count', 'ga_perfil', 'cc_token'];
   var COOKIE_KEYS = ['ga_jwt', 'ga_email', 'ga_nivel', 'ga_test_passed'];
   var VALID_PLANS = ['libre', 'fundador', 'semilla', 'cultivador', 'master', 'genetista'];
   var COOKIE_DAYS = 30;
@@ -21,7 +21,19 @@
   }
 
   function delCookie(name) {
-    document.cookie = name + '=; Path=/; Max-Age=0; SameSite=Lax';
+    // Hay que repetir Path/Secure/Domain o el navegador no borra la cookie
+    // que escribió setCookie (en HTTPS lleva Secure).
+    var base = name + '=; Path=/; Max-Age=0; SameSite=Lax';
+    var secure = location.protocol === 'https:' ? '; Secure' : '';
+    var host = location.hostname || '';
+    document.cookie = base + secure;
+    document.cookie = base;
+    if (host) {
+      document.cookie = base + secure + '; Domain=' + host;
+      if (host.indexOf('.') !== -1) {
+        document.cookie = base + secure + '; Domain=.' + host.replace(/^www\./, '');
+      }
+    }
   }
 
   function writeSessionCookies(token, email, nivel, testPassed) {
@@ -88,8 +100,10 @@
   }
 
   function clearSession() {
-    SESSION_KEYS.forEach(function (k) { localStorage.removeItem(k); });
-    try { sessionStorage.removeItem('ga_jwt'); } catch (e) {}
+    SESSION_KEYS.forEach(function (k) {
+      localStorage.removeItem(k);
+      try { sessionStorage.removeItem(k); } catch (e) {}
+    });
     clearSessionCookies();
   }
 
@@ -210,7 +224,7 @@
 
   function logout() {
     clearSession();
-    window.location.replace('/login.html');
+    window.location.replace('/login.html?logout=1');
   }
 
   var SB_URL = 'https://gfyrsrdnvgnhtsuexjkb.supabase.co';
