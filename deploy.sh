@@ -88,6 +88,15 @@ for ext in png jpg jpeg gif webp svg ico; do
   done
 done
 
+# Icono PWA / Add to Home Screen (app.html → /icons/icon-180.png)
+if [ -d icons ]; then
+  mkdir -p "$DEPLOYPATH/icons"
+  for file in icons/*.png; do
+    [ -f "$file" ] || continue
+    /bin/cp -f "$file" "$DEPLOYPATH/icons/"
+  done
+fi
+
 # Iconos SVG personalizados de la UI (app.html / dashboard.html) viven en la
 # subcarpeta assets/icons/, que el bucle de arriba (solo assets/*.ext) no cubre.
 if [ -d assets/icons ]; then
