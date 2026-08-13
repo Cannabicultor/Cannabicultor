@@ -273,7 +273,7 @@ section.block{padding:36px 0}
   </section>
 
   <section class="grid">
-    <a class="gcard" href="/genetica/cheese-critical-plus.html">
+    <a class="gcard" data-tipo="semilla" href="/genetica/cheese-critical-plus.html">
       <div class="gcard-img"><img src="/assets/genetica/cheese-critical-plus.jpg" alt="Cheese × Critical Plus — genética del Banco de la Alianza" width="420" height="420"></div>
       <div class="gcard-body">
         <span class="gcard-type">Feminizadas</span>
@@ -282,7 +282,7 @@ section.block{padding:36px 0}
         <span class="gcard-cta">Ver ficha &rarr;</span>
       </div>
     </a>
-    <a class="gcard" href="/genetica/biscotti.html">
+    <a class="gcard" data-tipo="semilla" href="/genetica/biscotti.html">
       <div class="gcard-img"><img src="/assets/genetica/biscotti.jpg" alt="Biscotti — genética del Banco de la Alianza" width="420" height="420"></div>
       <div class="gcard-body">
         <span class="gcard-type">Feminizadas</span>
@@ -291,7 +291,7 @@ section.block{padding:36px 0}
         <span class="gcard-cta">Ver ficha &rarr;</span>
       </div>
     </a>
-    <a class="gcard" href="/genetica/chiquita-banana.html">
+    <a class="gcard" data-tipo="semilla" href="/genetica/chiquita-banana.html">
       <div class="gcard-img"><img src="/assets/genetica/chiquita-banana.jpg" alt="Chiquita Banana — genética del Banco de la Alianza" width="420" height="420"></div>
       <div class="gcard-body">
         <span class="gcard-type">Feminizadas</span>
@@ -300,7 +300,7 @@ section.block{padding:36px 0}
         <span class="gcard-cta">Ver ficha &rarr;</span>
       </div>
     </a>
-    <a class="gcard" href="/genetica/runtz-og.html">
+    <a class="gcard" data-tipo="semilla" href="/genetica/runtz-og.html">
       <div class="gcard-img"><img src="/assets/genetica/runtz-og.jpg" alt="Runtz × OG — genética del Banco de la Alianza" width="420" height="420"></div>
       <div class="gcard-body">
         <span class="gcard-type">Feminizadas</span>
@@ -309,7 +309,7 @@ section.block{padding:36px 0}
         <span class="gcard-cta">Ver ficha &rarr;</span>
       </div>
     </a>
-    <a class="gcard" href="/genetica/chemdawg.html">
+    <a class="gcard" data-tipo="semilla" href="/genetica/chemdawg.html">
       <div class="gcard-img"><img src="/assets/genetica/chemdawg.jpg" alt="Chemdawg — genética del Banco de la Alianza" width="420" height="420"></div>
       <div class="gcard-body">
         <span class="gcard-type">Feminizadas</span>
@@ -318,7 +318,7 @@ section.block{padding:36px 0}
         <span class="gcard-cta">Ver ficha &rarr;</span>
       </div>
     </a>
-    <a class="gcard" href="/genetica/beldia-landrace-marruecos.html">
+    <a class="gcard" data-tipo="semilla" href="/genetica/beldia-landrace-marruecos.html">
       <div class="gcard-img"><img src="/assets/genetica/beldia-landrace-marruecos.jpg" alt="Beldia (autóctona Marruecos) — genética del Banco de la Alianza" width="420" height="420"></div>
       <div class="gcard-body">
         <span class="gcard-type">Regular · Landrace</span>
@@ -363,6 +363,10 @@ section.block{padding:36px 0}
   var WORKER='https://growers-alliance-ai.enriquedorta.workers.dev';
   var ref=new URLSearchParams(location.search).get('ref');
   fetch(WORKER+'/track/page_view',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({page:'banco_genetica',ref:ref})}).catch(function(){});
+  var tipo=new URLSearchParams(location.search).get('tipo');
+  if(tipo==='semilla'){
+    document.querySelectorAll('.gcard[data-tipo="clon"]').forEach(function(el){ el.style.display='none'; });
+  }
 })();
 </script>
 </body>

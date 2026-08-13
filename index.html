@@ -255,7 +255,8 @@ nav{position:fixed;top:0;left:0;right:0;z-index:500;background:rgba(255,255,255,
 
 /* ── PLANS ── */
 .plans-bg{background:var(--bg)}
-.plans-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-top:48px}
+.plans-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:48px}
+#planes{display:none}
 .plan-card{background:var(--white);border-radius:var(--R);border:1px solid var(--border);padding:28px 24px;position:relative;transition:all .2s}
 .plan-card:hover{box-shadow:var(--shadow);transform:translateY(-2px)}
 .plan-card.featured{border-color:var(--forest);box-shadow:0 0 0 1px var(--forest), var(--shadow)}
@@ -409,6 +410,7 @@ footer{padding:32px 0;background:var(--white);border-top:1px solid var(--border)
       <a href="#demo">Funciones</a>
       <a href="#como-funciona">Cómo funciona</a>
       <a href="#growers">Growers Alliance</a>
+      <a href="#planes" id="nav-planes">Ver planes</a>
     </div>
     <div class="nav-actions">
       <a href="/login.html" class="nav-login">Iniciar sesión</a>
@@ -762,6 +764,56 @@ footer{padding:32px 0;background:var(--white);border-top:1px solid var(--border)
 
 <div class="dv"></div>
 
+<!-- PLANES (ocultos hasta «Ver planes») -->
+<section class="sec plans-bg reveal" id="planes">
+  <div class="si">
+    <div class="section-eyebrow">Membresía</div>
+    <h2 class="section-title">Elige tu <em>plan</em></h2>
+    <p class="section-sub">Tres niveles. En Libre ya guardamos tu cultivo si dejas el email. El banco genético empieza en Semilla.</p>
+    <div class="plans-grid">
+      <div class="plan-card">
+        <div class="plan-name">Libre</div>
+        <div class="plan-price">0€<span>/mes</span></div>
+        <div class="plan-tagline">Para probar la IA</div>
+        <p class="plan-desc">2 consultas al día. Análisis de cultivo si dejas tu email. Sin banco genético.</p>
+        <ul class="plan-features">
+          <li>2 consultas IA / día</li>
+          <li>Análisis de cultivo (con email)</li>
+          <li class="off">Banco genético</li>
+        </ul>
+        <button class="plan-btn" onclick="window.location.href='/register.html'">Empezar gratis</button>
+      </div>
+      <div class="plan-card featured">
+        <div class="plan-badge">Recomendado</div>
+        <div class="plan-name">Semilla</div>
+        <div class="plan-price">5€<span>/mes</span></div>
+        <div class="plan-tagline">Cultivo con memoria</div>
+        <p class="plan-desc">10 consultas al día, perfil guardado y banco de semillas.</p>
+        <ul class="plan-features">
+          <li>10 consultas IA / día</li>
+          <li>Análisis de cultivo (perfil_cultivo)</li>
+          <li>Banco genético · solo semillas</li>
+        </ul>
+        <button class="plan-btn featured-btn" onclick="window.location.href='https://buy.stripe.com/3cI00c9Ex8WH22PenB6AM04'">Elegir Semilla</button>
+      </div>
+      <div class="plan-card">
+        <div class="plan-name">Cultivador</div>
+        <div class="plan-price">13€<span>/mes</span></div>
+        <div class="plan-tagline">Con especialistas</div>
+        <p class="plan-desc">Todo Semilla más consultas uno a uno con especialistas.</p>
+        <ul class="plan-features">
+          <li>Todo lo de Semilla</li>
+          <li>Consultas ilimitadas con la IA</li>
+          <li>Especialistas 1:1</li>
+        </ul>
+        <button class="plan-btn" onclick="window.location.href='https://buy.stripe.com/aFafZa5ohb4P4aX2ET6AM05'">Elegir Cultivador</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="dv"></div>
+
 <!-- FORM REGISTRO -->
 <section class="sec form-bg reveal" id="registro">
   <div class="si">
@@ -831,6 +883,20 @@ const obs = new IntersectionObserver(e => {
   e.forEach(x => { if (x.isIntersecting) { x.target.classList.add('on'); obs.unobserve(x.target); } });
 }, { threshold: 0.08 });
 document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+
+function showPlanesSection(e){
+  if(e) e.preventDefault();
+  var s = document.getElementById('planes');
+  if(!s) return false;
+  s.style.display = 'block';
+  s.classList.add('on');
+  s.scrollIntoView({behavior:'smooth', block:'start'});
+  history.replaceState(null,'', '#planes');
+  return false;
+}
+var navPlanes = document.getElementById('nav-planes');
+if(navPlanes) navPlanes.addEventListener('click', showPlanesSection);
+if(location.hash === '#planes') showPlanesSection();
 
 document.getElementById('brevo-form').addEventListener('submit', function(e) {
   const email = document.getElementById('email-input').value;
