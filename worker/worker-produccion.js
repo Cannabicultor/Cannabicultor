@@ -1114,8 +1114,9 @@ const DIARIO_COLS = new Set([
   'fecha', 'dia_ciclo', 'etapa', 'ph', 'ec', 'temp', 'hum', 'vpd',
   'riego_litros', 'riego_ph', 'riego_ec', 'runoff_ph', 'runoff_ec',
   'fertilizantes', 'plagas', 'hongos', 'tratamiento', 'poda', 'trasplante',
-  'foto_url', 'notas',
+  'notas',
 ]);
+const FOTO_SIGN_TTL_SEC = 6 * 60 * 60;
 
 function numOrNull(v) {
   if (v == null || v === '') return null;
@@ -1133,10 +1134,146 @@ function calcDiaCicloFromPerfil(perfil) {
   return Math.max(0, dias);
 }
 
-function fotoUrlPublica(ruta) {
+function encodeStoragePath(path) {
+  return String(path).split('/').filter(Boolean).map(encodeURIComponent).join('/');
+}
+
+/** Ruta interna del bucket `plantas`. Nunca devolver una URL pública. */
+function normalizeFotoPath(ruta) {
   if (!ruta) return null;
-  if (/^https?:\/\//i.test(ruta)) return ruta;
-  return `${SUPABASE_URL}/storage/v1/object/public/plantas/${ruta}`;
+  let s = String(ruta).trim().split('?')[0];
+  if (!s) return null;
+  const markers = [
+    '/storage/v1/object/public/plantas/',
+    '/storage/v1/object/sign/plantas/',
+    '/storage/v1/object/authenticated/plantas/',
+    '/storage/v1/object/plantas/',
+  ];
+  for (const m of markers) {
+    const i = s.indexOf(m);
+    if (i !== -1) {
+      try { s = decodeURIComponent(s.slice(i + m.length)); } catch { s = s.slice(i + m.length); }
+      break;
+    }
+  }
+  s = s.replace(/^\/+/, '');
+  if (!s || s.includes('..') || s.length > 500) return null;
+  return s;
+}
+
+function fotoPathOwnedBy(path, email) {
+  if (!path || !email) return false;
+  return path.toLowerCase().startsWith(String(email).trim().toLowerCase() + '/');
+}
+
+async function signFotoUrls(env, paths) {
+  const unique = [...new Set((paths || []).map(normalizeFotoPath).filter(Boolean))];
+  const out = new Map();
+  if (!unique.length || !env.SUPABASE_SERVICE_KEY) return out;
+  const res = await fetch(`${SUPABASE_URL}/storage/v1/object/sign/plantas`, {
+    method: 'POST',
+    headers: {
+      apikey: env.SUPABASE_SERVICE_KEY,
+      Authorization: `Bearer ${env.SUPABASE_SERVICE_KEY}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ expiresIn: FOTO_SIGN_TTL_SEC, paths: unique }),
+  });
+  if (res.ok) {
+    const data = await res.json().catch(() => null);
+    const rows = Array.isArray(data) ? data : (data && Array.isArray(data.data) ? data.data : []);
+    for (const row of rows) {
+      const path = normalizeFotoPath(row.path || row.name);
+      const signed = row.signedURL || row.signedUrl;
+      if (!path || !signed || row.error) continue;
+      out.set(path, /^https?:\/\//i.test(signed)
+        ? signed
+        : `${SUPABASE_URL}/storage/v1${signed.startsWith('/') ? '' : '/'}${signed}`);
+    }
+  }
+  const missing = unique.filter((p) => !out.has(p));
+  await Promise.all(missing.map(async (path) => {
+    const signed = await signFotoUrlOne(env, path);
+    if (signed) out.set(path, signed);
+  }));
+  return out;
+}
+
+async function signFotoUrlOne(env, path) {
+  const clean = normalizeFotoPath(path);
+  if (!clean || !env.SUPABASE_SERVICE_KEY) return null;
+  const res = await fetch(`${SUPABASE_URL}/storage/v1/object/sign/plantas/${encodeStoragePath(clean)}`, {
+    method: 'POST',
+    headers: {
+      apikey: env.SUPABASE_SERVICE_KEY,
+      Authorization: `Bearer ${env.SUPABASE_SERVICE_KEY}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ expiresIn: FOTO_SIGN_TTL_SEC }),
+  });
+  if (!res.ok) return null;
+  const data = await res.json().catch(() => null);
+  const signed = data && (data.signedURL || data.signedUrl);
+  if (!signed) return null;
+  return /^https?:\/\//i.test(signed)
+    ? signed
+    : `${SUPABASE_URL}/storage/v1${signed.startsWith('/') ? '' : '/'}${signed}`;
+}
+
+async function registrarDiarioFoto(env, { email, entradaId, path, origen }) {
+  const storagePath = normalizeFotoPath(path);
+  if (!email || !storagePath) return null;
+  if (!fotoPathOwnedBy(storagePath, email)) return null;
+  const fila = {
+    usuario_email: email,
+    entrada_id: entradaId || null,
+    storage_path: storagePath,
+    origen: origen || null,
+  };
+  const res = await sbRequest(env, 'diario_fotos?on_conflict=storage_path', {
+    method: 'POST',
+    headers: { Prefer: 'return=representation,resolution=merge-duplicates' },
+    body: JSON.stringify(fila),
+  });
+  if (!res.ok) return null;
+  const row = Array.isArray(res.data) ? res.data[0] : res.data;
+  return row || { storage_path: storagePath, entrada_id: entradaId || null };
+}
+
+async function decorateEntradasConFotos(env, email, entradas) {
+  if (!Array.isArray(entradas) || !entradas.length) return [];
+  const ids = entradas.map((e) => e.id).filter((id) => Number.isFinite(Number(id)));
+  let byEntrada = {};
+  if (ids.length) {
+    const q = `diario_fotos?usuario_email=eq.${encodeURIComponent(email)}&entrada_id=in.(${ids.join(',')})&select=id,entrada_id,storage_path,created_at&order=created_at.desc`;
+    const res = await sbRequest(env, q, { method: 'GET' });
+    if (res.ok && Array.isArray(res.data)) {
+      for (const r of res.data) {
+        if (!byEntrada[r.entrada_id]) byEntrada[r.entrada_id] = [];
+        byEntrada[r.entrada_id].push(r);
+      }
+    }
+  }
+  const paths = [];
+  for (const e of entradas) {
+    const rows = byEntrada[e.id] || [];
+    const colPath = normalizeFotoPath(e.foto_url);
+    if (colPath && !rows.some((r) => r.storage_path === colPath)) {
+      rows.unshift({ id: null, entrada_id: e.id, storage_path: colPath });
+      byEntrada[e.id] = rows;
+    }
+    for (const r of rows) paths.push(r.storage_path);
+  }
+  const signed = await signFotoUrls(env, paths);
+  return entradas.map((e) => {
+    const rows = byEntrada[e.id] || [];
+    const fotos = [];
+    for (const r of rows) {
+      const url = signed.get(normalizeFotoPath(r.storage_path));
+      if (url) fotos.push({ id: r.id, url });
+    }
+    return { ...e, foto_url: fotos[0] ? fotos[0].url : null, fotos };
+  });
 }
 
 async function authEmailFromRequest(request, env, bodyEmail) {
@@ -1217,16 +1354,18 @@ async function handleDiarioEntrada(body, env, request) {
 
   if (!fila.fecha) fila.fecha = new Date().toISOString().slice(0, 10);
 
-  // Foto adjunta desde el formulario (base64 JPEG) → Storage plantas/
+  // Foto adjunta desde el formulario (base64 JPEG) → Storage plantas/{email}/uuid.jpg
+  // foto_url del cliente se ignora (DIARIO_COLS ya no lo incluye): solo escribe el Worker.
+  let fotoPath = null;
   const fotoB64 = body.foto_base64 || src.foto_base64 || null;
-  if (fotoB64 && typeof fotoB64 === 'string' && !fila.foto_url) {
+  if (fotoB64 && typeof fotoB64 === 'string') {
     try {
       const raw = fotoB64.includes(',') ? fotoB64.split(',')[1] : fotoB64;
       let bytes = b64ToBytes(raw);
       if (esJpeg(bytes)) bytes = limpiarMetadatosJpeg(bytes);
-      const ruta = `${email}/${crypto.randomUUID()}.jpg`;
-      await subirFotoStorage(env, bytes, ruta);
-      fila.foto_url = fotoUrlPublica(ruta);
+      fotoPath = `${email}/${crypto.randomUUID()}.jpg`;
+      await subirFotoStorage(env, bytes, fotoPath);
+      fila.foto_url = fotoPath;
     } catch (err) {
       return { status: 500, data: { error: 'No se pudo subir la foto: ' + (err.message || 'error') } };
     }
@@ -1242,7 +1381,11 @@ async function handleDiarioEntrada(body, env, request) {
     return { status: 500, data: { error: msg } };
   }
   const row = Array.isArray(res.data) ? res.data[0] : res.data;
-  return { status: 200, data: { ok: true, entrada: row } };
+  if (fotoPath && row && row.id) {
+    await registrarDiarioFoto(env, { email, entradaId: row.id, path: fotoPath, origen: 'diario' });
+  }
+  const decorated = await decorateEntradasConFotos(env, email, [row]);
+  return { status: 200, data: { ok: true, entrada: decorated[0] || row } };
 }
 
 /**
@@ -1273,16 +1416,18 @@ async function handleListDiario(url, env, request) {
     const msg = res.data?.message || res.data?.error || 'No se pudieron leer las entradas';
     return { status: 500, data: { error: msg } };
   }
-  const entradas = Array.isArray(res.data) ? res.data : [];
+  const rawEntradas = Array.isArray(res.data) ? res.data : [];
+  const entradas = await decorateEntradasConFotos(env, email, rawEntradas);
   // Fechas con al menos una entrada (para resaltar en el calendario del cliente)
   const fechas = [...new Set(entradas.map((e) => e.fecha).filter(Boolean))];
   return { status: 200, data: { ok: true, entradas, fechas, fecha: fechaOk ? fecha : null } };
 }
 
-/** Foto del chat → inserta o actualiza la entrada de hoy con foto_url. */
+/** Foto del chat → inserta o actualiza la entrada de hoy y registra diario_fotos. */
 async function upsertDiarioFoto(env, email, imagenRuta, pregunta, reply) {
   const hoy = new Date().toISOString().slice(0, 10);
-  const fotoUrl = fotoUrlPublica(imagenRuta);
+  const fotoPath = normalizeFotoPath(imagenRuta);
+  if (!fotoPath || !email) return;
   const user = await getUserByEmail(env, email);
   const perfil = (user && user.perfil_cultivo && typeof user.perfil_cultivo === 'object') ? user.perfil_cultivo : {};
   const diaCiclo = calcDiaCicloFromPerfil(perfil);
@@ -1291,28 +1436,33 @@ async function upsertDiarioFoto(env, email, imagenRuta, pregunta, reply) {
 
   const q = `diario_entradas?usuario_email=eq.${encodeURIComponent(email)}&fecha=eq.${hoy}&select=id,foto_url,notas&order=created_at.desc&limit=1`;
   const existing = await sbRequest(env, q, { method: 'GET' });
+  let entradaId = null;
   if (existing.ok && Array.isArray(existing.data) && existing.data.length) {
     const row = existing.data[0];
+    entradaId = row.id;
     const notas = [row.notas, notaFoto].filter(Boolean).join('\n---\n');
     await sbRequest(env, `diario_entradas?id=eq.${row.id}`, {
       method: 'PATCH',
       headers: { Prefer: 'return=minimal' },
-      body: JSON.stringify({ foto_url: fotoUrl || row.foto_url, notas: notas || null }),
+      body: JSON.stringify({ foto_url: fotoPath, notas: notas || null }),
     });
-    return;
+  } else {
+    const created = await sbRequest(env, 'diario_entradas', {
+      method: 'POST',
+      headers: { Prefer: 'return=representation' },
+      body: JSON.stringify({
+        usuario_email: email,
+        fecha: hoy,
+        dia_ciclo: diaCiclo,
+        etapa: etapa ? String(etapa) : null,
+        foto_url: fotoPath,
+        notas: notaFoto || null,
+      }),
+    });
+    const row = created.ok && Array.isArray(created.data) ? created.data[0] : created.data;
+    entradaId = row && row.id;
   }
-  await sbRequest(env, 'diario_entradas', {
-    method: 'POST',
-    headers: { Prefer: 'return=minimal' },
-    body: JSON.stringify({
-      usuario_email: email,
-      fecha: hoy,
-      dia_ciclo: diaCiclo,
-      etapa: etapa ? String(etapa) : null,
-      foto_url: fotoUrl,
-      notas: notaFoto || null,
-    }),
-  });
+  await registrarDiarioFoto(env, { email, entradaId, path: fotoPath, origen: 'chat' });
 }
 
 async function handleLogin(body, env) {

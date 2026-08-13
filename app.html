@@ -864,12 +864,19 @@ function renderDiarioList(){
       head.hum!=null?`${head.hum}%`:null,
     ].filter(Boolean).join(' · ');
     const n = items.length;
-    const fotos = items.filter(e => e.foto_url).length;
+    const fotos = items.reduce((c, e) => c + (Array.isArray(e.fotos) && e.fotos.length ? e.fotos.length : (e.foto_url ? 1 : 0)), 0);
     return `<button type="button" onclick="openDiaConsulta('${fecha}')" style="width:100%;text-align:left;border:1px solid var(--border);border-radius:14px;padding:12px 14px;margin-bottom:8px;background:var(--card);cursor:pointer">
       <div style="display:flex;justify-content:space-between;gap:8px"><strong style="font-size:13.5px">${escHtml(fecha)}</strong><span style="font-size:11px;color:var(--soft)">${n} reg.${fotos?` · ${fotos}📷`:''} →</span></div>
       ${metrics?`<div style="font-size:12.5px;margin-top:5px;font-weight:600;color:var(--forest)">${escHtml(metrics)}</div>`:''}
     </button>`;
   }).join('');
+}
+function dayFotosHtml(e){
+  const urls = (Array.isArray(e.fotos) && e.fotos.length)
+    ? e.fotos.map(f => f && f.url).filter(Boolean)
+    : (e.foto_url ? [e.foto_url] : []);
+  if(!urls.length) return '';
+  return urls.map(u => `<a href="${escHtml(u)}" target="_blank" rel="noopener"><img src="${escHtml(u)}" alt="Foto del cultivo" class="diary-foto-preview" style="margin-top:10px;display:block;max-width:100%;border-radius:12px"></a>`).join('');
 }
 function dayEntryHtml(e){
   const cell = (k, v) => v==null||v==='' ? '' : `<div><div class="k">${k}</div><div class="v">${escHtml(String(v))}</div></div>`;
@@ -884,7 +891,7 @@ function dayEntryHtml(e){
       ${cell('Poda', e.poda)}${cell('Trasplante', e.trasplante ? 'Sí' : null)}
     </div>
     ${e.notas?`<div style="margin-top:10px;font-size:13px;line-height:1.45;color:var(--muted)">${escHtml(String(e.notas))}</div>`:''}
-    ${e.foto_url?`<a href="${escHtml(e.foto_url)}" target="_blank" rel="noopener"><img src="${escHtml(e.foto_url)}" alt="" class="diary-foto-preview" style="margin-top:10px;display:block"></a>`:''}
+    ${dayFotosHtml(e)}
   </div>`;
 }
 async function openDiaConsulta(fecha){
