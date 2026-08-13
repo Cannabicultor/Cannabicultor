@@ -214,7 +214,7 @@ function describe(v, breeder) {
   else if (v.tipo === 'regular') S.push('Se ofrece en formato de semilla regular.');
 
   // — CTA / enlace interno —
-  S.push(`Puedes comparar ${nombre} con otras genéticas en el <a href="/buscador-cannabicultor.html">buscador de variedades</a> o registrar tu cultivo en el <a href="/">diario de cultivo con IA</a> de Cannabicultor.`);
+  S.push(`Puedes comparar ${nombre} con otras genéticas en el <a href="/buscador-cannabicultor.html">buscador de variedades</a> o registrar tu cultivo en el <a href="/cultivo-con-ia/">asistente de IA para tu cultivo</a> de Cannabicultor.`);
 
   return S.join(' ');
 }
@@ -301,18 +301,23 @@ ${GA_SNIPPET}
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>${esc(title)}</title>
 <meta name="description" content="${esc(desc)}">
+<meta name="robots" content="index,follow,max-image-preview:large">
 <link rel="canonical" href="${canonical}">
+<link rel="alternate" hreflang="es" href="${canonical}">
+<link rel="alternate" hreflang="x-default" href="${canonical}">
 <meta property="og:type" content="article">
 <meta property="og:title" content="${esc(title)}">
 <meta property="og:description" content="${esc(desc)}">
 <meta property="og:url" content="${canonical}">
 <meta property="og:locale" content="es_ES">
 <meta property="og:site_name" content="Cannabicultor">
-${image ? `<meta property="og:image" content="${esc(image)}">` : ''}
+${image ? `<meta property="og:image" content="${esc(image)}">
+<meta property="og:image:alt" content="${esc(title)}">` : ''}
 <meta name="twitter:card" content="${image ? 'summary_large_image' : 'summary'}">
 <meta name="twitter:title" content="${esc(title)}">
 <meta name="twitter:description" content="${esc(desc)}">
-${image ? `<meta name="twitter:image" content="${esc(image)}">` : ''}
+${image ? `<meta name="twitter:image" content="${esc(image)}">
+<meta name="twitter:image:alt" content="${esc(title)}">` : ''}
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>${CSS}</style>
@@ -560,12 +565,16 @@ async function main() {
   // — Selección de variedades —
   let pilotVars = [];
   if (DO_ALL_VARS) {
+    // SEO: solo fichas con foto y datos suficientes (evita thin content).
     const allVars = await fetchAll('variedades', {
       select: 'id,breeder_id,nombre,tipo,thc_pct,thc_max,cbd_pct,cbd_max,floracion_dias,genetica,altura,produccion,descripcion,image_url,img_url,es_landrace,origen_geografico,anio_lanzamiento,updated_at',
+      filter: '&image_url=not.is.null',
     });
-    pilotVars = allVars.filter((v) => v.nombre);
+    const withPhoto = allVars.filter((v) => v.nombre && v.image_url);
+    const scored = withPhoto.filter((v) => countDataPoints(v) >= 2);
+    pilotVars = scored.length ? scored : withPhoto;
     assignVarietySlugs(pilotVars, breederById);
-    console.log(`  variedades a publicar: ${pilotVars.length}`);
+    console.log(`  variedades a publicar: ${pilotVars.length} (con foto; ${withPhoto.length - pilotVars.length} descartadas por datos insuficientes)`);
   } else if (PILOT) {
     const cands = await fetchAll('variedades', {
       select: 'id,breeder_id,nombre,tipo,thc_pct,thc_max,cbd_pct,cbd_max,floracion_dias,genetica,altura,produccion,descripcion,image_url,img_url,es_landrace,origen_geografico,anio_lanzamiento,updated_at',
