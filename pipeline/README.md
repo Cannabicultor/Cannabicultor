@@ -15,6 +15,8 @@
 ```
 pipeline/
 ├── run-discovery.sh                 ← El comando principal que vas a usar
+├── run-kb-ingest.sh                 ← PDF → kb_documents / kb_chunks (RAG)
+├── kb/                              ← extract + chunk + upsert Supabase
 ├── discovery/
 │   └── discover.js                  ← Motor de descubrimiento general (sitemaps + seeds + crawl básico)
 ├── sql/

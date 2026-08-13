@@ -8,3 +8,7 @@ node_modules/
 videos/
 output.json
 Fotos/
+pipeline/kb/.venv/
+pipeline/kb/**/__pycache__/
+research/kb/pdfs/
+research/kb/txt/
