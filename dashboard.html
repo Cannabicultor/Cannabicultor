@@ -645,17 +645,23 @@ function logout401(){
 }
 
 // ─── ESTADO GLOBAL ────────────────────────────────────────────────────────────
-const LIM = {libre:2, semilla:10, cultivador:999};
+const LIM = {libre:2, fundador:10, semilla:10, cultivador:999};
 const NIVEL_INFO = {
-  libre:      {name:'Libre',      badge:'👁️', note:'2 consultas diarias · Análisis de cultivo si dejas tu email'},
+  libre:      {name:'Libre',      badge:'👁️', note:'2 consultas diarias · Sin análisis de cultivo · Sin banco genético'},
+  fundador:   {name:'Fundador',   badge:'⭐', note:'10 consultas diarias · Análisis de cultivo · Banco (semillas) · 0€'},
   semilla:    {name:'Semilla',    badge:'🌱', note:'10 consultas diarias · Análisis de cultivo · Banco genético (semillas)'},
   cultivador: {name:'Cultivador', badge:'🌿', note:'Consultas ilimitadas · Todo Semilla + especialistas 1:1'}
 };
 function planKey(){
   const n = String(NIVEL||'libre').toLowerCase();
-  if(n==='semilla_fundador' || n==='semilla') return 'semilla';
+  if(n==='fundador' || n==='semilla_fundador') return 'fundador';
+  if(n==='semilla') return 'semilla';
   if(n==='cultivador' || n==='master' || n==='genetista') return 'cultivador';
   return 'libre';
+}
+function tieneAccesoSemilla(){
+  const k = planKey();
+  return k==='fundador' || k==='semilla' || k==='cultivador';
 }
 
 let PERFIL = JSON.parse(localStorage.getItem('ga_perfil') || 'null');
@@ -690,7 +696,7 @@ function renderNivel(){
   document.getElementById('nivelName').textContent  = info.name;
   document.getElementById('nivelNote').textContent  = info.note;
   const upBtn = document.getElementById('nivelUpgrade');
-  if(planKey() === 'libre' || planKey() === 'semilla'){
+  if(planKey() !== 'cultivador'){
     upBtn.style.display = 'block';
     upBtn.textContent = 'Ver planes →';
   }
@@ -710,8 +716,8 @@ function applyPlanGating(){
   if(esp) esp.style.display = t==='cultivador' ? '' : 'none';
 }
 function openBancoGenetico(ev){
-  if(planKey()==='libre'){ if(ev) ev.preventDefault(); showUpgradeModal(); return false; }
-  if(planKey()==='semilla'){
+  if(!tieneAccesoSemilla()){ if(ev) ev.preventDefault(); showUpgradeModal(); return false; }
+  if(planKey()!=='cultivador'){
     if(ev) ev.preventDefault();
     window.location.href = '/banco-genetica.html?tipo=semilla';
     return false;
@@ -1325,6 +1331,7 @@ function skipOnboarding(){ document.getElementById('modalOverlay').classList.add
 
 // ─── SYNC PERFIL → SUPABASE (solo fijos + cultivo; sin ph/ec/temp/hum/riego) ──
 function syncPerfilSupabase(){
+  if(!tieneAccesoSemilla()) return;
   if(!JWT || !PERFIL) return;
   if(!sessionEmail()) return;
   fetch(`${WORKER}/auth/save-perfil`, {
@@ -1390,7 +1397,21 @@ const STRIPE_LINKS = {
   cultivador:'https://buy.stripe.com/aFafZa5ohb4P4aX2ET6AM05'
 };
 function goUpgrade(){ showUpgradeModal(); }
+function planCard(href, bg, title, sub, price){
+  return `<a href="${href}" style="display:flex;align-items:center;justify-content:space-between;padding:16px 18px;border:1.5px solid #d0e8d8;border-radius:16px;text-decoration:none;background:${bg}"><div><div style="font-size:16px;font-weight:700;color:#151515">${title}</div><div style="font-size:13px;color:#6f746f;margin-top:3px">${sub}</div></div><div style="font-size:20px;font-weight:700;color:#1a5c32">${price}<span style="font-size:12px;color:#9aa09a">/mes</span></div></a>`;
+}
 function showUpgradeModal(){
+  const k = planKey();
+  const cards = [];
+  if(k==='libre'){
+    cards.push(planCard('/empezar.html','#f7faf6','⭐ Fundador','10 consultas · Análisis · Banco (sin semillas gratis)','0€'));
+  }
+  if(k==='libre' || k==='fundador'){
+    cards.push(planCard(STRIPE_LINKS.semilla,'#fff','🌱 Semilla','Mismas funciones que Fundador + semillas del banco','5€'));
+  }
+  if(k!=='cultivador'){
+    cards.push(planCard(STRIPE_LINKS.cultivador, k==='semilla'?'#f7faf6':'#fff','🌿 Cultivador','Todo Semilla + especialistas 1:1','13€'));
+  }
   const overlay = document.createElement('div');
   overlay.id = 'upgradeOverlay';
   overlay.style.cssText = 'position:fixed;inset:0;background:rgba(10,15,10,.75);backdrop-filter:blur(8px);z-index:2000;display:flex;align-items:center;justify-content:center;padding:20px';
@@ -1398,8 +1419,7 @@ function showUpgradeModal(){
     <div style="background:#fff;border-radius:28px;box-shadow:0 40px 120px rgba(0,0,0,.3);width:100%;max-width:540px;overflow:hidden">
       <div style="background:linear-gradient(135deg,#1a5c32,#2a7a44);padding:28px 32px 24px"><div style="font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.6);margin-bottom:8px">Elige tu plan</div><h2 style="font-family:Lora,Georgia,serif;font-size:26px;font-weight:600;color:#fff;margin:0">Sube de nivel, <em style="color:#7dd4a0">Cannabicultor</em></h2></div>
       <div style="padding:24px 32px 32px;display:flex;flex-direction:column;gap:12px">
-        <a href="${STRIPE_LINKS.semilla}" style="display:flex;align-items:center;justify-content:space-between;padding:16px 18px;border:1.5px solid #d0e8d8;border-radius:16px;text-decoration:none;background:#f7faf6"><div><div style="font-size:16px;font-weight:700;color:#151515">🌱 Semilla</div><div style="font-size:13px;color:#6f746f;margin-top:3px">10 consultas/día · Análisis de cultivo · Banco (semillas)</div></div><div style="font-size:20px;font-weight:700;color:#1a5c32">5€<span style="font-size:12px;color:#9aa09a">/mes</span></div></a>
-        <a href="${STRIPE_LINKS.cultivador}" style="display:flex;align-items:center;justify-content:space-between;padding:16px 18px;border:1.5px solid #d0e8d8;border-radius:16px;text-decoration:none;background:#fff"><div><div style="font-size:16px;font-weight:700;color:#151515">🌿 Cultivador</div><div style="font-size:13px;color:#6f746f;margin-top:3px">Todo Semilla + especialistas 1:1</div></div><div style="font-size:20px;font-weight:700;color:#1a5c32">13€<span style="font-size:12px;color:#9aa09a">/mes</span></div></a>
+        ${cards.join('')}
         <button onclick="document.getElementById('upgradeOverlay').remove()" style="margin-top:4px;background:transparent;border:0;color:#9aa09a;font-size:13px;font-weight:600;padding:8px;cursor:pointer">Cancelar</button>
       </div>
     </div>`;
@@ -1460,7 +1480,7 @@ async function sendMsg(){
   if(!text && !image) return;
   const lim = LIM[planKey()] || 2;
   if(PREGUNTAS >= lim){
-    addMsg('ai', `Has alcanzado el límite del plan ${NIVEL_INFO[planKey()].name}. ${planKey()==='libre'||planKey()==='semilla'?'Sube de nivel para más consultas.':''}`);
+    addMsg('ai', `Has alcanzado el límite del plan ${NIVEL_INFO[planKey()].name}. ${planKey()!=='cultivador'?'Sube de nivel para más consultas.':''}`);
     return;
   }
 
@@ -1596,6 +1616,7 @@ function cerrarSesion(){
 const SB_URL = 'https://gfyrsrdnvgnhtsuexjkb.supabase.co';
 const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdmeXJzcmRudmduaHRzdWV4amtiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg3MjIxNjUsImV4cCI6MjA5NDI5ODE2NX0.53peUmp28jF_b5tJFsHmP4STmGedRYUBV1WPItmdv50';
 function guardarCultivoStats(p){
+  if(!tieneAccesoSemilla()) return;
   if(!sessionEmail()) return;
   if(!p || !p.espacio) return;
   fetch(`${SB_URL}/rest/v1/cultivos_stats`, {

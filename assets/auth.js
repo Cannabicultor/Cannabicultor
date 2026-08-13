@@ -3,7 +3,7 @@
 
   var SESSION_KEYS = ['ga_jwt', 'ga_email', 'ga_nivel', 'ga_test_passed', 'ga_chat_date', 'ga_chat_count'];
   var COOKIE_KEYS = ['ga_jwt', 'ga_email', 'ga_nivel', 'ga_test_passed'];
-  var VALID_PLANS = ['libre', 'semilla', 'cultivador', 'master', 'genetista'];
+  var VALID_PLANS = ['libre', 'fundador', 'semilla', 'cultivador', 'master', 'genetista'];
   var COOKIE_DAYS = 30;
 
   function setCookie(name, value, days) {
@@ -55,6 +55,7 @@
 
   function normalizePlan(plan) {
     var p = String(plan || 'libre').toLowerCase().trim();
+    if (p === 'semilla_fundador') return 'fundador';
     return VALID_PLANS.indexOf(p) !== -1 ? p : 'libre';
   }
 

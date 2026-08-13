@@ -230,7 +230,7 @@
       <div class="reply" id="reply"><div class="who"><img src="https://cannabicultor.com/assets/icono_cannabicultor.png" alt=""><b>Cannabicultor IA</b></div><span id="replyText"></span></div>
       <div id="saveBox" style="display:none;margin-top:22px">
         <div class="speech" style="font-size:24px">Guarda este análisis y <span class="hl">entra en el diario</span>.</div>
-        <div class="sub">Con tu email lo recordamos (plan Libre, 0€). Luego sigues en la app.</div>
+        <div class="sub">Plaza Fundador (0€, plazas limitadas): mismo acceso que Semilla, sin semillas gratis. Luego sigues en la app.</div>
         <div class="field"><input type="email" id="emailP3" placeholder="Tu email" autocomplete="email"></div>
         <div class="field"><input type="password" id="passwordP3" placeholder="Crea una contraseña" autocomplete="new-password"></div>
         <label class="check">
@@ -265,7 +265,7 @@
       <div class="sub" id="p5Sub">Crea tu cuenta para no perder el seguimiento y acceder a todo lo de dentro.</div>
       <div class="founder">
         <div class="star">⭐</div>
-        <div><b>Plan Semilla · Fundador</b><small>Gratis de por vida. Quedan plazas de las primeras 500.</small></div>
+        <div><b>Plan Fundador</b><small>0€. Mismas funciones que Semilla, sin semillas gratis. 500 plazas.</small></div>
       </div>
       <div class="field"><input type="email" id="email" placeholder="Tu email" autocomplete="email"></div>
       <div class="field"><input type="password" id="password" placeholder="Crea una contraseña" autocomplete="new-password"></div>
@@ -533,7 +533,7 @@ function registrar(){
   fetch(`${WORKER_URL}/auth/register`, {
     method:'POST', headers:{'Content-Type':'application/json'},
     body: JSON.stringify({
-      email, password, session_id: state.sessionId, plan: 'libre',
+      email, password, session_id: state.sessionId,
       consent: { age:true, terms:true },
       perfil: { segmento:state.segmento, intencion:state.intencion, fase:state.fase }
     })
@@ -541,6 +541,7 @@ function registrar(){
   .then(r => r.json())
   .then(d => {
     if(d.ok && d.token){ guardarSesion(d); window.location.href = destApp(); }
+    else if(d.fundador_agotado){ window.location.href = d.stripe_semilla || 'https://buy.stripe.com/3cI00c9Ex8WH22PenB6AM04'; }
     else if(d.needs_login){ if(state.p===3){ syncCredsDesdeP3(); mostrar(5); } activarModoLogin(); }
     else { registrando=false; ctaActivo.disabled=false; ctaActivo.textContent = state.p===3 ? 'Guarda este análisis y entra en el diario' : 'Reclamar mi plaza de Fundador'; err.textContent=d.error||'No se pudo crear la cuenta.'; err.style.display='block'; }
   })

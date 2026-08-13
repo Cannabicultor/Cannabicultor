@@ -144,7 +144,13 @@ async function sbRequest(env, path, options = {}) {
   if (text) {
     try { data = JSON.parse(text); } catch { data = text; }
   }
-  return { ok: res.ok, status: res.status, data };
+  const cr = res.headers.get('content-range');
+  let count = null;
+  if (cr) {
+    const m = String(cr).match(/\/(\d+)$/);
+    if (m) count = parseInt(m[1], 10);
+  }
+  return { ok: res.ok, status: res.status, data, count };
 }
 
 async function getUserByEmail(env, email) {
@@ -934,6 +940,23 @@ function clientIp(request) {
     || '';
 }
 
+const FUNDADOR_TOPE = 500;
+const STRIPE_SEMILLA = 'https://buy.stripe.com/3cI00c9Ex8WH22PenB6AM04';
+
+function planTieneAccesoSemilla(plan) {
+  const p = String(plan || '').toLowerCase();
+  return p === 'fundador' || p === 'semilla' || p === 'cultivador'
+    || p === 'semilla_fundador' || p === 'master' || p === 'genetista';
+}
+
+async function countUsuariosPlan(env, plan) {
+  const res = await sbRequest(env, `Usuarios?plan=eq.${encodeURIComponent(plan)}&select=id`, {
+    method: 'GET',
+    headers: { Prefer: 'count=exact', Range: '0-0' },
+  });
+  return typeof res.count === 'number' ? res.count : 0;
+}
+
 async function handleRegister(body, env, request) {
   const email = String(body.email || '').trim().toLowerCase();
   const password = String(body.password || '');
@@ -959,7 +982,21 @@ async function handleRegister(body, env, request) {
     age: true, terms: true, marketing: !!consent.marketing,
     terms_version: 'v1', ts: new Date().toISOString(), ip: clientIp(request),
   };
-  const planNuevo = body.plan === 'libre' ? 'libre' : 'semilla';
+  const nFundador = await countUsuariosPlan(env, 'fundador');
+  if (nFundador >= FUNDADOR_TOPE) {
+    const stripe = email
+      ? `${STRIPE_SEMILLA}?prefilled_email=${encodeURIComponent(email)}`
+      : STRIPE_SEMILLA;
+    return {
+      status: 409,
+      data: {
+        fundador_agotado: true,
+        error: 'Las plazas Fundador se han agotado. Pasa a Semilla (5€/mes) para las mismas funciones.',
+        stripe_semilla: stripe,
+      },
+    };
+  }
+  const planNuevo = 'fundador';
   const created = await createUser(env, {
     email, password_hash, plan: planNuevo, nombre: '',
     consentimiento, fecha_registro: new Date().toISOString(),
@@ -986,6 +1023,11 @@ async function handleGuardarCultivo(body, env, request) {
   const claims = await verifyJwt(token, env.JWT_SECRET);
   if (!claims || !claims.email) return { status: 401, data: { error: 'No autorizado' } };
   const email = claims.email;
+  const userCultivo = await getUserByEmail(env, email);
+  if (!userCultivo) return { status: 404, data: { error: 'Usuario no encontrado' } };
+  if (!planTieneAccesoSemilla(userCultivo.plan)) {
+    return { status: 403, data: { error: 'El análisis de cultivo está disponible desde Fundador.' } };
+  }
   const p = body || {};
   const fila = {
     espacio: p.espacio || null, tipo_luz: p.tipoLuz || p.tipo_luz || null,
@@ -1010,6 +1052,9 @@ async function handleSavePerfil(body, env) {
   if (!claims || !claims.email) return { status: 401, data: { error: 'No autorizado' } };
   const user = await getUserByEmail(env, claims.email);
   if (!user) return { status: 404, data: { error: 'Usuario no encontrado' } };
+  if (!planTieneAccesoSemilla(user.plan)) {
+    return { status: 403, data: { error: 'El análisis de cultivo está disponible desde Fundador.' } };
+  }
   const actual = (user.perfil_cultivo && typeof user.perfil_cultivo === 'object') ? user.perfil_cultivo : {};
   const nuevo = (body.perfil_cultivo && typeof body.perfil_cultivo === 'object') ? body.perfil_cultivo : {};
   const fusionado = { ...actual, ...nuevo, actualizado: new Date().toISOString() };
@@ -1045,6 +1090,9 @@ async function handleGuardarSala(body, env, request) {
 
   const user = await getUserByEmail(env, email);
   if (!user) return { status: 404, data: { error: 'Usuario no encontrado' } };
+  if (!planTieneAccesoSemilla(user.plan)) {
+    return { status: 403, data: { error: 'El análisis de cultivo está disponible desde Fundador.' } };
+  }
 
   const actual = (user.perfil_cultivo && typeof user.perfil_cultivo === 'object' && !Array.isArray(user.perfil_cultivo))
     ? user.perfil_cultivo

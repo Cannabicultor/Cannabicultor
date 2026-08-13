@@ -255,7 +255,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:500;background:rgba(255,255,255,
 
 /* ── PLANS ── */
 .plans-bg{background:var(--bg)}
-.plans-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:48px}
+.plans-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;margin-top:48px}
 #planes{display:none}
 .plan-card{background:var(--white);border-radius:var(--R);border:1px solid var(--border);padding:28px 24px;position:relative;transition:all .2s}
 .plan-card:hover{box-shadow:var(--shadow);transform:translateY(-2px)}
@@ -769,42 +769,54 @@ footer{padding:32px 0;background:var(--white);border-top:1px solid var(--border)
   <div class="si">
     <div class="section-eyebrow">Membresía</div>
     <h2 class="section-title">Elige tu <em>plan</em></h2>
-    <p class="section-sub">Tres niveles. En Libre ya guardamos tu cultivo si dejas el email. El banco genético empieza en Semilla.</p>
+    <p class="section-sub">Libre para curiosear. Fundador es el gancho (mismas funciones que Semilla, 0€, 500 plazas). Semilla de pago cuando se agoten. Cultivador para 1:1.</p>
     <div class="plans-grid">
       <div class="plan-card">
         <div class="plan-name">Libre</div>
         <div class="plan-price">0€<span>/mes</span></div>
-        <div class="plan-tagline">Para probar la IA</div>
-        <p class="plan-desc">2 consultas al día. Análisis de cultivo si dejas tu email. Sin banco genético.</p>
+        <div class="plan-tagline">Para curiosear</div>
+        <p class="plan-desc">2 consultas al día. Sin análisis de cultivo. Sin banco genético.</p>
         <ul class="plan-features">
           <li>2 consultas IA / día</li>
-          <li>Análisis de cultivo (con email)</li>
+          <li class="off">Análisis de cultivo</li>
           <li class="off">Banco genético</li>
         </ul>
-        <button class="plan-btn" onclick="window.location.href='/register.html'">Empezar gratis</button>
+        <button class="plan-btn" onclick="window.location.href='/empezar.html'">Probar la IA</button>
       </div>
       <div class="plan-card featured">
-        <div class="plan-badge">Recomendado</div>
-        <div class="plan-name">Semilla</div>
-        <div class="plan-price">5€<span>/mes</span></div>
-        <div class="plan-tagline">Cultivo con memoria</div>
-        <p class="plan-desc">10 consultas al día, perfil guardado y banco de semillas.</p>
+        <div class="plan-badge">500 plazas</div>
+        <div class="plan-name">Fundador</div>
+        <div class="plan-price">0€<span>/mes</span></div>
+        <div class="plan-tagline">Mismo acceso que Semilla</div>
+        <p class="plan-desc">10 consultas, análisis de cultivo y banco de semillas. Sin semillas gratis.</p>
         <ul class="plan-features">
           <li>10 consultas IA / día</li>
-          <li>Análisis de cultivo (perfil_cultivo)</li>
+          <li>Análisis de cultivo</li>
           <li>Banco genético · solo semillas</li>
         </ul>
-        <button class="plan-btn featured-btn" onclick="window.location.href='https://buy.stripe.com/3cI00c9Ex8WH22PenB6AM04'">Elegir Semilla</button>
+        <button class="plan-btn featured-btn" onclick="window.location.href='/empezar.html'">Reclamar plaza Fundador</button>
+      </div>
+      <div class="plan-card">
+        <div class="plan-name">Semilla</div>
+        <div class="plan-price">5€<span>/mes</span></div>
+        <div class="plan-tagline">Cuando no queden plazas Fundador</div>
+        <p class="plan-desc">Las mismas funciones que Fundador, de pago. Incluye semillas del banco.</p>
+        <ul class="plan-features">
+          <li>Todo lo de Fundador</li>
+          <li>Semillas del banco</li>
+          <li>10 consultas IA / día</li>
+        </ul>
+        <button class="plan-btn" onclick="window.location.href='https://buy.stripe.com/3cI00c9Ex8WH22PenB6AM04'">Elegir Semilla</button>
       </div>
       <div class="plan-card">
         <div class="plan-name">Cultivador</div>
         <div class="plan-price">13€<span>/mes</span></div>
-        <div class="plan-tagline">Con especialistas</div>
-        <p class="plan-desc">Todo Semilla más consultas uno a uno con especialistas.</p>
+        <div class="plan-tagline">Consultoría 1:1</div>
+        <p class="plan-desc">Todo Semilla más especialistas y genéticas en otros formatos.</p>
         <ul class="plan-features">
           <li>Todo lo de Semilla</li>
-          <li>Consultas ilimitadas con la IA</li>
           <li>Especialistas 1:1</li>
+          <li>Intercambio más allá de semillas</li>
         </ul>
         <button class="plan-btn" onclick="window.location.href='https://buy.stripe.com/aFafZa5ohb4P4aX2ET6AM05'">Elegir Cultivador</button>
       </div>
