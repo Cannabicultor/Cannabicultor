@@ -959,7 +959,7 @@ async function handleRegister(body, env, request) {
     age: true, terms: true, marketing: !!consent.marketing,
     terms_version: 'v1', ts: new Date().toISOString(), ip: clientIp(request),
   };
-  const planNuevo = 'semilla';
+  const planNuevo = body.plan === 'libre' ? 'libre' : 'semilla';
   const created = await createUser(env, {
     email, password_hash, plan: planNuevo, nombre: '',
     consentimiento, fecha_registro: new Date().toISOString(),

@@ -228,6 +228,19 @@
       <input type="file" id="fileGal" accept="image/*" hidden>
       <div class="thinking" id="thinking"><div class="spin"></div> Analizando tu planta…</div>
       <div class="reply" id="reply"><div class="who"><img src="https://cannabicultor.com/assets/icono_cannabicultor.png" alt=""><b>Cannabicultor IA</b></div><span id="replyText"></span></div>
+      <div id="saveBox" style="display:none;margin-top:22px">
+        <div class="speech" style="font-size:24px">Guarda este análisis y <span class="hl">entra en el diario</span>.</div>
+        <div class="sub">Con tu email lo recordamos (plan Libre, 0€). Luego sigues en la app.</div>
+        <div class="field"><input type="email" id="emailP3" placeholder="Tu email" autocomplete="email"></div>
+        <div class="field"><input type="password" id="passwordP3" placeholder="Crea una contraseña" autocomplete="new-password"></div>
+        <label class="check">
+          <input type="checkbox" id="consentP3">
+          <span>Soy mayor de 18 y acepto los <a href="https://cannabicultor.com/terminos.html" target="_blank">términos</a> y la <a href="https://cannabicultor.com/privacidad.html" target="_blank">privacidad</a>.</span>
+        </label>
+        <div class="err" id="errP3"></div>
+        <button type="button" class="cta" id="ctaP3" style="margin-top:14px">Guarda este análisis y entra en el diario</button>
+        <div style="text-align:center"><span class="skip" id="skipSave">Ahora no, seguir</span></div>
+      </div>
       <div style="text-align:center"><span class="skip" id="noPhoto">No tengo foto ahora</span></div>
     </div>
 
@@ -272,13 +285,14 @@
 
 </div>
 
+<script src="assets/auth.js?v=20260813"></script>
 <script>
 // ============================================================
 //  CONFIGURACIÓN — AJUSTA ESTO
 // ============================================================
 const WORKER_URL = 'https://growers-alliance-ai.enriquedorta.workers.dev';
 const TERMS_URL  = 'https://cannabicultor.com/terminos.html';
-const APP_URL    = 'https://cannabicultor.com/dashboard.html';
+const APP_URL    = 'https://cannabicultor.com/app.html?new=true';
 // ============================================================
 
 const state = { p:0, token:null, sessionId:null, segmento:null, intencion:null, fase:null, fotoSubida:false, modoLogin:false };
@@ -466,8 +480,10 @@ async function diagnosticar(base64){
     document.getElementById('reply').style.display = 'block';
     state.fotoSubida = true;
     guardarPaso('P3', 'diagnostico_recibido', true);
-    cta.style.display = 'block'; cta.textContent = 'Continuar';
-    cta.onclick = () => mostrar(4);
+    const noPh = document.getElementById('noPhoto'); if(noPh) noPh.style.display = 'none';
+    document.getElementById('saveBox').style.display = 'block';
+    cta.style.display = 'none';
+    document.getElementById('scroll').scrollTop = document.getElementById('saveBox').offsetTop - 24;
   }catch(e){
     document.getElementById('thinking').style.display = 'none';
     document.getElementById('replyText').textContent = 'Algo ha fallado al analizar. Inténtalo de nuevo en un momento.';
@@ -485,42 +501,62 @@ document.getElementById('optsP4').addEventListener('click', e => {
 
 // P5 registro
 let registrando = false;   // candado: evita el doble disparo del registro
+function destApp(){
+  const movil = (window.innerWidth||0) < 768 || /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent||'');
+  return movil ? '/app.html?new=true' : '/dashboard.html?new=true';
+}
+function syncCredsDesdeP3(){
+  const e = document.getElementById('emailP3');
+  const p = document.getElementById('passwordP3');
+  const c = document.getElementById('consentP3');
+  if(e) document.getElementById('email').value = e.value;
+  if(p) document.getElementById('password').value = p.value;
+  if(c) document.getElementById('consent').checked = c.checked;
+}
 function registrar(){
   if(registrando) return;  // si ya está en marcha, ignora clics extra
   const email = document.getElementById('email').value.trim().toLowerCase();
   const password = document.getElementById('password').value;
   const consent = document.getElementById('consent').checked;
-  const err = document.getElementById('err'); err.style.display='none';
+  const errP3 = document.getElementById('errP3');
+  const err = (state.p === 3 && errP3) ? errP3 : document.getElementById('err'); err.style.display='none';
 
   if(!email.includes('@')){ err.textContent='Escribe un email válido.'; err.style.display='block'; return; }
   if(password.length < 6){ err.textContent='La contraseña necesita al menos 6 caracteres.'; err.style.display='block'; return; }
   if(!consent){ err.textContent='Debes confirmar tu edad y aceptar los términos.'; err.style.display='block'; return; }
 
   registrando = true;
-  cta.disabled = true; cta.textContent = 'Creando tu cuenta…';
+  const ctaP3 = document.getElementById('ctaP3');
+  const ctaActivo = (state.p === 3 && ctaP3) ? ctaP3 : cta;
+  ctaActivo.disabled = true; ctaActivo.textContent = 'Guardando tu análisis…';
+  guardarPaso('P3','email',email);
   fetch(`${WORKER_URL}/auth/register`, {
     method:'POST', headers:{'Content-Type':'application/json'},
     body: JSON.stringify({
-      email, password, session_id: state.sessionId,
+      email, password, session_id: state.sessionId, plan: 'libre',
       consent: { age:true, terms:true },
       perfil: { segmento:state.segmento, intencion:state.intencion, fase:state.fase }
     })
   })
   .then(r => r.json())
   .then(d => {
-    if(d.ok && d.token){ guardarSesion(d); window.location.href = APP_URL; }
-    else if(d.needs_login){ activarModoLogin(); }
-    else { registrando=false; cta.disabled=false; cta.textContent='Reclamar mi plaza de Fundador'; err.textContent=d.error||'No se pudo crear la cuenta.'; err.style.display='block'; }
+    if(d.ok && d.token){ guardarSesion(d); window.location.href = destApp(); }
+    else if(d.needs_login){ if(state.p===3){ syncCredsDesdeP3(); mostrar(5); } activarModoLogin(); }
+    else { registrando=false; ctaActivo.disabled=false; ctaActivo.textContent = state.p===3 ? 'Guarda este análisis y entra en el diario' : 'Reclamar mi plaza de Fundador'; err.textContent=d.error||'No se pudo crear la cuenta.'; err.style.display='block'; }
   })
-  .catch(() => { registrando=false; cta.disabled=false; cta.textContent='Reclamar mi plaza de Fundador'; err.textContent='Error de conexión. Inténtalo de nuevo.'; err.style.display='block'; });
+  .catch(() => { registrando=false; ctaActivo.disabled=false; ctaActivo.textContent = state.p===3 ? 'Guarda este análisis y entra en el diario' : 'Reclamar mi plaza de Fundador'; err.textContent='Error de conexión. Inténtalo de nuevo.'; err.style.display='block'; });
 }
 
 // ===== Guarda la sesión con las MISMAS llaves que espera el dashboard (ga_*) =====
 function guardarSesion(d){
+  const email = document.getElementById('email').value.trim().toLowerCase();
   localStorage.setItem('ga_jwt', d.token);
   localStorage.setItem('ga_nivel', d.plan || 'libre');
-  localStorage.setItem('ga_email', document.getElementById('email').value.trim().toLowerCase());
+  localStorage.setItem('ga_email', email);
   if(d.perfil_cultivo) localStorage.setItem('ga_perfil', JSON.stringify(d.perfil_cultivo));
+  if(window.GAAuth && typeof GAAuth.saveSession === 'function'){
+    GAAuth.saveSession(d.token, email, { plan: d.plan || 'libre', perfil_cultivo: d.perfil_cultivo });
+  }
 }
 
 // ===== Usuario que YA tiene cuenta: en vez de registrar, entra (y engancha su foto) =====
@@ -558,7 +594,7 @@ function entrar(){
   })
   .then(r => r.json())
   .then(d => {
-    if(d.ok && d.token){ guardarSesion(d); window.location.href = APP_URL; }
+    if(d.ok && d.token){ guardarSesion(d); window.location.href = destApp(); }
     else { registrando=false; cta.disabled=false; cta.textContent='Entrar'; err.textContent='Contraseña incorrecta. Prueba de nuevo o usa "¿Olvidaste tu contraseña?".'; err.style.display='block'; }
   })
   .catch(() => { registrando=false; cta.disabled=false; cta.textContent='Entrar'; err.textContent='Error de conexión. Inténtalo de nuevo.'; err.style.display='block'; });
@@ -575,6 +611,9 @@ function olvideContrasena(){
   err.textContent = 'Te he enviado un enlace a tu email para entrar. Revisa tu correo (y la carpeta de spam).';
   err.style.display = 'block';
 }
+
+document.getElementById('ctaP3').addEventListener('click', () => { syncCredsDesdeP3(); registrar(); });
+document.getElementById('skipSave').addEventListener('click', () => mostrar(4));
 
 mostrar(0);
 </script>
