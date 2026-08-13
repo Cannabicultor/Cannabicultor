@@ -308,7 +308,7 @@ button,input{font-family:inherit;cursor:pointer}
       <h2 class="result-title">Eres un Cultivador de <em>verdad</em></h2>
       <p class="result-text">Has obtenido <strong id="eliteScore">--</strong> en el test. Eso te da acceso a dos opciones exclusivas. Elige cómo quieres entrar.</p>
       <div class="choice-cards">
-        <div class="choice-card featured" onclick="choosePlan('semilla')">
+        <div class="choice-card featured" onclick="choosePlan('fundador')">
           <div class="choice-emoji">🌱</div>
           <div class="choice-name">Plaza Fundador</div>
           <div class="choice-desc">Acceso gratuito de por vida como miembro fundador de la Alianza</div>
@@ -2846,17 +2846,17 @@ function showResult(){
     const emailElite = STATE.email || localStorage.getItem('ga_email');
     if(emailElite) {
       enviarEmailBienvenida(emailElite, 7);
-      actualizarPlanBrevo(emailElite, 'semilla'); // elite entra como semilla hasta elegir plan
+      actualizarPlanBrevo(emailElite, 'fundador'); // elite entra como fundador hasta elegir plan
     }
     $('eliteScore').textContent = `${pct}% (${STATE.correctas}/${total})`;
     showScreen('screenChoice');
 
   } else if(pct >= 70){
-    guardarResultadoTest(pct, STATE.correctas, total, 'semilla', null);
-    const emailSemilla = STATE.email || localStorage.getItem('ga_email');
-    if(emailSemilla) {
-      enviarEmailBienvenida(emailSemilla, 6);
-      actualizarPlanBrevo(emailSemilla, 'semilla');
+    guardarResultadoTest(pct, STATE.correctas, total, 'fundador', null);
+    const emailFundador = STATE.email || localStorage.getItem('ga_email');
+    if(emailFundador) {
+      enviarEmailBienvenida(emailFundador, 6);
+      actualizarPlanBrevo(emailFundador, 'fundador');
     }
     buildPassScreen(pct, STATE.correctas, total);
     showScreen('screenPass');
@@ -2880,7 +2880,7 @@ function buildPassScreen(pct, correctas, total){
 
   if(pct >= 80){
     $('passTitle').textContent = 'Excelente, Cannabicultor';
-    $('passText').textContent = `${correctas} de ${total} correctas. Tu nivel es sólido. Bienvenido a Growers Alliance como miembro Semilla.`;
+    $('passText').textContent = `${correctas} de ${total} correctas. Tu nivel es sólido. Bienvenido a Growers Alliance como miembro Fundador.`;
   } else {
     $('passTitle').textContent = 'Aprobado, Cannabicultor';
     $('passText').textContent = `${correctas} de ${total} correctas. Has superado el mínimo requerido. Bienvenido a la Alianza.`;
@@ -2942,7 +2942,7 @@ function choosePlan(plan){
 
 function goToDashboard(){
   showLoading('Activando tu acceso…');
-  completeTestAccess('semilla', 'semilla');
+  completeTestAccess('fundador', 'fundador');
 }
 
 function goFreeAccess(){
