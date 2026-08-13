@@ -261,7 +261,23 @@
   .day-entry-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px 12px;margin-top:8px}
   .day-entry-grid .k{font-size:10px;font-weight:700;color:var(--soft);text-transform:uppercase;letter-spacing:.06em}
   .day-entry-grid .v{font-size:14px;font-weight:700;margin-top:2px}
-</style>
+
+  /* Aviso: añadir a pantalla de inicio */
+  .install-overlay{position:absolute;inset:0;background:rgba(10,15,10,.72);backdrop-filter:blur(8px);z-index:70;display:flex;align-items:flex-end;justify-content:center}
+  .install-overlay.hide{display:none}
+  .install-sheet{background:#fff;border-radius:22px 22px 0 0;width:100%;max-width:480px;max-height:88dvh;overflow-y:auto;padding:0 20px calc(16px + env(safe-area-inset-bottom));box-shadow:0 -12px 48px rgba(0,0,0,.2);animation:sheetUp .32s ease}
+  .install-sheet .modal-handle{margin-bottom:8px}
+  .install-hero{display:flex;align-items:center;gap:12px;margin:8px 0 14px}
+  .install-hero img{width:52px;height:52px;border-radius:12px;background:var(--forest);flex-shrink:0}
+  .install-hero h2{font-family:Lora,Georgia,serif;font-size:20px;font-weight:600;line-height:1.2;margin:0}
+  .install-hero p{font-size:13px;color:var(--muted);margin:4px 0 0;line-height:1.4}
+  .install-steps{margin:0 0 16px;padding:0;list-style:none;counter-reset:st}
+  .install-steps li{counter-increment:st;display:flex;gap:12px;align-items:flex-start;font-size:14px;line-height:1.45;color:var(--text);margin:0 0 12px}
+  .install-steps li::before{content:counter(st);flex-shrink:0;width:24px;height:24px;border-radius:50%;background:var(--pale);color:var(--forest);font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center}
+  .install-steps b{font-weight:700}
+  .install-ok{width:100%;background:var(--forest);color:#fff;border:0;border-radius:999px;padding:15px 24px;font-size:15px;font-weight:700;cursor:pointer}
+  .install-later{width:100%;background:transparent;border:0;color:var(--soft);font-size:13px;font-weight:600;padding:10px;cursor:pointer;margin-top:4px}
+
 </head>
 <body>
 <div class="app">
@@ -541,6 +557,23 @@
     </div>
   </div>
 
+  <!-- Aviso: acceso directo en la pantalla de inicio -->
+  <div class="install-overlay hide" id="installOverlay" role="dialog" aria-labelledby="installTitle" aria-modal="true" onclick="if(event.target===this)dismissInstallHint()">
+    <div class="install-sheet">
+      <div class="modal-handle" aria-hidden="true"></div>
+      <div class="install-hero">
+        <img src="/icons/icon-180.png" alt="">
+        <div>
+          <h2 id="installTitle">Llévala en tu pantalla de inicio</h2>
+          <p>Se abre como una app, sin la barra del navegador.</p>
+        </div>
+      </div>
+      <ol class="install-steps" id="installSteps"></ol>
+      <button type="button" class="install-ok" onclick="dismissInstallHint()">Entendido</button>
+      <button type="button" class="install-later" onclick="dismissInstallHint()">Ahora no</button>
+    </div>
+  </div>
+
   <!-- Upgrade modal slot -->
   <div class="upgrade-overlay hide" id="upgradeModal"></div>
 
@@ -612,6 +645,7 @@ function init(){
     renderVPD();
     loadDiario();
     setTimeout(mostrarCheckin, 2000);
+    scheduleInstallHint(3500);
   }
 }
 
@@ -1204,8 +1238,9 @@ async function saveProfile(){
   renderDashboard();
   renderVPD();
   resetBriefing();
+  scheduleInstallHint(700);
 }
-function skipOnboarding(){ document.getElementById('modalOverlay').classList.add('hide'); }
+function skipOnboarding(){ document.getElementById('modalOverlay').classList.add('hide'); scheduleInstallHint(500); }
 
 // ─── SYNC PERFIL → SUPABASE (solo fijos + cultivo) ────────────────────────────
 function syncPerfilSupabase(){
@@ -1395,6 +1430,49 @@ function addTyping(){
   document.getElementById('msgs').scrollTop = 99999;
 }
 function removeTyping(){ const t=document.getElementById('typing'); if(t) t.remove(); }
+
+// ─── ACCESO DIRECTO (iPhone / Android) ────────────────────────────────────────
+function isStandaloneApp(){
+  return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+}
+function installPlatform(){
+  const ua = navigator.userAgent || '';
+  const iOS = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  if(iOS) return 'ios';
+  if(/Android/i.test(ua)) return 'android';
+  return 'other';
+}
+function scheduleInstallHint(ms){ setTimeout(tryShowInstallHint, ms || 700); }
+function tryShowInstallHint(){
+  if(localStorage.getItem('ga_install_hint')) return;
+  if(isStandaloneApp()) return;
+  const onboarding = document.getElementById('modalOverlay');
+  if(onboarding && !onboarding.classList.contains('hide')){ setTimeout(tryShowInstallHint, 800); return; }
+  if(document.getElementById('checkinModal')){ setTimeout(tryShowInstallHint, 800); return; }
+  const steps = document.getElementById('installSteps');
+  const plat = installPlatform();
+  if(plat === 'ios'){
+    steps.innerHTML =
+      '<li>Abre esta página en <b>Safari</b> (no en Chrome ni Instagram).</li>'+
+      '<li>Toca el botón <b>Compartir</b> (cuadrado con flecha hacia arriba).</li>'+
+      '<li>Baja y toca <b>Añadir a pantalla de inicio</b> → Añadir.</li>';
+  } else if(plat === 'android'){
+    steps.innerHTML =
+      '<li>En Chrome, toca el menú <b>⋮</b> (arriba a la derecha).</li>'+
+      '<li>Elige <b>Añadir a la pantalla de inicio</b> o <b>Instalar aplicación</b>.</li>'+
+      '<li>Confirma. El icono de Cannabicultor queda en tu pantalla.</li>';
+  } else {
+    steps.innerHTML =
+      '<li><b>iPhone:</b> en Safari, Compartir → Añadir a pantalla de inicio.</li>'+
+      '<li><b>Android:</b> en Chrome, menú ⋮ → Añadir a la pantalla de inicio.</li>'+
+      '<li>Luego ábrela desde el icono, sin barra del navegador.</li>';
+  }
+  document.getElementById('installOverlay').classList.remove('hide');
+}
+function dismissInstallHint(){
+  localStorage.setItem('ga_install_hint', '1');
+  document.getElementById('installOverlay').classList.add('hide');
+}
 
 // ─── CHECK-IN DIARIO ──────────────────────────────────────────────────────────
 function mostrarCheckin(){
