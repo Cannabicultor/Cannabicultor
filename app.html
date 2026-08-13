@@ -579,7 +579,7 @@
 
 </div>
 
-<script src="assets/auth.js?v=20260725"></script>
+<script src="assets/auth.js?v=20260813"></script>
 <script src="https://cannabicultor.com/assets/chat-vision.js?v=3"></script>
 <script>
 
@@ -588,8 +588,10 @@ const WORKER = 'https://growers-alliance-ai.enriquedorta.workers.dev';
 // ─── GUARD DE SESIÓN JWT ──────────────────────────────────────────────────────
 // LOGIN ÚNICO: acepta el token venga del dashboard (ga_jwt) o del onboarding (cc_token).
 // Si llega como cc_token, lo normalizamos a ga_jwt para que toda la app use una sola clave.
-let JWT = localStorage.getItem('ga_jwt') || sessionStorage.getItem('ga_jwt') || localStorage.getItem('cc_token');
+let JWT = (window.GAAuth && typeof GAAuth.readSession === 'function' && GAAuth.readSession())
+  || localStorage.getItem('ga_jwt') || sessionStorage.getItem('ga_jwt') || localStorage.getItem('cc_token');
 if(JWT && !localStorage.getItem('ga_jwt')){ localStorage.setItem('ga_jwt', JWT); }
+// Acceso directo (standalone): si hay sesión, entrar a la app. Sin sesión, login.
 if(!JWT){ window.location.replace('/login.html'); }
 
 // ─── SAFETY NET · routing por dispositivo ─────────────────────────────────────
@@ -597,8 +599,11 @@ if(!JWT){ window.location.replace('/login.html'); }
 // presentaciones. Idéntico a dashboard.html (regla de paridad): si el dispositivo
 // no coincide con esta interfaz, se redirige a la correcta vía
 // GAAuth.isMobileDevice() (cargado arriba con ?v=). Se exime ?new=true.
+// El icono de pantalla de inicio SIEMPRE se queda en app.html.
+var _isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
 if(JWT && window.GAAuth && typeof GAAuth.isMobileDevice === 'function'
-   && !/[?&]new=true/.test(location.search)){
+   && !/[?&]new=true/.test(location.search)
+   && !_isStandalone){
   var _isMobile = GAAuth.isMobileDevice();
   var _isDashboard = location.pathname.includes('dashboard');
   var _isApp = location.pathname.includes('app.html');
@@ -607,6 +612,7 @@ if(JWT && window.GAAuth && typeof GAAuth.isMobileDevice === 'function'
 }
 
 function logout401(){
+  if(window.GAAuth && GAAuth.clearSession) GAAuth.clearSession();
   ['ga_jwt','ga_email','ga_nivel','ga_test_passed','ga_perfil'].forEach(k=>{
     localStorage.removeItem(k); sessionStorage.removeItem(k);
   });
@@ -1444,6 +1450,7 @@ function installPlatform(){
 }
 function scheduleInstallHint(ms){ setTimeout(tryShowInstallHint, ms || 700); }
 function tryShowInstallHint(){
+  if(!JWT) return;
   if(localStorage.getItem('ga_install_hint')) return;
   if(isStandaloneApp()) return;
   const onboarding = document.getElementById('modalOverlay');
@@ -1542,6 +1549,7 @@ function renderVPD(){
 // ─── CERRAR SESIÓN ────────────────────────────────────────────────────────────
 function cerrarSesion(){
   if(!confirm('¿Cerrar sesión?')) return;
+  if(window.GAAuth && GAAuth.clearSession) GAAuth.clearSession();
   ['ga_jwt','ga_email','ga_nivel','ga_test_passed','ga_perfil'].forEach(k=>{
     localStorage.removeItem(k); sessionStorage.removeItem(k);
   });

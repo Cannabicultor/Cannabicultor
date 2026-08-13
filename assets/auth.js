@@ -2,7 +2,38 @@
   'use strict';
 
   var SESSION_KEYS = ['ga_jwt', 'ga_email', 'ga_nivel', 'ga_test_passed', 'ga_chat_date', 'ga_chat_count'];
+  var COOKIE_KEYS = ['ga_jwt', 'ga_email', 'ga_nivel', 'ga_test_passed'];
   var VALID_PLANS = ['libre', 'semilla', 'cultivador', 'master', 'genetista'];
+  var COOKIE_DAYS = 30;
+
+  function setCookie(name, value, days) {
+    var max = Math.round((days || COOKIE_DAYS) * 86400);
+    var parts = name + '=' + encodeURIComponent(value == null ? '' : String(value)) +
+      '; Path=/; Max-Age=' + max + '; SameSite=Lax';
+    if (location.protocol === 'https:') parts += '; Secure';
+    document.cookie = parts;
+  }
+
+  function getCookie(name) {
+    var esc = name.replace(/[.$?*|{}()[\]\\/+^]/g, '\\$&');
+    var m = document.cookie.match(new RegExp('(?:^|; )' + esc + '=([^;]*)'));
+    return m ? decodeURIComponent(m[1]) : '';
+  }
+
+  function delCookie(name) {
+    document.cookie = name + '=; Path=/; Max-Age=0; SameSite=Lax';
+  }
+
+  function writeSessionCookies(token, email, nivel, testPassed) {
+    if (token) setCookie('ga_jwt', token);
+    if (email) setCookie('ga_email', email);
+    if (nivel) setCookie('ga_nivel', nivel);
+    if (testPassed) setCookie('ga_test_passed', 'true');
+  }
+
+  function clearSessionCookies() {
+    COOKIE_KEYS.forEach(delCookie);
+  }
 
   function parseJwt(token) {
     try {
@@ -39,18 +70,50 @@
   }
 
   function saveSession(token, email, data) {
+    var nivel = normalizePlan(
+      data && (data.nivel || data.plan || (data.user && (data.user.nivel || data.user.plan)))
+    );
+    var passed = testPassedFromApi(data);
     localStorage.setItem('ga_jwt', token);
     localStorage.setItem('ga_email', email);
-    localStorage.setItem('ga_nivel', normalizePlan(
-      data && (data.nivel || data.plan || (data.user && (data.user.nivel || data.user.plan)))
-    ));
-    if (testPassedFromApi(data)) {
+    localStorage.setItem('ga_nivel', nivel);
+    if (passed) {
       localStorage.setItem('ga_test_passed', 'true');
     }
+    // Cookie de primer partido: el icono de pantalla de inicio (iOS/Android)
+    // a veces no comparte localStorage con Safari/Chrome. Así el acceso
+    // directo entra sin volver a pedir login.
+    writeSessionCookies(token, email, nivel, passed);
   }
 
   function clearSession() {
     SESSION_KEYS.forEach(function (k) { localStorage.removeItem(k); });
+    try { sessionStorage.removeItem('ga_jwt'); } catch (e) {}
+    clearSessionCookies();
+  }
+
+  // Recupera el JWT de localStorage o, si falta (PWA / acceso directo), de cookie.
+  function readSession() {
+    var token = localStorage.getItem('ga_jwt') ||
+      (function () { try { return sessionStorage.getItem('ga_jwt'); } catch (e) { return null; } })() ||
+      localStorage.getItem('cc_token');
+    if (!isJwtValid(token)) token = getCookie('ga_jwt');
+    if (!isJwtValid(token)) return null;
+    if (!localStorage.getItem('ga_jwt')) {
+      localStorage.setItem('ga_jwt', token);
+      var email = getCookie('ga_email');
+      var nivel = getCookie('ga_nivel');
+      if (email) localStorage.setItem('ga_email', email);
+      if (nivel) localStorage.setItem('ga_nivel', nivel);
+      if (getCookie('ga_test_passed') === 'true') localStorage.setItem('ga_test_passed', 'true');
+    }
+    writeSessionCookies(
+      token,
+      localStorage.getItem('ga_email') || getCookie('ga_email'),
+      localStorage.getItem('ga_nivel') || getCookie('ga_nivel'),
+      localStorage.getItem('ga_test_passed') === 'true' || getCookie('ga_test_passed') === 'true'
+    );
+    return token;
   }
 
   // Detección de dispositivo para elegir la interfaz post-login.
@@ -80,9 +143,9 @@
   }
 
   function redirectIfAuthenticated() {
-    var token = localStorage.getItem('ga_jwt');
+    var token = readSession();
     if (!isJwtValid(token)) {
-      if (token) clearSession();
+      if (localStorage.getItem('ga_jwt') || getCookie('ga_jwt')) clearSession();
       return false;
     }
     window.location.replace(postAuthDestination());
@@ -90,7 +153,7 @@
   }
 
   function requireAuth() {
-    var token = localStorage.getItem('ga_jwt');
+    var token = readSession();
     if (!isJwtValid(token)) {
       clearSession();
       window.location.replace('/login.html');
@@ -185,6 +248,7 @@
     testPassedFromApi: testPassedFromApi,
     saveSession: saveSession,
     clearSession: clearSession,
+    readSession: readSession,
     postAuthDestination: postAuthDestination,
     redirectIfAuthenticated: redirectIfAuthenticated,
     requireAuth: requireAuth,
