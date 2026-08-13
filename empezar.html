@@ -401,6 +401,7 @@ async function procesarFoto(file){
   thinking.style.display = 'flex';
   try{
     const dataUrl = await convertirAJpeg(file);     // robusto; lanza error si no puede
+    guardarPaso('P3', 'foto_subida', true);
     const img = document.getElementById('preview');
     img.src = dataUrl; img.style.display = 'block';
     await diagnosticar(dataUrl.split(',')[1]);
@@ -464,6 +465,7 @@ async function diagnosticar(base64){
     document.getElementById('replyText').textContent = d.reply || 'No he podido analizar la foto. Prueba con otra más clara.';
     document.getElementById('reply').style.display = 'block';
     state.fotoSubida = true;
+    guardarPaso('P3', 'diagnostico_recibido', true);
     cta.style.display = 'block'; cta.textContent = 'Continuar';
     cta.onclick = () => mostrar(4);
   }catch(e){
