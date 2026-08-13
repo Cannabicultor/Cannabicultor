@@ -73,6 +73,7 @@ ASSET_FILES=(
   assets/analytics.js
   assets/auth.js
   assets/chat-vision.js
+  assets/resenas.js
 )
 
 for file in "${ASSET_FILES[@]}"; do

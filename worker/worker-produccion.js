@@ -1694,6 +1694,72 @@ async function handleAdminListLibros(request, env) {
 }
 
 // =========================================================================
+// RESEÑAS (variedad / breeder)
+// =========================================================================
+function displayNameFromEmail(email) {
+  const local = String(email || '').split('@')[0].replace(/[._-]+/g, ' ').trim();
+  if (!local) return 'Cultivador';
+  return local.charAt(0).toUpperCase() + local.slice(1);
+}
+
+function parseResenaTarget(tipoRaw, idRaw) {
+  const tipo = String(tipoRaw || '').trim();
+  const targetId = parseInt(idRaw, 10);
+  if (tipo !== 'variedad' && tipo !== 'breeder') return { error: { status: 400, data: { error: 'tipo inválido' } } };
+  if (!Number.isFinite(targetId) || targetId < 1) return { error: { status: 400, data: { error: 'id inválido' } } };
+  return { tipo, targetId };
+}
+
+async function handleListResenas(url, env) {
+  const parsed = parseResenaTarget(url.searchParams.get('tipo'), url.searchParams.get('id'));
+  if (parsed.error) return parsed.error;
+  const { tipo, targetId } = parsed;
+  const res = await sbRequest(env,
+    `resenas?tipo=eq.${encodeURIComponent(tipo)}&target_id=eq.${targetId}&select=id,nombre_publico,puntuacion,texto,created_at&order=created_at.desc&limit=50`,
+    { method: 'GET' }
+  );
+  if (!res.ok) return { status: 500, data: { error: 'No se pudieron leer las reseñas' } };
+  const items = Array.isArray(res.data) ? res.data : [];
+  const n = items.length;
+  const media = n ? Math.round((items.reduce((s, r) => s + Number(r.puntuacion || 0), 0) / n) * 10) / 10 : null;
+  return { status: 200, data: { ok: true, tipo, id: targetId, media, total: n, resenas: items } };
+}
+
+async function handleCreateResena(body, env, request) {
+  const auth = await authEmailFromRequest(request, env, body.email);
+  if (auth.error) return auth.error;
+  const parsed = parseResenaTarget(body.tipo, body.id ?? body.target_id);
+  if (parsed.error) return parsed.error;
+  const { tipo, targetId } = parsed;
+  const puntuacion = parseInt(body.puntuacion, 10);
+  if (!Number.isFinite(puntuacion) || puntuacion < 1 || puntuacion > 5) {
+    return { status: 400, data: { error: 'La puntuación debe ser de 1 a 5' } };
+  }
+  const texto = body.texto == null || body.texto === '' ? null : String(body.texto).trim().slice(0, 800);
+  const nombre = displayNameFromEmail(auth.email);
+  const fila = {
+    tipo,
+    target_id: targetId,
+    usuario_email: auth.email,
+    nombre_publico: nombre,
+    puntuacion,
+    texto,
+    updated_at: new Date().toISOString(),
+  };
+  const res = await sbRequest(env, 'resenas?on_conflict=tipo,target_id,usuario_email', {
+    method: 'POST',
+    headers: { Prefer: 'return=representation,resolution=merge-duplicates' },
+    body: JSON.stringify(fila),
+  });
+  if (!res.ok) {
+    const msg = res.data?.message || res.data?.error || 'No se pudo guardar la reseña';
+    return { status: 500, data: { error: msg } };
+  }
+  const row = Array.isArray(res.data) ? res.data[0] : res.data;
+  return { status: 200, data: { ok: true, resena: row } };
+}
+
+// =========================================================================
 // MAIN HANDLER
 // =========================================================================
 export default {
@@ -1709,6 +1775,10 @@ export default {
       if (request.method === 'GET') {
         if (path === '/diario/entradas') {
           const r = await handleListDiario(url, env, request);
+          return json(r.data, r.status, cors);
+        }
+        if (path === '/resenas') {
+          const r = await handleListResenas(url, env);
           return json(r.data, r.status, cors);
         }
         return new Response('Method not allowed', { status: 405, headers: cors });
@@ -1761,6 +1831,7 @@ export default {
       if (path === '/cultivo/guardar') { const r = await handleGuardarCultivo(body, env, request); return json(r.data, r.status, cors); }
       if (path === '/perfil/sala') { const r = await handleGuardarSala(body, env, request); return json(r.data, r.status, cors); }
       if (path === '/diario/entrada') { const r = await handleDiarioEntrada(body, env, request); return json(r.data, r.status, cors); }
+      if (path === '/resenas') { const r = await handleCreateResena(body, env, request); return json(r.data, r.status, cors); }
       if (path === '/auth/save-perfil') { const r = await handleSavePerfil(body, env); return json(r.data, r.status, cors); }
       if (path === '/auth/register') { const r = await handleRegister(body, env, request); return json(r.data, r.status, cors); }
       if (path === '/auth/login') { const r = await handleLogin(body, env); return json(r.data, r.status, cors); }

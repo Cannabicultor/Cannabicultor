@@ -267,6 +267,18 @@ h2{font-size:22px;font-weight:600;letter-spacing:-0.02em;margin:36px 0 14px}
 .cta:hover{background:var(--forest-light);text-decoration:none}
 footer.ft{border-top:1px solid var(--border);color:var(--text3);font-size:13px;max-width:820px;margin:40px auto 0;padding:24px 20px}
 footer.ft a{color:var(--text3)}
+.rev-box{margin-top:36px;padding-top:20px;border-top:1px solid var(--border)}
+.rev-box h3{font-size:18px;margin:0 0 12px}
+.rev-avg,.rev-meta{font-size:14px;color:var(--text3);margin-bottom:10px}
+.rev-stars{letter-spacing:1px;color:var(--forest)}
+.rev-star{background:none;border:0;padding:0 1px;font-size:18px;color:var(--forest)}
+.rev-stars-in .rev-star{cursor:pointer}
+.rev-item{padding:12px 0;border-bottom:1px solid var(--border);font-size:15px}
+.rev-empty,.rev-login{color:var(--text3);font-size:14px}
+.rev-form{display:flex;flex-direction:column;gap:8px;margin-top:14px}
+.rev-form textarea{width:100%;border:1px solid var(--border);border-radius:10px;padding:10px;font:inherit}
+.rev-send{background:var(--forest);color:#fff;border:0;border-radius:10px;padding:12px;font-weight:600;cursor:pointer}
+.rev-msg{color:#b94b42;font-size:13px}
 @media(max-width:560px){.varlist{columns:1}.hero img{width:100%;height:auto;aspect-ratio:1}}`;
 
 const GA_SNIPPET = `<!-- Google tag (gtag.js) -->
@@ -315,6 +327,7 @@ ${bodyHtml}
 <p>Cannabicultor · Guía IA de cultivo de cannabis en español. Solo para mayores de 18 años. El cultivo de cannabis está regulado; consulta la legislación vigente en tu país. Fines educativos.</p>
 <p><a href="/">Inicio</a> · <a href="/buscador-cannabicultor.html">Buscador</a> · <a href="/atlas_landrace.html">Atlas landrace</a></p>
 </footer>
+<script src="/assets/resenas.js"></script>
 </body>
 </html>`;
 }
@@ -385,6 +398,7 @@ ${img ? `<img src="${esc(img)}" alt="Foto de la variedad ${esc(v.nombre)}" loadi
 </div>
 <div class="body"><p>${describe(v, breeder)}</p></div>
 ${bn ? `<a class="cta" href="/breeders/${breederSlug}/">Ver más variedades de ${esc(bn)}</a>` : `<a class="cta" href="/buscador-cannabicultor.html">Explorar el buscador de variedades</a>`}
+<div data-resenas data-tipo="variedad" data-id="${v.id}"></div>
 `;
   return shell({ title, desc, canonical, image: img, jsonld, bodyHtml: body });
 }
@@ -450,6 +464,7 @@ ${rows.length ? `<table class="facts">${rows.map(([k, val]) => `<tr><th>${k}</th
 ${b.website ? `<p class="body"><a href="${esc(b.website)}" rel="nofollow noopener" target="_blank">Sitio web oficial ↗</a></p>` : ''}
 ${varsHtml}
 <a class="cta" href="/buscador-cannabicultor.html">Explorar todas las variedades</a>
+<div data-resenas data-tipo="breeder" data-id="${b.id}"></div>
 `;
   return shell({ title, desc, canonical, image: img, jsonld, bodyHtml: body });
 }
@@ -542,9 +557,16 @@ async function main() {
   const breederById = new Map(breeders.map((b) => [b.id, b]));
   console.log(`  breeders cargados: ${breeders.length}`);
 
-  // — Selección de variedades del piloto —
+  // — Selección de variedades —
   let pilotVars = [];
-  if (PILOT) {
+  if (DO_ALL_VARS) {
+    const allVars = await fetchAll('variedades', {
+      select: 'id,breeder_id,nombre,tipo,thc_pct,thc_max,cbd_pct,cbd_max,floracion_dias,genetica,altura,produccion,descripcion,image_url,img_url,es_landrace,origen_geografico,anio_lanzamiento,updated_at',
+    });
+    pilotVars = allVars.filter((v) => v.nombre);
+    assignVarietySlugs(pilotVars, breederById);
+    console.log(`  variedades a publicar: ${pilotVars.length}`);
+  } else if (PILOT) {
     const cands = await fetchAll('variedades', {
       select: 'id,breeder_id,nombre,tipo,thc_pct,thc_max,cbd_pct,cbd_max,floracion_dias,genetica,altura,produccion,descripcion,image_url,img_url,es_landrace,origen_geografico,anio_lanzamiento,updated_at',
       filter: '&image_url=not.is.null',
