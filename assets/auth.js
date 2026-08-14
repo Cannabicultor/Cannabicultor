@@ -147,10 +147,21 @@
     return uaMobile || iPadOS || narrow;
   }
 
+  function safeNextPath() {
+    try {
+      var n = new URLSearchParams(location.search).get('next') || '';
+      if (!n || n.charAt(0) !== '/' || n.indexOf('//') !== -1) return '';
+      if (!/^\/[A-Za-z0-9_./?#=-]*$/.test(n)) return '';
+      return n;
+    } catch (e) { return ''; }
+  }
+
   function postAuthDestination() {
     // Registro nuevo (test sin superar): siempre al Test de Acceso, con
     // independencia del dispositivo. Preserva el flujo register -> test.html.
     if (!isTestPassed()) return '/test.html';
+    var next = safeNextPath();
+    if (next) return next;
     // Usuario verificado: interfaz según dispositivo.
     //   móvil / tablet -> app.html      (nav inferior, vista compacta)
     //   escritorio     -> dashboard.html (sidebar, vista amplia)

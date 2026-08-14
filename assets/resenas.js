@@ -29,10 +29,21 @@
     var media = data && data.media;
     var total = (data && data.total) || 0;
     var logged = !!jwt();
+    var copy = tipo === 'growshop'
+      ? {
+          h3: 'Reseñas de cultivadores',
+          empty: 'Aún no hay reseñas de esta tienda. Sé el primero: atención, stock, precios, asesoramiento.',
+          ph: '¿Cómo es la atención, el stock y el asesoramiento? (opcional)'
+        }
+      : {
+          h3: 'Reseñas de cultivadores',
+          empty: 'Aún no hay reseñas. Sé el primero en contar tu experiencia.',
+          ph: '¿Cómo se comportó en tu cultivo? (opcional)'
+        };
     var head = total
       ? '<div class="rev-avg">' + stars(Math.round(media || 0), false) +
         ' <b>' + (media || '—') + '</b> · ' + total + ' reseña' + (total === 1 ? '' : 's') + '</div>'
-      : '<p class="rev-empty">Aún no hay reseñas. Sé el primero en contar tu experiencia.</p>';
+      : '<p class="rev-empty">' + copy.empty + '</p>';
     var list = items.map(function (r) {
       return '<article class="rev-item"><div class="rev-meta">' + stars(r.puntuacion, false) +
         ' <span>' + esc(r.nombre_publico || 'Cultivador') + '</span> · <time>' + esc(fmtDate(r.created_at)) +
@@ -41,11 +52,11 @@
     var form = logged
       ? '<form class="rev-form"><div class="rev-lab">Tu reseña</div>' + stars(0, true) +
         '<input type="hidden" name="puntuacion" value="">' +
-        '<textarea name="texto" maxlength="800" rows="3" placeholder="¿Cómo se comportó en tu cultivo? (opcional)"></textarea>' +
+        '<textarea name="texto" maxlength="800" rows="3" placeholder="' + copy.ph + '"></textarea>' +
         '<button type="submit" class="rev-send">Publicar reseña</button>' +
         '<p class="rev-msg" hidden></p></form>'
       : '<p class="rev-login">Para dejar una reseña, <a href="/login.html">inicia sesión</a>.</p>';
-    el.innerHTML = '<section class="rev-box"><h3>Reseñas de cultivadores</h3>' + head + list + form + '</section>';
+    el.innerHTML = '<section class="rev-box"><h3>' + copy.h3 + '</h3>' + head + list + form + '</section>';
 
     var hidden = el.querySelector('input[name="puntuacion"]');
     el.querySelectorAll('.rev-stars-in .rev-star').forEach(function (btn) {

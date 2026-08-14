@@ -1705,7 +1705,9 @@ function displayNameFromEmail(email) {
 function parseResenaTarget(tipoRaw, idRaw) {
   const tipo = String(tipoRaw || '').trim();
   const targetId = parseInt(idRaw, 10);
-  if (tipo !== 'variedad' && tipo !== 'breeder') return { error: { status: 400, data: { error: 'tipo inválido' } } };
+  if (tipo !== 'variedad' && tipo !== 'breeder' && tipo !== 'growshop') {
+    return { error: { status: 400, data: { error: 'tipo inválido' } } };
+  }
   if (!Number.isFinite(targetId) || targetId < 1) return { error: { status: 400, data: { error: 'id inválido' } } };
   return { tipo, targetId };
 }
@@ -1731,6 +1733,12 @@ async function handleCreateResena(body, env, request) {
   const parsed = parseResenaTarget(body.tipo, body.id ?? body.target_id);
   if (parsed.error) return parsed.error;
   const { tipo, targetId } = parsed;
+  if (tipo === 'growshop') {
+    const exists = await sbRequest(env, `growshops?id=eq.${targetId}&select=id,activo`, { method: 'GET' });
+    if (!exists.ok || !Array.isArray(exists.data) || !exists.data.length || exists.data[0].activo === false) {
+      return { status: 404, data: { error: 'Growshop no encontrado' } };
+    }
+  }
   const puntuacion = parseInt(body.puntuacion, 10);
   if (!Number.isFinite(puntuacion) || puntuacion < 1 || puntuacion > 5) {
     return { status: 400, data: { error: 'La puntuación debe ser de 1 a 5' } };
@@ -1757,6 +1765,78 @@ async function handleCreateResena(body, env, request) {
   }
   const row = Array.isArray(res.data) ? res.data[0] : res.data;
   return { status: 200, data: { ok: true, resena: row } };
+}
+
+function slugifyGrowshop(nombre, ciudad) {
+  const raw = [nombre, ciudad].filter(Boolean).join(' ');
+  const map = { á: 'a', à: 'a', ä: 'a', â: 'a', é: 'e', è: 'e', ë: 'e', ê: 'e', í: 'i', ì: 'i', ï: 'i', î: 'i', ó: 'o', ò: 'o', ö: 'o', ô: 'o', ú: 'u', ù: 'u', ü: 'u', û: 'u', ñ: 'n', ç: 'c' };
+  const s = String(raw || 'growshop').toLowerCase().replace(/[áàäâéèëêíìïîóòöôúùüûñç]/g, (c) => map[c] || c);
+  return s.replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 80) || 'growshop';
+}
+
+function cleanUrl(v) {
+  if (v == null || v === '') return null;
+  const s = String(v).trim();
+  if (!s) return null;
+  if (/^https?:\/\//i.test(s)) return s.slice(0, 240);
+  if (/^[\w.-]+\.[a-z]{2,}/i.test(s)) return `https://${s}`.slice(0, 240);
+  return null;
+}
+
+async function handleCreateGrowshop(body, env, request) {
+  const auth = await authEmailFromRequest(request, env, body.email);
+  if (auth.error) return auth.error;
+  const nombre = String(body.nombre || '').trim().slice(0, 160);
+  const ciudad = String(body.ciudad || '').trim().slice(0, 80);
+  if (nombre.length < 2 || ciudad.length < 2) {
+    return { status: 400, data: { error: 'Nombre y ciudad son obligatorios' } };
+  }
+  const qn = encodeURIComponent(`"${nombre}"`);
+  const qc = encodeURIComponent(`"${ciudad}"`);
+  const dup = await sbRequest(
+    env,
+    `growshops?select=id,nombre,ciudad&nombre=ilike.${qn}&ciudad=ilike.${qc}&limit=1`,
+    { method: 'GET' }
+  );
+  if (dup.ok && Array.isArray(dup.data) && dup.data.length) {
+    return { status: 409, data: { error: 'Ya hay una ficha con ese nombre en esa ciudad', growshop: dup.data[0] } };
+  }
+  let slug = slugifyGrowshop(nombre, ciudad);
+  const taken = await sbRequest(env, `growshops?select=slug&slug=like.${encodeURIComponent(slug)}*`, { method: 'GET' });
+  const slugs = new Set((Array.isArray(taken.data) ? taken.data : []).map((r) => r.slug));
+  if (slugs.has(slug)) {
+    let n = 2;
+    while (slugs.has(`${slug}-${n}`)) n += 1;
+    slug = `${slug}-${n}`;
+  }
+  const fila = {
+    slug,
+    nombre,
+    ciudad,
+    provincia: body.provincia ? String(body.provincia).trim().slice(0, 80) : null,
+    ccaa: body.ccaa ? String(body.ccaa).trim().slice(0, 80) : null,
+    direccion: body.direccion ? String(body.direccion).trim().slice(0, 200) : null,
+    telefono: body.telefono ? String(body.telefono).trim().slice(0, 40) : null,
+    web: cleanUrl(body.web),
+    instagram: body.instagram ? String(body.instagram).trim().slice(0, 80) : null,
+    email: body.email_contacto || body.email_tienda ? String(body.email_contacto || body.email_tienda).trim().slice(0, 120) : null,
+    notas_envio: body.notas_envio ? String(body.notas_envio).trim().slice(0, 400) : null,
+    fuente: 'manual',
+    verificado: false,
+    activo: true,
+    enviado_por: auth.email,
+  };
+  const res = await sbRequest(env, 'growshops', {
+    method: 'POST',
+    headers: { Prefer: 'return=representation' },
+    body: JSON.stringify(fila),
+  });
+  if (!res.ok) {
+    const msg = res.data?.message || res.data?.error || 'No se pudo guardar el growshop';
+    return { status: 500, data: { error: msg } };
+  }
+  const row = Array.isArray(res.data) ? res.data[0] : res.data;
+  return { status: 200, data: { ok: true, growshop: row } };
 }
 
 // =========================================================================
@@ -1832,6 +1912,7 @@ export default {
       if (path === '/perfil/sala') { const r = await handleGuardarSala(body, env, request); return json(r.data, r.status, cors); }
       if (path === '/diario/entrada') { const r = await handleDiarioEntrada(body, env, request); return json(r.data, r.status, cors); }
       if (path === '/resenas') { const r = await handleCreateResena(body, env, request); return json(r.data, r.status, cors); }
+      if (path === '/growshops') { const r = await handleCreateGrowshop(body, env, request); return json(r.data, r.status, cors); }
       if (path === '/auth/save-perfil') { const r = await handleSavePerfil(body, env); return json(r.data, r.status, cors); }
       if (path === '/auth/register') { const r = await handleRegister(body, env, request); return json(r.data, r.status, cors); }
       if (path === '/auth/login') { const r = await handleLogin(body, env); return json(r.data, r.status, cors); }
