@@ -515,6 +515,7 @@ const STATIC_URLS = [
   { loc: `${SITE}/informes/cannabis-del-barrio-al-turista/informe.pdf`, priority: '0.6', changefreq: 'yearly', lastmod: '2026-07-23' },
   { loc: `${SITE}/buscador-cannabicultor.html`, priority: '0.9', changefreq: 'monthly' },
   { loc: `${SITE}/growshops.html`, priority: '0.8', changefreq: 'weekly' },
+  { loc: `${SITE}/asociaciones.html`, priority: '0.8', changefreq: 'weekly' },
   { loc: `${SITE}/disenador_sala_cultivo.html`, priority: '0.9', changefreq: 'monthly' },
   { loc: `${SITE}/atlas_landrace.html`, priority: '0.9', changefreq: 'monthly' },
   { loc: `${SITE}/aviso-legal.html`, priority: '0.3', changefreq: 'yearly', lastmod: '2026-06-18' },

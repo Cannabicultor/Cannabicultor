@@ -1705,7 +1705,7 @@ function displayNameFromEmail(email) {
 function parseResenaTarget(tipoRaw, idRaw) {
   const tipo = String(tipoRaw || '').trim();
   const targetId = parseInt(idRaw, 10);
-  if (tipo !== 'variedad' && tipo !== 'breeder' && tipo !== 'growshop') {
+  if (tipo !== 'variedad' && tipo !== 'breeder' && tipo !== 'growshop' && tipo !== 'asociacion') {
     return { error: { status: 400, data: { error: 'tipo inválido' } } };
   }
   if (!Number.isFinite(targetId) || targetId < 1) return { error: { status: 400, data: { error: 'id inválido' } } };
@@ -1739,6 +1739,12 @@ async function handleCreateResena(body, env, request) {
       return { status: 404, data: { error: 'Growshop no encontrado' } };
     }
   }
+  if (tipo === 'asociacion') {
+    const exists = await sbRequest(env, `asociaciones?id=eq.${targetId}&select=id,activo`, { method: 'GET' });
+    if (!exists.ok || !Array.isArray(exists.data) || !exists.data.length || exists.data[0].activo === false) {
+      return { status: 404, data: { error: 'Asociación no encontrada' } };
+    }
+  }
   const puntuacion = parseInt(body.puntuacion, 10);
   if (!Number.isFinite(puntuacion) || puntuacion < 1 || puntuacion > 5) {
     return { status: 400, data: { error: 'La puntuación debe ser de 1 a 5' } };
@@ -1767,11 +1773,15 @@ async function handleCreateResena(body, env, request) {
   return { status: 200, data: { ok: true, resena: row } };
 }
 
-function slugifyGrowshop(nombre, ciudad) {
+function slugifyFicha(nombre, ciudad, fallback = 'ficha') {
   const raw = [nombre, ciudad].filter(Boolean).join(' ');
   const map = { á: 'a', à: 'a', ä: 'a', â: 'a', é: 'e', è: 'e', ë: 'e', ê: 'e', í: 'i', ì: 'i', ï: 'i', î: 'i', ó: 'o', ò: 'o', ö: 'o', ô: 'o', ú: 'u', ù: 'u', ü: 'u', û: 'u', ñ: 'n', ç: 'c' };
-  const s = String(raw || 'growshop').toLowerCase().replace(/[áàäâéèëêíìïîóòöôúùüûñç]/g, (c) => map[c] || c);
-  return s.replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 80) || 'growshop';
+  const s = String(raw || fallback).toLowerCase().replace(/[áàäâéèëêíìïîóòöôúùüûñç]/g, (c) => map[c] || c);
+  return s.replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 80) || fallback;
+}
+
+function slugifyGrowshop(nombre, ciudad) {
+  return slugifyFicha(nombre, ciudad, 'growshop');
 }
 
 function cleanUrl(v) {
@@ -1838,6 +1848,64 @@ async function handleCreateGrowshop(body, env, request) {
   }
   const row = Array.isArray(res.data) ? res.data[0] : res.data;
   return { status: 200, data: { ok: true, growshop: row } };
+}
+
+async function handleCreateAsociacion(body, env, request) {
+  const auth = await authEmailFromRequest(request, env, body.email);
+  if (auth.error) return auth.error;
+  const nombre = String(body.nombre || '').trim().slice(0, 160);
+  const ciudad = String(body.ciudad || '').trim().slice(0, 80);
+  if (nombre.length < 2 || ciudad.length < 2) {
+    return { status: 400, data: { error: 'Nombre y ciudad son obligatorios' } };
+  }
+  const qn = encodeURIComponent(`"${nombre}"`);
+  const qc = encodeURIComponent(`"${ciudad}"`);
+  const dup = await sbRequest(
+    env,
+    `asociaciones?select=id,nombre,ciudad&nombre=ilike.${qn}&ciudad=ilike.${qc}&limit=1`,
+    { method: 'GET' }
+  );
+  if (dup.ok && Array.isArray(dup.data) && dup.data.length) {
+    return { status: 409, data: { error: 'Ya hay una ficha con ese nombre en esa ciudad', asociacion: dup.data[0] } };
+  }
+  let slug = slugifyFicha(nombre, ciudad, 'asociacion');
+  const taken = await sbRequest(env, `asociaciones?select=slug&slug=like.${encodeURIComponent(slug)}*`, { method: 'GET' });
+  const slugs = new Set((Array.isArray(taken.data) ? taken.data : []).map((r) => r.slug));
+  if (slugs.has(slug)) {
+    let n = 2;
+    while (slugs.has(`${slug}-${n}`)) n += 1;
+    slug = `${slug}-${n}`;
+  }
+  const fila = {
+    slug,
+    nombre,
+    ciudad,
+    provincia: body.provincia ? String(body.provincia).trim().slice(0, 80) : null,
+    ccaa: body.ccaa ? String(body.ccaa).trim().slice(0, 80) : null,
+    direccion: body.direccion ? String(body.direccion).trim().slice(0, 200) : null,
+    acceso: body.acceso ? String(body.acceso).trim().slice(0, 160) : null,
+    telefono: body.telefono ? String(body.telefono).trim().slice(0, 40) : null,
+    web: cleanUrl(body.web),
+    instagram: body.instagram ? String(body.instagram).trim().slice(0, 80) : null,
+    logo_url: cleanUrl(body.logo_url),
+    email: body.email_contacto || body.email_asociacion ? String(body.email_contacto || body.email_asociacion).trim().slice(0, 120) : null,
+    notas_envio: body.notas_envio ? String(body.notas_envio).trim().slice(0, 400) : null,
+    fuente: 'manual',
+    verificado: false,
+    activo: true,
+    enviado_por: auth.email,
+  };
+  const res = await sbRequest(env, 'asociaciones', {
+    method: 'POST',
+    headers: { Prefer: 'return=representation' },
+    body: JSON.stringify(fila),
+  });
+  if (!res.ok) {
+    const msg = res.data?.message || res.data?.error || 'No se pudo guardar la asociación';
+    return { status: 500, data: { error: msg } };
+  }
+  const row = Array.isArray(res.data) ? res.data[0] : res.data;
+  return { status: 200, data: { ok: true, asociacion: row } };
 }
 
 // =========================================================================
@@ -1914,6 +1982,7 @@ export default {
       if (path === '/diario/entrada') { const r = await handleDiarioEntrada(body, env, request); return json(r.data, r.status, cors); }
       if (path === '/resenas') { const r = await handleCreateResena(body, env, request); return json(r.data, r.status, cors); }
       if (path === '/growshops') { const r = await handleCreateGrowshop(body, env, request); return json(r.data, r.status, cors); }
+      if (path === '/asociaciones') { const r = await handleCreateAsociacion(body, env, request); return json(r.data, r.status, cors); }
       if (path === '/auth/save-perfil') { const r = await handleSavePerfil(body, env); return json(r.data, r.status, cors); }
       if (path === '/auth/register') { const r = await handleRegister(body, env, request); return json(r.data, r.status, cors); }
       if (path === '/auth/login') { const r = await handleLogin(body, env); return json(r.data, r.status, cors); }

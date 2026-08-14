@@ -10,13 +10,13 @@
 </script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>Directorio de growshops en España | Reseñas de cultivadores – Cannabicultor</title>
-<meta name="description" content="Encuentra growshops en España: dirección, teléfono, web y reseñas reales de cultivadores. Añade tu tienda y construye reputación con la comunidad.">
-<link rel="canonical" href="https://www.cannabicultor.com/growshops.html">
-<link rel="alternate" hreflang="es" href="https://www.cannabicultor.com/growshops.html">
-<meta property="og:title" content="Directorio de growshops en España | Cannabicultor">
-<meta property="og:description" content="Growshops de España con dirección, contacto y reseñas de cultivadores. Añade tu tienda.">
-<meta property="og:url" content="https://www.cannabicultor.com/growshops.html">
+<title>Directorio de asociaciones y clubes cannábicos en España | Cannabicultor</title>
+<meta name="description" content="Asociaciones y clubes sociales de cannabis en España: ciudad, acceso, horario y reseñas de socios. Añade tu asociación. Son entidades privadas: hace falta ser socio.">
+<link rel="canonical" href="https://www.cannabicultor.com/asociaciones.html">
+<link rel="alternate" hreflang="es" href="https://www.cannabicultor.com/asociaciones.html">
+<meta property="og:title" content="Asociaciones y clubes cannábicos de España | Cannabicultor">
+<meta property="og:description" content="Directorio de asociaciones cannábicas de España con reseñas de socios. Entidades privadas, no son tiendas.">
+<meta property="og:url" content="https://www.cannabicultor.com/asociaciones.html">
 <meta property="og:type" content="website">
 <meta property="og:locale" content="es_ES">
 <meta property="og:image" content="https://cannabicultor.com/assets/logo_publico_4.png">
@@ -46,6 +46,7 @@ h1{font-family:var(--font-display);font-weight:600;font-size:27px;line-height:1.
 h1 em{color:var(--forest);font-style:italic}
 .stats{font-size:12.5px;color:var(--muted);display:flex;align-items:center;gap:7px;margin-bottom:12px}
 .dot{width:7px;height:7px;border-radius:50%;background:var(--forest)}
+.note{font-size:12.5px;line-height:1.55;color:var(--muted);background:var(--pale);border:1px solid rgba(26,92,50,.18);border-radius:12px;padding:10px 12px;margin-bottom:12px}
 .searchbox{position:relative;margin-bottom:10px}
 .searchbox svg{position:absolute;left:14px;top:50%;transform:translateY(-50%);opacity:.65}
 .searchbox input{
@@ -142,16 +143,17 @@ footer{margin-top:34px;padding-top:16px;border-top:1px solid var(--border);font-
       <div class="logo">🌿</div>
       <div class="name"><b>Cannabicultor IA</b> · Growers Alliance</div>
     </a>
-    <h1>Growshops de <em>España</em></h1>
+    <h1>Asociaciones y <em>clubes</em></h1>
     <div class="stats"><span class="dot"></span><span id="statsLine">Cargando directorio…</span></div>
+    <p class="note">Son asociaciones privadas, no tiendas. El acceso es para socios (suele hacer falta invitación). No publicamos la calle si el club la reserva a miembros.</p>
     <div class="searchbox">
       <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#6f746f" stroke-width="2.4" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
       <input id="q" type="search" placeholder="Busca por nombre o ciudad…" autocomplete="off" enterkeyhint="search">
       <button class="clear-btn" id="clearBtn" aria-label="Borrar">×</button>
     </div>
     <div class="add-row">
-      <button class="add-btn" id="addBtn" type="button">Añade tu growshop</button>
-      <button class="add-btn ghost" id="sortBtn" type="button">Mejor valorados</button>
+      <button class="add-btn" id="addBtn" type="button">Añade tu asociación</button>
+      <button class="add-btn ghost" id="sortBtn" type="button">Mejor valoradas</button>
     </div>
   </header>
 
@@ -162,10 +164,10 @@ footer{margin-top:34px;padding-top:16px;border-top:1px solid var(--border);font-
   <div class="list" id="list"></div>
   <button class="more-btn" id="moreBtn" style="display:none">Cargar más</button>
   <footer>
-    Directorio de growshops de Cannabicultor · reseñas de cultivadores reales.<br>
-    Parte de los datos procede de <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>.<br>
-    También hay un <a href="/asociaciones.html">directorio de asociaciones y clubes</a>.<br>
-    Solo mayores de 18 años. Consulta la legislación vigente.
+    Directorio de asociaciones cannábicas de Cannabicultor · reseñas de socios.<br>
+    Datos de listados públicos de España. Fichas abiertas a corrección por la propia asociación.<br>
+    Si buscas tiendas: <a href="/growshops.html">directorio de growshops</a>.<br>
+    Solo mayores de 18 años. Consulta la legislación vigente. No son dispensarios.
   </footer>
 </div>
 
@@ -210,7 +212,7 @@ async function pg(path, { count = false, signal } = {}) {
 
 function buildUrl() {
   const q = query.trim().replace(/[,()*]/g, " ").trim();
-  let u = "growshops?select=id,slug,nombre,direccion,ciudad,provincia,ccaa,telefono,web,instagram,logo_url,lat,lon,verificado,media_resenas,num_resenas&activo=is.true";
+  let u = "asociaciones?select=id,slug,nombre,direccion,ciudad,provincia,ccaa,telefono,web,instagram,logo_url,lat,lon,acceso,verificado,media_resenas,num_resenas&activo=is.true";
   if (q) {
     const enc = encodeURIComponent(q);
     u += "&or=(nombre.ilike.*" + enc + "*,ciudad.ilike.*" + enc + "*,provincia.ilike.*" + enc + "*)";
@@ -241,11 +243,11 @@ async function load(reset) {
     if (token !== lastToken) return;
     if (reset) list.innerHTML = "";
     if (!data.length && reset) {
-      list.innerHTML = '<div class="empty"><span class="big">Aún no hay fichas aquí</span>Prueba otra comunidad o añade tu growshop para inaugurar la zona.</div>';
+      list.innerHTML = '<div class="empty"><span class="big">Aún no hay fichas aquí</span>Prueba otra comunidad o añade tu asociación para inaugurar la zona.</div>';
       countLine.textContent = "";
     } else {
       data.forEach(g => list.appendChild(cardEl(g)));
-      countLine.innerHTML = "<b>" + nf.format(total) + "</b> growshop" + (total === 1 ? "" : "s") + " en el directorio";
+      countLine.innerHTML = "<b>" + nf.format(total) + "</b> asociaci" + (total === 1 ? "ón" : "ones") + " en el directorio";
       moreBtn.style.display = data.length === PAGE ? "block" : "none";
     }
   } catch (e) {
@@ -264,15 +266,16 @@ function cardEl(g) {
   const rating = g.num_resenas
     ? '<span class="badge ok">' + starsTxt(g.media_resenas) + " " + esc(g.media_resenas) + " · " + g.num_resenas + "</span>"
     : '<span class="badge">Sin reseñas aún</span>';
+  const acceso = g.acceso ? '<span class="badge">' + esc(g.acceso) + "</span>" : "";
   const logo = g.logo_url
-    ? '<img class="logo" src="' + esc(g.logo_url) + '" alt="" onerror="this.className=\'\';this.src=\'assets/icons/12-growshop.svg\'">'
-    : '<img src="assets/icons/12-growshop.svg" alt="">';
+    ? '<img class="logo" src="' + esc(g.logo_url) + '" alt="" onerror="this.className=\'\';this.src=\'assets/icons/13-asociacion.svg\'">'
+    : '<img src="assets/icons/13-asociacion.svg" alt="">';
   btn.innerHTML =
     '<div class="thumb">' + logo + '</div>' +
     '<div class="card-body"><div class="card-title">' + esc(g.nombre) + '</div>' +
     '<div class="card-sub">' + esc(place || "España") + '</div>' +
-    '<div class="badges">' + rating + (g.verificado ? '<span class="badge ok">Verificado</span>' : "") + "</div></div>";
-  btn.onclick = () => openShop(g.id);
+    '<div class="badges">' + rating + acceso + (g.verificado ? '<span class="badge ok">Verificado</span>' : "") + "</div></div>";
+  btn.onclick = () => openClub(g.id);
   return btn;
 }
 
@@ -287,10 +290,10 @@ function closeSheet() {
 }
 $("overlay").onclick = closeSheet;
 
-async function openShop(id) {
+async function openClub(id) {
   openSheet('<div class="sk" style="height:140px"></div>');
   try {
-    const { data } = await pg("growshops?select=*&id=eq." + id + "&activo=is.true&limit=1");
+    const { data } = await pg("asociaciones?select=*&id=eq." + id + "&activo=is.true&limit=1");
     const g = data[0];
     if (!g) return closeSheet();
     const maps = (g.lat && g.lon)
@@ -304,16 +307,20 @@ async function openShop(id) {
       headLogo +
       '<div class="sheet-title">' + esc(g.nombre) + '</div>' +
       '<div class="sheet-breeder">' + esc([g.ciudad, g.ccaa].filter(Boolean).join(" · ") || "España") +
-        (g.verificado ? " · verificado" : " · ficha abierta a reseñas") + '</div>' +
-      (addr ? '<div class="section" style="margin-top:16px"><div class="k">Dirección</div><p>' + esc(addr) + '</p></div>' : "") +
+        (g.verificado ? " · verificado" : " · asociación privada") + '</div>' +
+      '<div class="section" style="margin-top:16px"><div class="k">Acceso</div><p>' +
+        esc(g.acceso || "Asociación privada. Normalmente hace falta ser socio o ir con invitación.") +
+      '</p></div>' +
+      (addr ? '<div class="section"><div class="k">Dirección</div><p>' + esc(addr) + '</p></div>' : "") +
       (g.telefono ? '<div class="section"><div class="k">Teléfono</div><p><a href="tel:' + esc(g.telefono) + '">' + esc(g.telefono) + '</a></p></div>' : "") +
+      (g.email ? '<div class="section"><div class="k">Email</div><p><a href="mailto:' + esc(g.email) + '">' + esc(g.email) + '</a></p></div>' : "") +
       (g.horario ? '<div class="section"><div class="k">Horario</div><p>' + esc(g.horario) + '</p></div>' : "") +
       (g.web ? '<a class="link-btn" href="' + esc(g.web) + '" target="_blank" rel="noopener">Visitar web →</a>' : "") +
       (g.instagram ? '<a class="link-btn ghost" href="' + esc(igUrl(g.instagram)) + '" target="_blank" rel="noopener">Instagram</a>' : "") +
-      (maps ? '<a class="link-btn ghost" href="' + esc(maps) + '" target="_blank" rel="noopener">Ver en el mapa</a>' : "") +
+      (maps ? '<a class="link-btn ghost" href="' + esc(maps) + '" target="_blank" rel="noopener">Ver zona en el mapa</a>' : "") +
       '<div id="revMount"></div>'
     );
-    if (window.CCResenas) CCResenas.mount(document.getElementById("revMount"), "growshop", g.id);
+    if (window.CCResenas) CCResenas.mount(document.getElementById("revMount"), "asociacion", g.id);
     history.replaceState(null, "", "#id=" + g.id);
   } catch {
     closeSheet();
@@ -329,21 +336,22 @@ function igUrl(v) {
 function formHtml() {
   const logged = !!jwt();
   if (!logged) {
-    return '<div class="sheet-title">Añade tu growshop</div><p class="section" style="margin-top:12px">Para publicar una ficha y empezar a recibir reseñas, <a href="/login.html?next=/growshops.html#anadir">inicia sesión</a>.</p>';
+    return '<div class="sheet-title">Añade tu asociación</div><p class="section" style="margin-top:12px">Para publicar una ficha y empezar a recibir reseñas, <a href="/login.html?next=/asociaciones.html#anadir">inicia sesión</a>.</p>';
   }
   return (
-    '<div class="sheet-title">Añade tu growshop</div>' +
-    '<p class="section" style="margin-top:10px">La ficha se publica al momento y queda abierta a reseñas. La verificamos después, en la campaña con las tiendas.</p>' +
+    '<div class="sheet-title">Añade tu asociación</div>' +
+    '<p class="section" style="margin-top:10px">La ficha se publica al momento. Es una asociación privada, no una tienda: no hace falta poner la calle si solo la dais a socios.</p>' +
     '<form class="form-grid" id="addForm">' +
-      '<div><label>Nombre de la tienda *</label><input name="nombre" required maxlength="120"></div>' +
+      '<div><label>Nombre de la asociación *</label><input name="nombre" required maxlength="120"></div>' +
       '<div><label>Ciudad *</label><input name="ciudad" required maxlength="80"></div>' +
       '<div><label>Provincia / comunidad</label><input name="provincia" maxlength="80"></div>' +
-      '<div><label>Dirección</label><input name="direccion" maxlength="180"></div>' +
+      '<div><label>Dirección (opcional)</label><input name="direccion" maxlength="180" placeholder="Déjala vacía si es solo para socios"></div>' +
+      '<div><label>Cómo se accede</label><input name="acceso" maxlength="120" placeholder="Invitación de un socio, cuota anual…"></div>' +
       '<div><label>Teléfono</label><input name="telefono" maxlength="40" inputmode="tel"></div>' +
       '<div><label>Web</label><input name="web" maxlength="180" placeholder="https://"></div>' +
-      '<div><label>Instagram</label><input name="instagram" maxlength="80" placeholder="@tu_growshop"></div>' +
+      '<div><label>Instagram</label><input name="instagram" maxlength="80" placeholder="@tu_asociacion"></div>' +
       '<div><label>Email de contacto</label><input name="email_contacto" type="email" maxlength="120"></div>' +
-      '<div><label>Notas (opcional)</label><textarea name="notas_envio" rows="3" maxlength="400" placeholder="Horario, cómo llegar, especialidad…"></textarea></div>' +
+      '<div><label>Notas (opcional)</label><textarea name="notas_envio" rows="3" maxlength="400" placeholder="Horario, requisitos, ambiente…"></textarea></div>' +
       '<button class="add-btn" type="submit">Publicar ficha</button>' +
       '<p class="rev-msg" id="addMsg" hidden></p>' +
     '</form>'
@@ -364,7 +372,7 @@ function openAdd() {
     const btn = form.querySelector("button[type=submit]");
     btn.disabled = true;
     try {
-      const r = await fetch(WORKER + "/growshops", {
+      const r = await fetch(WORKER + "/asociaciones", {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: "Bearer " + jwt() },
         body: JSON.stringify(body)
@@ -373,7 +381,7 @@ function openAdd() {
       if (!r.ok) throw new Error(d.error || "No se pudo guardar");
       closeSheet();
       await load(true);
-      if (d.growshop && d.growshop.id) openShop(d.growshop.id);
+      if (d.asociacion && d.asociacion.id) openClub(d.asociacion.id);
     } catch (err) {
       btn.disabled = false;
       if (msg) { msg.hidden = false; msg.textContent = err.message || "Error"; }
@@ -383,7 +391,7 @@ function openAdd() {
 
 async function loadChips() {
   try {
-    const { data } = await pg("growshops?select=ccaa&activo=is.true");
+    const { data } = await pg("asociaciones?select=ccaa&activo=is.true");
     const set = new Set((data || []).map(r => r.ccaa).filter(Boolean));
     const ordered = CCAA_ORDER.filter(c => set.has(c)).concat([...set].filter(c => !CCAA_ORDER.includes(c)).sort());
     const wrap = $("chips");
@@ -408,9 +416,9 @@ async function loadChips() {
 
 (async () => {
   try {
-    const { total } = await pg("growshops?select=id&activo=is.true&limit=1", { count: true });
-    $("statsLine").textContent = nf.format(total) + " growshops · reseñas de cultivadores";
-  } catch { $("statsLine").textContent = "Directorio de growshops · España"; }
+    const { total } = await pg("asociaciones?select=id&activo=is.true&limit=1", { count: true });
+    $("statsLine").textContent = nf.format(total) + " asociaciones · España";
+  } catch { $("statsLine").textContent = "Directorio de asociaciones · España"; }
 })();
 
 let debounce;
@@ -424,7 +432,7 @@ $("clearBtn").onclick = () => { $("q").value = ""; query = ""; $("clearBtn").sty
 $("addBtn").onclick = openAdd;
 $("sortBtn").onclick = () => {
   onlyRated = !onlyRated;
-  $("sortBtn").textContent = onlyRated ? "Ver todas" : "Mejor valorados";
+  $("sortBtn").textContent = onlyRated ? "Ver todas" : "Mejor valoradas";
   load(true);
 };
 moreBtn.onclick = () => { offset += PAGE; load(false); };
@@ -434,9 +442,9 @@ load(true);
 
 if (location.hash === "#anadir") setTimeout(openAdd, 200);
 const idMatch = location.hash.match(/id=(\d+)/);
-if (idMatch) setTimeout(() => openShop(idMatch[1]), 250);
+if (idMatch) setTimeout(() => openClub(idMatch[1]), 250);
 </script>
-<script src="assets/resenas.js?v=20260814-growshop"></script>
+<script src="assets/resenas.js?v=20260814-asociaciones"></script>
 <script src="/assets/ac-urgent-banner.js" defer></script>
 </body>
 </html>
