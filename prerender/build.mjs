@@ -508,6 +508,8 @@ const STATIC_URLS = [
   { loc: `${SITE}/`, priority: '1.0', changefreq: 'weekly', lastmod: TODAY },
   { loc: `${SITE}/cultivo-con-ia/`, priority: '0.9', changefreq: 'monthly', lastmod: TODAY },
   { loc: `${SITE}/biblioteca/`, priority: '0.9', changefreq: 'monthly', lastmod: TODAY },
+  { loc: `${SITE}/biblioteca/charlie-garcia-cannabiogen/`, priority: '0.8', changefreq: 'yearly', lastmod: '2026-08-14' },
+  { loc: `${SITE}/biblioteca/sam-the-skunkman-legado/`, priority: '0.8', changefreq: 'yearly', lastmod: '2026-08-14' },
   { loc: `${SITE}/informes/cannabis-del-barrio-al-turista/`, priority: '0.9', changefreq: 'yearly', lastmod: '2026-07-23' },
   { loc: `${SITE}/informes/cannabis-del-barrio-al-turista/informe.pdf`, priority: '0.6', changefreq: 'yearly', lastmod: '2026-07-23' },
   { loc: `${SITE}/buscador-cannabicultor.html`, priority: '0.9', changefreq: 'monthly' },

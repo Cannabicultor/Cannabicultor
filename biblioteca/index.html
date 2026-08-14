@@ -83,6 +83,12 @@ h1 em{font-family:'Lora',serif;font-style:italic;color:var(--forest);font-weight
 }
 .chip:hover{background:var(--forest-pale);border-color:var(--forest-pale2);text-decoration:none;color:var(--forest)}
 .chip .n{font-size:11px;font-weight:700;color:var(--forest);background:var(--forest-pale);padding:2px 7px;border-radius:999px}
+.chip.is-active{background:var(--forest);border-color:var(--forest);color:#fff}
+.chip.is-active .n{background:rgba(255,255,255,.18);color:#fff}
+.chip[aria-pressed="true"]{background:var(--forest);border-color:var(--forest);color:#fff}
+.hub-sec{margin-top:28px}
+.hub-sec h2{font-size:16px;font-weight:600;letter-spacing:-0.02em;margin:0 0 12px;color:var(--text)}
+.hub-sec .lib-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
 
 /* Grid: una tarjeta por categoría, lado a lado */
 .lib-grid--latest{
@@ -205,11 +211,13 @@ footer{border-top:1px solid var(--border);background:var(--bg2);margin-top:0}
     <!-- Todos los botones de categoría juntos -->
     <nav class="cat-nav" aria-label="Categorías de la biblioteca">
       <span class="label">Explorar</span>
-      <a class="chip" href="/biblioteca/informes/">Informes</a>
-      <a class="chip" href="/biblioteca/guias/">Guías</a>
-      <a class="chip" href="/biblioteca/articulos/">Artículos</a>
-      <a class="chip" href="/biblioteca/investigaciones/">Investigaciones</a>
-      <a class="chip" href="/biblioteca/libros/">Libros</a>
+      <a class="chip is-active" href="/biblioteca/" data-filter="todos">Todos</a>
+      <a class="chip" href="/biblioteca/informes/" data-filter="informes">Informes</a>
+      <a class="chip" href="/biblioteca/guias/" data-filter="guias">Guías</a>
+      <a class="chip" href="/biblioteca/articulos/" data-filter="articulos">Artículos</a>
+      <a class="chip" href="/biblioteca/perfiles/" data-filter="perfiles">Perfiles/Historia</a>
+      <a class="chip" href="/biblioteca/investigaciones/" data-filter="investigaciones">Investigaciones</a>
+      <a class="chip" href="/biblioteca/libros/" data-filter="libros">Libros</a>
     </nav>
 
     <!-- Última tarjeta de cada categoría, en fila -->
@@ -279,6 +287,34 @@ footer{border-top:1px solid var(--border);background:var(--bg2);margin-top:0}
       </div>
 
     </div>
+
+    <div class="hub-sec" id="perfiles" data-cat="perfiles">
+      <h2>Perfiles / Historia</h2>
+      <div class="lib-grid" id="libPerfiles">
+<!-- LIB-CARDS:perfiles START -->
+      <a class="lib-card" data-tipo="perfiles" href="/biblioteca/charlie-garcia-cannabiogen/">
+        <div class="lib-top">
+          <span class="badge">Perfil</span>
+          <span class="lib-date">14 ago 2026</span>
+        </div>
+        <h3>Enrique, el hombre detrás de Cannabiogen</h3>
+        <div class="sub">El breeder español que el mundo del cannabis casi olvida</div>
+        <p>Testimonio sobre Charlie Garcia / Kaiki, fundador de Cannabiogen: el encuentro de 2007, el premio ICMag 2011 y un legado que se fue borrando.</p>
+        <span class="go">Leer el perfil →</span>
+      </a>
+      <a class="lib-card" data-tipo="perfiles" href="/biblioteca/sam-the-skunkman-legado/">
+        <div class="lib-top">
+          <span class="badge">Perfil</span>
+          <span class="lib-date">14 ago 2026</span>
+        </div>
+        <h3>Sam the Skunkman: legado de David Paul Watson</h3>
+        <div class="sub">El hombre que cruzó un océano con 250.000 semillas</div>
+        <p>Homenaje a David Paul Watson (1948–2025), breeder de la Skunk #1 y de las líneas que sentaron la genética comercial moderna.</p>
+        <span class="go">Leer el perfil →</span>
+      </a>
+<!-- LIB-CARDS:perfiles END -->
+      </div>
+    </div>
   </section>
 </div>
 
@@ -290,6 +326,7 @@ footer{border-top:1px solid var(--border);background:var(--bg2);margin-top:0}
       <a href="/biblioteca/informes/">Informes</a>
       <a href="/biblioteca/guias/">Guías</a>
       <a href="/biblioteca/articulos/">Artículos</a>
+      <a href="/biblioteca/perfiles/">Perfiles/Historia</a>
       <a href="/cultivo-con-ia/">Cultivo con IA</a>
       <a href="/contacto.html">Contacto</a>
     </div>
@@ -298,5 +335,39 @@ footer{border-top:1px solid var(--border);background:var(--bg2);margin-top:0}
   </div>
 </footer>
 
+<script>
+(function () {
+  var chips = document.querySelectorAll('.cat-nav .chip[data-filter]');
+  var slots = document.querySelectorAll('.latest-slot');
+  var perfiles = document.getElementById('perfiles');
+  function apply(tipo) {
+    chips.forEach(function (c) {
+      var on = c.getAttribute('data-filter') === tipo;
+      c.classList.toggle('is-active', on);
+      c.setAttribute('aria-pressed', on ? 'true' : 'false');
+    });
+    slots.forEach(function (slot) {
+      var cat = slot.getAttribute('data-cat');
+      slot.style.display = (tipo === 'todos' || cat === tipo) ? '' : 'none';
+    });
+    if (perfiles) perfiles.style.display = (tipo === 'todos' || tipo === 'perfiles') ? '' : 'none';
+  }
+  chips.forEach(function (chip) {
+    chip.addEventListener('click', function (e) {
+      var tipo = chip.getAttribute('data-filter');
+      if (!tipo) return;
+      e.preventDefault();
+      apply(tipo);
+      if (tipo === 'perfiles' && perfiles) perfiles.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      if (history.replaceState) {
+        var url = tipo === 'todos' ? '/biblioteca/' : '/biblioteca/?tipo=' + encodeURIComponent(tipo);
+        history.replaceState(null, '', url);
+      }
+    });
+  });
+  var q = new URLSearchParams(location.search).get('tipo');
+  if (q) apply(q);
+})();
+</script>
 </body>
 </html>
