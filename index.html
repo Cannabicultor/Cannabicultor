@@ -115,7 +115,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:500;background:rgba(255,255,255,
 .hero-sub{font-size:clamp(15px,1.6vw,18px);color:var(--text3);line-height:1.7;max-width:520px;margin:0 auto 40px;font-weight:400;opacity:0;animation:fadeUp .8s .35s forwards}
 .hero-badge{display:inline-flex;align-items:center;gap:8px;background:var(--forest-pale);border:1px solid var(--forest-pale2);padding:6px 16px;border-radius:24px;font-size:12px;color:var(--forest);font-weight:500;margin-bottom:28px;opacity:0;animation:fadeUp .7s .28s forwards}
 .hero-badge-dot{width:6px;height:6px;border-radius:50%;background:var(--forest);animation:pulse 2s infinite}
-.hero-cta{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;opacity:0;animation:fadeUp .8s .45s forwards;margin-bottom:72px}
+.hero-cta{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;opacity:0;animation:fadeUp .8s .45s forwards;margin-bottom:28px}
 .hero-login-hint{width:100%;text-align:center;font-size:14px;color:var(--text3);margin:6px 0 0}
 .hero-login-hint a{color:var(--forest);font-weight:600}
 .hero-guide-link{width:100%;text-align:center;font-size:14px;margin:10px 0 0}
@@ -437,6 +437,123 @@ footer{padding:32px 0;background:var(--white);border-top:1px solid var(--border)
     <p class="hero-login-hint">¿Ya tienes cuenta? <a href="/login.html">Inicia sesión</a></p>
     <p class="hero-guide-link">Conoce el <a href="/cultivo-con-ia/">asistente de IA para tu cultivo</a></p>
   </div>
+
+<style>
+  #ac-home-block{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    max-width:920px;
+    width:100%;
+    margin:8px auto 40px;
+    padding:28px 32px;
+    background:#fff6f4;
+    border:1px solid #f0c9c2;
+    border-left:6px solid #c0392b;
+    border-radius:14px;
+    text-align:left;
+  }
+  #ac-home-block .ac-eyebrow{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    font-size:.75rem;
+    font-weight:800;
+    text-transform:uppercase;
+    letter-spacing:.06em;
+    color:#a5281a;
+    margin-bottom:10px;
+  }
+  #ac-home-block .ac-eyebrow .ac-dot2{
+    width:7px;height:7px;border-radius:50%;
+    background:#c0392b;
+    animation:ac-pulse2 1.4s infinite;
+  }
+  @keyframes ac-pulse2{
+    0%{box-shadow:0 0 0 0 rgba(192,57,43,.5);}
+    70%{box-shadow:0 0 0 7px rgba(192,57,43,0);}
+    100%{box-shadow:0 0 0 0 rgba(192,57,43,0);}
+  }
+  #ac-home-block h3{
+    margin:0 0 10px;
+    font-size:1.4rem;
+    color:#3a1a14;
+  }
+  #ac-home-block p{
+    margin:0 0 20px;
+    color:#5a4a44;
+    font-size:.98rem;
+    max-width:680px;
+  }
+  #ac-home-block .ac-petitions{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
+    gap:14px;
+  }
+  #ac-home-block .ac-card{
+    background:#fff;
+    border:1px solid #f0d9d4;
+    border-radius:10px;
+    padding:16px 18px;
+  }
+  #ac-home-block .ac-card span.ac-tag{
+    display:inline-block;
+    background:#fbe4de;
+    color:#a5281a;
+    font-size:.68rem;
+    font-weight:800;
+    text-transform:uppercase;
+    letter-spacing:.05em;
+    padding:3px 8px;
+    border-radius:999px;
+    margin-bottom:8px;
+  }
+  #ac-home-block .ac-card p{
+    font-size:.88rem;
+    margin:0 0 14px;
+    color:#5a4a44;
+  }
+  #ac-home-block .ac-card a{
+    display:inline-block;
+    background:#c0392b;
+    color:#fff;
+    font-weight:700;
+    text-decoration:none;
+    padding:9px 18px;
+    border-radius:8px;
+    font-size:.88rem;
+  }
+  #ac-home-block .ac-card a:hover{background:#a5281a;}
+  #ac-home-block .ac-more{
+    display:inline-block;
+    margin-top:16px;
+    font-size:.85rem;
+    color:#a5281a;
+    font-weight:700;
+    text-decoration:underline;
+  }
+  @media(max-width:768px){
+    #ac-home-block{margin:8px 0 32px;padding:22px 18px;}
+  }
+</style>
+
+<div id="ac-home-block">
+  <div class="ac-eyebrow"><span class="ac-dot2"></span> Acción urgente</div>
+  <h3>El proyecto de ley antitabaco amenaza a los clubes sociales de cannabis</h3>
+  <p>Está en trámite en el Congreso de los Diputados. Todavía no es ley — es el momento de presionar con firmas antes de que el texto quede cerrado. Pedimos dos cambios concretos.</p>
+  <div class="ac-petitions">
+    <div class="ac-card">
+      <span class="ac-tag">Petición 1</span>
+      <p>Excluir a los clubes sociales de cannabis del proyecto de ley antitabaco.</p>
+      <a href="https://c.org/ptW5TXJS28" target="_blank" rel="noopener">Firmar ahora →</a>
+    </div>
+    <div class="ac-card">
+      <span class="ac-tag">Petición 2</span>
+      <p>Eliminar las multas de la Ley de Seguridad Ciudadana por posesión en autoconsumo.</p>
+      <a href="https://c.org/GnbVPnQM4v" target="_blank" rel="noopener">Firmar ahora →</a>
+    </div>
+  </div>
+  <a class="ac-more" href="/ley-antitabaco">Ver toda la información →</a>
+</div>
+
   <div class="quickstart">
     <div class="qs-step"><span class="qs-num">1</span>Test rápido</div>
     <div class="qs-arrow">→</div>
@@ -939,5 +1056,6 @@ document.getElementById('brevo-form').addEventListener('submit', function(e) {
 });
 </script>
 <script src="assets/analytics.js" defer></script>
+<script src="/assets/ac-urgent-banner.js" defer></script>
 </body>
 </html>

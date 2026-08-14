@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Alianza Cannabicultores | Cannabicultor</title>
+<meta name="description" content="El proyecto de ley antitabaco puede acabar de facto con los clubes sociales de cannabis en España. Firma las dos peticiones de la Alianza Cannabicultores.">
+<link rel="canonical" href="https://www.cannabicultor.com/ley-antitabaco/">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<meta property="og:title" content="Alianza Cannabicultores | Cannabicultor">
+<meta property="og:description" content="El proyecto de ley antitabaco puede acabar de facto con los clubes sociales de cannabis. Firma las dos peticiones.">
+<meta property="og:url" content="https://www.cannabicultor.com/ley-antitabaco/">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="es_ES">
+<meta property="og:site_name" content="Cannabicultor">
+<style>
+  :root{
+    --green-dark:#1b3a2b;
+    --green:#2f6b3f;
+    --green-light:#4c9a5c;
+    --amber:#d98c2b;
+    --bg:#f7f5ef;
+    --ink:#1c1c1c;
+    --muted:#5a5a52;
+    --card:#ffffff;
+    --border:#e3ded0;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:var(--bg);
+    color:var(--ink);
+    line-height:1.6;
+  }
+  a{color:var(--green);}
+  .wrap{max-width:920px;margin:0 auto;padding:0 24px;}
+
+  header.hero{
+    background:linear-gradient(160deg,var(--green-dark),var(--green));
+    color:#fff;
+    padding:64px 0 56px;
+  }
+  header.hero .eyebrow{
+    text-transform:uppercase;
+    letter-spacing:.12em;
+    font-size:.8rem;
+    color:#c9e6c9;
+    font-weight:600;
+    margin-bottom:14px;
+  }
+  header.hero h1{
+    font-size:2.4rem;
+    margin:0 0 18px;
+    line-height:1.15;
+  }
+  header.hero p.lead{
+    font-size:1.15rem;
+    color:#e7f3e7;
+    max-width:640px;
+    margin:0 0 28px;
+  }
+  .cta-row{display:flex;gap:14px;flex-wrap:wrap;}
+  .btn{
+    display:inline-block;
+    padding:14px 26px;
+    border-radius:8px;
+    font-weight:700;
+    text-decoration:none;
+    font-size:1rem;
+    transition:transform .15s ease;
+  }
+  .btn:hover{transform:translateY(-2px);}
+  .btn-primary{background:var(--amber);color:#241400;}
+  .btn-ghost{background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.4);}
+
+  nav.jump{
+    background:var(--green-dark);
+    padding:10px 0;
+  }
+  nav.jump .wrap{display:flex;gap:20px;flex-wrap:wrap;font-size:.9rem;}
+  nav.jump a{color:#dfeede;text-decoration:none;font-weight:600;}
+  nav.jump a:hover{color:#fff;text-decoration:underline;}
+
+  main section{padding:52px 0;}
+  section.alt{background:#eef2e6;}
+  h2{font-size:1.6rem;color:var(--green-dark);margin-bottom:6px;}
+  h2 .num{color:var(--amber);}
+  .section-sub{color:var(--muted);margin-bottom:28px;max-width:680px;}
+
+  .fact-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:18px;margin-top:8px;}
+  .fact-card{
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:12px;
+    padding:22px;
+  }
+  .fact-card h3{margin:0 0 10px;font-size:1.05rem;color:var(--green-dark);}
+  .fact-card p{margin:0;color:var(--muted);font-size:.95rem;}
+
+  .petition-card{
+    background:var(--card);
+    border:1px solid var(--border);
+    border-left:6px solid var(--amber);
+    border-radius:12px;
+    padding:28px;
+    margin-bottom:24px;
+  }
+  .petition-card h3{margin:0 0 8px;color:var(--green-dark);font-size:1.25rem;}
+  .petition-card .tag{
+    display:inline-block;
+    background:#fbeedb;
+    color:#8a5a10;
+    font-size:.75rem;
+    font-weight:700;
+    text-transform:uppercase;
+    letter-spacing:.05em;
+    padding:4px 10px;
+    border-radius:999px;
+    margin-bottom:12px;
+  }
+  .petition-card p{color:var(--muted);margin:0 0 18px;}
+  .placeholder-note{
+    font-size:.82rem;
+    color:#a0763a;
+    background:#fff8ec;
+    border:1px dashed #e0b877;
+    border-radius:8px;
+    padding:10px 14px;
+    margin-top:14px;
+  }
+
+  .timeline{border-left:3px solid var(--green-light);margin-left:6px;padding-left:24px;}
+  .timeline .item{margin-bottom:22px;position:relative;}
+  .timeline .item::before{
+    content:"";
+    position:absolute;left:-31px;top:4px;
+    width:12px;height:12px;border-radius:50%;
+    background:var(--green);border:2px solid #fff;
+  }
+  .timeline .item h4{margin:0 0 4px;color:var(--green-dark);font-size:1rem;}
+  .timeline .item p{margin:0;color:var(--muted);font-size:.92rem;}
+
+  footer{
+    background:var(--green-dark);
+    color:#cfe3cf;
+    padding:36px 0;
+    font-size:.85rem;
+  }
+  footer a{color:#fff;}
+  footer .sources{margin-top:16px;font-size:.78rem;color:#a9c4a9;}
+  footer .sources a{color:#a9c4a9;text-decoration:underline;}
+
+  .disclaimer{
+    background:#fff8ec;
+    border:1px solid #e0b877;
+    border-radius:10px;
+    padding:16px 20px;
+    font-size:.85rem;
+    color:#6b4a17;
+    margin-top:32px;
+  }
+
+  .status-banner{
+    background:#fff3d6;
+    border-bottom:1px solid #e0b877;
+    padding:12px 0;
+    font-size:.88rem;
+    color:#6b4a17;
+    text-align:center;
+  }
+  .status-banner strong{color:#4a3110;}
+
+  .official-links{
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:12px;
+    padding:24px 28px;
+    margin-top:8px;
+  }
+  .official-links ul{margin:0;padding-left:20px;}
+  .official-links li{margin-bottom:10px;font-size:.95rem;}
+  .official-links .status-tag{
+    display:inline-block;
+    font-size:.72rem;
+    font-weight:700;
+    text-transform:uppercase;
+    letter-spacing:.04em;
+    padding:2px 8px;
+    border-radius:999px;
+    margin-left:8px;
+    vertical-align:middle;
+  }
+  .status-tag.pending{background:#fbeedb;color:#8a5a10;}
+  .status-tag.notpublished{background:#f3dede;color:#9a3131;}
+</style>
+</head>
+<body>
+
+<div class="status-banner">
+  ⏳ <strong>Estado a 14/08/2026:</strong> el proyecto de ley del tabaco fue aprobado en Consejo de Ministros el 21/07/2026 y remitido a las Cortes Generales. <strong>Todavía no se ha publicado en el BOE ni es ley vigente</strong> — está en trámite parlamentario. Sigue vigente la Ley 28/2005.
+</div>
+
+<header class="hero">
+  <div class="wrap">
+    <div class="eyebrow">Una campaña impulsada por Cannabicultor</div>
+    <h1>Alianza Cannabicultores</h1>
+    <p class="lead">La nueva ley antitabaco puede acabar de facto con los clubes sociales de cannabis en España. Y la Ley de Seguridad Ciudadana sigue multando por poseer o consumir cannabis en la calle. Pedimos dos cambios concretos.</p>
+    <div class="cta-row">
+      <a href="https://c.org/ptW5TXJS28" target="_blank" rel="noopener" class="btn btn-primary">Firmar petición 1: Excluir a los clubes</a>
+      <a href="https://c.org/GnbVPnQM4v" target="_blank" rel="noopener" class="btn btn-ghost">Firmar petición 2: Eliminar la multa</a>
+    </div>
+  </div>
+</header>
+
+<nav class="jump">
+  <div class="wrap">
+    <a href="#que-pasa">Qué está pasando</a>
+    <a href="#peticion-1">Petición 1</a>
+    <a href="#peticion-2">Petición 2</a>
+    <a href="#fuentes">Fuentes</a>
+  </div>
+</nav>
+
+<main>
+
+<section id="que-pasa">
+  <div class="wrap">
+    <h2>Qué está pasando</h2>
+    <p class="section-sub">Dos normas distintas, aprobadas o en tramitación en 2026, afectan directamente al sector del cannabis en España — aunque ninguna de las dos fue pensada originalmente para regularlo.</p>
+
+    <div class="fact-grid">
+      <div class="fact-card">
+        <h3>1. Es un proyecto de ley, aún no una ley</h3>
+        <p>El Consejo de Ministros aprobó el <strong>proyecto de ley</strong> del tabaco el 21 de julio de 2026 y lo remitió a las Cortes Generales. Ahora debe pasar por el Congreso (con plazo de enmiendas), el Senado, y posiblemente volver al Congreso, antes de publicarse en el BOE. Hasta entonces sigue vigente la Ley 28/2005. <strong>Es el momento clave para presentar enmiendas.</strong></p>
+      </div>
+      <div class="fact-card">
+        <h3>1b. No distingue cannabis de tabaco</h3>
+        <p>El texto amplía los espacios sin humo a terrazas, playas, campus universitarios y entornos sanitarios, y define como producto afectado cualquier "producto a base de hierbas, utilizado para fumar, vaporizar o inhalar" — una definición que incluye al cannabis sin mencionarlo por su nombre.</p>
+      </div>
+      <div class="fact-card">
+        <h3>2. Elimina la protección legal de los clubes</h3>
+        <p>La ley de 2005 (Ley 28/2005) contenía una salvedad para "clubes de fumadores" que los clubes sociales de cannabis han usado como base legal de facto durante casi dos décadas. La nueva ley elimina esa salvedad, dejando a los clubes sin ese único paraguas legal para el consumo colectivo en sus locales.</p>
+      </div>
+      <div class="fact-card">
+        <h3>3. Sanciones que pueden llegar a los 600.000€</h3>
+        <p>La norma prevé multas de 30 a 600€ para quien fume donde no debe, hasta 10.000€ para el local que lo tolere, y hasta 600.000€ en caso de reincidencia o habilitación de zonas no permitidas, con posible cierre temporal del establecimiento.</p>
+      </div>
+      <div class="fact-card">
+        <h3>4. La Ley de Seguridad Ciudadana sigue multando la calle</h3>
+        <p>Al margen del tabaco, la Ley Orgánica de Seguridad Ciudadana (la llamada "ley mordaza") sigue tipificando como infracción administrativa el consumo y la tenencia de cannabis en la vía pública, con multas que en muchos casos superan los cientos de euros, incluso cuando la cantidad es compatible con el autoconsumo.</p>
+      </div>
+    </div>
+
+    <div class="official-links">
+      <h3 style="margin-top:0;color:var(--green-dark);">Enlaces oficiales para seguir el trámite</h3>
+      <ul>
+        <li>
+          <a href="https://www.lamoncloa.gob.es/consejodeministros/resumenes/Paginas/2026/210726-rueda-prensa-ministros.aspx" target="_blank" rel="noopener">La Moncloa — Referencia del Consejo de Ministros (21/07/2026)</a>
+          <span class="status-tag pending">Aprobación inicial</span>
+        </li>
+        <li>
+          <a href="https://www.sanidad.gob.es/en/gabinete/notasPrensa.do?id=6968" target="_blank" rel="noopener">Ministerio de Sanidad — Nota de prensa del proyecto de ley</a>
+          <span class="status-tag pending">Aprobación inicial</span>
+        </li>
+        <li>
+          <a href="https://www.congreso.es/busqueda-de-iniciativas" target="_blank" rel="noopener">Congreso de los Diputados — Buscador de iniciativas legislativas</a>
+          <span class="status-tag notpublished">Aún sin ficha de expediente</span>
+        </li>
+        <li>
+          <a href="https://www.boe.es/" target="_blank" rel="noopener">BOE — Boletín Oficial del Estado (buscador)</a>
+          <span class="status-tag notpublished">No publicado</span>
+        </li>
+      </ul>
+      <p style="font-size:.85rem;color:var(--muted);margin:14px 0 0;">A fecha de esta página, el proyecto todavía no tiene número de expediente público en el buscador del Congreso. Actualizaremos estos enlaces con la ficha directa en cuanto esté disponible.</p>
+    </div>
+  </div>
+</section>
+
+<section class="alt" id="peticiones">
+  <div class="wrap">
+    <h2>Dos peticiones, dos objetivos concretos</h2>
+    <p class="section-sub">No pedimos legalizar nada nuevo: pedimos que no se les aplique a los clubes una ley pensada para el tabaco, y que se deje de sancionar administrativamente lo que ya es legal en el ámbito privado.</p>
+
+    <div class="petition-card" id="peticion-1">
+      <span class="tag">Petición 1</span>
+      <h3>Excluir a los clubes sociales de cannabis de la ley antitabaco</h3>
+      <p>Pedimos al Gobierno y al Congreso que incluyan una excepción expresa para los clubes sociales de cannabis en el nuevo Plan Integral de Prevención y Control del Tabaquismo, reconociendo que el cannabis no es tabaco y que sus espacios de consumo colectivo ya operan bajo normativa autonómica y estatutos propios.</p>
+      <a href="https://c.org/ptW5TXJS28" target="_blank" rel="noopener" class="btn btn-primary" data-changeorg-slot="peticion-1">Firmar en Change.org →</a>
+    </div>
+
+    <div class="petition-card" id="peticion-2">
+      <span class="tag">Petición 2</span>
+      <h3>Eliminar las multas por posesión y consumo de cannabis en la calle</h3>
+      <p>Pedimos la reforma de la Ley de Seguridad Ciudadana para retirar las sanciones administrativas por tenencia o consumo de cannabis en cantidades de autoconsumo, alineando la norma con el hecho de que el consumo y cultivo en el ámbito privado no es delito en España.</p>
+      <a href="https://c.org/GnbVPnQM4v" target="_blank" rel="noopener" class="btn btn-primary" data-changeorg-slot="peticion-2">Firmar en Change.org →</a>
+    </div>
+
+    <div class="disclaimer">
+      Esta página tiene fines informativos y de recogida de firmas ciudadanas. No constituye asesoramiento legal. Si te encuentras en un procedimiento sancionador, consulta con un abogado especializado en derecho administrativo o de drogas.
+    </div>
+  </div>
+</section>
+
+<section id="proximos-pasos">
+  <div class="wrap">
+    <h2>Qué puedes hacer ahora</h2>
+    <div class="timeline">
+      <div class="item">
+        <h4>Firma ambas peticiones</h4>
+        <p>Cada firma cuenta como respaldo ciudadano cuando se presenten alegaciones durante la tramitación parlamentaria.</p>
+      </div>
+      <div class="item">
+        <h4>Comparte esta página con tu club o asociación</h4>
+        <p>Cuantas más asociaciones se sumen, más peso tiene la petición ante los grupos parlamentarios.</p>
+      </div>
+      <div class="item">
+        <h4>Sigue el proceso legislativo</h4>
+        <p>El texto está ahora en el Congreso, donde se abrirá plazo de enmiendas. Cannabicultor irá actualizando esta página con la ficha oficial del expediente y el estado del trámite en Congreso, Senado y BOE.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer id="fuentes">
+  <div class="wrap">
+    <p>Alianza Cannabicultores es una campaña informativa impulsada por <a href="https://cannabicultor.com">Cannabicultor.com</a>.</p>
+    <div class="sources">
+      Fuentes consultadas (agosto 2026):
+      <br>· <a href="https://www.lamoncloa.gob.es/consejodeministros/resumenes/Paginas/2026/210726-rueda-prensa-ministros.aspx" target="_blank" rel="noopener">La Moncloa — Consejo de Ministros, actualización de la ley antitabaco (21/07/2026)</a>
+      <br>· <a href="https://www.sanidad.gob.es/en/gabinete/notasPrensa.do?id=6968" target="_blank" rel="noopener">Ministerio de Sanidad — Proyecto de ley del tabaco, espacios sin humo</a>
+      <br>· <a href="https://www.kannabia.com/es/blog/la-guerra-de-espana-contra-el-tabaco-amenaza-con-desmantelar-su-cultura-de-clubes-sociales-de-cannabis" target="_blank" rel="noopener">Kannabia — La guerra de España contra el tabaco amenaza a los Clubes Sociales de Cannabis</a>
+      <br>· <a href="https://etersystem.es/blog/ley-antitabaco-2026-cuando-entra-en-vigor" target="_blank" rel="noopener">Eter System — Ley Antitabaco 2026: cuándo entra en vigor y qué prohíbe</a>
+      <br>· <a href="https://lasagradamaria.org/politicas-cannabis/legalidad-cannabica-i-ley-mordaza-seguridad-ciudadana-o-castigo-al-consumo-personal/" target="_blank" rel="noopener">La Sagrada María — Ley Mordaza: ¿seguridad ciudadana o castigo al consumo personal?</a>
+      <br>· <a href="https://www.congreso.es/busqueda-de-iniciativas" target="_blank" rel="noopener">Congreso de los Diputados — Buscador de iniciativas (seguimiento del trámite)</a>
+      <br>· <a href="https://www.boe.es/" target="_blank" rel="noopener">BOE — Boletín Oficial del Estado</a>
+    </div>
+  </div>
+</footer>
+
+<script src="/assets/ac-urgent-banner.js" defer></script>
+</body>
+</html>

@@ -16,6 +16,9 @@
 
   # Legacy atlas (guion) → misma versión canónica limpia
   RewriteRule ^atlas-landrace\.html$ https://www.cannabicultor.com/atlas-landraces/ [L,R=301]
+
+  # Campaña Alianza Cannabicultores: /ley-antitabaco → directorio
+  RewriteRule ^ley-antitabaco$ /ley-antitabaco/ [R=301,L]
 </IfModule>
 
 # Block sensitive files from web access

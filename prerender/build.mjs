@@ -333,6 +333,7 @@ ${bodyHtml}
 <p><a href="/">Inicio</a> · <a href="/buscador-cannabicultor.html">Buscador</a> · <a href="/atlas_landrace.html">Atlas landrace</a></p>
 </footer>
 <script src="/assets/resenas.js"></script>
+<script src="/assets/ac-urgent-banner.js" defer></script>
 </body>
 </html>`;
 }
