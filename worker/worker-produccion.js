@@ -1819,6 +1819,7 @@ async function handleCreateGrowshop(body, env, request) {
     telefono: body.telefono ? String(body.telefono).trim().slice(0, 40) : null,
     web: cleanUrl(body.web),
     instagram: body.instagram ? String(body.instagram).trim().slice(0, 80) : null,
+    logo_url: cleanUrl(body.logo_url),
     email: body.email_contacto || body.email_tienda ? String(body.email_contacto || body.email_tienda).trim().slice(0, 120) : null,
     notas_envio: body.notas_envio ? String(body.notas_envio).trim().slice(0, 400) : null,
     fuente: 'manual',

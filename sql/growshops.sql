@@ -16,6 +16,7 @@ create table if not exists public.growshops (
   email text,
   web text,
   instagram text,
+  logo_url text,
   horario text,
   descripcion text,
   fuente text not null default 'manual',

@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
-"""Importa growshops de España desde OpenStreetMap (ODbL) a public.growshops.
+"""Importa growshops de España desde fuentes oficiales y OSM.
 
-No inventa fichas. Solo OSM / Nominatim. No pisa fichas verificadas ni manuales.
+Fuentes: GB The Green Brand (localizador), CANNA (distribuidores),
+páginas de contacto de tiendas y OpenStreetMap (ODbL).
+No pisa fichas verificadas ni altas manuales.
 """
 from __future__ import annotations
 
@@ -287,26 +289,245 @@ def nominatim_search(q: str) -> list[dict]:
     return out
 
 
+GB_LOGO = "https://www.growbarato.net/img/logo-1768933553.svg"
+BAD_LOGO = re.compile(
+    r"rsrc\.php|via\.placeholder|/defaults/|favicon|16x16|32x32|1x1|pixel|sprite|logo_google",
+    re.I,
+)
+
+
+def hours_to_text(hours) -> str | None:
+    if not hours:
+        return None
+    days = ["L", "M", "X", "J", "V", "S", "D"]
+    parts = []
+    if isinstance(hours, list):
+        for i, slot in enumerate(hours[:7]):
+            val = slot[0] if isinstance(slot, list) and slot else slot
+            if val:
+                parts.append(f"{days[i]} {val}")
+    return " · ".join(parts) if parts else None
+
+
+def harvest_gb() -> list[dict]:
+    url = "https://www.growbarato.net/module/advancedstoremaps/data?ajax=1"
+    req = urllib.request.Request(
+        url,
+        headers={
+            "User-Agent": UA,
+            "Accept": "application/json",
+            "X-Requested-With": "XMLHttpRequest",
+            "Referer": "https://www.growbarato.net/tiendas",
+        },
+    )
+    with urllib.request.urlopen(req, timeout=30) as r:
+        data = json.loads(r.read().decode("utf-8", "replace"))
+    out = []
+    for s in data.get("stores") or []:
+        if not s.get("active") or (s.get("country_iso") or "ES") != "ES":
+            continue
+        ciudad = re.sub(r"\s*\([^)]*\)\s*", " ", s.get("city") or "").strip()
+        out.append(
+            {
+                "osm_id": f"gb/{s.get('id_store')}",
+                "nombre": (s.get("name") or f"GB {ciudad}")[:160],
+                "direccion": s.get("address1") or None,
+                "cp": s.get("postcode"),
+                "ciudad": ciudad,
+                "provincia": s.get("state"),
+                "ccaa": ccaa_from(s.get("state"), None),
+                "lat": s.get("latitude"),
+                "lon": s.get("longitude"),
+                "telefono": s.get("phone") or None,
+                "email": s.get("email") or None,
+                "web": "https://www.growbarato.net/tiendas",
+                "horario": hours_to_text(s.get("hours")),
+                "logo_url": GB_LOGO,
+                "cadena": "GB The Green Brand",
+                "fuente": "cadena",
+            }
+        )
+    return out
+
+
+def harvest_canna() -> list[dict]:
+    html = None
+    req = urllib.request.Request("https://www.canna.es/stores", headers={"User-Agent": UA})
+    with urllib.request.urlopen(req, timeout=45) as r:
+        html = r.read().decode("utf-8", "replace")
+    blocks = re.findall(r"<article[^>]*node--type-dealer[\s\S]*?</article>", html)
+    out = []
+    for b in blocks:
+        name = re.search(r'field--name-title[^>]*>([^<]+)', b)
+        country = re.search(r'class="country">([^<]+)', b)
+        loc = re.search(r'class="locality">([^<]+)', b)
+        prov = re.search(r'class="administrative-area">([^<]+)', b)
+        cp = re.search(r'class="postal-code">([^<]+)', b)
+        org = re.search(r'class="organization">([^<]+)', b)
+        line1 = re.search(r'class="address-line1">([^<]+)', b)
+        if not name:
+            continue
+        nombre = name.group(1).strip()
+        if re.search(r"\(online\)|\bonline\b", nombre, re.I):
+            continue
+        if country and not country.group(1).lower().startswith("espa"):
+            continue
+        street_parts = []
+        if org and re.search(r"\d|c/|calle|av|plaza|carrer|camino|ronda", org.group(1), re.I):
+            street_parts.append(org.group(1).strip())
+        if line1 and line1.group(1).strip().lower() not in {"bajo", "local", "nave"}:
+            street_parts.append(line1.group(1).strip())
+        elif line1 and street_parts:
+            street_parts.append(line1.group(1).strip())
+        ciudad = loc.group(1).strip() if loc else None
+        provincia = prov.group(1).strip() if prov else None
+        out.append(
+            {
+                "osm_id": f"canna/{slugify(nombre, ciudad or '')}",
+                "nombre": nombre[:160],
+                "direccion": ", ".join(street_parts) or None,
+                "cp": cp.group(1).strip() if cp else None,
+                "ciudad": ciudad,
+                "provincia": provincia,
+                "ccaa": ccaa_from(provincia, None),
+                "fuente": "canna",
+            }
+        )
+    return out
+
+
+def harvest_oficiales() -> list[dict]:
+    return [
+        {
+            "osm_id": "web/santa-maria-barcelona",
+            "nombre": "Santa Maria Growshop",
+            "direccion": "Carrer Canvis Vells, 5",
+            "cp": "08003",
+            "ciudad": "Barcelona",
+            "provincia": "Barcelona",
+            "ccaa": "Cataluña",
+            "telefono": "930101130",
+            "web": "https://www.santamariagrowshop.com/",
+            "fuente": "web",
+        },
+        {
+            "osm_id": "web/kaya-barcelona",
+            "nombre": "Kaya Barcelona Growshop",
+            "direccion": "Carrer Moianes, 24",
+            "ciudad": "Barcelona",
+            "provincia": "Barcelona",
+            "ccaa": "Cataluña",
+            "telefono": "+34 93 432 87 56",
+            "email": "kayabcn@kayabarcelona.com",
+            "web": "https://kayabarcelonagrowshop.com/",
+            "horario": "L-V 11:00-20:00 · S 10:00-14:00",
+            "fuente": "web",
+        },
+        {
+            "osm_id": "web/all-in-pulianas",
+            "nombre": "Grow Shop All-in",
+            "direccion": "Carretera de Güevejar, 9",
+            "cp": "18197",
+            "ciudad": "Pulianas",
+            "provincia": "Granada",
+            "ccaa": "Andalucía",
+            "telefono": "696509201",
+            "web": "https://growshopall-in.com/",
+            "fuente": "web",
+        },
+        {
+            "osm_id": "web/matillaplant-peligros",
+            "nombre": "MatillaPlant Central",
+            "direccion": "Polígono Ind. Navegran, C/ Melilla, S/N",
+            "cp": "18210",
+            "ciudad": "Peligros",
+            "provincia": "Granada",
+            "ccaa": "Andalucía",
+            "lat": 37.2273372,
+            "lon": -3.6345854,
+            "telefono": "858 990 207",
+            "web": "https://www.matillaplant.com/",
+            "horario": "L-V 09:30-20:30 · S 10:00-14:00",
+            "fuente": "web",
+        },
+    ]
+
+
+def pick_logo_from_html(html: str, base: str) -> str | None:
+    cands = []
+    for pat in [
+        r'<link[^>]+rel=["\'](?:apple-touch-icon|icon)[^>]+href=["\']([^"\']+)',
+        r'<meta[^>]+property=["\']og:image["\'][^>]+content=["\']([^"\']+)',
+        r'<meta[^>]+content=["\']([^"\']+)["\'][^>]+property=["\']og:image["\']',
+        r'src=["\']([^"\']*logo[^"\']+\.(?:png|svg|webp|jpg|jpeg))',
+    ]:
+        cands.extend(re.findall(pat, html, re.I))
+    scored = []
+    for raw in cands:
+        try:
+            absu = urllib.parse.urljoin(base, raw.split("?")[0] if "logo" in raw.lower() else raw)
+        except Exception:
+            continue
+        if BAD_LOGO.search(absu):
+            continue
+        if "wixstatic" in absu and "logo" not in absu.lower():
+            continue
+        score = 0
+        if "logo" in absu.lower():
+            score += 6
+        if re.search(r"\.svg($|\?)", absu, re.I):
+            score += 3
+        if re.search(r"apple-touch|icon", absu, re.I):
+            score += 1
+        if score <= 0 and not re.search(r"\.(png|svg|webp)$", absu, re.I):
+            continue
+        scored.append((score, absu[:400]))
+    scored.sort(key=lambda x: -x[0])
+    return scored[0][1] if scored else None
+
+
+def fetch_logo(web: str) -> str | None:
+    if not web:
+        return None
+    try:
+        req = urllib.request.Request(web, headers={"User-Agent": UA, "Accept": "text/html"})
+        with urllib.request.urlopen(req, timeout=15) as r:
+            html = r.read(250000).decode("utf-8", "replace")
+            final = r.geturl()
+        return pick_logo_from_html(html, final)
+    except Exception:
+        return None
+
+
 def upsert(row: dict, used_slugs: set[str]) -> bool:
-    slug = slugify(row["nombre"], row.get("ciudad") or "")
-    base = slug
-    n = 2
-    while slug in used_slugs:
-        slug = f"{base}-{n}"
-        n += 1
-    used_slugs.add(slug)
+    ext = row.get("osm_id")
+    if not ext:
+        ext = f"tmp/{slugify(row['nombre'], row.get('ciudad') or '')}"
+        row["osm_id"] = ext
+    existing_slug = psql(f"SELECT slug FROM growshops WHERE osm_id = {sql_str(ext)} LIMIT 1;")
+    if existing_slug:
+        slug = existing_slug
+    else:
+        slug = slugify(row["nombre"], row.get("ciudad") or "")
+        base = slug
+        n = 2
+        while slug in used_slugs:
+            slug = f"{base}-{n}"
+            n += 1
+        used_slugs.add(slug)
+    fuente = row.get("fuente") or "osm"
     sql = f"""
     INSERT INTO growshops (
       slug, nombre, direccion, cp, ciudad, provincia, ccaa,
-      lat, lon, telefono, email, web, instagram, horario,
-      fuente, osm_id, verificado, activo
+      lat, lon, telefono, email, web, instagram, logo_url, horario,
+      fuente, osm_id, cadena, verificado, activo
     ) VALUES (
       {sql_str(slug)}, {sql_str(row['nombre'])}, {sql_str(row.get('direccion'))},
       {sql_str(row.get('cp'))}, {sql_str(row.get('ciudad'))}, {sql_str(row.get('provincia'))},
       {sql_str(row.get('ccaa'))}, {sql_num(row.get('lat'))}, {sql_num(row.get('lon'))},
       {sql_str(row.get('telefono'))}, {sql_str(row.get('email'))}, {sql_str(row.get('web'))},
-      {sql_str(row.get('instagram'))}, {sql_str(row.get('horario'))},
-      'osm', {sql_str(row['osm_id'])}, false, true
+      {sql_str(row.get('instagram'))}, {sql_str(row.get('logo_url'))}, {sql_str(row.get('horario'))},
+      {sql_str(fuente)}, {sql_str(ext)}, {sql_str(row.get('cadena'))}, false, true
     )
     ON CONFLICT (osm_id) DO UPDATE SET
       nombre = EXCLUDED.nombre,
@@ -321,9 +542,12 @@ def upsert(row: dict, used_slugs: set[str]) -> bool:
       email = COALESCE(EXCLUDED.email, growshops.email),
       web = COALESCE(EXCLUDED.web, growshops.web),
       instagram = COALESCE(EXCLUDED.instagram, growshops.instagram),
+      logo_url = COALESCE(EXCLUDED.logo_url, growshops.logo_url),
       horario = COALESCE(EXCLUDED.horario, growshops.horario),
+      cadena = COALESCE(EXCLUDED.cadena, growshops.cadena),
+      fuente = EXCLUDED.fuente,
       updated_at = now()
-    WHERE growshops.verificado = false AND growshops.fuente = 'osm'
+    WHERE growshops.verificado = false
     RETURNING id;
     """
     try:
@@ -334,48 +558,82 @@ def upsert(row: dict, used_slugs: set[str]) -> bool:
         return False
 
 
+def fill_missing_logos():
+    raw = psql(
+        """
+        SELECT id || E'\\t' || coalesce(web,'')
+        FROM growshops
+        WHERE activo = true AND (logo_url IS NULL OR logo_url = '')
+          AND web IS NOT NULL AND web <> ''
+        LIMIT 80;
+        """
+    )
+    n = 0
+    for line in raw.splitlines():
+        if "\t" not in line:
+            continue
+        gid, web = line.split("\t", 1)
+        try:
+            logo = fetch_logo(web)
+            if not logo:
+                continue
+            sql_path = Path("/tmp/gs_logo.sql")
+            sql_path.write_text(
+                f"UPDATE growshops SET logo_url = {sql_str(logo)}, updated_at = now() "
+                f"WHERE id = {int(gid)} AND (logo_url IS NULL OR logo_url = '');\n",
+                encoding="utf-8",
+            )
+            import subprocess
+            subprocess.check_output(
+                ["psql", os.environ["DATABASE_URL"], "-At", "-f", str(sql_path)],
+                text=True,
+            )
+            n += 1
+            print("logo", gid, logo[:80])
+        except Exception as e:
+            print("logo fail", gid, type(e).__name__)
+        time.sleep(0.2)
+    print(f"logos nuevos={n}")
+
+
 def main():
     os.environ["DATABASE_URL"] = load_db_url()
     rows = []
+    print("gb…")
+    try:
+        gb = harvest_gb()
+        print("gb", len(gb))
+        rows.extend(gb)
+    except Exception as e:
+        print("gb fail", e)
+    print("canna…")
+    try:
+        canna = harvest_canna()
+        print("canna", len(canna))
+        rows.extend(canna)
+    except Exception as e:
+        print("canna fail", e)
+    rows.extend(harvest_oficiales())
     if os.environ.get("SKIP_OVERPASS") != "1":
         print("overpass…")
         try:
-            rows = overpass_spain()
+            osm = overpass_spain()
+            print("overpass", len(osm))
+            rows.extend(osm)
         except Exception as e:
             print("overpass fail", e)
-            rows = []
-        print("overpass", len(rows))
-    print("nominatim…")
-    queries = [
-        "growshop",
-        "grow shop",
-        "grow-shop",
-        "growshop Madrid",
-        "growshop Barcelona",
-        "growshop Valencia",
-        "growshop Sevilla",
-        "growshop Málaga",
-        "growshop Zaragoza",
-        "growshop Murcia",
-        "growshop Palma",
-        "growshop Bilbao",
-        "growshop Alicante",
-        "growshop Granada",
-        "growshop Vigo",
-        "growshop Córdoba",
-        "growshop Las Palmas",
-        "growshop Santa Cruz de Tenerife",
-    ]
-    for q in queries:
-        extra = nominatim_search(q)
-        print(" nominatim", q, len(extra))
-        rows.extend(extra)
+    if os.environ.get("RUN_NOMINATIM") == "1":
+        print("nominatim…")
+        for q in ("growshop", "grow shop"):
+            extra = nominatim_search(q)
+            print(" nominatim", q, len(extra))
+            rows.extend(extra)
 
-    by_osm = {}
+    by_id = {}
     for r in rows:
         if r.get("osm_id"):
-            by_osm[r["osm_id"]] = r
-    rows = list(by_osm.values())
+            by_id[r["osm_id"]] = r
+    rows = list(by_id.values())
     print("únicos", len(rows))
 
     existing = psql("SELECT coalesce(slug,'') FROM growshops;")
@@ -384,8 +642,10 @@ def main():
     for r in rows:
         if upsert(r, used):
             ok += 1
+    fill_missing_logos()
     total = psql("SELECT count(*) FROM growshops WHERE activo = true;")
-    print(f"upserts={ok} activos={total}")
+    logos = psql("SELECT count(*) FROM growshops WHERE logo_url IS NOT NULL AND logo_url <> '';")
+    print(f"upserts={ok} activos={total} con_logo={logos}")
 
 
 if __name__ == "__main__":

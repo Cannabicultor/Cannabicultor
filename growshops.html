@@ -83,6 +83,7 @@ h1 em{color:var(--forest);font-style:italic}
   display:flex;align-items:center;justify-content:center;border:1px solid var(--border);
 }
 .thumb img{width:28px;height:28px}
+.thumb img.logo{width:100%;height:100%;object-fit:contain;padding:5px;background:#fff}
 .card-body{flex:1;min-width:0}
 .card-title{font-size:15px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:2px}
 .card-sub{font-size:11.5px;color:var(--forest);letter-spacing:.04em;text-transform:uppercase;font-weight:600;margin-bottom:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -208,7 +209,7 @@ async function pg(path, { count = false, signal } = {}) {
 
 function buildUrl() {
   const q = query.trim().replace(/[,()*]/g, " ").trim();
-  let u = "growshops?select=id,slug,nombre,direccion,ciudad,provincia,ccaa,telefono,web,instagram,lat,lon,verificado,media_resenas,num_resenas&activo=is.true";
+  let u = "growshops?select=id,slug,nombre,direccion,ciudad,provincia,ccaa,telefono,web,instagram,logo_url,lat,lon,verificado,media_resenas,num_resenas&activo=is.true";
   if (q) {
     const enc = encodeURIComponent(q);
     u += "&or=(nombre.ilike.*" + enc + "*,ciudad.ilike.*" + enc + "*,provincia.ilike.*" + enc + "*)";
@@ -262,8 +263,11 @@ function cardEl(g) {
   const rating = g.num_resenas
     ? '<span class="badge ok">' + starsTxt(g.media_resenas) + " " + esc(g.media_resenas) + " · " + g.num_resenas + "</span>"
     : '<span class="badge">Sin reseñas aún</span>';
+  const logo = g.logo_url
+    ? '<img class="logo" src="' + esc(g.logo_url) + '" alt="" onerror="this.className=\'\';this.src=\'assets/icons/12-growshop.svg\'">'
+    : '<img src="assets/icons/12-growshop.svg" alt="">';
   btn.innerHTML =
-    '<div class="thumb"><img src="assets/icons/12-growshop.svg" alt=""></div>' +
+    '<div class="thumb">' + logo + '</div>' +
     '<div class="card-body"><div class="card-title">' + esc(g.nombre) + '</div>' +
     '<div class="card-sub">' + esc(place || "España") + '</div>' +
     '<div class="badges">' + rating + (g.verificado ? '<span class="badge ok">Verificado</span>' : "") + "</div></div>";
@@ -292,7 +296,11 @@ async function openShop(id) {
       ? "https://www.openstreetmap.org/?mlat=" + g.lat + "&mlon=" + g.lon + "#map=17/" + g.lat + "/" + g.lon
       : (g.direccion ? "https://www.openstreetmap.org/search?query=" + encodeURIComponent([g.direccion, g.ciudad, g.provincia].filter(Boolean).join(", ")) : "");
     const addr = [g.direccion, g.cp, g.ciudad, g.provincia].filter(Boolean).join(", ");
+    const headLogo = g.logo_url
+      ? '<img class="logo" src="' + esc(g.logo_url) + '" alt="" style="width:56px;height:56px;object-fit:contain;border:1px solid var(--border);border-radius:12px;background:#fff;padding:4px;margin-bottom:10px">'
+      : "";
     openSheet(
+      headLogo +
       '<div class="sheet-title">' + esc(g.nombre) + '</div>' +
       '<div class="sheet-breeder">' + esc([g.ciudad, g.ccaa].filter(Boolean).join(" · ") || "España") +
         (g.verificado ? " · verificado" : " · ficha abierta a reseñas") + '</div>' +
