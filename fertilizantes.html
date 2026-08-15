@@ -11,10 +11,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Calculadora de dosificación de fertilizantes | Cannabicultor</title>
-<meta name="description" content="Dosis de Canna, BioBizz, Hesi, Plagron, Atami, BAC y GHE en un solo sitio: elige línea, litros y semana. Tablas oficiales del fabricante.">
+<meta name="description" content="Dosis de Canna, BioBizz, Hesi, Plagron, Atami, BAC, GHE y Top Crop en un solo sitio: elige línea, litros y semana. Tablas oficiales del fabricante.">
 <link rel="canonical" href="https://www.cannabicultor.com/fertilizantes.html">
 <meta property="og:title" content="Calculadora de fertilizantes | Cannabicultor">
-<meta property="og:description" content="Canna, BioBizz, Hesi, Plagron, Atami, BAC y GHE: ml por litro según la semana de cultivo.">
+<meta property="og:description" content="Canna, BioBizz, Hesi, Plagron, Atami, BAC, GHE y Top Crop: ml por litro según la semana de cultivo.">
 <meta property="og:url" content="https://www.cannabicultor.com/fertilizantes.html">
 <meta property="og:type" content="website">
 <meta property="og:locale" content="es_ES">
@@ -1086,6 +1086,124 @@ const LINES = [
       { name:"CALiMAGic", u:"ml", d:[0.53,0.53,0.53,0.53,0.74,0.74,0.74,0.74,0.74,0.53,0.53,0.53,null] }
     ],
     ec: [{w:0.4,a:0.85,t:1.25},{w:0.4,a:0.85,t:1.25},{w:0.4,a:1.25,t:1.65},{w:0.4,a:1.25,t:1.65},{w:0.4,a:1.35,t:1.75},{w:0.4,a:1.35,t:1.75},{w:0.4,a:1.35,t:1.75},{w:0.4,a:1.35,t:1.75},{w:0.4,a:1.35,t:1.75},{w:0.4,a:1.15,t:1.55},{w:0.4,a:1.15,t:1.55},{w:0.4,a:1.15,t:1.55},{w:0.4,a:0,t:0.4}]
+  },
+  {
+    id: "topcrop-basica",
+    brand: "Top Crop",
+    name: "Top Crop · Gama básica",
+    source: "Manual oficial Top Crop (tabla de cultivo). Dosis UNA VEZ POR SEMANA, no en cada riego. Deeper 1–2 ml / 1,5 L en sem 1–2; Top Veg 2–4 ml/L sem 3–5; Top Bloom 2–4 ml/L sem 6–12; Top Wash 2 ml/L sem 12.",
+    sourceUrl: "https://www.topcropfert.com/ar/descargas/Manual_de_Usuario_TOP_CROP.pdf",
+    weeks: [
+      { id:"s1", label:"Sem 1", sub:"raíz 18h" },
+      { id:"s2", label:"Sem 2", sub:"raíz 18h" },
+      { id:"s3", label:"Sem 3", sub:"veg 18h" },
+      { id:"s4", label:"Sem 4", sub:"veg 18h" },
+      { id:"s5", label:"Sem 5", sub:"veg 18h" },
+      { id:"s6", label:"Sem 6", sub:"flor 12h" },
+      { id:"s7", label:"Sem 7", sub:"flor 12h" },
+      { id:"s8", label:"Sem 8", sub:"flor 12h" },
+      { id:"s9", label:"Sem 9", sub:"flor 12h" },
+      { id:"s10", label:"Sem 10", sub:"flor 12h" },
+      { id:"s11", label:"Sem 11", sub:"flor 12h" },
+      { id:"s12", label:"Sem 12", sub:"lavado" }
+    ],
+    products: [
+      { name:"Deeper Underground", u:"ml", d:[{min:0.7,max:1.3},{min:0.7,max:1.3},null,null,null,null,null,null,null,null,null,null] },
+      { name:"Top Veg", u:"ml", d:[null,null,{min:2,max:4},{min:2,max:4},{min:2,max:4},null,null,null,null,null,null,null] },
+      { name:"Top Bloom", u:"ml", d:[null,null,null,null,null,{min:2,max:4},{min:2,max:4},{min:2,max:4},{min:2,max:4},{min:2,max:4},{min:2,max:4},{min:2,max:4}] },
+      { name:"Top Wash", u:"ml", d:[null,null,null,null,null,null,null,null,null,null,null,2] }
+    ]
+  },
+  {
+    id: "topcrop-completa",
+    brand: "Top Crop",
+    name: "Top Crop · Gama completa",
+    source: "Manual oficial Top Crop, gama completa (1×/semana). Básica + Big One (sem 4/6/8/10), Top Candy (sem 8–12), Green Explosion y Barrier (sem 3/6/9), Top Bud (sem 9–12).",
+    sourceUrl: "https://www.topcropfert.com/ar/descargas/Manual_de_Usuario_TOP_CROP.pdf",
+    weeks: [
+      { id:"s1", label:"Sem 1", sub:"raíz 18h" },
+      { id:"s2", label:"Sem 2", sub:"raíz 18h" },
+      { id:"s3", label:"Sem 3", sub:"veg 18h" },
+      { id:"s4", label:"Sem 4", sub:"veg 18h" },
+      { id:"s5", label:"Sem 5", sub:"veg 18h" },
+      { id:"s6", label:"Sem 6", sub:"flor 12h" },
+      { id:"s7", label:"Sem 7", sub:"flor 12h" },
+      { id:"s8", label:"Sem 8", sub:"flor 12h" },
+      { id:"s9", label:"Sem 9", sub:"flor 12h" },
+      { id:"s10", label:"Sem 10", sub:"flor 12h" },
+      { id:"s11", label:"Sem 11", sub:"flor 12h" },
+      { id:"s12", label:"Sem 12", sub:"lavado" }
+    ],
+    products: [
+      { name:"Deeper Underground", u:"ml", d:[{min:0.7,max:1.3},{min:0.7,max:1.3},null,null,null,null,null,null,null,null,null,null] },
+      { name:"Top Veg", u:"ml", d:[null,null,{min:2,max:4},{min:2,max:4},{min:2,max:4},null,null,null,null,null,null,null] },
+      { name:"Top Bloom", u:"ml", d:[null,null,null,null,null,{min:2,max:4},{min:2,max:4},{min:2,max:4},{min:2,max:4},{min:2,max:4},{min:2,max:4},{min:2,max:4}] },
+      { name:"Big One", u:"ml", d:[null,null,null,2,null,2,null,2,null,2,null,null] },
+      { name:"Top Candy", u:"ml", d:[null,null,null,null,null,null,null,{min:1,max:2},{min:1,max:2},{min:1,max:2},{min:1,max:2},{min:1,max:2}] },
+      { name:"Green Explosion", u:"ml", d:[null,null,{min:1,max:2},null,null,null,null,null,null,null,null,null] },
+      { name:"Barrier", u:"ml", d:[null,null,0.5,null,null,0.5,null,null,0.5,null,null,null] },
+      { name:"Top Bud", u:"ml", d:[null,null,null,null,null,null,null,null,{min:0.5,max:1},{min:0.5,max:1},{min:0.5,max:1},{min:0.5,max:1}] },
+      { name:"Top Wash", u:"ml", d:[null,null,null,null,null,null,null,null,null,null,null,2] }
+    ]
+  },
+  {
+    id: "topcrop-auto",
+    brand: "Top Crop",
+    name: "Top Crop · Autoflorecientes",
+    source: "Manual oficial Top Crop, autos (sin fotoperiodo, 1×/semana). Deeper sem 1–2; Top Auto 2,5–3,5 ml/L sem 3–12 (1ª sem de veg puede bajar a 1–1,5). Big One sem 3 y 6; Top Candy sem 5–12; Top Bud sem 8–12.",
+    sourceUrl: "https://www.topcropfert.com/ar/descargas/Manual_de_Usuario_TOP_CROP.pdf",
+    weeks: [
+      { id:"s1", label:"Sem 1", sub:"raíz" },
+      { id:"s2", label:"Sem 2", sub:"raíz" },
+      { id:"s3", label:"Sem 3", sub:"auto" },
+      { id:"s4", label:"Sem 4", sub:"auto" },
+      { id:"s5", label:"Sem 5", sub:"auto" },
+      { id:"s6", label:"Sem 6", sub:"auto" },
+      { id:"s7", label:"Sem 7", sub:"auto" },
+      { id:"s8", label:"Sem 8", sub:"auto" },
+      { id:"s9", label:"Sem 9", sub:"auto" },
+      { id:"s10", label:"Sem 10", sub:"auto" },
+      { id:"s11", label:"Sem 11", sub:"auto" },
+      { id:"s12", label:"Sem 12", sub:"lavado" }
+    ],
+    products: [
+      { name:"Deeper Underground", u:"ml", d:[{min:0.7,max:1.3},{min:0.7,max:1.3},null,null,null,null,null,null,null,null,null,null] },
+      { name:"Top Auto", u:"ml", d:[null,null,{min:2.5,max:3.5},{min:2.5,max:3.5},{min:2.5,max:3.5},{min:2.5,max:3.5},{min:2.5,max:3.5},{min:2.5,max:3.5},{min:2.5,max:3.5},{min:2.5,max:3.5},{min:2.5,max:3.5},{min:2.5,max:3.5}] },
+      { name:"Big One", u:"ml", d:[null,null,2,null,null,2,null,null,null,null,null,null] },
+      { name:"Top Candy", u:"ml", d:[null,null,null,null,{min:1,max:2},{min:1,max:2},{min:1,max:2},{min:1,max:2},{min:1,max:2},{min:1,max:2},{min:1,max:2},{min:1,max:2}] },
+      { name:"Top Bud", u:"ml", d:[null,null,null,null,null,null,null,{min:0.5,max:1},{min:0.5,max:1},{min:0.5,max:1},{min:0.5,max:1},{min:0.5,max:1}] },
+      { name:"Top Wash", u:"ml", d:[null,null,null,null,null,null,null,null,null,null,null,2] }
+    ]
+  },
+  {
+    id: "topcrop-coco",
+    brand: "Top Crop",
+    name: "Top Crop · Coco A+B",
+    source: "Ficha oficial Top Coco A+B (1×/semana): enraizamiento 0,5–1, veg 1–2, flor 2–3 ml/L de cada parte. CalMag 0,1–1 ml/L según el agua. Aditivos de la tabla completa opcionales.",
+    sourceUrl: "https://www.topcropfert.com/ar/descargas/Manual_de_Usuario_TOP_CROP.pdf",
+    weeks: [
+      { id:"s1", label:"Sem 1", sub:"raíz" },
+      { id:"s2", label:"Sem 2", sub:"raíz" },
+      { id:"s3", label:"Sem 3", sub:"veg" },
+      { id:"s4", label:"Sem 4", sub:"veg" },
+      { id:"s5", label:"Sem 5", sub:"veg" },
+      { id:"s6", label:"Sem 6", sub:"flor" },
+      { id:"s7", label:"Sem 7", sub:"flor" },
+      { id:"s8", label:"Sem 8", sub:"flor" },
+      { id:"s9", label:"Sem 9", sub:"flor" },
+      { id:"s10", label:"Sem 10", sub:"flor" },
+      { id:"s11", label:"Sem 11", sub:"flor" },
+      { id:"s12", label:"Sem 12", sub:"lavado" }
+    ],
+    products: [
+      { name:"Top Coco A", u:"ml", d:[{min:0.5,max:1},{min:0.5,max:1},{min:1,max:2},{min:1,max:2},{min:1,max:2},{min:2,max:3},{min:2,max:3},{min:2,max:3},{min:2,max:3},{min:2,max:3},{min:2,max:3},{min:2,max:3}] },
+      { name:"Top Coco B", u:"ml", d:[{min:0.5,max:1},{min:0.5,max:1},{min:1,max:2},{min:1,max:2},{min:1,max:2},{min:2,max:3},{min:2,max:3},{min:2,max:3},{min:2,max:3},{min:2,max:3},{min:2,max:3},{min:2,max:3}] },
+      { name:"CalMag", u:"ml", d:[{min:0.1,max:1},{min:0.1,max:1},{min:0.1,max:1},{min:0.1,max:1},{min:0.1,max:1},{min:0.1,max:1},{min:0.1,max:1},{min:0.1,max:1},{min:0.1,max:1},{min:0.1,max:1},{min:0.1,max:1},null] },
+      { name:"Big One", u:"ml", d:[null,null,null,2,null,2,null,2,null,2,null,null] },
+      { name:"Top Candy", u:"ml", d:[null,null,null,null,null,null,null,{min:1,max:2},{min:1,max:2},{min:1,max:2},{min:1,max:2},{min:1,max:2}] },
+      { name:"Top Bud", u:"ml", d:[null,null,null,null,null,null,null,null,{min:0.5,max:1},{min:0.5,max:1},{min:0.5,max:1},{min:0.5,max:1}] },
+      { name:"Top Wash", u:"ml", d:[null,null,null,null,null,null,null,null,null,null,null,2] }
+    ]
   }
 ];
 
