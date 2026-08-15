@@ -563,7 +563,10 @@ button{cursor:pointer}
           <div class="section-title">Diario de cultivo</div>
           <div class="section-sub">Consulta por día · lecturas, riegos y fotos</div>
         </div>
-        <button class="btn" type="button" onclick="openNuevaEntrada()">+ Nueva entrada</button>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn" type="button" onclick="exportDiarioConsultor()" id="btnExportDiario">Exportar para consultor</button>
+          <button class="btn primary" type="button" onclick="openNuevaEntrada()">+ Nueva entrada</button>
+        </div>
       </div>
       <div class="card-body">
         <div class="diary-toolbar">
@@ -819,6 +822,35 @@ async function postDiarioEntrada(entrada){
   const data = await res.json().catch(()=>({}));
   if(!res.ok || !data.ok) throw new Error(data.error || 'No se pudo guardar la entrada');
   return data.entrada || null;
+}
+async function exportDiarioConsultor(){
+  if(!JWT || !sessionEmail()){ alert('Inicia sesión para exportar el diario.'); return; }
+  const btn = document.getElementById('btnExportDiario');
+  if(btn){ btn.disabled = true; btn.textContent = 'Preparando informe…'; }
+  try{
+    const q = new URLSearchParams({ email: sessionEmail(), limit: '200' });
+    const res = await fetch(`${WORKER}/diario/export?${q}`, { headers:{ 'Authorization':'Bearer '+JWT } });
+    if(res.status===401){ logout401(); return; }
+    if(!res.ok){
+      const data = await res.json().catch(()=>({}));
+      throw new Error(data.error || 'No se pudo exportar');
+    }
+    const blob = await res.blob();
+    const dispo = res.headers.get('Content-Disposition') || '';
+    const m = /filename="([^"]+)"/.exec(dispo);
+    const name = m ? m[1] : 'diario-cultivo.html';
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = name;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  }catch(err){
+    alert(err.message || 'No se pudo exportar el diario');
+  }finally{
+    if(btn){ btn.disabled = false; btn.textContent = 'Exportar para consultor'; }
+  }
 }
 async function fetchDiario({ fecha, limit } = {}){
   if(!JWT || !sessionEmail()) return { entradas: [], fechas: [] };
