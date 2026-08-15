@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-XS18E0J277"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-XS18E0J277');
+</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Calculadora de dosificación de fertilizantes | Cannabicultor</title>
+<meta name="description" content="Dosis de Canna, BioBizz y Hesi en un solo sitio: elige línea, litros y semana. Tablas oficiales del fabricante.">
+<link rel="canonical" href="https://www.cannabicultor.com/fertilizantes.html">
+<meta property="og:title" content="Calculadora de fertilizantes | Cannabicultor">
+<meta property="og:description" content="Canna, BioBizz y Hesi: ml por litro según la semana de cultivo.">
+<meta property="og:url" content="https://www.cannabicultor.com/fertilizantes.html">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="es_ES">
+<meta property="og:image" content="https://cannabicultor.com/assets/logo_publico_4.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Lora:ital,wght@0,400;0,600;1,400;1,600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f5f7f4;--bg2:#eef1ec;--card:#fff;
+  --forest:#1a5c32;--forest2:#2a7a44;
+  --pale:#e8f0ea;--pale2:#d4e4d9;
+  --text:#151515;--muted:#6f746f;--soft:#9aa09a;
+  --border:rgba(0,0,0,.075);--border2:rgba(0,0,0,.12);
+  --radius:14px;--shadow:0 1px 3px rgba(0,0,0,.04);
+  --font-ui:'Inter',system-ui,sans-serif;
+  --font-display:'Lora',Georgia,serif;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{font-family:var(--font-ui);background:var(--bg);color:var(--text);min-height:100dvh;-webkit-font-smoothing:antialiased}
+.app{max-width:520px;margin:0 auto;padding:0 16px calc(40px + env(safe-area-inset-bottom))}
+header{padding:18px 0 6px;position:sticky;top:0;z-index:40;background:linear-gradient(to bottom,var(--bg) 78%,rgba(245,247,244,0))}
+.brand{display:flex;align-items:center;gap:10px;margin-bottom:12px;text-decoration:none;color:inherit}
+.brand .logo{width:34px;height:34px;border-radius:50%;background:var(--pale);border:1px solid var(--forest);display:flex;align-items:center;justify-content:center;font-size:17px}
+.brand .name{font-size:13px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.brand .name b{color:var(--text)}
+h1{font-family:var(--font-display);font-weight:600;font-size:27px;line-height:1.15;margin-bottom:6px}
+h1 em{color:var(--forest);font-style:italic}
+.note{font-size:12.5px;line-height:1.55;color:var(--muted);background:var(--pale);border:1px solid rgba(26,92,50,.18);border-radius:12px;padding:10px 12px;margin-bottom:14px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:14px;margin-bottom:12px;box-shadow:var(--shadow)}
+label.k{display:block;font-size:10.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:7px}
+select,input[type=number]{
+  width:100%;padding:12px 12px;font:500 15px var(--font-ui);border:1px solid var(--border2);
+  border-radius:10px;background:#fff;color:var(--text);outline:none;
+}
+select:focus,input:focus{border-color:var(--forest)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.chips{display:flex;gap:7px;flex-wrap:wrap}
+.chip{
+  flex:0 0 auto;padding:7px 12px;border-radius:100px;font-size:12.5px;font-weight:500;
+  background:var(--card);border:1px solid var(--border2);color:var(--muted);
+  font-family:var(--font-ui);cursor:pointer;white-space:nowrap;
+}
+.chip.active{background:var(--pale);border-color:var(--forest);color:var(--forest);font-weight:600}
+.weeks{display:flex;gap:6px;overflow-x:auto;padding:2px 0 4px;scrollbar-width:none}
+.weeks::-webkit-scrollbar{display:none}
+.week{
+  flex:0 0 auto;min-width:52px;padding:8px 8px 6px;border-radius:10px;border:1px solid var(--border2);
+  background:#fff;text-align:center;cursor:pointer;font-family:var(--font-ui);
+}
+.week.active{border-color:var(--forest);background:var(--pale)}
+.week .ph{font-size:10px;color:var(--muted);font-weight:600;letter-spacing:.04em}
+.week .n{font-size:14px;font-weight:700}
+.dose-list{display:flex;flex-direction:column;gap:8px}
+.dose{
+  display:flex;align-items:center;justify-content:space-between;gap:10px;
+  background:var(--pale);border:1px solid rgba(26,92,50,.14);border-radius:12px;padding:11px 12px;
+}
+.dose .pname{font-size:14px;font-weight:600}
+.dose .punit{font-size:11px;color:var(--muted)}
+.dose .qty{font-family:var(--font-display);font-size:22px;font-weight:700;color:var(--forest);white-space:nowrap}
+.dose .qty small{font-size:13px;font-weight:600;color:var(--muted)}
+.empty{text-align:center;color:var(--muted);font-size:13.5px;padding:18px 8px}
+.table-wrap{overflow-x:auto;margin-top:8px}
+table{border-collapse:collapse;width:100%;font-size:11.5px}
+th,td{padding:6px 5px;text-align:center;border-bottom:1px solid var(--border);white-space:nowrap}
+th{font-size:10px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);font-weight:600}
+td.prod{text-align:left;font-weight:600}
+td.hi{color:var(--forest);font-weight:700;background:var(--pale)}
+.source{font-size:11.5px;color:var(--muted);line-height:1.55;margin-top:8px}
+.source a{color:var(--forest)}
+footer{margin-top:28px;padding-top:16px;border-top:1px solid var(--border);font-size:11px;color:var(--muted);line-height:1.6;text-align:center}
+.ec{font-size:12.5px;color:var(--muted);margin-top:8px}
+.ec b{color:var(--forest)}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <a class="brand" href="/">
+      <div class="logo">🌿</div>
+      <div class="name"><b>Cannabicultor IA</b> · Growers Alliance</div>
+    </a>
+    <h1>Dosis de <em>fertilizantes</em></h1>
+    <p class="note">Tablas oficiales del fabricante, en un sitio. Elige línea, litros y semana. Empieza al 50&nbsp;% si es tu primer ciclo con esa gama.</p>
+  </header>
+
+  <div class="card">
+    <label class="k">Línea</label>
+    <select id="line"></select>
+    <div class="row2" style="margin-top:10px">
+      <div>
+        <label class="k">Litros de agua</label>
+        <input id="liters" type="number" min="0.5" step="0.5" value="10">
+      </div>
+      <div>
+        <label class="k">Intensidad</label>
+        <div class="chips" id="inten" style="margin-top:2px">
+          <button class="chip" data-i="0.5" type="button">50%</button>
+          <button class="chip active" data-i="1" type="button">100%</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <label class="k">Semana</label>
+    <div class="weeks" id="weeks"></div>
+  </div>
+
+  <div class="card">
+    <label class="k">Para este riego</label>
+    <div class="dose-list" id="doses"></div>
+    <div class="ec" id="ec"></div>
+  </div>
+
+  <div class="card">
+    <label class="k">Tabla completa (ml / L a 100%)</label>
+    <div class="table-wrap" id="table"></div>
+    <p class="source" id="source"></p>
+  </div>
+
+  <footer>
+    Esquemas de los fabricantes, no consejo agronómico. Ajusta pH después de mezclar.<br>
+    Si tu floración es más larga, repite la última semana de abono antes del lavado.<br>
+    <a href="/disenador_sala_cultivo.html">Diseñador de sala</a> · <a href="/">Inicio</a>
+  </footer>
+</div>
+<script src="assets/ac-urgent-banner.js" defer></script>
+<script>
+/* Dosis en ml/L (o g/L). null = no se usa. {min,max} = rango oficial. */
+const LINES = [
+  {
+    id: "canna-coco",
+    brand: "Canna",
+    name: "Canna Coco",
+    source: "Esquema oficial CANNA COCO (ml/10 L, abril 2026)",
+    sourceUrl: "https://www.canna.es/growguide",
+    weeks: [
+      { id:"veg1", label:"Veg 1", sub:"D1–5 · 18h" },
+      { id:"veg2", label:"Veg 2", sub:"D6–25 · 18h" },
+      { id:"f1", label:"Flor 1", sub:"12h" },
+      { id:"f2", label:"Flor 2", sub:"12h" },
+      { id:"f3", label:"Flor 3", sub:"12h" },
+      { id:"f4", label:"Flor 4", sub:"12h" },
+      { id:"f5", label:"Flor 5", sub:"12h" },
+      { id:"f6", label:"Flor 6", sub:"PK" },
+      { id:"f7", label:"Flor 7", sub:"12h" },
+      { id:"f8", label:"Flor 8", sub:"12h" },
+      { id:"flush", label:"Lavado", sub:"agua" }
+    ],
+    products: [
+      { name:"Coco A", u:"ml", d:[2.9,2.9,3.3,3.3,3.3,3.3,3.3,3.3,2.9,2.9,null] },
+      { name:"Coco B", u:"ml", d:[2.9,2.9,3.3,3.3,3.3,3.3,3.3,3.3,2.9,2.9,null] },
+      { name:"Rhizotonic", u:"ml", d:[4,2,2,2,0.5,0.5,0.5,0.5,0.5,null,null] },
+      { name:"Cannazym", u:"ml", d:[null,2.5,2.5,2.5,2.5,2.5,2.5,2.5,2.5,{min:2.5,max:5},{min:2.5,max:5}] },
+      { name:"Cannaboost", u:"ml", d:[null,null,2,2,{min:2,max:4},{min:2,max:4},{min:2,max:4},{min:2,max:4},{min:2,max:4},{min:2,max:4},{min:2,max:4}] },
+      { name:"PK 13/14", u:"ml", d:[null,null,null,null,null,null,null,1.5,null,null,null] },
+      { name:"Calmag Agent", u:"ml", d:[{min:0,max:0.7},{min:0,max:0.7},{min:0,max:0.7},{min:0,max:0.7},{min:0,max:0.7},{min:0,max:0.7},{min:0,max:0.7},{min:0,max:0.7},{min:0,max:0.7},{min:0,max:0.7},{min:0,max:0.7}] }
+    ],
+    ec: [ /* water / add / total */ {w:0.4,a:1.6,t:2.0},{w:0.4,a:1.6,t:2.0},{w:0.4,a:1.8,t:2.2},{w:0.4,a:1.8,t:2.2},{w:0.4,a:1.8,t:2.2},{w:0.4,a:1.8,t:2.2},{w:0.4,a:1.8,t:2.2},{w:0.4,a:2.3,t:2.7},{w:0.4,a:1.6,t:2.0},{w:0.4,a:1.6,t:2.0},{w:0.4,a:0,t:0.4} ]
+  },
+  {
+    id: "canna-terra",
+    brand: "Canna",
+    name: "Canna Terra",
+    source: "Esquema oficial CANNA TERRA (ml/10 L, abril 2026)",
+    sourceUrl: "https://www.canna.es/growguide",
+    weeks: [
+      { id:"veg1", label:"Veg 1", sub:"D1–5 · 18h" },
+      { id:"veg2", label:"Veg 2", sub:"D6–25 · 18h" },
+      { id:"f1", label:"Flor 1", sub:"12h" },
+      { id:"f2", label:"Flor 2", sub:"12h" },
+      { id:"f3", label:"Flor 3", sub:"12h" },
+      { id:"f4", label:"Flor 4", sub:"12h" },
+      { id:"f5", label:"Flor 5", sub:"12h" },
+      { id:"f6", label:"Flor 6", sub:"PK" },
+      { id:"f7", label:"Flor 7", sub:"12h" },
+      { id:"f8", label:"Flor 8", sub:"12h" },
+      { id:"flush", label:"Lavado", sub:"agua" }
+    ],
+    products: [
+      { name:"Terra Vega", u:"ml", d:[4.1,5.4,6.2,6.2,null,null,null,null,null,null,null] },
+      { name:"Terra Flores", u:"ml", d:[null,null,null,null,6.6,6.6,6.6,6.6,6.6,4.4,null] },
+      { name:"Rhizotonic", u:"ml", d:[4,2,2,2,0.5,0.5,0.5,0.5,0.5,null,null] },
+      { name:"Cannazym", u:"ml", d:[null,2.5,2.5,2.5,2.5,2.5,2.5,2.5,2.5,{min:2.5,max:5},{min:2.5,max:5}] },
+      { name:"Cannaboost", u:"ml", d:[null,null,2,2,{min:2,max:4},{min:2,max:4},{min:2,max:4},{min:2,max:4},{min:2,max:4},{min:2,max:4},{min:2,max:4}] },
+      { name:"PK 13/14", u:"ml", d:[null,null,null,null,null,null,null,1.5,null,null,null] },
+      { name:"Calmag Agent", u:"ml", d:[{min:0,max:0.7},{min:0,max:0.7},{min:0,max:0.7},{min:0,max:0.7},{min:0,max:0.7},{min:0,max:0.7},{min:0,max:0.7},{min:0,max:0.7},{min:0,max:0.7},{min:0,max:0.7},{min:0,max:0.7}] }
+    ],
+    ec: [{w:0.4,a:1.0,t:1.4},{w:0.4,a:1.3,t:1.7},{w:0.4,a:1.5,t:1.9},{w:0.4,a:1.5,t:1.9},{w:0.4,a:1.5,t:1.9},{w:0.4,a:1.5,t:1.9},{w:0.4,a:1.5,t:1.9},{w:0.4,a:1.9,t:2.3},{w:0.4,a:1.5,t:1.9},{w:0.4,a:1.0,t:1.4},{w:0.4,a:0,t:0.4}]
+  },
+  {
+    id: "biobizz-allmix",
+    brand: "BioBizz",
+    name: "BioBizz · All-Mix",
+    source: "Nutrient Schedule oficial BioBizz 2024 (All-Mix)",
+    sourceUrl: "https://biobizz.com/es/descargas/",
+    weeks: [
+      { id:"prop", label:"Estaq.", sub:"esqueje" },
+      { id:"veg", label:"Veg", sub:"2–4 hojas" },
+      { id:"f1", label:"Flor 1", sub:"" },
+      { id:"f2", label:"Flor 2", sub:"" },
+      { id:"f3", label:"Flor 3", sub:"" },
+      { id:"f4", label:"Flor 4", sub:"" },
+      { id:"f5", label:"Flor 5", sub:"" },
+      { id:"f6", label:"Flor 6", sub:"" },
+      { id:"f7", label:"Flor 7", sub:"" },
+      { id:"f8", label:"Flor 8", sub:"" },
+      { id:"flush", label:"Lavado", sub:"agua" }
+    ],
+    products: [
+      { name:"Root·Juice", u:"ml", d:[4,4,null,null,null,null,null,null,null,null,null] },
+      { name:"Bio·Grow", u:"ml", d:[null,1,1,1,1,1,1,1,1,1,null] },
+      { name:"Fish·Mix", u:"ml", d:[null,1,1,1,1,1,1,1,1,1,null] },
+      { name:"Bio·Bloom", u:"ml", d:[null,null,1,2,2,3,3,4,4,4,null] },
+      { name:"Top·Max", u:"ml", d:[null,null,1,1,1,1,1,4,4,4,null] },
+      { name:"Bio·Heaven", u:"ml", d:[2,2,2,2,3,4,4,5,5,5,null] },
+      { name:"Acti·Vera", u:"ml", d:[2,2,2,2,3,4,4,5,5,5,null] },
+      { name:"Microbes", u:"g", d:[0.4,0.4,0.2,0.2,0.4,0.4,0.4,0.2,0.2,0.2,null] }
+    ]
+  },
+  {
+    id: "biobizz-light",
+    brand: "BioBizz",
+    name: "BioBizz · Light-Mix / Coco",
+    source: "Nutrient Schedule oficial BioBizz 2024 (Light-Mix / Coco-Mix)",
+    sourceUrl: "https://biobizz.com/es/descargas/",
+    weeks: [
+      { id:"prop", label:"Estaq.", sub:"esqueje" },
+      { id:"veg", label:"Veg", sub:"2–4 hojas" },
+      { id:"f1", label:"Flor 1", sub:"" },
+      { id:"f2", label:"Flor 2", sub:"" },
+      { id:"f3", label:"Flor 3", sub:"" },
+      { id:"f4", label:"Flor 4", sub:"" },
+      { id:"f5", label:"Flor 5", sub:"" },
+      { id:"f6", label:"Flor 6", sub:"" },
+      { id:"f7", label:"Flor 7", sub:"" },
+      { id:"f8", label:"Flor 8", sub:"" },
+      { id:"flush", label:"Lavado", sub:"agua" }
+    ],
+    products: [
+      { name:"Root·Juice", u:"ml", d:[4,4,null,null,null,null,null,null,null,null,null] },
+      { name:"Bio·Grow", u:"ml", d:[null,2,2,2,3,3,4,4,4,4,null] },
+      { name:"Fish·Mix", u:"ml", d:[null,2,2,2,3,3,4,4,4,4,null] },
+      { name:"Bio·Bloom", u:"ml", d:[null,null,1,2,2,3,3,4,4,4,null] },
+      { name:"Top·Max", u:"ml", d:[null,null,1,1,1,1,1,4,4,4,null] },
+      { name:"Bio·Heaven", u:"ml", d:[2,2,2,2,3,4,4,5,5,5,null] },
+      { name:"Alg·A·Mic", u:"ml", d:[null,null,1,2,2,3,3,4,4,4,null] },
+      { name:"Acti·Vera", u:"ml", d:[2,2,2,2,3,4,4,5,5,5,null] },
+      { name:"Microbes", u:"g", d:[0.4,0.4,0.2,0.2,0.4,0.4,0.4,0.2,0.2,0.2,null] }
+    ]
+  },
+  {
+    id: "hesi-tierra",
+    brand: "Hesi",
+    name: "Hesi Tierra",
+    source: "Tabla Hesi tierra (Complejo TNT / Floración / Fósforo Plus)",
+    sourceUrl: "https://www.hesi.nl/es/descargas",
+    weeks: [
+      { id:"v1", label:"Veg 1", sub:"" },
+      { id:"v2", label:"Veg 2", sub:"" },
+      { id:"v3", label:"Veg 3", sub:"" },
+      { id:"v4", label:"Veg 4+", sub:"" },
+      { id:"f1", label:"Flor 1", sub:"" },
+      { id:"f2", label:"Flor 2", sub:"" },
+      { id:"f3", label:"Flor 3", sub:"" },
+      { id:"f4", label:"Flor 4", sub:"PK" },
+      { id:"f5", label:"Flor 5", sub:"" },
+      { id:"f6", label:"Flor 6", sub:"" },
+      { id:"f7", label:"Flor 7+", sub:"" },
+      { id:"flush", label:"Lavado", sub:"agua" }
+    ],
+    products: [
+      { name:"Complejo TNT", u:"ml", d:[3,4,4,5,null,null,null,null,null,null,null,null] },
+      { name:"Complejo de Floración", u:"ml", d:[null,null,null,null,3,3,3,4,4,5,5,null] },
+      { name:"Fósforo Plus", u:"ml", d:[null,null,null,null,null,null,null,2.5,2.5,2.5,2.5,null] },
+      { name:"Complejo Radicular", u:"ml", d:[5,5,5,5,5,null,null,null,null,null,null,null] },
+      { name:"SuperVit", u:"drops", d:[0.2,0.2,0.2,0.2,0.2,0.2,0.2,0.2,0.2,0.2,0.2,null] },
+      { name:"PowerZyme", u:"ml", d:[2,2,2,2,2,2,2,2,2,2,2,null] }
+    ]
+  },
+  {
+    id: "hesi-coco",
+    brand: "Hesi",
+    name: "Hesi Coco",
+    source: "Tabla Hesi coco (TNT en veg, Hesi Coco + PK 13/14 en flor)",
+    sourceUrl: "https://www.hesi.nl/es/descargas",
+    weeks: [
+      { id:"v1", label:"Veg 1", sub:"" },
+      { id:"v2", label:"Veg 2", sub:"" },
+      { id:"v3", label:"Veg 3", sub:"" },
+      { id:"v4", label:"Veg 4+", sub:"" },
+      { id:"f1", label:"Flor 1", sub:"" },
+      { id:"f2", label:"Flor 2", sub:"" },
+      { id:"f3", label:"Flor 3", sub:"" },
+      { id:"f4", label:"Flor 4", sub:"PK" },
+      { id:"f5", label:"Flor 5", sub:"" },
+      { id:"f6", label:"Flor 6", sub:"" },
+      { id:"f7", label:"Flor 7+", sub:"" },
+      { id:"flush", label:"Lavado", sub:"agua" }
+    ],
+    products: [
+      { name:"Complejo TNT", u:"ml", d:[3,4,4,5,null,null,null,null,null,null,null,null] },
+      { name:"Hesi Coco", u:"ml", d:[null,null,null,null,4,4,4,4,4,5,5,null] },
+      { name:"PK 13/14", u:"ml", d:[null,null,null,null,null,null,null,0.25,0.5,0.74,1.5,null] },
+      { name:"Complejo Radicular", u:"ml", d:[5,5,5,5,5,null,null,null,null,null,null,null] },
+      { name:"SuperVit", u:"drops", d:[0.2,0.2,0.2,0.2,0.2,0.2,0.2,0.2,0.2,0.2,0.2,null] },
+      { name:"PowerZyme", u:"ml", d:[2,2,2,2,2,2,2,2,2,2,2,null] },
+      { name:"Boost", u:"ml", d:[null,null,null,null,2,null,null,2,2,2,2,null] }
+    ]
+  },
+  {
+    id: "hesi-hidro",
+    brand: "Hesi",
+    name: "Hesi Hidro",
+    source: "Tabla Hesi hidro (Crecimiento / Floración Hydro + PK 13/14)",
+    sourceUrl: "https://www.hesi.nl/es/descargas",
+    weeks: [
+      { id:"v1", label:"Veg 1", sub:"" },
+      { id:"v2", label:"Veg 2", sub:"" },
+      { id:"v3", label:"Veg 3", sub:"" },
+      { id:"v4", label:"Veg 4+", sub:"" },
+      { id:"f1", label:"Flor 1", sub:"" },
+      { id:"f2", label:"Flor 2", sub:"" },
+      { id:"f3", label:"Flor 3", sub:"" },
+      { id:"f4", label:"Flor 4", sub:"PK" },
+      { id:"f5", label:"Flor 5", sub:"" },
+      { id:"f6", label:"Flor 6", sub:"" },
+      { id:"f7", label:"Flor 7+", sub:"" },
+      { id:"flush", label:"Lavado", sub:"agua" }
+    ],
+    products: [
+      { name:"Crecimiento Hydro", u:"ml", d:[3,4,4,5,null,null,null,null,null,null,null,null] },
+      { name:"Floración Hydro", u:"ml", d:[null,null,null,null,3,3,3,4,4,5,5,null] },
+      { name:"PK 13/14", u:"ml", d:[null,null,null,null,null,null,null,0.25,0.5,0.74,1.5,null] },
+      { name:"Complejo Radicular", u:"ml", d:[5,5,5,5,5,null,null,null,null,null,null,null] },
+      { name:"SuperVit", u:"drops", d:[0.2,0.2,0.2,0.2,0.2,0.2,0.2,0.2,0.2,0.2,0.2,null] },
+      { name:"PowerZyme", u:"ml", d:[2,2,2,2,2,2,2,2,2,2,2,null] }
+    ]
+  }
+];
+
+let lineId = LINES[0].id, week = 0, inten = 1;
+const $ = id => document.getElementById(id);
+const lineEl = $("line"), weeksEl = $("weeks"), dosesEl = $("doses");
+
+function line(){ return LINES.find(l => l.id === lineId); }
+
+function fmtDose(v, u, liters, scale){
+  if (v == null) return null;
+  const range = typeof v === "object";
+  const lo = (range ? v.min : v) * scale;
+  const hi = (range ? v.max : v) * scale;
+  if (u === "drops") {
+    const drops = lo * liters; // stored as drops per L (0.2 = 1 drop / 5 L)
+    if (drops <= 0) return null;
+    const n = Math.max(1, Math.round(drops));
+    return { text: n + " gota" + (n===1?"":"s"), sub: "en " + liters + " L" };
+  }
+  const unit = u === "g" ? "g" : "ml";
+  const totLo = lo * liters, totHi = hi * liters;
+  if (range && hi !== lo) {
+    return { text: trim(totLo) + "–" + trim(totHi) + " " + unit, sub: trim(lo) + "–" + trim(hi) + " " + unit + "/L" };
+  }
+  if (totLo === 0 && totHi === 0) return { text: "0–" + trim(0.7*liters*scale) + " " + unit, sub: "según EC del agua" };
+  return { text: trim(totLo) + " " + unit, sub: trim(lo) + " " + unit + "/L" };
+}
+function trim(n){ return Math.round(n*100)/100; }
+
+function renderSelect(){
+  const groups = {};
+  LINES.forEach(l => { (groups[l.brand] ||= []).push(l); });
+  lineEl.innerHTML = Object.entries(groups).map(([b, arr]) =>
+    `<optgroup label="${b}">${arr.map(l => `<option value="${l.id}">${l.name}</option>`).join("")}</optgroup>`
+  ).join("");
+  lineEl.value = lineId;
+}
+
+function renderWeeks(){
+  const L = line();
+  weeksEl.innerHTML = L.weeks.map((w,i) =>
+    `<button class="week${i===week?" active":""}" data-w="${i}" type="button">
+      <div class="ph">${w.sub || "·"}</div><div class="n">${w.label}</div>
+    </button>`
+  ).join("");
+}
+
+function cell(v){
+  if (v == null) return "—";
+  if (typeof v === "object") return v.min + "–" + v.max;
+  return String(v);
+}
+
+function renderTable(){
+  const L = line();
+  const head = "<tr><th></th>" + L.weeks.map(w => "<th>"+w.label+"</th>").join("") + "</tr>";
+  const body = L.products.map(p => {
+    const tds = p.d.map((v,i) => `<td class="${i===week?"hi":""}">${cell(v)}</td>`).join("");
+    return `<tr><td class="prod">${p.name}${p.u==="g"?" (g)":p.u==="drops"?" (gotas/L)":""}</td>${tds}</tr>`;
+  }).join("");
+  $("table").innerHTML = "<table>"+head+body+"</table>";
+  $("source").innerHTML = L.source + (L.sourceUrl ? ' · <a href="'+L.sourceUrl+'" target="_blank" rel="noopener">fuente</a>' : "");
+}
+
+function renderDoses(){
+  const L = line();
+  const liters = Math.max(0.5, parseFloat($("liters").value) || 10);
+  const rows = [];
+  L.products.forEach(p => {
+    const shown = fmtDose(p.d[week], p.u, liters, inten);
+    if (!shown) return;
+    rows.push(`<div class="dose"><div><div class="pname">${p.name}</div><div class="punit">${shown.sub}</div></div><div class="qty">${shown.text}</div></div>`);
+  });
+  dosesEl.innerHTML = rows.length ? rows.join("") : '<div class="empty">Esta semana es lavado: solo agua. Ajusta pH si hace falta.</div>';
+  if (L.ec && L.ec[week]) {
+    const e = L.ec[week];
+    $("ec").innerHTML = "EC guía: agua <b>"+e.w+"</b> + abono <b>"+e.a+"</b> → <b>"+e.t+" mS/cm</b>";
+  } else $("ec").textContent = "";
+}
+
+function render(){ renderWeeks(); renderTable(); renderDoses(); }
+
+lineEl.addEventListener("change", () => { lineId = lineEl.value; week = 0; render(); });
+$("liters").addEventListener("input", renderDoses);
+weeksEl.addEventListener("click", e => {
+  const b = e.target.closest("[data-w]");
+  if (!b) return;
+  week = +b.dataset.w;
+  render();
+});
+$("inten").addEventListener("click", e => {
+  const b = e.target.closest("[data-i]");
+  if (!b) return;
+  inten = parseFloat(b.dataset.i);
+  $("inten").querySelectorAll(".chip").forEach(c => c.classList.toggle("active", c===b));
+  renderDoses();
+});
+
+renderSelect();
+render();
+</script>
+</body>
+</html>

@@ -26,6 +26,7 @@ HTML_FILES=(
   buscador-cannabicultor.html
   growshops.html
   asociaciones.html
+  fertilizantes.html
   disenador_sala_cultivo.html
   app.html
   atlas_landrace.html
