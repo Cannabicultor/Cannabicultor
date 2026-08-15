@@ -57,6 +57,13 @@ button{cursor:pointer}
 .nivel-note{font-size:12px;opacity:.7;line-height:1.4}
 .nivel-upgrade{margin-top:12px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.2);border-radius:999px;padding:8px 14px;font-size:12px;font-weight:700;color:#fff;width:100%;text-align:center;display:none}
 .nivel-upgrade:hover{background:rgba(255,255,255,.25)}
+.dash-tools{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin:0 0 22px}
+.dash-tool{display:flex;align-items:center;gap:12px;background:#fff;border:1px solid var(--border);border-radius:18px;padding:14px 16px;text-decoration:none;color:inherit;box-shadow:0 1px 2px rgba(0,0,0,.03)}
+.dash-tool:hover{border-color:var(--forest)}
+.dash-tool .g{width:42px;height:42px;border-radius:12px;background:var(--pale);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+.dash-tool b{display:block;font-size:14px;font-weight:700}
+.dash-tool small{display:block;font-size:12px;color:var(--muted);margin-top:2px}
+@media(max-width:560px){.dash-tools{grid-template-columns:1fr}}
 
 /* MAIN */
 .main{height:100vh;overflow:auto;padding:22px 28px 110px}
@@ -361,8 +368,9 @@ button{cursor:pointer}
       <a class="nav-btn" href="growshops.html"><span class="ico"><img src="assets/icons/12-growshop.svg" alt=""></span>Growshops de España</a>
       <a class="nav-btn" href="asociaciones.html"><span class="ico"><img src="assets/icons/13-asociacion.svg" alt=""></span>Asociaciones y clubes</a>
       <a class="nav-btn" href="disenador_sala_cultivo.html"><span class="ico"><img src="assets/icons/08-disenador-sala.svg" alt=""></span>Diseñador de sala</a>
+      <a class="nav-btn" href="/fertilizantes.html"><span class="ico"><img src="assets/icons/06-herramientas.svg" alt=""></span>Fertilizantes</a>
       <a class="nav-btn" href="/tabla-valores-ideales.html"><span class="ico"><img src="assets/icons/06-herramientas.svg" alt=""></span>Valores ideales</a>
-      <a class="nav-btn" href="/atlas_landrace.html"><span class="ico"><img src="assets/icons/09-mapa-landraces.svg" alt=""></span>Mapa de landraces</a>
+      <a class="nav-btn" href="/atlas_landrace.html"><span class="ico">🌍</span>Mapa de landraces</a>
       <a class="nav-btn" href="https://genetica.cannabicultor.com"><span class="ico"><img src="assets/icons/11-banco-genetica.svg" alt=""></span>Genealogía de tu genética</a>
       <a class="nav-btn" href="/cultivo-con-ia/"><span class="ico"><img src="assets/icons/01-analisis-briefing.svg" alt=""></span>Guía Cultivo con IA</a>
       <a class="nav-btn" href="/biblioteca/"><span class="ico"><img src="assets/icons/10-biblioteca.svg" alt=""></span>Biblioteca</a>
@@ -455,6 +463,16 @@ button{cursor:pointer}
         </div>
       </div>
     </section>
+    <div class="dash-tools">
+      <a class="dash-tool" href="/atlas_landrace.html">
+        <span class="g">🌍</span>
+        <span><b>Mapa de landraces</b><small>Gira el globo y mira el origen de cada variedad</small></span>
+      </a>
+      <a class="dash-tool" href="/fertilizantes.html">
+        <span class="g">💧</span>
+        <span><b>Calculadora de fertilizantes</b><small>Canna, BioBizz y Hesi · ml según la semana</small></span>
+      </a>
+    </div>
     </div><!-- /#resumen -->
 
     <!-- METRICS -->
