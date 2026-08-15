@@ -11,10 +11,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Calculadora de dosificación de fertilizantes | Cannabicultor</title>
-<meta name="description" content="Dosis de Canna, BioBizz, Hesi y Plagron en un solo sitio: elige línea, litros y semana. Tablas oficiales del fabricante.">
+<meta name="description" content="Dosis de Canna, BioBizz, Hesi, Plagron y Atami en un solo sitio: elige línea, litros y semana. Tablas oficiales del fabricante.">
 <link rel="canonical" href="https://www.cannabicultor.com/fertilizantes.html">
 <meta property="og:title" content="Calculadora de fertilizantes | Cannabicultor">
-<meta property="og:description" content="Canna, BioBizz, Hesi y Plagron: ml por litro según la semana de cultivo.">
+<meta property="og:description" content="Canna, BioBizz, Hesi, Plagron y Atami: ml por litro según la semana de cultivo.">
 <meta property="og:url" content="https://www.cannabicultor.com/fertilizantes.html">
 <meta property="og:type" content="website">
 <meta property="og:locale" content="es_ES">
@@ -555,6 +555,272 @@ const LINES = [
       { name:"Green Sensation", u:"ml", d:[null,null,null,null,null,1,1,1,1,1,null] },
       { name:"Sugar Royal", u:"ml", d:[1,1,1,1,1,1,1,1,1,1,null] },
       { name:"Vita Race (foliar 1×/sem)", u:"ml", d:[3,3,5,5,5,null,null,null,null,null,null] }
+    ]
+  },
+  {
+    id: "atami-bcuzz-soil",
+    brand: "Atami",
+    name: "Atami B’cuzz · Tierra",
+    source: "Guía oficial Atami B’cuzz Soil (ml/L). pH 5,8–6,5 · EC 1,2–2,8. Nutrir en cada riego.",
+    sourceUrl: "https://atami.com/es/guias-para-el-cultivo",
+    weeks: [
+      { id:"g1", label:"Veg 1", sub:"crec." },
+      { id:"g2", label:"Veg 2", sub:"crec." },
+      { id:"f1", label:"Flor 1", sub:"inicio" },
+      { id:"f2", label:"Flor 2", sub:"inicio" },
+      { id:"f3", label:"Flor 3", sub:"flor" },
+      { id:"f4", label:"Flor 4", sub:"flor" },
+      { id:"f5", label:"Flor 5", sub:"madura" },
+      { id:"f6", label:"Flor 6", sub:"madura" },
+      { id:"f7", label:"Flor 7", sub:"cierre" },
+      { id:"flush", label:"Flor 8", sub:"agua" }
+    ],
+    products: [
+      { name:"B’cuzz Soil A", u:"ml", d:[{min:2,max:3},{min:2.8,max:3.8},{min:3.5,max:4.5},{min:4,max:5},{min:4,max:5},{min:3.8,max:4.8},{min:3.8,max:4.8},{min:3.5,max:4.5},{min:3.5,max:4.5},null] },
+      { name:"B’cuzz Soil B", u:"ml", d:[{min:2,max:3},{min:2.8,max:3.8},{min:3.5,max:4.5},{min:4,max:5},{min:4,max:5},{min:3.8,max:4.8},{min:3.8,max:4.8},{min:3.5,max:4.5},{min:3.5,max:4.5},null] },
+      { name:"ATA CalMag", u:"ml", d:[{min:0.2,max:0.3},{min:0.2,max:0.3},{min:0.2,max:0.3},{min:0.2,max:0.3},{min:0.1,max:0.2},{min:0.1,max:0.2},{min:0.1,max:0.2},{min:0.1,max:0.2},{min:0.1,max:0.2},null] },
+      { name:"B’cuzz Blossom Builder", u:"ml", d:[null,null,{min:0.4,max:0.8},{min:0.4,max:0.8},{min:0.4,max:0.8},{min:0.4,max:0.8},{min:0.4,max:0.8},{min:0.4,max:0.8},{min:0.4,max:0.8},null] },
+      { name:"B’cuzz Soil Booster Uni", u:"ml", d:[null,0.5,null,null,null,null,null,null,null,null] },
+      { name:"B’cuzz Bloom Stimulator", u:"ml", d:[null,null,{min:0.5,max:1},{min:0.5,max:1},{min:0.5,max:1},{min:0.5,max:1},{min:0.5,max:1},{min:0.5,max:1},{min:0.5,max:1},null] },
+      { name:"B’cuzz Root Stimulator", u:"ml", d:[1,{min:0.5,max:1},null,null,null,null,null,null,null,null] },
+      { name:"B’cuzz Silic Boost", u:"ml", d:[0.1,0.1,0.1,0.1,0.1,0.1,null,null,null,null] },
+      { name:"Atazyme", u:"ml", d:[null,1,1,1,1,1,1,1,1,null] }
+    ]
+  },
+  {
+    id: "atami-bastics-bcuzz-soil",
+    brand: "Atami",
+    name: "Atami Bastics + B’cuzz · Tierra",
+    source: "Guía oficial Atami Bastics + B’cuzz Soil (ml/L). pH 5,8–6,5 · EC 1,2–2,8. Bloombastic → Rokzbastic (se solapan en Flor 4).",
+    sourceUrl: "https://atami.com/es/guias-para-el-cultivo",
+    weeks: [
+      { id:"g1", label:"Veg 1", sub:"crec." },
+      { id:"g2", label:"Veg 2", sub:"crec." },
+      { id:"f1", label:"Flor 1", sub:"inicio" },
+      { id:"f2", label:"Flor 2", sub:"inicio" },
+      { id:"f3", label:"Flor 3", sub:"flor" },
+      { id:"f4", label:"Flor 4", sub:"flor" },
+      { id:"f5", label:"Flor 5", sub:"madura" },
+      { id:"f6", label:"Flor 6", sub:"madura" },
+      { id:"f7", label:"Flor 7", sub:"cierre" },
+      { id:"flush", label:"Flor 8", sub:"agua" }
+    ],
+    products: [
+      { name:"B’cuzz Soil A", u:"ml", d:[{min:2,max:3},{min:2.8,max:3.8},{min:3.5,max:4.5},{min:4,max:5},{min:4,max:5},{min:3.8,max:4.8},{min:3.5,max:4.8},{min:3.5,max:4.5},{min:3.5,max:4.5},null] },
+      { name:"B’cuzz Soil B", u:"ml", d:[{min:2,max:3},{min:2.8,max:3.8},{min:3.5,max:4.5},{min:4,max:5},{min:4,max:5},{min:3.8,max:4.8},{min:3.5,max:4.8},{min:3.5,max:4.5},{min:3.5,max:4.5},null] },
+      { name:"ATA CalMag", u:"ml", d:[{min:0.2,max:0.3},{min:0.2,max:0.3},{min:0.2,max:0.3},{min:0.2,max:0.3},{min:0.1,max:0.2},{min:0.1,max:0.2},{min:0.1,max:0.2},{min:0.1,max:0.2},{min:0.1,max:0.2},null] },
+      { name:"Bloombastic", u:"ml", d:[null,null,{min:0.6,max:1.2},{min:0.6,max:1.2},{min:0.6,max:1.2},{min:0.3,max:0.6},null,null,null,null] },
+      { name:"Rokzbastic", u:"ml", d:[null,null,null,null,null,{min:0.3,max:0.6},{min:0.6,max:1.2},{min:0.6,max:1.2},{min:0.6,max:1.2},null] },
+      { name:"B’cuzz Soil Booster Uni", u:"ml", d:[null,0.5,null,null,null,null,null,null,null,null] },
+      { name:"B’cuzz Bloom Stimulator", u:"ml", d:[null,null,{min:0.5,max:1},{min:0.5,max:1},{min:0.5,max:1},{min:0.5,max:1},{min:0.5,max:1},{min:0.5,max:1},{min:0.5,max:1},null] },
+      { name:"Rootbastic", u:"ml", d:[0.1,{min:0.1,max:0.3},null,null,null,null,null,null,null,null] },
+      { name:"B’cuzz Silic Boost", u:"ml", d:[0.1,0.1,0.1,0.1,0.1,0.1,null,null,null,null] },
+      { name:"Atazyme", u:"ml", d:[null,1,1,1,1,1,1,1,1,null] }
+    ]
+  },
+  {
+    id: "atami-bastics-ata-soil",
+    brand: "Atami",
+    name: "Atami Bastics + ATA Terra · Tierra",
+    source: "Guía oficial Atami Bastics + ATA Soil (ml/L). pH 5,8–6,5 · EC 1,2–2,8. Terra Leaves en veg, Terra Max en flor.",
+    sourceUrl: "https://atami.com/es/guias-para-el-cultivo",
+    weeks: [
+      { id:"g1", label:"Veg 1", sub:"crec." },
+      { id:"g2", label:"Veg 2", sub:"crec." },
+      { id:"f1", label:"Flor 1", sub:"inicio" },
+      { id:"f2", label:"Flor 2", sub:"inicio" },
+      { id:"f3", label:"Flor 3", sub:"flor" },
+      { id:"f4", label:"Flor 4", sub:"flor" },
+      { id:"f5", label:"Flor 5", sub:"madura" },
+      { id:"f6", label:"Flor 6", sub:"madura" },
+      { id:"f7", label:"Flor 7", sub:"cierre" },
+      { id:"flush", label:"Flor 8", sub:"agua" }
+    ],
+    products: [
+      { name:"ATA Terra Leaves", u:"ml", d:[{min:2,max:4},{min:3,max:5},null,null,null,null,null,null,null,null] },
+      { name:"ATA Terra Max", u:"ml", d:[null,null,{min:3,max:5},{min:3,max:5},{min:3,max:5},{min:3,max:5},{min:3,max:5},{min:3,max:5},{min:3,max:5},null] },
+      { name:"ATA CalMag", u:"ml", d:[{min:0.4,max:0.8},{min:0.3,max:0.7},{min:0.3,max:0.7},{min:0.3,max:0.6},{min:0.3,max:0.6},{min:0.2,max:0.5},{min:0.2,max:0.5},{min:0.2,max:0.4},{min:0.2,max:0.4},null] },
+      { name:"Bloombastic", u:"ml", d:[null,null,{min:0.6,max:1.2},{min:0.6,max:1.2},{min:0.6,max:1.2},{min:0.3,max:0.6},null,null,null,null] },
+      { name:"Rokzbastic", u:"ml", d:[null,null,null,null,null,{min:0.3,max:0.6},{min:0.6,max:1.2},{min:0.6,max:1.2},{min:0.6,max:1.2},null] },
+      { name:"Rootbastic", u:"ml", d:[0.1,{min:0.1,max:0.3},null,null,null,null,null,null,null,null] },
+      { name:"B’cuzz Silic Boost", u:"ml", d:[0.1,0.1,0.1,0.1,0.1,0.1,null,null,null,null] },
+      { name:"Atazyme", u:"ml", d:[null,1,1,1,1,1,1,1,1,null] }
+    ]
+  },
+  {
+    id: "atami-bcuzz-coco",
+    brand: "Atami",
+    name: "Atami B’cuzz · Coco",
+    source: "Guía oficial Atami B’cuzz Coco (ml/L). pH 5,5–6,0 · EC 1,2–2,8.",
+    sourceUrl: "https://atami.com/es/guias-para-el-cultivo",
+    weeks: [
+      { id:"g1", label:"Veg 1", sub:"crec." },
+      { id:"g2", label:"Veg 2", sub:"crec." },
+      { id:"f1", label:"Flor 1", sub:"inicio" },
+      { id:"f2", label:"Flor 2", sub:"inicio" },
+      { id:"f3", label:"Flor 3", sub:"flor" },
+      { id:"f4", label:"Flor 4", sub:"flor" },
+      { id:"f5", label:"Flor 5", sub:"madura" },
+      { id:"f6", label:"Flor 6", sub:"madura" },
+      { id:"f7", label:"Flor 7", sub:"cierre" },
+      { id:"flush", label:"Flor 8", sub:"agua" }
+    ],
+    products: [
+      { name:"B’cuzz Coco A", u:"ml", d:[{min:1,max:2},{min:1.5,max:2.5},{min:2,max:3},{min:2.4,max:3.4},{min:2.3,max:3.3},{min:2.2,max:3.2},{min:2.1,max:3.1},{min:2,max:3},{min:2,max:3},null] },
+      { name:"B’cuzz Coco B", u:"ml", d:[{min:1,max:2},{min:1.5,max:2.5},{min:2,max:3},{min:2.4,max:3.4},{min:2.3,max:3.3},{min:2.2,max:3.2},{min:2.1,max:3.1},{min:2,max:3},{min:2,max:3},null] },
+      { name:"ATA CalMag", u:"ml", d:[{min:0.3,max:0.6},{min:0.3,max:0.6},{min:0.2,max:0.4},{min:0.2,max:0.4},{min:0.1,max:0.3},{min:0.1,max:0.3},{min:0.1,max:0.2},{min:0.1,max:0.2},{min:0.1,max:0.2},null] },
+      { name:"B’cuzz Blossom Builder", u:"ml", d:[null,null,{min:0.4,max:0.8},{min:0.4,max:0.8},{min:0.4,max:0.8},{min:0.4,max:0.8},{min:0.4,max:0.8},{min:0.4,max:0.8},{min:0.4,max:0.8},null] },
+      { name:"B’cuzz Coco Booster Uni", u:"ml", d:[null,0.5,null,null,null,null,null,null,null,null] },
+      { name:"B’cuzz Coco Bloom Stimulator", u:"ml", d:[null,null,{min:0.5,max:1},{min:0.5,max:1},{min:0.5,max:1},{min:0.5,max:1},{min:0.5,max:1},{min:0.5,max:1},{min:0.5,max:1},null] },
+      { name:"B’cuzz Root Stimulator", u:"ml", d:[1,{min:0.5,max:1},null,null,null,null,null,null,null,null] },
+      { name:"B’cuzz Silic Boost", u:"ml", d:[0.1,0.1,0.1,0.1,0.1,0.1,null,null,null,null] },
+      { name:"Atazyme", u:"ml", d:[null,1,1,1,1,1,1,1,1,null] }
+    ]
+  },
+  {
+    id: "atami-bastics-bcuzz-coco",
+    brand: "Atami",
+    name: "Atami Bastics + B’cuzz · Coco",
+    source: "Guía oficial Atami Bastics + B’cuzz Coco (ml/L). pH 5,5–6,0 · EC 1,2–2,8.",
+    sourceUrl: "https://atami.com/es/guias-para-el-cultivo",
+    weeks: [
+      { id:"g1", label:"Veg 1", sub:"crec." },
+      { id:"g2", label:"Veg 2", sub:"crec." },
+      { id:"f1", label:"Flor 1", sub:"inicio" },
+      { id:"f2", label:"Flor 2", sub:"inicio" },
+      { id:"f3", label:"Flor 3", sub:"flor" },
+      { id:"f4", label:"Flor 4", sub:"flor" },
+      { id:"f5", label:"Flor 5", sub:"madura" },
+      { id:"f6", label:"Flor 6", sub:"madura" },
+      { id:"f7", label:"Flor 7", sub:"cierre" },
+      { id:"flush", label:"Flor 8", sub:"agua" }
+    ],
+    products: [
+      { name:"B’cuzz Coco A", u:"ml", d:[{min:1,max:2},{min:1.5,max:2.5},{min:2,max:3},{min:2.4,max:3.4},{min:2.3,max:3.3},{min:2.2,max:3.2},{min:2.1,max:3.1},{min:2,max:3},{min:2,max:3},null] },
+      { name:"B’cuzz Coco B", u:"ml", d:[{min:1,max:2},{min:1.5,max:2.5},{min:2,max:3},{min:2.4,max:3.4},{min:2.3,max:3.3},{min:2.2,max:3.2},{min:2.1,max:3.1},{min:2,max:3},{min:2,max:3},null] },
+      { name:"ATA CalMag", u:"ml", d:[{min:0.3,max:0.6},{min:0.3,max:0.6},{min:0.2,max:0.4},{min:0.2,max:0.4},{min:0.1,max:0.3},{min:0.1,max:0.3},{min:0.1,max:0.2},{min:0.1,max:0.2},{min:0.1,max:0.2},null] },
+      { name:"Bloombastic", u:"ml", d:[null,null,{min:0.6,max:1.2},{min:0.6,max:1.2},{min:0.6,max:1.2},{min:0.3,max:0.6},null,null,null,null] },
+      { name:"Rokzbastic", u:"ml", d:[null,null,null,null,null,{min:0.3,max:0.6},{min:0.6,max:1.2},{min:0.6,max:1.2},{min:0.6,max:1.2},null] },
+      { name:"B’cuzz Coco Booster Uni", u:"ml", d:[null,0.5,null,null,null,null,null,null,null,null] },
+      { name:"B’cuzz Coco Bloom Stimulator", u:"ml", d:[null,null,{min:0.5,max:1},{min:0.5,max:1},{min:0.5,max:1},{min:0.5,max:1},{min:0.5,max:1},{min:0.5,max:1},{min:0.5,max:1},null] },
+      { name:"Rootbastic", u:"ml", d:[0.1,{min:0.1,max:0.3},null,null,null,null,null,null,null,null] },
+      { name:"B’cuzz Silic Boost", u:"ml", d:[0.1,0.1,0.1,0.1,0.1,0.1,null,null,null,null] },
+      { name:"Atazyme", u:"ml", d:[null,1,1,1,1,1,1,1,1,null] }
+    ]
+  },
+  {
+    id: "atami-bcuzz-hydro",
+    brand: "Atami",
+    name: "Atami B’cuzz · Hidro",
+    source: "Guía oficial Atami B’cuzz Hydro (ml/L). pH 5,5–5,8 · EC 1,2–2,8. ATA Clean: 0,1 ml/L un par de riegos por semana (limpieza de sistema).",
+    sourceUrl: "https://atami.com/es/guias-para-el-cultivo",
+    weeks: [
+      { id:"g1", label:"Veg 1", sub:"crec." },
+      { id:"g2", label:"Veg 2", sub:"crec." },
+      { id:"f1", label:"Flor 1", sub:"inicio" },
+      { id:"f2", label:"Flor 2", sub:"inicio" },
+      { id:"f3", label:"Flor 3", sub:"flor" },
+      { id:"f4", label:"Flor 4", sub:"flor" },
+      { id:"f5", label:"Flor 5", sub:"madura" },
+      { id:"f6", label:"Flor 6", sub:"madura" },
+      { id:"f7", label:"Flor 7", sub:"cierre" },
+      { id:"flush", label:"Flor 8", sub:"agua" }
+    ],
+    products: [
+      { name:"B’cuzz Hydro A", u:"ml", d:[{min:1,max:2},{min:1.5,max:2.5},{min:2,max:3},{min:2.4,max:3.4},{min:2.3,max:3.3},{min:2.2,max:3.2},{min:2.1,max:3.1},{min:2,max:3},{min:2,max:3},null] },
+      { name:"B’cuzz Hydro B", u:"ml", d:[{min:1,max:2},{min:1.5,max:2.5},{min:2,max:3},{min:2.4,max:3.4},{min:2.3,max:3.3},{min:2.2,max:3.2},{min:2.1,max:3.1},{min:2,max:3},{min:2,max:3},null] },
+      { name:"ATA CalMag", u:"ml", d:[{min:0.2,max:0.4},{min:0.2,max:0.4},{min:0.2,max:0.4},{min:0.2,max:0.4},{min:0.2,max:0.3},{min:0.2,max:0.3},{min:0.2,max:0.3},{min:0.2,max:0.3},{min:0.2,max:0.3},null] },
+      { name:"B’cuzz Blossom Builder", u:"ml", d:[null,null,{min:0.4,max:0.8},{min:0.4,max:0.8},{min:0.4,max:0.8},{min:0.4,max:0.8},{min:0.4,max:0.8},{min:0.4,max:0.8},{min:0.4,max:0.8},null] },
+      { name:"B’cuzz Hydro Booster Uni", u:"ml", d:[null,0.5,null,null,null,null,null,null,null,null] },
+      { name:"B’cuzz Bloom Stimulator", u:"ml", d:[null,null,{min:0.5,max:1},{min:0.5,max:1},{min:0.5,max:1},{min:0.5,max:1},{min:0.5,max:1},{min:0.5,max:1},{min:0.5,max:1},null] },
+      { name:"B’cuzz Root Stimulator", u:"ml", d:[1,{min:0.5,max:1},null,null,null,null,null,null,null,null] },
+      { name:"B’cuzz Silic Boost", u:"ml", d:[0.1,0.1,0.1,0.1,0.1,0.1,null,null,null,null] },
+      { name:"Atazyme", u:"ml", d:[null,1,1,1,1,1,1,1,1,null] },
+      { name:"ATA Clean (sistema)", u:"ml", d:[0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,null] }
+    ]
+  },
+  {
+    id: "atami-bastics-bcuzz-hydro",
+    brand: "Atami",
+    name: "Atami Bastics + B’cuzz · Hidro",
+    source: "Guía oficial Atami Bastics + B’cuzz Hydro (ml/L). pH 5,5–5,8 · EC 1,2–2,8. ATA Clean: 0,1 ml/L un par de riegos por semana.",
+    sourceUrl: "https://atami.com/es/guias-para-el-cultivo",
+    weeks: [
+      { id:"g1", label:"Veg 1", sub:"crec." },
+      { id:"g2", label:"Veg 2", sub:"crec." },
+      { id:"f1", label:"Flor 1", sub:"inicio" },
+      { id:"f2", label:"Flor 2", sub:"inicio" },
+      { id:"f3", label:"Flor 3", sub:"flor" },
+      { id:"f4", label:"Flor 4", sub:"flor" },
+      { id:"f5", label:"Flor 5", sub:"madura" },
+      { id:"f6", label:"Flor 6", sub:"madura" },
+      { id:"f7", label:"Flor 7", sub:"cierre" },
+      { id:"flush", label:"Flor 8", sub:"agua" }
+    ],
+    products: [
+      { name:"B’cuzz Hydro A", u:"ml", d:[{min:1,max:2},{min:1.5,max:2.5},{min:2,max:3},{min:2.4,max:3.4},{min:2.3,max:3.3},{min:2.2,max:3.2},{min:2.1,max:3.1},{min:2,max:3},{min:2,max:3},null] },
+      { name:"B’cuzz Hydro B", u:"ml", d:[{min:1,max:2},{min:1.5,max:2.5},{min:2,max:3},{min:2.4,max:3.4},{min:2.3,max:3.3},{min:2.2,max:3.2},{min:2.1,max:3.1},{min:2,max:3},{min:2,max:3},null] },
+      { name:"ATA CalMag", u:"ml", d:[{min:0.2,max:0.4},{min:0.2,max:0.4},{min:0.2,max:0.4},{min:0.2,max:0.4},{min:0.2,max:0.3},{min:0.2,max:0.3},{min:0.2,max:0.3},{min:0.2,max:0.3},{min:0.2,max:0.3},null] },
+      { name:"Bloombastic", u:"ml", d:[null,null,{min:0.6,max:1.2},{min:0.6,max:1.2},{min:0.6,max:1.2},{min:0.3,max:0.6},null,null,null,null] },
+      { name:"Rokzbastic", u:"ml", d:[null,null,null,null,null,{min:0.3,max:0.6},{min:0.6,max:1.2},{min:0.6,max:1.2},{min:0.6,max:1.2},null] },
+      { name:"B’cuzz Hydro Booster Uni", u:"ml", d:[null,0.5,null,null,null,null,null,null,null,null] },
+      { name:"B’cuzz Bloom Stimulator", u:"ml", d:[null,null,{min:0.5,max:1},{min:0.5,max:1},{min:0.5,max:1},{min:0.5,max:1},{min:0.5,max:1},{min:0.5,max:1},{min:0.5,max:1},null] },
+      { name:"Rootbastic", u:"ml", d:[0.1,{min:0.1,max:0.3},null,null,null,null,null,null,null,null] },
+      { name:"B’cuzz Silic Boost", u:"ml", d:[0.1,0.1,0.1,0.1,0.1,0.1,null,null,null,null] },
+      { name:"Atazyme", u:"ml", d:[null,1,1,1,1,1,1,1,1,null] },
+      { name:"ATA Clean (sistema)", u:"ml", d:[0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,null] }
+    ]
+  },
+  {
+    id: "atami-nrg-soil",
+    brand: "Atami",
+    name: "Atami ATA NRG · Tierra",
+    source: "Guía oficial Atami ATA NRG full range (ml/L). pH 5,8–6,5. Growth-C sigue en floración junto a Bloom-C.",
+    sourceUrl: "https://atami.com/es/guias-para-el-cultivo",
+    weeks: [
+      { id:"g1", label:"Veg 1", sub:"crec." },
+      { id:"g2", label:"Veg 2", sub:"crec." },
+      { id:"f1", label:"Flor 1", sub:"inicio" },
+      { id:"f2", label:"Flor 2", sub:"inicio" },
+      { id:"f3", label:"Flor 3", sub:"flor" },
+      { id:"f4", label:"Flor 4", sub:"flor" },
+      { id:"f5", label:"Flor 5", sub:"madura" },
+      { id:"f6", label:"Flor 6", sub:"madura" },
+      { id:"f7", label:"Flor 7", sub:"cierre" },
+      { id:"flush", label:"Flor 8", sub:"agua" }
+    ],
+    products: [
+      { name:"ATA NRG Growth-C", u:"ml", d:[{min:1,max:3},{min:3,max:5},{min:3,max:5},{min:3,max:5},{min:3,max:5},{min:3,max:5},{min:3,max:5},{min:3,max:5},{min:3,max:5},null] },
+      { name:"ATA NRG Bloom-C", u:"ml", d:[null,null,{min:1,max:3},{min:1,max:3},{min:1,max:3},{min:1,max:3},{min:1,max:3},{min:1,max:3},{min:1,max:3},null] },
+      { name:"ATA NRG Flavor", u:"ml", d:[null,null,null,null,null,null,{min:0.5,max:1},{min:0.5,max:1},{min:0.5,max:1},null] },
+      { name:"ATA NRG Root-C", u:"ml", d:[{min:1,max:5},null,null,null,null,null,null,null,null,null] },
+      { name:"ATA NRG Flower-C", u:"ml", d:[null,{min:1,max:5},{min:1,max:5},{min:1,max:5},{min:1,max:5},{min:1,max:5},{min:1,max:5},{min:1,max:5},{min:1,max:5},null] },
+      { name:"ATA NRG Alga-C", u:"ml", d:[null,{min:1,max:2},{min:1,max:2},{min:1,max:2},{min:1,max:2},{min:1,max:2},{min:1,max:2},{min:1,max:2},{min:1,max:2},null] }
+    ]
+  },
+  {
+    id: "atami-vgn-soil",
+    brand: "Atami",
+    name: "Atami VGN · Orgánica / vegana",
+    source: "Guía oficial Atami VGN Organic (ml/L). pH 5,0–6,0. Poco apto para riego automático (olores / biofilm).",
+    sourceUrl: "https://atami.com/es/guias-para-el-cultivo",
+    weeks: [
+      { id:"g1", label:"Veg 1", sub:"crec." },
+      { id:"g2", label:"Veg 2", sub:"crec." },
+      { id:"f1", label:"Flor 1", sub:"inicio" },
+      { id:"f2", label:"Flor 2", sub:"inicio" },
+      { id:"f3", label:"Flor 3", sub:"flor" },
+      { id:"f4", label:"Flor 4", sub:"flor" },
+      { id:"f5", label:"Flor 5", sub:"madura" },
+      { id:"f6", label:"Flor 6", sub:"madura" },
+      { id:"f7", label:"Flor 7", sub:"cierre" },
+      { id:"flush", label:"Flor 8", sub:"agua" }
+    ],
+    products: [
+      { name:"VGN 5-2-2", u:"ml", d:[{min:3,max:4},{min:3,max:5},{min:2,max:4},{min:2,max:4},{min:2,max:3},{min:2,max:3},{min:1,max:2},{min:1,max:2},{min:1,max:2},null] },
+      { name:"VGN 2-2-4", u:"ml", d:[{min:1,max:3},{min:2,max:4},{min:3,max:5},{min:3,max:5},{min:3,max:5},{min:3,max:5},{min:3,max:5},{min:3,max:5},{min:3,max:5},null] },
+      { name:"VGN 1-4-4", u:"ml", d:[{min:0,max:1},{min:0,max:1},{min:1,max:2},{min:1,max:2},{min:2,max:4},{min:2,max:4},{min:3,max:5},{min:3,max:5},{min:3,max:5},null] },
+      { name:"VGN CalMag", u:"ml", d:[{min:1,max:2},{min:1,max:2},{min:1,max:2},{min:1,max:2},{min:1,max:2},{min:1,max:2},{min:1,max:2},{min:1,max:2},{min:1,max:2},null] }
     ]
   }
 ];
