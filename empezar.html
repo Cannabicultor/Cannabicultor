@@ -301,6 +301,15 @@ const fill = document.getElementById('fill');
 const stepLabel = document.getElementById('stepLabel');
 const cta = document.getElementById('cta');
 
+function medir(evento, parametros = {}){
+  if(typeof window.gtag !== 'function') return;
+  window.gtag('event', evento, {
+    onboarding_step: state.p,
+    source: new URLSearchParams(window.location.search).get('utm_source') || 'direct',
+    ...parametros
+  });
+}
+
 async function iniciar(){
   try{
     const r = await fetch(`${WORKER_URL}/onboarding/start`, { method:'POST', headers:{'Content-Type':'application/json'}, body:'{}' });
@@ -331,19 +340,22 @@ function mostrar(p){
 
 function configurarCTA(p){
   cta.style.display = 'block'; cta.disabled = false; cta.onclick = ctaDefault;
-  if(p === 0){ cta.textContent = 'Empezar'; }
+  if(p === 0){ cta.textContent = 'Diagnosticar mi cultivo gratis'; }
   else if(p === 1 || p === 4){ cta.style.display = 'none'; }
   else if(p === 2){ cta.style.display = state.segmento === 'empezar' ? 'none' : 'none'; } // P2 avanza al tocar opción
   else if(p === 3){ cta.style.display = 'none'; }
   else if(p === 5){ cta.textContent = 'Reclamar mi plaza de Fundador'; }
 }
-function ctaDefault(){ if(state.p===0) mostrar(1); else if(state.p===5){ state.modoLogin ? entrar() : registrar(); } }
-cta.addEventListener('click', ctaDefault);
+function ctaDefault(){
+  if(state.p===0){ medir('onboarding_start'); mostrar(1); }
+  else if(state.p===5){ state.modoLogin ? entrar() : registrar(); }
+}
 
 // P1
 document.getElementById('optsP1').addEventListener('click', e => {
   const b = e.target.closest('.opt'); if(!b) return;
   state.segmento = b.dataset.val;
+  medir('onboarding_segment_selected', { segmento: state.segmento });
   guardarPaso('P1','segmento',state.segmento);
   construirP2(state.segmento);
   mostrar(2);
@@ -386,6 +398,7 @@ function construirP2(seg){
 document.getElementById('optsP2').addEventListener('click', e => {
   const b = e.target.closest('.opt'); if(!b) return;
   state.intencion = b.dataset.val;
+  medir('onboarding_intent_selected', { segmento: state.segmento, intencion: state.intencion });
   guardarPaso('P2','intencion',state.intencion);
   if(state.segmento === 'cultivando'){ mostrar(3); }
   else{ ajustarP5(); mostrar(5); }
@@ -408,6 +421,7 @@ document.getElementById('noPhoto').addEventListener('click', () => mostrar(5));
 
 async function procesarFoto(file){
   if(!file) return;
+  medir('onboarding_photo_selected');
   const thinking = document.getElementById('thinking');
   const replyBox = document.getElementById('reply');
   const replyText = document.getElementById('replyText');
@@ -479,6 +493,7 @@ async function diagnosticar(base64){
     document.getElementById('replyText').textContent = d.reply || 'No he podido analizar la foto. Prueba con otra más clara.';
     document.getElementById('reply').style.display = 'block';
     state.fotoSubida = true;
+    medir('onboarding_diagnosis_completed');
     guardarPaso('P3', 'diagnostico_recibido', true);
     const noPh = document.getElementById('noPhoto'); if(noPh) noPh.style.display = 'none';
     document.getElementById('saveBox').style.display = 'block';
@@ -526,6 +541,7 @@ function registrar(){
   if(!consent){ err.textContent='Debes confirmar tu edad y aceptar los términos.'; err.style.display='block'; return; }
 
   registrando = true;
+  medir('sign_up_start', { method: 'email', segmento: state.segmento || 'unknown' });
   const ctaP3 = document.getElementById('ctaP3');
   const ctaActivo = (state.p === 3 && ctaP3) ? ctaP3 : cta;
   ctaActivo.disabled = true; ctaActivo.textContent = 'Guardando tu análisis…';
@@ -540,7 +556,7 @@ function registrar(){
   })
   .then(r => r.json())
   .then(d => {
-    if(d.ok && d.token){ guardarSesion(d); window.location.href = destApp(); }
+    if(d.ok && d.token){ medir('sign_up', { method: 'email' }); guardarSesion(d); window.location.href = destApp(); }
     else if(d.fundador_agotado){ window.location.href = d.stripe_semilla || 'https://buy.stripe.com/3cI00c9Ex8WH22PenB6AM04'; }
     else if(d.needs_login){ if(state.p===3){ syncCredsDesdeP3(); mostrar(5); } activarModoLogin(); }
     else { registrando=false; ctaActivo.disabled=false; ctaActivo.textContent = state.p===3 ? 'Guarda este análisis y entra en el diario' : 'Reclamar mi plaza de Fundador'; err.textContent=d.error||'No se pudo crear la cuenta.'; err.style.display='block'; }
@@ -589,13 +605,14 @@ function entrar(){
   const err = document.getElementById('err'); err.style.display = 'none'; err.style.color = 'var(--danger)';
   if(password.length < 1){ err.textContent = 'Escribe tu contraseña.'; err.style.display = 'block'; return; }
   registrando = true; cta.disabled = true; cta.textContent = 'Entrando…';
+  medir('login_start', { method: 'email' });
   fetch(`${WORKER_URL}/auth/login`, {
     method:'POST', headers:{'Content-Type':'application/json'},
     body: JSON.stringify({ email, password, session_id: state.sessionId })
   })
   .then(r => r.json())
   .then(d => {
-    if(d.ok && d.token){ guardarSesion(d); window.location.href = destApp(); }
+    if(d.ok && d.token){ medir('login', { method: 'email' }); guardarSesion(d); window.location.href = destApp(); }
     else { registrando=false; cta.disabled=false; cta.textContent='Entrar'; err.textContent='Contraseña incorrecta. Prueba de nuevo o usa "¿Olvidaste tu contraseña?".'; err.style.display='block'; }
   })
   .catch(() => { registrando=false; cta.disabled=false; cta.textContent='Entrar'; err.textContent='Error de conexión. Inténtalo de nuevo.'; err.style.display='block'; });
@@ -617,7 +634,7 @@ document.getElementById('ctaP3').addEventListener('click', () => { syncCredsDesd
 document.getElementById('skipSave').addEventListener('click', () => mostrar(4));
 
 mostrar(0);
+medir('onboarding_view');
 </script>
-<script src="/assets/ac-urgent-banner.js" defer></script>
 </body>
 </html>
