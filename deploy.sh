@@ -32,6 +32,7 @@ HTML_FILES=(
   atlas_landrace.html
   banco-genetica.html
   growers-alliance.html
+  partners.html
 )
 
 for file in "${HTML_FILES[@]}"; do
