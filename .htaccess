@@ -12,6 +12,12 @@
   RewriteCond %{HTTP_HOST} ^cannabicultor\.com$ [NC]
   RewriteRule ^(.*)$ https://www.cannabicultor.com/$1 [L,R=301]
 
+  # Redirect 301: Atlas antiguo (underscore) → Atlas correcto (guión)
+  RewriteRule ^atlas_landraces/(.*)$ https://www.cannabicultor.com/atlas-landraces/$1 [L,R=301]
+
+  # Redirect de la página principal antigua (por si aún se usa)
+  RewriteRule ^atlas_landrace\.html$ https://www.cannabicultor.com/atlas-landraces/ [L,R=301]
+
   RewriteRule ^analytics\.html$ /trafico.html [R=301,L]
 
   # Legacy atlas (guion) → misma versión canónica limpia
