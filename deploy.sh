@@ -112,6 +112,15 @@ if [ -d assets/icons ]; then
   done
 fi
 
+# Press kit / prensa (HTML estático a mano): /prensa/index.html
+if [ -d prensa ]; then
+  mkdir -p "$DEPLOYPATH/prensa"
+  for file in prensa/*.html; do
+    [ -f "$file" ] || continue
+    /bin/cp -f "$file" "$DEPLOYPATH/prensa/"
+  done
+fi
+
 # Fichas del Banco Genético: HTML estático hecho a mano en la subcarpeta
 # genetica/ (no es un directorio de generador, así que se copia sin --delete).
 if [ -d genetica ]; then

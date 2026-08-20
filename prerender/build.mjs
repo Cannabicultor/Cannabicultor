@@ -508,6 +508,7 @@ ${names.map((n) => `  <sitemap><loc>${SITE}/${n}</loc><lastmod>${TODAY}</lastmod
 const STATIC_URLS = [
   { loc: `${SITE}/`, priority: '1.0', changefreq: 'weekly', lastmod: TODAY },
   { loc: `${SITE}/cultivo-con-ia/`, priority: '0.9', changefreq: 'monthly', lastmod: TODAY },
+  { loc: `${SITE}/prensa/`, priority: '0.7', changefreq: 'monthly', lastmod: TODAY },
   { loc: `${SITE}/biblioteca/`, priority: '0.9', changefreq: 'monthly', lastmod: TODAY },
   { loc: `${SITE}/biblioteca/charlie-garcia-cannabiogen/`, priority: '0.8', changefreq: 'yearly', lastmod: '2026-08-14' },
   { loc: `${SITE}/biblioteca/sam-the-skunkman-legado/`, priority: '0.8', changefreq: 'yearly', lastmod: '2026-08-14' },
