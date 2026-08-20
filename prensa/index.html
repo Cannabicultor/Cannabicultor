@@ -91,8 +91,10 @@ strong{color:var(--text);font-weight:600}
 .tool a.more{font-size:14px;font-weight:500}
 
 .card{background:var(--bg);border:1px solid var(--border);border-radius:16px;padding:26px 28px}
-.logo-box{display:flex;align-items:center;gap:20px;flex-wrap:wrap;margin:8px 0 18px}
-.logo-box img{height:72px;width:auto;background:#fff;border:1px solid var(--border);border-radius:14px;padding:10px}
+.logo-box{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:8px 0 18px}
+.logo-item{background:var(--bg);border:1px solid var(--border);border-radius:14px;padding:18px 20px;display:flex;flex-direction:column;align-items:flex-start;gap:10px}
+.logo-item img{height:72px;width:auto;background:#fff;border:1px solid var(--border);border-radius:14px;padding:10px}
+.logo-item p{margin:0;font-size:14.5px;color:var(--text)}
 
 .final{background:var(--bg);border-radius:18px;padding:36px 28px;text-align:center;margin:44px 0 52px;border:1px solid var(--border)}
 .final h2{margin-bottom:12px}
@@ -109,6 +111,7 @@ footer{border-top:1px solid var(--border);background:var(--bg2)}
   section{padding:36px 0}
   .nl-brand span{display:none}
   .card,.tool{padding:20px}
+  .logo-box{grid-template-columns:1fr}
   .final{padding:28px 20px}
   .btn{width:100%;text-align:center}
 }
@@ -217,10 +220,15 @@ footer{border-top:1px solid var(--border);background:var(--bg2)}
   <section id="press-kit">
     <h2>Material para prensa / creadores</h2>
     <div class="logo-box">
-      <img src="/assets/icono_cannabicultor.png" alt="Logo Cannabicultor">
-      <div>
-        <p style="margin:0 0 10px">Logo oficial de Cannabicultor.</p>
-        <a class="btn-ghost" href="/assets/icono_cannabicultor.png" download>Descargar logo (PNG)</a>
+      <div class="logo-item">
+        <img src="/assets/icono_cannabicultor.png" alt="Logo Cannabicultor">
+        <p>Logo Cannabicultor</p>
+        <a class="btn-ghost" href="/assets/icono_cannabicultor.png" download>Descargar PNG</a>
+      </div>
+      <div class="logo-item">
+        <img src="/assets/logo_publico_4.png" alt="Logo Growers Alliance">
+        <p>Logo Growers Alliance</p>
+        <a class="btn-ghost" href="/assets/logo_publico_4.png" download>Descargar PNG</a>
       </div>
     </div>
     <p>Cannabicultor es la plataforma en español de cultivo de cannabis asistido por IA: base de datos de más de 44.000 variedades, calculadora de VPD y luz, diario de cultivo con memoria y comunidad de cultivadores.</p>
