@@ -261,7 +261,7 @@ async function pg(path, { count = false, signal } = {}) {
 function buildUrl() {
   const q = query.trim().replace(/[,()*]/g, " ").trim();
   if (tab === "variedades") {
-    let u = "variedades?select=id,nombre,tipo,thc_pct,thc_min,thc_max,floracion_dias,genetica,image_url,es_landrace,breeders(breeder_name)"
+    let u = "variedades?select=id,nombre,tipo,thc_pct,thc_min,thc_max,floracion_dias,genetica,image_url,es_landrace,es_clon,breeders(breeder_name,tipo_semillas)"
           + "&activa=is.true";
     if (q) u += "&nombre=ilike.*" + encodeURIComponent(q) + "*";
     if (filter === "cbd=1") u += "&or=(tipo.eq.CBD,cbd_pct.gte.4,cbd_max.gte.4)";
@@ -311,6 +311,10 @@ function thumbEl(url, name) {
   return t;
 }
 
+function isClon(v) {
+  return !!(v.es_clon || v.tipo === "clon" || v.breeders?.tipo_semillas === "solo clon");
+}
+
 function cardVariedad(v) {
   const b = document.createElement("button");
   b.className = "card";
@@ -318,11 +322,12 @@ function cardVariedad(v) {
   const body = document.createElement("div");
   body.className = "card-body";
   const thc = thcLabel(v);
+  const clon = isClon(v);
   body.innerHTML =
     '<div class="card-title">' + esc(v.nombre) + '</div>' +
-    '<div class="card-sub">' + esc(v.breeders?.breeder_name || "Breeder desconocido") + '</div>' +
+    '<div class="card-sub">' + esc(clon ? "Solo clon · sin semillas" : (v.breeders?.breeder_name || "Breeder desconocido")) + '</div>' +
     '<div class="badges">' +
-      (v.tipo ? '<span class="badge tipo">' + esc(cap(v.tipo)) + '</span>' : "") +
+      (clon ? '<span class="badge tipo">Solo clon</span>' : (v.tipo ? '<span class="badge tipo">' + esc(cap(v.tipo)) + '</span>' : "")) +
       (thc ? '<span class="badge thc">THC ' + thc + '</span>' : "") +
       (v.floracion_dias ? '<span class="badge">' + v.floracion_dias + ' días flora</span>' : "") +
       (v.es_landrace ? '<span class="badge thc">Landrace</span>' : "") +
@@ -374,17 +379,18 @@ function genLine(g){
 async function openVariedad(id) {
   openSheet('<div class="sk" style="height:120px"></div>');
   try {
-    const { data } = await pg("variedades?select=*,breeders(breeder_name,website,pais_origen)&id=eq." + id + "&limit=1");
+    const { data } = await pg("variedades?select=*,breeders(breeder_name,website,pais_origen,tipo_semillas)&id=eq." + id + "&limit=1");
     const v = data[0]; if (!v) return closeSheet();
     const thc = thcLabel(v);
     const cbd = v.cbd_pct ?? v.cbd_max;
+    const clon = isClon(v);
     openSheet(
       '<div class="sheet-head">' + thumbEl(v.image_url, v.nombre).outerHTML +
         '<div><div class="sheet-title">' + esc(v.nombre) + '</div>' +
-        '<div class="sheet-breeder">' + esc(v.breeders?.breeder_name || "") + (v.breeders?.pais_origen ? " · " + esc(v.breeders.pais_origen) : "") + '</div></div>' +
+        '<div class="sheet-breeder">' + esc(clon ? "Solo clon · sin semillas" : (v.breeders?.breeder_name || "")) + (!clon && v.breeders?.pais_origen ? " · " + esc(v.breeders.pais_origen) : "") + '</div></div>' +
       '</div>' +
       '<div class="grid">' +
-        statCard("Tipo", v.tipo ? esc(cap(v.tipo)) : null) +
+        statCard("Tipo", clon ? "Solo clon" : (v.tipo ? esc(cap(v.tipo)) : null)) +
         statCard("THC", thc, true) +
         statCard("CBD", cbd ? (+cbd) + "%" : null) +
         statCard("Floración", v.floracion_dias ? v.floracion_dias + " días" : null) +
@@ -398,7 +404,7 @@ async function openVariedad(id) {
       tagRow("Aromas", v.aromas) +
       (v.descripcion ? '<div class="section"><div class="k">Descripción</div><p>' + esc(v.descripcion) + '</p></div>' : "") +
       (v.premios ? '<div class="section"><div class="k">Premios</div><p>' + esc(v.premios) + '</p></div>' : "") +
-      (v.breeders?.website ? '<a class="link-btn" href="' + esc(v.breeders.website) + '" target="_blank" rel="noopener">Web del breeder →</a>' : "") +
+      (!clon && v.breeders?.website ? '<a class="link-btn" href="' + esc(v.breeders.website) + '" target="_blank" rel="noopener">Web del breeder →</a>' : "") +
       '<div id="revMount"></div>'
     );
     if (window.CCResenas) CCResenas.mount(document.getElementById('revMount'), 'variedad', v.id);

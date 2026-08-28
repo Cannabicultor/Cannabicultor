@@ -12,3 +12,16 @@ pipeline/kb/.venv/
 pipeline/kb/**/__pycache__/
 research/kb/pdfs/
 research/kb/txt/
+
+# Codebase memory index (local, generado por codebase-memory-mcp)
+.codebase-memory/
+
+# Catalogación de fotos (local, muy pesado, no es código)
+.catalogacion-fotos/
+
+# Python cache en todo el repo
+__pycache__/
+*.pyc
+
+# Backups
+*.bak

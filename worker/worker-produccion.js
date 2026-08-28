@@ -25,9 +25,13 @@ const JWT_TTL_SEC = 8 * 60 * 60;
 const RESET_TTL_MS = 60 * 60 * 1000;
 const ONBOARDING_TTL_SEC = 2 * 60 * 60;
 
+// Origenes de desarrollo local (cualquier puerto) para probar el widget /asesor.
+const LOCAL_ORIGIN_RE = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/;
+
 function corsHeaders(request) {
   const origin = request.headers.get('Origin') || '';
-  const allowed = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
+  const isLocal = LOCAL_ORIGIN_RE.test(origin);
+  const allowed = (ALLOWED_ORIGINS.includes(origin) || isLocal) ? origin : ALLOWED_ORIGINS[0];
   return {
     'Access-Control-Allow-Origin': allowed,
     'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
@@ -929,6 +933,30 @@ async function handleChat(body, env) {
   }
 }
 
+async function hasBenchmarkAccess(request, env) {
+  const provided = (request.headers.get('Authorization') || '').replace(/^Bearer\s+/i, '');
+  if (!env.BENCHMARK_API_KEY) return false;
+  const encoder = new TextEncoder();
+  const [providedHash, expectedHash] = await Promise.all([
+    crypto.subtle.digest('SHA-256', encoder.encode(provided)),
+    crypto.subtle.digest('SHA-256', encoder.encode(env.BENCHMARK_API_KEY)),
+  ]);
+  return crypto.subtle.timingSafeEqual(providedHash, expectedHash);
+}
+
+async function handleBenchmarkGrok(body, env) {
+  const prompt = extractLastUserText(body?.messages || []);
+  if (!prompt) return { status: 400, data: { error: 'Faltan mensajes' } };
+  const response = await fetch('https://api.x.ai/v1/chat/completions', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${env.XAI_API_KEY}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ model: 'grok-4-1-fast-reasoning', temperature: 0, messages: [{ role: 'user', content: prompt }] }),
+  });
+  if (!response.ok) return { status: response.status, data: { error: 'Grok no disponible' } };
+  const value = await response.json();
+  return { status: 200, data: { reply: value.choices?.[0]?.message?.content || '' } };
+}
+
 // =========================================================================
 // AUTH
 // =========================================================================
@@ -1423,6 +1451,214 @@ async function handleListDiario(url, env, request) {
   return { status: 200, data: { ok: true, entradas, fechas, fecha: fechaOk ? fecha : null } };
 }
 
+function htmlEsc(s) {
+  return String(s ?? '').replace(/[&<>"']/g, (c) => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+  }[c]));
+}
+
+function bytesToBase64(bytes) {
+  const u8 = bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes);
+  let bin = '';
+  const chunk = 0x8000;
+  for (let i = 0; i < u8.length; i += chunk) {
+    bin += String.fromCharCode.apply(null, u8.subarray(i, i + chunk));
+  }
+  return btoa(bin);
+}
+
+async function fetchFotoBase64(env, path) {
+  const clean = normalizeFotoPath(path);
+  if (!clean || !env.SUPABASE_SERVICE_KEY) return null;
+  const res = await fetch(`${SUPABASE_URL}/storage/v1/object/plantas/${encodeStoragePath(clean)}`, {
+    headers: {
+      apikey: env.SUPABASE_SERVICE_KEY,
+      Authorization: `Bearer ${env.SUPABASE_SERVICE_KEY}`,
+    },
+  });
+  if (!res.ok) return null;
+  const buf = await res.arrayBuffer();
+  if (!buf.byteLength || buf.byteLength > 4_000_000) return null;
+  const mime = res.headers.get('content-type') || 'image/jpeg';
+  return `data:${mime};base64,${bytesToBase64(buf)}`;
+}
+
+function slugExportName(s) {
+  return String(s || 'cultivo')
+    .toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '')
+    .slice(0, 40) || 'cultivo';
+}
+
+const DIARIO_INFORME_PAGE = `<!DOCTYPE html>
+<html lang="es"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Exportar diario · Cannabicultor</title>
+<style>
+body{font-family:Inter,system-ui,sans-serif;background:#f5f7f4;color:#151515;margin:0;padding:28px}
+.box{max-width:420px;margin:40px auto;background:#fff;border:1px solid #e6e8e4;border-radius:16px;padding:28px;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+h1{font-size:22px;margin:0 0 8px}
+p{color:#6f746f;font-size:14px;line-height:1.5}
+label{display:block;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#6f746f;margin:14px 0 6px}
+input{width:100%;box-sizing:border-box;padding:12px;border:1px solid #ddd;border-radius:10px;font:15px inherit}
+button{margin-top:18px;width:100%;border:0;background:#1a5c32;color:#fff;border-radius:999px;padding:13px;font-weight:700;font-size:15px;cursor:pointer}
+button:disabled{opacity:.6}
+.err{color:#b94b42;font-size:13px;margin-top:10px}
+</style></head><body>
+<div class="box">
+<h1>Exportar diario para un consultor</h1>
+<p>Entra con la misma cuenta del dashboard. Se descarga un HTML con apuntes y fotos, listo para enviar o imprimir a PDF.</p>
+<form id="f">
+<label>Email</label><input name="email" type="email" autocomplete="username" required>
+<label>Contraseña</label><input name="password" type="password" autocomplete="current-password" required>
+<button type="submit">Descargar informe</button>
+<div class="err" id="err"></div>
+</form>
+</div>
+<script>
+const API = location.origin;
+document.getElementById('f').onsubmit = async (e) => {
+  e.preventDefault();
+  const err = document.getElementById('err');
+  const btn = e.target.querySelector('button');
+  err.textContent = '';
+  btn.disabled = true; btn.textContent = 'Preparando…';
+  try {
+    const fd = new FormData(e.target);
+    const login = await fetch(API + '/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: fd.get('email'), password: fd.get('password') })
+    });
+    const data = await login.json();
+    if (!login.ok || !data.token) throw new Error(data.error || 'No se pudo entrar');
+    const q = new URLSearchParams({ email: data.email, limit: '200' });
+    const exp = await fetch(API + '/diario/export?' + q, { headers: { Authorization: 'Bearer ' + data.token } });
+    if (!exp.ok) {
+      const j = await exp.json().catch(() => ({}));
+      throw new Error(j.error || 'No se pudo generar el informe');
+    }
+    const blob = await exp.blob();
+    const m = /filename="([^"]+)"/.exec(exp.headers.get('Content-Disposition') || '');
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = m ? m[1] : 'diario-cultivo.html';
+    a.click();
+    btn.textContent = 'Descargado';
+  } catch (ex) {
+    err.textContent = ex.message || 'Error';
+    btn.textContent = 'Descargar informe';
+    btn.disabled = false;
+  }
+};
+</script>
+</body></html>`;
+
+/** GET /diario/export — HTML autocontenido (apuntes + fotos) para enviar a un consultor. */
+async function handleExportDiario(url, env, request) {
+  const listed = await handleListDiario(url, env, request);
+  if (listed.status !== 200) return listed;
+  const email = (url.searchParams.get('email') || '').trim().toLowerCase();
+  const user = email ? await getUserByEmail(env, email) : null;
+  const perfil = (user && user.perfil_cultivo && typeof user.perfil_cultivo === 'object') ? user.perfil_cultivo : {};
+  const cultivo = (perfil.cultivo && typeof perfil.cultivo === 'object') ? perfil.cultivo : {};
+  const nombre = cultivo.nombre || perfil.nombre || perfil.genetica || cultivo.genetica || 'Cultivo';
+  const genetica = cultivo.genetica || perfil.genetica || '';
+  const fase = cultivo.fase || perfil.fase || '';
+  const setup = cultivo.setup || perfil.setup || '';
+  const inicio = cultivo.fechaInicio || perfil.fechaInicio || '';
+  const entradas = listed.data.entradas || [];
+
+  const paths = [];
+  for (const e of entradas) {
+    if (Array.isArray(e.fotos)) e.fotos.forEach((f) => { if (f && f.url) paths.push(f.url); });
+    else if (e.foto_url) paths.push(e.foto_url);
+  }
+  const unique = [...new Set(paths.map(normalizeFotoPath).filter(Boolean))].slice(0, 80);
+  const embeds = new Map();
+  await Promise.all(unique.map(async (p) => {
+    const data = await fetchFotoBase64(env, p);
+    if (data) embeds.set(p, data);
+  }));
+
+  const cell = (k, v) => (v == null || v === '' ? '' : `<div class="kv"><span>${htmlEsc(k)}</span><b>${htmlEsc(String(v))}</b></div>`);
+  const byDate = {};
+  for (const e of entradas) {
+    const f = e.fecha || 'sin-fecha';
+    (byDate[f] ||= []).push(e);
+  }
+  const fechas = Object.keys(byDate).sort().reverse();
+  const diasHtml = fechas.map((fecha) => {
+    const items = byDate[fecha].map((e) => {
+      const fert = e.fertilizantes == null ? null
+        : (typeof e.fertilizantes === 'string' ? e.fertilizantes : JSON.stringify(e.fertilizantes));
+      const fotoPaths = (Array.isArray(e.fotos) && e.fotos.length)
+        ? e.fotos.map((f) => normalizeFotoPath(f && f.url)).filter(Boolean)
+        : (e.foto_url ? [normalizeFotoPath(e.foto_url)] : []);
+      const imgs = fotoPaths.map((p) => embeds.get(p)).filter(Boolean)
+        .map((src) => `<img src="${src}" alt="Foto del cultivo">`).join('');
+      return `<article class="entry">
+        <div class="meta">${e.created_at ? htmlEsc(new Date(e.created_at).toLocaleString('es-ES')) : ''}${e.etapa ? ' · ' + htmlEsc(e.etapa) : ''}${e.dia_ciclo != null ? ' · Día ' + e.dia_ciclo : ''}</div>
+        <div class="grid">
+          ${cell('pH', e.ph)}${cell('EC', e.ec)}${cell('Temp °C', e.temp)}${cell('Hum %', e.hum)}
+          ${cell('VPD', e.vpd)}${cell('Riego (L)', e.riego_litros)}
+          ${cell('Riego pH', e.riego_ph)}${cell('Riego EC', e.riego_ec)}
+          ${cell('Runoff pH', e.runoff_ph)}${cell('Runoff EC', e.runoff_ec)}
+          ${cell('Fertilizantes', fert)}${cell('Plagas', e.plagas)}
+          ${cell('Hongos', e.hongos)}${cell('Tratamiento', e.tratamiento)}
+          ${cell('Poda', e.poda)}${cell('Trasplante', e.trasplante ? 'Sí' : null)}
+        </div>
+        ${e.notas ? `<p class="notas">${htmlEsc(String(e.notas))}</p>` : ''}
+        ${imgs ? `<div class="fotos">${imgs}</div>` : ''}
+      </article>`;
+    }).join('');
+    return `<section><h2>${htmlEsc(fecha)}</h2>${items}</section>`;
+  }).join('');
+
+  const html = `<!DOCTYPE html>
+<html lang="es"><head><meta charset="utf-8">
+<title>Diario de cultivo · ${htmlEsc(nombre)}</title>
+<style>
+body{font-family:Inter,system-ui,sans-serif;background:#f5f7f4;color:#151515;margin:0;padding:24px}
+.wrap{max-width:760px;margin:0 auto;background:#fff;border:1px solid #e6e8e4;border-radius:16px;padding:28px 28px 40px}
+h1{font-size:26px;margin:0 0 6px}
+.sub{color:#6f746f;font-size:14px;margin-bottom:18px;line-height:1.5}
+.perfil{display:grid;grid-template-columns:1fr 1fr;gap:8px 16px;margin-bottom:22px;padding:14px;background:#e8f0ea;border-radius:12px;font-size:14px}
+.perfil span{color:#6f746f;display:block;font-size:11px;text-transform:uppercase;letter-spacing:.05em}
+section{margin:22px 0;padding-top:8px;border-top:1px solid #eee}
+h2{font-size:16px;margin:0 0 10px;color:#1a5c32}
+.entry{margin-bottom:16px;padding:12px;border:1px solid #eee;border-radius:12px}
+.meta{font-size:12px;color:#9aa09a;font-weight:600;margin-bottom:8px}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.kv span{display:block;font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:#9aa09a}
+.kv b{font-size:14px}
+.notas{font-size:14px;line-height:1.55;color:#333;margin:10px 0 0}
+.fotos img{display:block;max-width:100%;border-radius:10px;margin-top:10px}
+.foot{margin-top:28px;font-size:11px;color:#9aa09a}
+@media print{body{background:#fff;padding:0}.wrap{border:0}}
+</style></head><body>
+<div class="wrap">
+<h1>Diario de cultivo · ${htmlEsc(nombre)}</h1>
+<p class="sub">Informe para consultor · ${htmlEsc(new Date().toLocaleDateString('es-ES'))} · ${entradas.length} registro${entradas.length===1?'':'s'}${unique.length>embeds.size?` · ${embeds.size} de ${unique.length} fotos incrustadas`:''}</p>
+<div class="perfil">
+  <div><span>Planta / genética</span><b>${htmlEsc(genetica || nombre)}</b></div>
+  <div><span>Fase</span><b>${htmlEsc(fase || '—')}</b></div>
+  <div><span>Inicio</span><b>${htmlEsc(inicio || '—')}</b></div>
+  <div><span>Setup</span><b>${htmlEsc(setup || '—')}</b></div>
+</div>
+${diasHtml || '<p>No hay entradas en el diario.</p>'}
+<p class="foot">Generado por Cannabicultor. Fotos incrustadas en el archivo (se pueden enviar por email o imprimir a PDF).</p>
+</div></body></html>`;
+
+  return {
+    status: 200,
+    filename: `diario-${slugExportName(genetica || nombre)}-${new Date().toISOString().slice(0, 10)}.html`,
+    html,
+  };
+}
+
 /** Foto del chat → inserta o actualiza la entrada de hoy y registra diario_fotos. */
 async function upsertDiarioFoto(env, email, imagenRuta, pregunta, reply) {
   const hoy = new Date().toISOString().slice(0, 10);
@@ -1909,6 +2145,146 @@ async function handleCreateAsociacion(body, env, request) {
 }
 
 // =========================================================================
+// ASESOR CANNABICULTOR (widget B2B embebible) — prototipo single-tenant
+// Ruta pública /asesor: recomienda productos del catálogo demo. Sin JWT.
+// Catálogo de prueba: tabla demo_growshop_productos (NO es tienda real).
+// =========================================================================
+const ASESOR_TABLA = 'demo_growshop_productos';
+const ASESOR_STOPWORDS = new Set(
+  ('para con una unos unas del los las que como cual necesito quiero tengo mi mis me te se un el la de en y a o u es por su sus muy mas más algo alguna algun algún cuanto cuánto cuál sobre entre este esta esto estos estas cannabis planta plantas cultivo growshop hola gracias porfa favor recomienda recomiendas mejor bueno buena').split(
+    ' '
+  )
+);
+
+function asesorKeywords(texto) {
+  const norm = String(texto || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+  const seen = [];
+  (norm.match(/[a-z0-9]+/g) || []).forEach((w) => {
+    if (w.length < 3 || ASESOR_STOPWORDS.has(w)) return;
+    if (seen.indexOf(w) === -1) seen.push(w);
+  });
+  return seen.slice(0, 6);
+}
+
+async function buscarProductosAsesor(env, texto, categoria) {
+  const cols = 'sku,nombre,marca,categoria,descripcion_texto,precio_con_iva,stock,imagen_principal,slug';
+  const kws = asesorKeywords(texto);
+  const params = ['select=' + cols, 'limit=14'];
+  if (kws.length) {
+    const ors = [];
+    kws.forEach((kw) => {
+      const v = '*' + kw + '*';
+      ors.push('nombre.ilike.' + v, 'descripcion_texto.ilike.' + v, 'categoria.ilike.' + v);
+    });
+    params.push('or=(' + ors.join(',') + ')');
+  }
+  if (categoria) params.push('categoria=ilike.*' + encodeURIComponent(categoria) + '*');
+  params.push('order=stock.desc.nullslast');
+  const res = await sbRequest(env, ASESOR_TABLA + '?' + params.join('&'), { method: 'GET' });
+  const rows = Array.isArray(res.data) ? res.data : [];
+  // Si la búsqueda por palabras no devuelve nada, mostramos algo del catálogo.
+  if (!rows.length && kws.length) {
+    const fb = await sbRequest(env, ASESOR_TABLA + '?select=' + cols + '&limit=6&order=stock.desc.nullslast', {
+      method: 'GET',
+    });
+    return Array.isArray(fb.data) ? fb.data : [];
+  }
+  return rows;
+}
+
+function asesorPublicProduct(p) {
+  return {
+    sku: p.sku,
+    nombre: p.nombre,
+    marca: p.marca || null,
+    categoria: p.categoria || null,
+    precio_con_iva: p.precio_con_iva != null ? Number(p.precio_con_iva) : null,
+    imagen_principal: p.imagen_principal || null,
+    slug: p.slug || null,
+  };
+}
+
+const ASESOR_SYSTEM_BASE = `Eres el Asesor de un growshop: un vendedor experto que ayuda a clientes a elegir producto de cultivo (iluminación, extracción, sustratos, macetas, medidores, riego, fertilizantes).
+
+REGLAS ESTRICTAS:
+1. SOLO puedes recomendar productos que aparezcan en el CATÁLOGO de abajo. Nunca inventes productos, marcas ni precios.
+2. Cita los productos que recomiendes por su NÚMERO entre corchetes, ej: [2]. Puedes recomendar 1–3 como máximo.
+3. Si el catálogo no tiene nada adecuado para lo que pide, dilo con honestidad y pide más datos (espacio, fase, presupuesto). No fuerces una venta.
+4. Respuesta breve y útil: máximo 8 líneas. Primero responde directo, luego justifica en una frase.
+5. Tono cercano, tuteo, sin tecnicismos innecesarios. No inventes datos técnicos que no estén en la descripción del producto.`;
+
+async function handleAsesor(body, env) {
+  const messages = body && Array.isArray(body.messages) ? body.messages : null;
+  if (!messages || !messages.length) return { status: 400, data: { error: 'Faltan mensajes' } };
+  if (!env.ANTHROPIC_API_KEY) return { status: 500, data: { error: 'Asesor no configurado' } };
+
+  let lastUser = '';
+  for (let i = messages.length - 1; i >= 0; i--) {
+    if (messages[i] && messages[i].role === 'user') {
+      lastUser = typeof messages[i].content === 'string' ? messages[i].content : '';
+      break;
+    }
+  }
+
+  const productos = await buscarProductosAsesor(env, lastUser, body && body.categoria);
+  const contexto = productos.length
+    ? productos
+        .map((p, i) => {
+          const precio = p.precio_con_iva != null ? Number(p.precio_con_iva).toFixed(2) + ' €' : 'precio n/d';
+          const marca = p.marca ? ' — ' + p.marca : '';
+          const desc = String(p.descripcion_texto || '').slice(0, 220);
+          return `[${i + 1}] ${p.nombre}${marca} · ${p.categoria || ''} · ${precio} · stock:${p.stock == null ? '?' : p.stock}\n${desc}`;
+        })
+        .join('\n\n')
+    : '(No hay productos que coincidan con la consulta.)';
+
+  const system = ASESOR_SYSTEM_BASE + '\n\nCATÁLOGO DISPONIBLE:\n' + contexto;
+
+  const anthropicMessages = messages.map((m) => ({
+    role: m.role === 'assistant' ? 'assistant' : 'user',
+    content: typeof m.content === 'string' ? m.content : String(m.content || ''),
+  }));
+
+  const resp = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': env.ANTHROPIC_API_KEY,
+      'anthropic-version': '2023-06-01',
+    },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-5',
+      max_tokens: 600,
+      system,
+      messages: anthropicMessages,
+    }),
+  });
+  if (!resp.ok) {
+    const detail = await resp.text();
+    return { status: 500, data: { error: 'API Error', details: detail } };
+  }
+  const data = await resp.json();
+  const reply = (data.content && data.content[0] && data.content[0].text) || 'No he podido generar respuesta.';
+
+  // Productos citados por [n]; si no cita ninguno, no adjuntamos tarjetas.
+  const cited = [];
+  const re = /\[(\d+)\]/g;
+  let m;
+  while ((m = re.exec(reply)) !== null) {
+    const idx = parseInt(m[1], 10) - 1;
+    if (idx >= 0 && idx < productos.length && cited.indexOf(idx) === -1) cited.push(idx);
+  }
+  const chosen = cited.slice(0, 3).map((i) => asesorPublicProduct(productos[i]));
+  // Limpia las marcas [n] del texto visible.
+  const replyLimpio = reply.replace(/\s*\[\d+\]/g, '');
+
+  return { status: 200, data: { reply: replyLimpio, products: chosen } };
+}
+
+// =========================================================================
 // MAIN HANDLER
 // =========================================================================
 export default {
@@ -1925,6 +2301,34 @@ export default {
         if (path === '/diario/entradas') {
           const r = await handleListDiario(url, env, request);
           return json(r.data, r.status, cors);
+        }
+        if (path === '/diario/export') {
+          const r = await handleExportDiario(url, env, request);
+          if (r.html) {
+            return new Response(r.html, {
+              status: 200,
+              headers: {
+                ...cors,
+                'Content-Type': 'text/html; charset=utf-8',
+                'Content-Disposition': `attachment; filename="${r.filename || 'diario-cultivo.html'}"`,
+              },
+            });
+          }
+          return json(r.data, r.status, cors);
+        }
+        if (path === '/diario/informe') {
+          return new Response(DIARIO_INFORME_PAGE, {
+            status: 200,
+            headers: { ...cors, 'Content-Type': 'text/html; charset=utf-8' },
+          });
+        }
+        if (path === '/fertilizantes' || path === '/fertilizantes.html') {
+          const gh = await fetch('https://raw.githubusercontent.com/Cannabicultor/Cannabicultor/main/fertilizantes.html');
+          if (!gh.ok) return new Response('Guía no disponible', { status: 502, headers: cors });
+          return new Response(await gh.text(), {
+            status: 200,
+            headers: { ...cors, 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'public, max-age=300' },
+          });
         }
         if (path === '/resenas') {
           const r = await handleListResenas(url, env);
@@ -1961,6 +2365,19 @@ export default {
         return json(r.data, r.status, cors);
       }
 
+      // Ruta privada para comparativas reproducibles. No usa una sesión de usuario
+      // ni persiste diagnósticos; solo atiende peticiones autorizadas por secreto.
+      if (path === '/benchmark') {
+        if (!await hasBenchmarkAccess(request, env)) return json({ error: 'No autorizado' }, 401, cors);
+        const result = await handleChat(body, env);
+        return json(result.data, result.status, cors);
+      }
+      if (path === '/benchmark/grok') {
+        if (!await hasBenchmarkAccess(request, env)) return json({ error: 'No autorizado' }, 401, cors);
+        const result = await handleBenchmarkGrok(body, env);
+        return json(result.data, result.status, cors);
+      }
+
       if (path === '/' || path === '/chat') {
         const auth = request.headers.get('Authorization') || '';
         const token = auth.startsWith('Bearer ') ? auth.slice(7) : '';
@@ -1977,6 +2394,7 @@ export default {
         return json(result.data, result.status, cors);
       }
 
+      if (path === '/asesor') { const r = await handleAsesor(body, env); return json(r.data, r.status, cors); }
       if (path === '/cultivo/guardar') { const r = await handleGuardarCultivo(body, env, request); return json(r.data, r.status, cors); }
       if (path === '/perfil/sala') { const r = await handleGuardarSala(body, env, request); return json(r.data, r.status, cors); }
       if (path === '/diario/entrada') { const r = await handleDiarioEntrada(body, env, request); return json(r.data, r.status, cors); }

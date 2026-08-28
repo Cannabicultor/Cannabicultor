@@ -48,6 +48,11 @@ const sb = createClient(SB_URL, SB_KEY);
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const norm = s => (s || '').toString().trim().toLowerCase();
 
+function isGenericStrainImage(url) {
+  if (!url) return true;
+  return /\/og\/|logo|banner|icon|flag|00breeder|placeholder|\/defaults\/|favicon|cat-autoflowering|cabecera|fondo-patron|sample_weed_nug|\/blog\/|_blog_|\/themes\/|\/img\/cms\/|advert|seedshop/i.test(url);
+}
+
 function normalizeForUrl(str) {
   return String(str || '')
     .toLowerCase()
@@ -129,13 +134,17 @@ async function enrichFromSeedfinder(nombre, breederSlug) {
     if (thcMatch) result.thc_max = parseFloat(thcMatch[1]);
     if (cbdMatch) result.cbd_max = parseFloat(cbdMatch[1]);
 
-    // === Imagen de la cepa ===
+    // === Imagen de la cepa (nunca og:logo / arte de categoría / blog) ===
+    const galerie = html.match(/https?:\/\/seedfinder\.eu\/storage\/pics\/galerie\/[^\s"'<>]+\.(?:jpg|jpeg|png|webp)/i);
     const img =
-      $('meta[property="og:image"]').attr('content') ||
-      $('img[src*="strain"], img[src*="bud"], img[src*="flower"]').first().attr('src') ||
-      $('img').filter((i, el) => /product|bud|flower|strain/.test($(el).attr('src') || '')).first().attr('src');
+      (galerie && galerie[0]) ||
+      $('img[src*="galerie"], img[src*="strain"], img[src*="bud"], img[src*="flower"]').first().attr('src') ||
+      $('img').filter((i, el) => /galerie|product|bud|flower|strain/.test($(el).attr('src') || '')).first().attr('src');
 
-    if (img) result.image_url = new URL(img, url).href;
+    if (img) {
+      const abs = new URL(img, url).href;
+      if (!isGenericStrainImage(abs)) result.image_url = abs;
+    }
 
     // Marca la fuente
     result.enrichment_sources = ['seedfinder'];
@@ -226,7 +235,9 @@ async function run() {
     if (breeder.website && (!patch.terpenos || !patch.image_url)) {
       const fromSite = await enrichFromBreederSite(breeder.website, v.nombre);
       if (fromSite.terpenos && !patch.terpenos) patch.terpenos = fromSite.terpenos;
-      if (fromSite.image_url && !patch.image_url) patch.image_url = fromSite.image_url;
+      if (fromSite.image_url && !patch.image_url && !isGenericStrainImage(fromSite.image_url)) {
+        patch.image_url = fromSite.image_url;
+      }
       if (fromSite.enrichment_sources) {
         patch.enrichment_sources = [...(patch.enrichment_sources || []), ...fromSite.enrichment_sources];
       }

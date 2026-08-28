@@ -36,6 +36,13 @@
       '#ac-urgent-banner a.ac-btn:hover{transform:translateY(-1px);}',
       '#ac-urgent-banner .ac-close{background:transparent;border:none;color:#fff;font-size:1.1rem;cursor:pointer;opacity:.75;line-height:1;padding:2px 6px;}',
       '#ac-urgent-banner .ac-close:hover{opacity:1;}',
+      '@media(max-width:640px){',
+      '#ac-urgent-banner{justify-content:flex-start;gap:7px;padding:9px 38px 9px 12px;font-size:.78rem;line-height:1.3;}',
+      '#ac-urgent-banner .ac-dot{display:none;}',
+      '#ac-urgent-banner .ac-links{display:grid;grid-template-columns:1fr 1fr;gap:7px;width:100%;}',
+      '#ac-urgent-banner a.ac-btn{padding:6px 8px;font-size:.74rem;text-align:center;}',
+      '#ac-urgent-banner .ac-close{position:absolute;right:7px;top:8px;}',
+      '}',
       'body.ac-banner-active{padding-top:var(--ac-banner-h,52px);}',
       'body.ac-banner-active nav{top:var(--ac-banner-h,52px) !important;}',
       'html{scroll-padding-top:var(--ac-banner-h,0px);}'
@@ -48,8 +55,8 @@
       '<span class="ac-dot"></span>' +
       '<span><strong>Urgente:</strong> el proyecto de ley antitabaco puede acabar con los clubes sociales de cannabis. Firma antes de que termine el trámite parlamentario.</span>' +
       '<span class="ac-links">' +
-        '<a class="ac-btn" href="https://c.org/ptW5TXJS28" target="_blank" rel="noopener">Firmar petición: clubes</a>' +
-        '<a class="ac-btn" href="https://c.org/GnbVPnQM4v" target="_blank" rel="noopener">Firmar petición: multas</a>' +
+        '<a class="ac-btn" href="https://c.org/ptW5TXJS28" target="_blank" rel="noopener">Firmar: clubes</a>' +
+        '<a class="ac-btn" href="https://c.org/GnbVPnQM4v" target="_blank" rel="noopener">Firmar: multas</a>' +
       '</span>' +
       '<button type="button" class="ac-close" aria-label="Cerrar aviso">✕</button>';
 

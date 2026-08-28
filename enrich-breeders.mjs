@@ -65,8 +65,11 @@ function extractFromHtml(html, baseUrl) {
 
   const redes = [yt && 'YouTube: ' + yt, fb && 'Facebook: ' + fb].filter(Boolean).join(' · ') || null;
 
+  const logoAbs = logo ? absolutize(logo, baseUrl) : null;
+  const logoOk = logoAbs && !/cdninstagram\.com\/rsrc\.php|via\.placeholder|favicon|32x32|16x16/i.test(logoAbs);
+
   return {
-    logo_url: logo ? absolutize(logo, baseUrl) : null,
+    logo_url: logoOk ? logoAbs : null,
     descripcion: desc ? desc.replace(/\s+/g, ' ').slice(0, 280) : null,
     instagram: ig && !['p', 'reel', 'explore'].includes(ig) ? ig : null,
     redes_sociales: redes,

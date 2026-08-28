@@ -1,0 +1,30 @@
+# Generated / static site content — not application code
+breeders/
+variedades/
+atlas-landraces/
+biblioteca/
+videos/
+Fotos/
+Mails/
+informes/
+.catalogacion-fotos/
+node_modules/
+worker/node_modules/
+worker/.wrangler/
+
+# Binary / media
+*.png
+*.jpg
+*.jpeg
+*.webp
+*.gif
+*.ico
+*.pdf
+*.zip
+*.mp4
+*.mov
+*.woff
+*.woff2
+*.ttf
+*.otf
+*.DS_Store
