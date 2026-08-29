@@ -1076,7 +1076,10 @@ function detectDirectorySearchIntent(text) {
   if (!mentionsGrowshop && !mentionsClub) return null;
 
   const asksLocation = /\b(cerca de mi|cerca mio|cerca|donde hay|donde esta|donde encuentro|donde puedo|en mi ciudad|recomiendame|recomienda|conoces alguno|conoces alguna)\b/.test(t);
-  if (!asksLocation) return null;
+  // "growshop en Madrid" / "club en Barcelona": "en <algo>" cuenta como señal de ubicación
+  // aunque no haya verbo de búsqueda explícito.
+  const hasEnLugar = /\ben\s+[a-z]/.test(t);
+  if (!asksLocation && !hasEnLugar) return null;
 
   let tipo = 'ambos';
   if (mentionsGrowshop && !mentionsClub) tipo = 'growshop';
@@ -1125,6 +1128,42 @@ function formatDirectorioContexto(resultados) {
 const DIRECTORY_ASK_CITY_REPLY =
   '¡Claro! ¿En qué ciudad o zona buscas? Así te digo qué hay en el directorio de Cannabicultor.';
 
+/**
+ * Si el turno anterior del asistente fue DIRECTORY_ASK_CITY_REPLY, el usuario está
+ * respondiendo solo con una ciudad (ej. "Alcalá de Henares"), sin repetir "growshop"
+ * ni "cerca de mí". detectDirectorySearchIntent() por sí sola no lo detecta porque
+ * mira solo el último mensaje. Esta función mira el historial: si el assistant
+ * acaba de pedir la ciudad, toma el texto del usuario tal cual como ciudad, y
+ * recupera el "tipo" (growshop/asociacion/ambos) del mensaje de usuario anterior
+ * a esa pregunta (el que sí mencionaba "growshop" o "club").
+ */
+function detectDirectorySearchIntentConHistorial(messages, textoConsulta) {
+  const directo = detectDirectorySearchIntent(textoConsulta);
+  if (directo) return directo;
+
+  const lista = Array.isArray(messages) ? messages : [];
+  if (lista.length < 2) return null;
+  const anterior = lista[lista.length - 2];
+  const anteriorTexto = anterior && typeof anterior.content === 'string' ? anterior.content : '';
+  const fueAskCity = anterior && anterior.role === 'assistant' && anteriorTexto.includes('Así te digo qué hay en el directorio de Cannabicultor');
+  if (!fueAskCity) return null;
+
+  // La respuesta del usuario a "¿en qué ciudad?" es la ciudad en sí, sin más parsing.
+  const ciudad = String(textoConsulta || '').trim().replace(/[?.!]+$/, '');
+  if (!ciudad || ciudad.length < 2 || ciudad.length > 60) return null;
+
+  // Recuperar el tipo (growshop/asociacion/ambos) del mensaje de usuario que originó la pregunta
+  let tipo = 'ambos';
+  for (let i = lista.length - 3; i >= 0; i--) {
+    if (lista[i].role !== 'user') continue;
+    const txt = typeof lista[i].content === 'string' ? lista[i].content : '';
+    const previo = detectDirectorySearchIntent(txt);
+    if (previo) { tipo = previo.tipo; break; }
+  }
+
+  return { tipo, ciudad };
+}
+
 async function handleChat(body, env) {
   const { messages, perfil } = body || {};
   if (!messages || !Array.isArray(messages) || !messages.length) {
@@ -1136,7 +1175,7 @@ async function handleChat(body, env) {
 
   // Directorio de growshops/clubes: intención explícita → consulta directa a Supabase,
   // sin pasar por RAG/LLM si falta la ciudad (ahorra una llamada y es más rápido para el usuario).
-  const dirIntent = detectDirectorySearchIntent(textoConsulta);
+  const dirIntent = detectDirectorySearchIntentConHistorial(messages, textoConsulta);
   if (dirIntent && !dirIntent.ciudad) {
     return {
       status: 200,
