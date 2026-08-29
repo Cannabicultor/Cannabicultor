@@ -1119,7 +1119,12 @@ function detectDirectorySearchIntent(text) {
 
 /** Consulta growshops y/o asociaciones activos por ciudad (ilike). Máx 5 cada uno. */
 async function buscarDirectorioPorCiudad(env, tipo, ciudad) {
-  const qc = `*${encodeURIComponent(ciudad)}*`;
+  // Normalizar a NFC: iOS/Safari a veces manda vocales acentuadas como NFD
+  // (letra base + acento combinante, ej. "a" + "´" en vez de "á" precompuesta).
+  // Los datos en Supabase están en NFC, así que sin esto "Alcalá" (NFD del móvil)
+  // no hace match por ilike contra "Alcalá" (NFC en la BD) aunque se vean idénticos.
+  const ciudadNormalizada = String(ciudad || '').normalize('NFC');
+  const qc = `*${encodeURIComponent(ciudadNormalizada)}*`;
   const out = { growshops: [], asociaciones: [] };
   if (tipo === 'growshop' || tipo === 'ambos') {
     const r = await sbRequest(env, `growshops?select=nombre,ciudad,direccion,telefono,web,instagram&ciudad=ilike.${qc}&activo=eq.true&limit=5`, { method: 'GET' });
