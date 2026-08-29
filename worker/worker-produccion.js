@@ -560,9 +560,11 @@ async function brevoSendResetEmail(env, email, token) {
 // =========================================================================
 // CHAT
 // =========================================================================
-const SCOPE_PROMPT = `Eres el asistente de IA de Cannabicultor, especializado exclusivamente en cultivo de cannabis: variedades/genética, cultivo (luz, sustrato, riego, VPD, nutrientes, fertilizantes, plagas, floración, cosecha), diseño de espacios de cultivo, y temas directamente relacionados con la comunidad cultivadora en España.
+const SCOPE_PROMPT = `Eres el asistente de IA de Cannabicultor, especializado exclusivamente en cultivo de cannabis: variedades/genética, cultivo (luz, sustrato, riego, VPD, nutrientes, fertilizantes, plagas, floración, cosecha), diseño de espacios de cultivo, el DIRECTORIO de growshops/tiendas de cultivo y clubes/asociaciones cannábicas de España, y temas directamente relacionados con la comunidad cultivadora en España.
 
-Si el usuario pregunta algo que NO tiene relación con cultivo de cannabis o el uso de esta plataforma (por ejemplo: reparar un coche, recetas de cocina no relacionadas, tareas de programación ajenas, preguntas generales de cultura, etc.), NO respondas la pregunta. En su lugar, responde brevemente (1-2 frases) indicando que solo puedes ayudar con temas de cultivo de cannabis, y sugiere reformular la pregunta dentro de ese ámbito. No uses el contexto RAG en ese caso, no expliques el motivo con detalle, sé breve.`;
+El directorio de growshops y de clubes/asociaciones es parte del ámbito de esta plataforma: si el usuario pregunta por un growshop, tienda de cultivo o club/asociación cerca de él, en su ciudad, o pide recomendaciones de dónde comprar/asociarse, SÍ debes ayudarle usando la información del directorio que se te proporcione en el contexto (si la hay). Si no tienes datos del directorio para su ciudad, dilo con honestidad y sugiere que puede añadir la ficha desde la plataforma si conoce un sitio no listado.
+
+Si el usuario pregunta algo que NO tiene relación con cultivo de cannabis, el directorio de growshops/clubes, o el uso de esta plataforma (por ejemplo: reparar un coche, recetas de cocina no relacionadas, tareas de programación ajenas, preguntas generales de cultura, etc.), NO respondas la pregunta. En su lugar, responde brevemente (1-2 frases) indicando que solo puedes ayudar con temas de cultivo de cannabis y el directorio de Cannabicultor, y sugiere reformular la pregunta dentro de ese ámbito. No uses el contexto RAG en ese caso, no expliques el motivo con detalle, sé breve.`;
 
 const SCOPE_REJECT_REPLY =
   'Solo puedo ayudarte con cultivo de cannabis y el uso de Cannabicultor. Reformula tu pregunta en ese ámbito (luz, riego, nutrientes, genética, plagas, sala de cultivo, etc.) y te ayudo.';
@@ -593,13 +595,17 @@ function extractReferenciaBreve(chunkContent) {
   return autores ? `${autores}, ${anio}` : `estudio de ${anio}`;
 }
 
-function buildSystemPrompt(perfil, chunks) {
+function buildSystemPrompt(perfil, chunks, directorioContexto) {
   // Scope primero (antes del RAG); el LLM lo ve aunque la heurística no sea concluyente.
   let base = `${SCOPE_PROMPT}
 
 Eres Cannabicultor IA de Growers Alliance. Tono: autoridad con calidez. Tuteo respetuoso.
 Primera frase responde DIRECTAMENTE. Máx 8-12 líneas. Abre UNA puerta al final.
 NUNCA inventes estudios ni legislación.${VISION_PROMPT}`;
+
+  if (directorioContexto) {
+    base += `\n\nDIRECTORIO CANNABICULTOR (usa esto para responder, es la fuente real y actual — NUNCA inventes un growshop, club o dato de contacto que no esté aquí):\n${directorioContexto}`;
+  }
 
   if (chunks && chunks.length > 0) {
     const contexto = chunks.map((c, i) => {
@@ -683,6 +689,8 @@ function isClearlyOffTopicCultivo(text, withVision) {
     'maceta', 'macetas', 'sala de cultivo', 'tienda de cultivo', 'grow shop', 'extraccion', 'filtro de carbon',
     'poda', 'lst', 'scrog', 'sog', 'topping', 'fim', 'deficiencia', 'exceso', 'quemadura',
     'thc', 'cbd', 'terpeno', 'landrace', 'breeder', 'banco de semillas', 'germinacion', 'plantula',
+    'growshop', 'growshops', 'club', 'clubes', 'asociacion', 'asociaciones', 'cannabico', 'cannabica',
+    'directorio', 'cerca de mi', 'donde comprar', 'donde hay',
   ];
 
   const offTopic = [
@@ -1052,6 +1060,71 @@ async function generateChatReply(system, anthropicMessages, withVision, env) {
   throw err;
 }
 
+/**
+ * Detecta intención de "buscar growshop/club/asociación cerca de mí o en <ciudad>".
+ * Heurística barata, sin red. Devuelve { tipo, ciudad } o null si no aplica.
+ * tipo: 'growshop' | 'asociacion' | 'ambos'
+ * ciudad: string si se detectó una ciudad en el texto, null si no (habrá que preguntarla).
+ */
+function detectDirectorySearchIntent(text) {
+  const raw = String(text || '').trim();
+  if (raw.length < 4) return null;
+  const t = raw.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
+  const mentionsGrowshop = /\b(growshop|grow shop|tienda de cultivo|tiendas de cultivo)\b/.test(t);
+  const mentionsClub = /\b(club|clubes|asociacion|asociaciones|club cannabico|asociacion cannabica)\b/.test(t);
+  if (!mentionsGrowshop && !mentionsClub) return null;
+
+  const asksLocation = /\b(cerca de mi|cerca mio|cerca|donde hay|donde esta|donde encuentro|donde puedo|en mi ciudad|recomiendame|recomienda|conoces alguno|conoces alguna)\b/.test(t);
+  if (!asksLocation) return null;
+
+  let tipo = 'ambos';
+  if (mentionsGrowshop && !mentionsClub) tipo = 'growshop';
+  if (mentionsClub && !mentionsGrowshop) tipo = 'asociacion';
+
+  // Intento simple de extraer ciudad: "en <ciudad>" al final o tras "de"
+  let ciudad = null;
+  const m = raw.match(/\ben\s+([A-ZÁÉÍÓÚÑa-záéíóúñ][A-ZÁÉÍÓÚÑa-záéíóúñ\s]{2,30})\s*[?.!]?$/);
+  if (m) {
+    const candidate = m[1].trim();
+    // Evitar falsos positivos tipo "en mi ciudad" / "en españa"
+    if (!/^(mi ciudad|espana|mi zona|mi barrio)$/i.test(candidate)) {
+      ciudad = candidate;
+    }
+  }
+
+  return { tipo, ciudad };
+}
+
+/** Consulta growshops y/o asociaciones activos por ciudad (ilike). Máx 5 cada uno. */
+async function buscarDirectorioPorCiudad(env, tipo, ciudad) {
+  const qc = encodeURIComponent(`*${ciudad}*`);
+  const out = { growshops: [], asociaciones: [] };
+  if (tipo === 'growshop' || tipo === 'ambos') {
+    const r = await sbRequest(env, `growshops?select=nombre,ciudad,direccion,telefono,web,instagram&ciudad=ilike.${qc}&activo=eq.true&limit=5`, { method: 'GET' });
+    if (r.ok && Array.isArray(r.data)) out.growshops = r.data;
+  }
+  if (tipo === 'asociacion' || tipo === 'ambos') {
+    const r = await sbRequest(env, `asociaciones?select=nombre,ciudad,direccion,telefono,web,instagram&ciudad=ilike.${qc}&activo=eq.true&limit=5`, { method: 'GET' });
+    if (r.ok && Array.isArray(r.data)) out.asociaciones = r.data;
+  }
+  return out;
+}
+
+function formatDirectorioContexto(resultados) {
+  const lineas = [];
+  for (const g of resultados.growshops || []) {
+    lineas.push(`- [Growshop] ${g.nombre} · ${g.ciudad}${g.direccion ? ' · ' + g.direccion : ''}${g.telefono ? ' · tel: ' + g.telefono : ''}${g.web ? ' · ' + g.web : ''}`);
+  }
+  for (const a of resultados.asociaciones || []) {
+    lineas.push(`- [Club/Asociación] ${a.nombre} · ${a.ciudad}${a.direccion ? ' · ' + a.direccion : ''}${a.telefono ? ' · tel: ' + a.telefono : ''}${a.web ? ' · ' + a.web : ''}`);
+  }
+  return lineas.join('\n');
+}
+
+const DIRECTORY_ASK_CITY_REPLY =
+  '¡Claro! ¿En qué ciudad o zona buscas? Así te digo qué hay en el directorio de Cannabicultor.';
+
 async function handleChat(body, env) {
   const { messages, perfil } = body || {};
   if (!messages || !Array.isArray(messages) || !messages.length) {
@@ -1061,8 +1134,31 @@ async function handleChat(body, env) {
   const withVision = hasVision(anthropicMessages);
   const textoConsulta = extractLastUserText(messages);
 
+  // Directorio de growshops/clubes: intención explícita → consulta directa a Supabase,
+  // sin pasar por RAG/LLM si falta la ciudad (ahorra una llamada y es más rápido para el usuario).
+  const dirIntent = detectDirectorySearchIntent(textoConsulta);
+  if (dirIntent && !dirIntent.ciudad) {
+    return {
+      status: 200,
+      data: { reply: DIRECTORY_ASK_CITY_REPLY, provider: 'directory_heuristic' },
+    };
+  }
+  let directorioContexto = null;
+  if (dirIntent && dirIntent.ciudad) {
+    try {
+      const resultados = await buscarDirectorioPorCiudad(env, dirIntent.tipo, dirIntent.ciudad);
+      const total = (resultados.growshops?.length || 0) + (resultados.asociaciones?.length || 0);
+      directorioContexto = total > 0
+        ? `Resultados del directorio de Cannabicultor para "${dirIntent.ciudad}":\n${formatDirectorioContexto(resultados)}`
+        : `No hay fichas activas en el directorio de Cannabicultor para "${dirIntent.ciudad}". Dilo con honestidad, no inventes nombres de growshops o clubes.`;
+    } catch (_) {
+      directorioContexto = null;
+    }
+  }
+
   // Guarda barata de scope: off-topic claro → respuesta fija sin RAG ni LLM
-  if (isClearlyOffTopicCultivo(textoConsulta, withVision)) {
+  // (si ya detectamos intención de directorio, no aplica: es on-topic por definición)
+  if (!dirIntent && isClearlyOffTopicCultivo(textoConsulta, withVision)) {
     logProvider('scope_heuristic', true, 'off_topic_rejected');
     return {
       status: 200,
@@ -1080,7 +1176,7 @@ async function handleChat(body, env) {
   } catch (_) {}
 
   // System incluye SCOPE_PROMPT al inicio; casos dudosos los resuelve el LLM
-  const system = buildSystemPrompt(perfil, chunks);
+  const system = buildSystemPrompt(perfil, chunks, directorioContexto);
 
   try {
     const { reply, provider } = await generateChatReply(system, anthropicMessages, withVision, env);
