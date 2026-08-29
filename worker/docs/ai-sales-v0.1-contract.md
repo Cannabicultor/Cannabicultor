@@ -1,100 +1,85 @@
-# Cannabicultor AI Sales v0.1 contract
+# AI Sales — historial de diseño
 
-`POST /ai-sales/recommend`
+## 2026-08-29: v0.1 (extractor JSON + motor determinista) — RETIRADO
 
-The endpoint is intentionally limited to an indoor 120×120 cm tent, four plants, coco and a maximum 900 € equipment budget. Seeds, electrical installation, advanced climate control and non-essential accessories are excluded.
+Construido inicialmente con Codex: endpoints `/ai-sales/recommend` y
+`/ai-sales/chat`, un extractor JSON de requisitos + motor determinista de
+reglas para un único caso de uso (indoor 120×120, coco, 4 plantas, parto de
+cero). Quedó descartado como experiencia de cliente:
 
-```json
-{
-  "requirements": {
-    "height_cm": 198,
-    "seeds_in_budget": false,
-    "budget_eur": 900
-  }
-}
-```
+- Conversación rígida — en cuanto tenía los 2 campos bloqueantes (altura,
+  semillas), disparaba la cesta y repetía la misma respuesta plantilla sin
+  importar qué se preguntara después.
+- El extractor LLM alucinó valores (`seeds_in_budget: false`) sin que el
+  usuario los hubiera dicho, saltándose la pregunta de confirmación que el
+  propio código exigía.
+- No tenía ninguna noción de "vendedor" real: no argumentaba, no manejaba
+  objeciones, no conversaba sobre lo ya propuesto.
 
-The fixed scope values may optionally be sent and must equal: `tent_width_cm: 120`, `tent_depth_cm: 120`, `plant_count: 4`, `substrate: "coco"`. Unknown fields and values outside the scope return `400`.
+Código eliminado el 2026-08-29 (`ai-sales.js`, rutas en
+`worker-produccion.js`, páginas `ai-sales-test.html`/`ai-sales-chat.html`).
+La tabla `ai_sales_runs` en Supabase se conserva con los datos históricos de
+las pruebas, pero ya no recibe escrituras nuevas.
 
-If `height_cm` or `seeds_in_budget` is absent (or seeds are included), the endpoint returns `200` with `status: "needs_clarification"`, structured questions and no `selected_items`.
+## 2026-08-29: Sales Agent multi-tenant (Claude tool use) — ACTIVO
 
-Successful responses contain `requirements`, `evidence`, `calculations`, `candidates_considered`, `discarded`, `selected_items` and `total_eur`. `selected_items` only contains `{sku, quantity, component, bundle}`; the storefront must re-query those SKU before invoking its existing cart API.
+Reemplazo completo. Un solo endpoint nuevo: `POST /sales-agent/chat`
+(`sales-agent.js` + handlers en `worker-produccion.js`). Diseño:
 
-## Conversational entry point
-
-`POST /ai-sales/chat` is separate from both `/ai-sales/recommend` and `/asesor`.
-It accepts a short, client-held sequence of shopper-authored messages, the
-current requirements state and the outstanding blocking field:
-
-```json
-{
-  "messages": [{ "role": "user", "content": "Tengo 900 €, un espacio 120×120, quiero cuatro plantas en coco y parto de cero." }],
-  "requirements": {},
-  "pending_field": null
-}
-```
-
-Only the shopper messages plus the minimal requirements state (budget,
-dimensions, height, plant count, substrate and seed-budget confirmation) are
-sent to the configured LLM provider. The model may only return requirement
-updates; the Worker validates them with the same strict schema used by the
-recommendation endpoint. The conversational text is never persisted. Once
-the blocking fields are complete, the handler delegates to
-`/ai-sales/recommend` logic; that final deterministic execution is the only
-one recorded in `ai_sales_runs`.
-
-## Curated profile and components
-
-The versioned profile lives in `ai-sales.js`. Its source is `demo_growshop_productos` (`sku`, `nombre`, `descripcion_texto`, price and stock), checked on 2026-08-29; every SKU is revalidated on every request.
-
-| Component | Curated SKU(s) | Rule |
-| --- | --- | --- |
-| Armario | `ASJDS120R4.00` | 120×120×198 cm |
-| Iluminación | `ILED.066` | 720 W |
-| Extracción | `XXT.110-150` | 272 m³/h >= calculated volume × 60 |
-| Ventilación interior | `XXT.200` | 161 CFM |
-| Macetas | `AMAC.84-19L` ×4 | one per plant |
-| Coco | `SATA.041-100` | 100 L coco |
-| Nutrición | `FATA.018-5A` + `FATA.018-5B` | declared A+B coco bundle |
-| Medición básica | `MSG.003PH` + `MSG.002EC` | declared pH+EC bundle |
-
-No fallback search exists. If any curated candidate is absent, exhausted, incompatible or makes the total exceed the budget, the response is blocked and records the structured reason.
-
----
-
-## Nota de diseño (2026-08-29): pivote a Sales Agent multi-tenant
-
-El AI Sales v0.1 (extractor JSON + motor determinista rígido, endpoints
-`/ai-sales/recommend` y `/ai-sales/chat`) quedó descartado como experiencia de
-cliente: no conversaba de verdad, repetía plantillas y se saltaba preguntas
-bloqueantes por invención del LLM extractor. Se mantiene en el código sin
-tocar (intacto, con sus 7 tests) como referencia y por si se quiere comparar,
-pero no es el camino a producción.
-
-El camino nuevo es `/sales-agent/chat` (`sales-agent.js` + handlers en
-`worker-produccion.js`): un vendedor real con Claude tool-use, multi-tenant
-desde el diseño:
-
-- `sales_tenants`: clientes growshop del producto (SaaS), distinto del
-  directorio `growshops` (scraping de tiendas físicas).
-- `product_intelligence`: catálogo maestro compartido (cerebro), se enriquece
-  con el tiempo (campo `needs_enrichment` para el agente de investigación).
-- `sales_tenant_inventory`: inventario aislado por `tenant_id` — el bot NUNCA
-  puede ver o vender productos de otro tenant, aunque el maestro crezca a
+- **Un cerebro, muchos inventarios aislados.** El vendedor es Claude con
+  tool-use real (no un extractor JSON): decide libremente cuándo buscar
+  productos, calcular una cesta o registrar demanda no cubierta, como haría
+  un vendedor humano. Cada tool se ejecuta hard-scoped a un `tenant_id`
+  resuelto server-side (por `tenant_slug` en el body por ahora; pendiente
+  resolverlo por dominio/origin cuando haya más de un tenant real) — el
+  modelo nunca ve ni controla ese valor, así que no puede filtrarse
+  inventario de un growshop a otro aunque el catálogo maestro crezca a
   cientos de miles de productos.
-- `sales_agent_turns`: auditoría de conversación y tool calls por turno.
-- `sales_missed_demand`: cuando un cliente pide algo que el growshop no
-  tiene, el bot NUNCA lo manda a buscar a otro lado — registra la petición
-  (+ email de contacto si lo consigue) para que el dueño decida si lo trae.
-  Cierre del loop (avisar al cliente cuando el dueño responde) queda
-  pendiente, deliberadamente fuera de alcance por ahora.
+- **Tablas**: `sales_tenants` (clientes growshop del SaaS, distinto del
+  directorio `growshops` que es scraping de tiendas físicas),
+  `product_intelligence` (catálogo maestro compartido — el "cerebro" que se
+  enriquece con el tiempo, campo `needs_enrichment` para el agente de
+  investigación), `sales_tenant_inventory` (inventario aislado por tenant,
+  único lugar que las tools pueden leer), `sales_agent_turns` (auditoría de
+  conversación y tool calls), `sales_missed_demand` (demanda no cubierta +
+  contacto del cliente).
+- **Nunca manda al cliente a buscar en otro lado.** Si algo no está en el
+  inventario del tenant, el bot lo reconoce con honestidad, pide el email si
+  hace falta, y registra la necesidad — sin prometer plazos. El cierre del
+  loop (avisar al cliente cuando el dueño del growshop responde) queda
+  fuera de alcance por ahora, es un paso manual.
+- **Guardas anti-alucinación de datos reales**: precio/stock siempre vienen
+  de una llamada a `calcular_cesta` justo antes de cerrar (nunca de memoria
+  de turnos anteriores); un email de contacto solo se guarda si aparece
+  literalmente en lo que el cliente escribió en ESA conversación — el
+  modelo no puede "recordar" un contacto de otra sesión y afirmar que ya lo
+  tiene.
+- **Ritmo de conversación**: una pregunta por turno, respuestas cortas — los
+  clientes no leen mensajes largos ni recuerdan varias preguntas a la vez.
 
-Piloto actual: solo 10 SKU migrados (el caso 120×120/coco/parto-de-cero),
-tenant `demo-growshop-leaflife` (display_name "Growshop Demo"). Migrar el
-catálogo completo (3.708 productos, de los cuales solo 12 sin descripción
-decente) es el siguiente paso natural una vez validado el diseño.
+Piloto actual: 10 SKU migrados (el caso 120×120/coco/parto-de-cero), tenant
+único `demo-growshop-leaflife` (display_name "Growshop Demo"). Migrar el
+catálogo completo (3.708 productos del demo, de los cuales solo 12 sin
+descripción decente) y probar con un segundo tenant real (para validar el
+aislamiento de inventario con datos reales, no solo por diseño de código)
+son los siguientes pasos.
 
-Idea de producto guardada para más adelante, no construida aún: un dashboard
-para que cada growshop dueño hable con SU vendedor IA — pedirle cosas como
-"recomienda más esto" o "vende esto en liquidación" — es decir, el dueño
+Búsqueda de catálogo: `buscar_productos` intenta primero la frase literal
+del modelo contra nombre/categoría, y si no hay resultado expande
+automáticamente a palabras sueltas + sinónimos del rubro (led/luz/
+iluminación/foco/panel, extractor/extracción, etc.) antes de rendirse. Esto
+corrigió un bug real donde el bot decía "no tengo LED" teniendo stock,
+porque buscaba la frase completa "iluminación LED panel luz cultivo" que
+nunca hace match literal contra "LED MJ3 RS 720w".
+
+Idea de producto guardada para más adelante, no construida aún: un
+dashboard para que cada growshop dueño hable con SU vendedor IA — pedirle
+cosas como "recomienda más esto" o "vende esto en liquidación" — el dueño
 como otro usuario que instruye al agente, no solo lo audita.
+
+Decisión explícita del usuario: cada conversación del sales agent empieza
+sin memoria de otras sesiones/días — no hay reconocimiento de "cliente
+recurrente" todavía. Si se quiere en el futuro, requiere una tabla real de
+clientes del growshop + identificación del visitante (cookie/login), nunca
+que el modelo "recuerde" de su propio contexto entre conversaciones
+distintas.
