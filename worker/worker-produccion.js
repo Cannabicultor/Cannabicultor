@@ -1137,10 +1137,67 @@ const DIRECTORY_ASK_CITY_REPLY =
  * recupera el "tipo" (growshop/asociacion/ambos) del mensaje de usuario anterior
  * a esa pregunta (el que sí mencionaba "growshop" o "club").
  */
+/**
+ * Busca hacia atrás en el historial si el usuario ya dio una ciudad de directorio
+ * en algún turno reciente (respondiendo a DIRECTORY_ASK_CITY_REPLY, o mencionándola
+ * directamente). Permite sostener una conversación de varios turnos sobre el mismo
+ * tema ("club en Alcalá" → "y algún growshop?") sin que el usuario repita la ciudad.
+ * Mira como máximo los últimos 8 mensajes para no arrastrar contexto viejo de la
+ * conversación si el usuario cambia de tema y vuelve más tarde.
+ */
+function recuperarCiudadDelHistorial(messages) {
+  const lista = Array.isArray(messages) ? messages : [];
+  const ventana = lista.slice(-8);
+  for (let i = ventana.length - 1; i >= 0; i--) {
+    const msg = ventana[i];
+    if (msg.role !== 'assistant') continue;
+    const texto = typeof msg.content === 'string' ? msg.content : '';
+    const fueAskCity = texto.includes('Así te digo qué hay en el directorio de Cannabicultor');
+    if (fueAskCity && ventana[i + 1] && ventana[i + 1].role === 'user') {
+      const ciudad = String(ventana[i + 1].content || '').trim().replace(/[?.!]+$/, '');
+      if (ciudad && ciudad.length >= 2 && ciudad.length <= 60) return ciudad;
+    }
+  }
+  // También: si algún mensaje de usuario reciente ya traía "en <ciudad>" explícito
+  for (let i = ventana.length - 1; i >= 0; i--) {
+    const msg = ventana[i];
+    if (msg.role !== 'user') continue;
+    const texto = typeof msg.content === 'string' ? msg.content : '';
+    const previo = detectDirectorySearchIntent(texto);
+    if (previo && previo.ciudad) return previo.ciudad;
+  }
+  return null;
+}
+
 function detectDirectorySearchIntentConHistorial(messages, textoConsulta) {
   const directo = detectDirectorySearchIntent(textoConsulta);
-  if (directo) return directo;
+  if (directo && directo.ciudad) return directo;
 
+  // El texto actual menciona growshop/club (con o sin ciudad) → intentar completar
+  // con la ciudad ya establecida en la conversación.
+  const t = String(textoConsulta || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  const mentionsGrowshop = /\b(growshop|grow shop|tienda de cultivo|tiendas de cultivo)\b/.test(t);
+  const mentionsClub = /\b(club|clubes|asociacion|asociaciones)\b/.test(t);
+
+  if (directo && !directo.ciudad) {
+    // "growshop cerca de mi" sin ciudad: ver si ya hay una ciudad establecida antes de pedirla de nuevo.
+    const ciudadPrevia = recuperarCiudadDelHistorial(messages);
+    if (ciudadPrevia) return { tipo: directo.tipo, ciudad: ciudadPrevia };
+    return directo;
+  }
+
+  if (mentionsGrowshop || mentionsClub) {
+    // Turno de seguimiento tipo "y algún growshop?" tras ya haber dado la ciudad.
+    const ciudadPrevia = recuperarCiudadDelHistorial(messages);
+    if (ciudadPrevia) {
+      let tipo = 'ambos';
+      if (mentionsGrowshop && !mentionsClub) tipo = 'growshop';
+      if (mentionsClub && !mentionsGrowshop) tipo = 'asociacion';
+      return { tipo, ciudad: ciudadPrevia };
+    }
+  }
+
+  // Turno de solo-ciudad respondiendo a la pregunta del bot (sin mencionar growshop/club en este mensaje).
   const lista = Array.isArray(messages) ? messages : [];
   if (lista.length < 2) return null;
   const anterior = lista[lista.length - 2];
@@ -1148,11 +1205,9 @@ function detectDirectorySearchIntentConHistorial(messages, textoConsulta) {
   const fueAskCity = anterior && anterior.role === 'assistant' && anteriorTexto.includes('Así te digo qué hay en el directorio de Cannabicultor');
   if (!fueAskCity) return null;
 
-  // La respuesta del usuario a "¿en qué ciudad?" es la ciudad en sí, sin más parsing.
   const ciudad = String(textoConsulta || '').trim().replace(/[?.!]+$/, '');
   if (!ciudad || ciudad.length < 2 || ciudad.length > 60) return null;
 
-  // Recuperar el tipo (growshop/asociacion/ambos) del mensaje de usuario que originó la pregunta
   let tipo = 'ambos';
   for (let i = lista.length - 3; i >= 0; i--) {
     if (lista[i].role !== 'user') continue;
