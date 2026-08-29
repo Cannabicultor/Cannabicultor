@@ -1066,6 +1066,13 @@ async function generateChatReply(system, anthropicMessages, withVision, env) {
  * tipo: 'growshop' | 'asociacion' | 'ambos'
  * ciudad: string si se detectó una ciudad en el texto, null si no (habrá que preguntarla).
  */
+/**
+ * Términos de cultivo reconocidos (subconjunto de onTopic en isClearlyOffTopicCultivo),
+ * usados solo para decidir si una pregunta de ubicación ambigua es "sobre cultivo en
+ * general" (no aplica aclaración) o "posible directorio con palabra que no reconocemos".
+ */
+const TERMINOS_CULTIVO_BASICOS = /\b(cannabis|marihuana|marijuana|weed|cogollo|cogollos|planta|plantas|cultivo|cultivar|cultivador|indoor|outdoor|invernadero|armario|sativa|indica|hibrida|hibrido|ruderalis|autoflor|fotoperiodo|fotoperiodica|genetica|variedad|variedades|semilla|semillas|esqueje|esquejes|clon|floracion|vegetativo|cosecha|secado|curado|trichoma|tricoma|resina|luz|led|hps|lumens|ppfd|dli|sustrato|coco|tierra|hydro|hidro|riego|regando|regar|ph|ec|ppm|vpd|humedad|temperatura|nutriente|nutrientes|fertilizante|abono|npk|calmag|nitrogeno|fosforo|potasio|plaga|plagas|hongo|oidio|mildiu|trips|arana|thrips|maceta|macetas|extraccion|poda|lst|scrog|sog|topping|fim|deficiencia|exceso|quemadura|thc|cbd|terpeno|landrace|breeder|germinacion|plantula)\b/;
+
 function detectDirectorySearchIntent(text) {
   const raw = String(text || '').trim();
   if (raw.length < 4) return null;
@@ -1073,12 +1080,23 @@ function detectDirectorySearchIntent(text) {
 
   const mentionsGrowshop = /\b(growshop|growshops|grow shop|grow|grows|tienda de cultivo|tiendas de cultivo)\b/.test(t);
   const mentionsClub = /\b(club|clubes|asociacion|asociaciones|club cannabico|asociacion cannabica)\b/.test(t);
-  if (!mentionsGrowshop && !mentionsClub) return null;
 
   const asksLocation = /\b(cerca de mi|cerca mio|cerca|donde hay|donde esta|donde encuentro|donde puedo|en mi ciudad|recomiendame|recomienda|conoces alguno|conoces alguna)\b/.test(t);
   // "growshop en Madrid" / "club en Barcelona": "en <algo>" cuenta como señal de ubicación
   // aunque no haya verbo de búsqueda explícito.
   const hasEnLugar = /\ben\s+[a-z]/.test(t);
+
+  if (!mentionsGrowshop && !mentionsClub) {
+    // No reconocemos ningún término de growshop/club, pero SÍ pide ubicación y no
+    // menciona nada de cultivo tampoco: zona gris real (el próximo coloquialismo que no
+    // cubrimos, ej. "tienda" a secas, "sitio" a secas). En vez de fallar en silencio o
+    // dejar que el LLM improvise, pedimos aclaración como haría un humano.
+    if ((asksLocation || hasEnLugar) && !TERMINOS_CULTIVO_BASICOS.test(t)) {
+      return { tipo: 'ambiguo', ciudad: null };
+    }
+    return null;
+  }
+
   if (!asksLocation && !hasEnLugar) return null;
 
   let tipo = 'ambos';
@@ -1127,6 +1145,9 @@ function formatDirectorioContexto(resultados) {
 
 const DIRECTORY_ASK_CITY_REPLY =
   '¡Claro! ¿En qué ciudad o zona buscas? Así te digo qué hay en el directorio de Cannabicultor.';
+
+const DIRECTORY_CLARIFY_REPLY =
+  '¿Te refieres a un growshop (tienda de cultivo) o a un club/asociación cannábica? Así te busco bien en el directorio de Cannabicultor.';
 
 /**
  * Si el turno anterior del asistente fue DIRECTORY_ASK_CITY_REPLY, el usuario está
@@ -1229,13 +1250,30 @@ function tipoDirectorioDelHistorial(messages) {
 
 function detectDirectorySearchIntentConHistorial(messages, textoConsulta) {
   const directo = detectDirectorySearchIntent(textoConsulta);
+  if (directo && directo.tipo === 'ambiguo') return directo;
   if (directo && directo.ciudad) return directo;
 
   const t = String(textoConsulta || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
   const mentionsGrowshop = /\b(growshop|growshops|grow shop|grow|grows|tienda de cultivo|tiendas de cultivo)\b/.test(t);
   const mentionsClub = /\b(club|clubes|asociacion|asociaciones)\b/.test(t);
 
-  if (directo && !directo.ciudad) {
+  // Respuesta a nuestra pregunta de aclaración ("¿growshop o club?"): el usuario contesta
+  // con el tipo, sin necesariamente repetir ubicación. Resolver el tipo y seguir el flujo
+  // normal (pedir ciudad, o usar la ya conocida de la conversación si existe).
+  const lista0 = Array.isArray(messages) ? messages : [];
+  const anterior0 = lista0.length >= 2 ? lista0[lista0.length - 2] : null;
+  const anteriorTexto0 = anterior0 && typeof anterior0.content === 'string' ? anterior0.content : '';
+  const fueClarify = anterior0 && anterior0.role === 'assistant' && anteriorTexto0.includes('¿Te refieres a un growshop');
+  if (fueClarify && (mentionsGrowshop || mentionsClub)) {
+    let tipoAclarado = 'ambos';
+    if (mentionsGrowshop && !mentionsClub) tipoAclarado = 'growshop';
+    if (mentionsClub && !mentionsGrowshop) tipoAclarado = 'asociacion';
+    const ciudadPrevia0 = recuperarCiudadDelHistorial(messages);
+    if (ciudadPrevia0) return { tipo: tipoAclarado, ciudad: ciudadPrevia0 };
+    return { tipo: tipoAclarado, ciudad: null };
+  }
+
+  if (directo && directo.tipo !== 'ambiguo' && !directo.ciudad) {
     // "growshop cerca de mi" sin ciudad: ver si ya hay una ciudad establecida antes de pedirla de nuevo.
     const ciudadPrevia = recuperarCiudadDelHistorial(messages);
     if (ciudadPrevia) return { tipo: directo.tipo, ciudad: ciudadPrevia };
@@ -1276,6 +1314,14 @@ async function handleChat(body, env) {
   // Directorio de growshops/clubes: intención explícita → consulta directa a Supabase,
   // sin pasar por RAG/LLM si falta la ciudad (ahorra una llamada y es más rápido para el usuario).
   const dirIntent = detectDirectorySearchIntentConHistorial(messages, textoConsulta);
+  if (dirIntent && dirIntent.tipo === 'ambiguo') {
+    // Como haría un humano que no entendió bien: pregunta qué quiso decir en vez de
+    // improvisar o fallar en silencio. Barato, sin LLM.
+    return {
+      status: 200,
+      data: { reply: DIRECTORY_CLARIFY_REPLY, provider: 'directory_heuristic' },
+    };
+  }
   if (dirIntent && !dirIntent.ciudad) {
     return {
       status: 200,
