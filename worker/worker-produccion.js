@@ -1098,7 +1098,7 @@ function detectDirectorySearchIntent(text) {
 
 /** Consulta growshops y/o asociaciones activos por ciudad (ilike). Máx 5 cada uno. */
 async function buscarDirectorioPorCiudad(env, tipo, ciudad) {
-  const qc = encodeURIComponent(`*${ciudad}*`);
+  const qc = `*${encodeURIComponent(ciudad)}*`;
   const out = { growshops: [], asociaciones: [] };
   if (tipo === 'growshop' || tipo === 'ambos') {
     const r = await sbRequest(env, `growshops?select=nombre,ciudad,direccion,telefono,web,instagram&ciudad=ilike.${qc}&activo=eq.true&limit=5`, { method: 'GET' });
