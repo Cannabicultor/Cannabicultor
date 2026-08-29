@@ -4,6 +4,7 @@ import {
   buildSalesAgentSystemPrompt,
   executeSalesAgentTool,
 } from './sales-agent.js';
+import { runCatalogIngest } from './catalog-curation.js';
 
 /**
  * growers-alliance-ai — fuente de verdad del Worker de chat (Cannabicultor)
@@ -510,6 +511,65 @@ async function handleSalesAgentChat(body, env) {
   } catch (error) {
     console.log(JSON.stringify({ event: 'sales_agent_chat_failed', tenant: tenant.slug, detail: String(error?.message || error).slice(0, 200), stack: String(error?.stack || '').slice(0, 500) }));
     return { status: 502, data: { error: 'sales_agent_dependency_unavailable' } };
+  }
+}
+
+// =========================================================================
+// CATALOG CURATION — ingesta continua de catálogo por growshop
+// =========================================================================
+
+/**
+ * POST /catalog/ingest — un growshop (tenant) sube su catálogo (o una parte)
+ * cuando quiere, vía API/webhook. Cada ítem se procesa contra el cerebro
+ * compartido (product_intelligence) con el agente de curación: nunca fusiona
+ * nada por debajo del umbral de auto-aprobación, nunca sobreescribe una
+ * descripción activa sin registrar la fuente nueva primero. Ver
+ * catalog-curation.js para el detalle del algoritmo.
+ *
+ * body: { tenant_slug, source_type?, items: [{ nombre, sku?, descripcion?,
+ *         specs?, marca?, categoria?, categoria_l1?, categoria_l2?,
+ *         source_url? }, ...] }
+ */
+async function handleCatalogIngest(body, env) {
+  const tenantSlug = body?.tenant_slug;
+  const tenant = await resolveSalesTenant(env, tenantSlug);
+  if (!tenant) return { status: 404, data: { error: 'unknown_tenant' } };
+
+  const items = Array.isArray(body?.items) ? body.items : null;
+  if (!items || !items.length || items.length > 500) {
+    return { status: 400, data: { error: 'invalid_items' } };
+  }
+  if (!items.every((it) => it && typeof it.nombre === 'string' && it.nombre.trim())) {
+    return { status: 400, data: { error: 'item_missing_nombre' } };
+  }
+
+  const sourceType = ['manufacturer_official', 'catalogue_description', 'manual_curation', 'scraped'].includes(body?.source_type)
+    ? body.source_type
+    : 'catalogue_description';
+
+  try {
+    const result = await runCatalogIngest(env, sbRequest, {
+      tenantId: tenant.id,
+      items,
+      triggeredBy: 'webhook',
+      sourceType,
+    });
+    return {
+      status: 200,
+      data: {
+        run_id: result.runId,
+        tenant: { slug: tenant.slug, display_name: tenant.display_name },
+        items_matched_existing: result.items_matched_existing,
+        items_created_new: result.items_created_new,
+        candidates_generated: result.candidates_generated,
+        candidates_auto_approved: result.candidates_auto_approved,
+        conflicts_detected: result.conflicts_detected,
+        errors: result.errors,
+      },
+    };
+  } catch (error) {
+    console.log(JSON.stringify({ event: 'catalog_ingest_failed', tenant: tenant.slug, detail: String(error?.message || error).slice(0, 200), stack: String(error?.stack || '').slice(0, 500) }));
+    return { status: 502, data: { error: 'catalog_curation_dependency_unavailable' } };
   }
 }
 
@@ -2856,6 +2916,7 @@ export default {
       }
 
       if (path === '/sales-agent/chat') { const r = await handleSalesAgentChat(body, env); return json(r.data, r.status, cors); }
+      if (path === '/catalog/ingest') { const r = await handleCatalogIngest(body, env); return json(r.data, r.status, cors); }
       if (path === '/asesor') { const r = await handleAsesor(body, env); return json(r.data, r.status, cors); }
       if (path === '/cultivo/guardar') { const r = await handleGuardarCultivo(body, env, request); return json(r.data, r.status, cors); }
       if (path === '/perfil/sala') { const r = await handleGuardarSala(body, env, request); return json(r.data, r.status, cors); }
