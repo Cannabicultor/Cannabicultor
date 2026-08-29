@@ -431,6 +431,26 @@ ANÁLISIS DE FOTOS:
 - Describe primero lo que VES (1-2 frases), luego diagnóstico y pasos siguientes.
 - Si la foto no es clara, pide otra mejor. No inventes detalles invisibles.`;
 
+/**
+ * Extrae una referencia breve (autor/medio + anio) de un chunk del RAG, parseando
+ * el propio texto (formato "Title: ...\nURL: ...\n<revista/medio>, <anio>. <Autores>").
+ * Devuelve null si no encuentra un patron de anio de 4 digitos cerca de "Title:"/URL,
+ * para no inventar referencia donde no hay una real (libros/manuales internos).
+ */
+function extractReferenciaBreve(chunkContent) {
+  if (!chunkContent || !/^Title:/m.test(chunkContent)) return null;
+  const head = chunkContent.slice(0, 500);
+  const anioMatch = head.match(/\b(19|20)\d{2}\b/);
+  if (!anioMatch) return null;
+  const anio = anioMatch[0];
+  // Intenta capturar "Revista, Volumen... AUTORES" o linea de autores tipica antes del anio
+  const lineaConAnio = head.split('\n').find((l) => l.includes(anio)) || '';
+  // Autores: nombres propios separados por comas, suele ir al final de la linea del anio
+  const autoresMatch = lineaConAnio.match(/([A-ZÁÉÍÓÚÑ][a-záéíóúñ]+(?:[\s,.-]+[A-ZÁÉÍÓÚÑ][a-záéíóúñ.]*)+)\s*$/);
+  const autores = autoresMatch ? autoresMatch[1].trim().split(/\s*,\s*/)[0] : null;
+  return autores ? `${autores}, ${anio}` : `estudio de ${anio}`;
+}
+
 function buildSystemPrompt(perfil, chunks) {
   // Scope primero (antes del RAG); el LLM lo ve aunque la heurística no sea concluyente.
   let base = `${SCOPE_PROMPT}
@@ -442,11 +462,15 @@ NUNCA inventes estudios ni legislación.${VISION_PROMPT}`;
   if (chunks && chunks.length > 0) {
     const contexto = chunks.map((c, i) => {
       const fuente = c.libro_propuesto || 'Base de conocimiento';
-      return `[${i + 1}] ${fuente}:\n${c.content}`;
+      const referencia = extractReferenciaBreve(c.content);
+      const etiqueta = referencia
+        ? `[${i + 1}] ${fuente} | REFERENCIA EXACTA PARA CITAR ESTE FRAGMENTO: ${referencia}`
+        : `[${i + 1}] ${fuente} | SIN AUTOR/ANIO IDENTIFICABLE — NO CITAR AUTOR PARA ESTE FRAGMENTO`;
+      return `${etiqueta}:\n${c.content}`;
     }).join('\n\n');
     base += `\n\nCONOCIMIENTO TECNICO RELEVANTE (basa tu respuesta en esto):\n${contexto}\n\nINSTRUCCIONES:\n- Usa el conocimiento anterior cuando sea relevante.\n- Si la pregunta está fuera del ámbito de cultivo (ver scope arriba), IGNORA este contexto y rechaza en 1-2 frases.\n- Si algun fragmento esta en ingles, sintetizalo en espanol. NUNCA muestres texto en ingles al usuario.\n- CITAS: si un fragmento incluye Title/autor/revista/URL (estudio cientifico real, ej. "Web · Cultivo"), y tu respuesta usa un dato o hallazgo concreto de ese fragmento (cifra, porcentaje, resultado de estudio, mecanismo especifico), cita la fuente de forma breve al final de esa frase o del bloque: "(segun [revista/medio], [anio])" o "(estudio de [autor principal], [anio])". No hace falta URL completa ni formato APA, solo la referencia breve.
 - REGLA ESTRICTA DE TRAZABILIDAD: solo puedes citar una fuente si el dato/cifra/hallazgo que acabas de mencionar en ESA MISMA frase aparece literalmente en ESE fragmento concreto. Prohibido citar una fuente por asociacion tematica, por "sonar mas autorizado", o porque el autor/estudio anda cerca en el contexto pero habla de otra cosa. Si citas, la cifra citada y el fragmento citado deben coincidir exactamente.
-- COPIA EXACTA DEL AUTOR: el nombre de autor/es y el anio que cites deben copiarse literalmente del texto del fragmento que estas usando (busca "Title:", el bloque de autores, o el anio de publicacion dentro de ESE fragmento). PROHIBIDO citar de memoria o "por parecido" un autor que viste en otro fragmento de la conversacion, aunque exista realmente en la base de conocimiento. Si no encuentras autor/anio explicito en el fragmento que sustenta el dato, di "segun un estudio en mi base de conocimiento" SIN inventar nombre.
+- COPIA EXACTA DEL AUTOR: cada fragmento trae su propia linea "REFERENCIA EXACTA PARA CITAR ESTE FRAGMENTO: ..." o "SIN AUTOR/ANIO IDENTIFICABLE". Usa SOLO esa referencia pre-calculada del MISMO fragmento que sustenta el dato que estas citando -- nunca la de otro fragmento, aunque el autor te "suene" del contexto. Si el fragmento dice "SIN AUTOR/ANIO IDENTIFICABLE", di "segun un estudio en mi base de conocimiento" SIN inventar nombre.
 - UN SOLO DATO, UNA SOLA FUENTE: no añadas una segunda cifra o estudio "de refuerzo" para reforzar tu respuesta si ese segundo dato no aparece en los fragmentos recuperados para ESTA pregunta. Mejor una respuesta con un dato bien citado que dos datos, uno de ellos inventado.
 - Si no encuentras en los fragmentos el dato exacto que te piden (ej. semanas exactas, porcentaje exacto), NO inventes un rango aproximado ni una cifra "razonable". Di explicitamente que no tienes ese dato preciso en tu base de conocimiento y da tu mejor criterio de cultivador experto SIN disfrazarlo de cita ni de cifra exacta.
 - Ante la duda entre citar con precision o no citar, elige NO citar. Una respuesta sin cita es mejor que una cita que no sustenta lo dicho.
