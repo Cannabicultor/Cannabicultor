@@ -1071,7 +1071,7 @@ function detectDirectorySearchIntent(text) {
   if (raw.length < 4) return null;
   const t = raw.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 
-  const mentionsGrowshop = /\b(growshop|grow shop|tienda de cultivo|tiendas de cultivo)\b/.test(t);
+  const mentionsGrowshop = /\b(growshop|growshops|grow shop|grow|grows|tienda de cultivo|tiendas de cultivo)\b/.test(t);
   const mentionsClub = /\b(club|clubes|asociacion|asociaciones|club cannabico|asociacion cannabica)\b/.test(t);
   if (!mentionsGrowshop && !mentionsClub) return null;
 
@@ -1145,9 +1145,23 @@ const DIRECTORY_ASK_CITY_REPLY =
  * Mira como máximo los últimos 8 mensajes para no arrastrar contexto viejo de la
  * conversación si el usuario cambia de tema y vuelve más tarde.
  */
+/** Heurística barata: ¿el texto parece un topónimo suelto (respuesta de ubicación) y no una frase/pregunta normal? */
+function pareceSoloUnaCiudad(texto) {
+  const s = String(texto || '').trim();
+  if (!s || s.length < 2 || s.length > 60) return false;
+  // Sin verbos/preguntas típicos, pocas palabras, no termina en "?"
+  if (/[?]/.test(s)) return false;
+  const palabras = s.split(/\s+/).length;
+  if (palabras > 6) return false;
+  if (/\b(que|como|cuando|donde|por que|porque|cual|quiero|necesito|tengo|hay|puedo)\b/i.test(s)) return false;
+  return true;
+}
+
 function recuperarCiudadDelHistorial(messages) {
   const lista = Array.isArray(messages) ? messages : [];
   const ventana = lista.slice(-8);
+
+  // Vía 1: el assistant usó literalmente nuestra pregunta fija de ciudad.
   for (let i = ventana.length - 1; i >= 0; i--) {
     const msg = ventana[i];
     if (msg.role !== 'assistant') continue;
@@ -1158,7 +1172,8 @@ function recuperarCiudadDelHistorial(messages) {
       if (ciudad && ciudad.length >= 2 && ciudad.length <= 60) return ciudad;
     }
   }
-  // También: si algún mensaje de usuario reciente ya traía "en <ciudad>" explícito
+
+  // Vía 2: algún mensaje de usuario reciente ya traía "en <ciudad>" explícito.
   for (let i = ventana.length - 1; i >= 0; i--) {
     const msg = ventana[i];
     if (msg.role !== 'user') continue;
@@ -1166,17 +1181,58 @@ function recuperarCiudadDelHistorial(messages) {
     const previo = detectDirectorySearchIntent(texto);
     if (previo && previo.ciudad) return previo.ciudad;
   }
+
+  // Vía 3 (fallback robusto): un mensaje de usuario reciente mencionó growshop/club
+  // (aunque no lo detectáramos por vocabulario, ej. "grow" antes del fix), el assistant
+  // respondió algo (pidiendo ubicación por su cuenta, sin usar nuestra frase fija), y el
+  // siguiente mensaje del usuario parece un topónimo suelto. No exige coincidencia exacta
+  // de texto del bot — solo la secuencia: mención de directorio → turno del bot → topónimo.
+  for (let i = ventana.length - 1; i >= 1; i--) {
+    const msg = ventana[i];
+    if (msg.role !== 'user') continue;
+    const texto = typeof msg.content === 'string' ? msg.content : '';
+    if (!pareceSoloUnaCiudad(texto)) continue;
+    const anterior = ventana[i - 1];
+    if (!anterior || anterior.role !== 'assistant') continue;
+    // Buscar hacia atrás desde ahí un mensaje de usuario que mencionara growshop/club
+    for (let j = i - 2; j >= 0; j--) {
+      const previoMsg = ventana[j];
+      if (previoMsg.role !== 'user') continue;
+      const previoTexto = (typeof previoMsg.content === 'string' ? previoMsg.content : '')
+        .toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+      if (/\b(growshop|growshops|grow shop|grow|grows|tienda de cultivo|club|clubes|asociacion|asociaciones)\b/.test(previoTexto)) {
+        return texto.trim().replace(/[?.!]+$/, '');
+      }
+      break; // solo miramos el mensaje de usuario inmediatamente anterior al turno del bot
+    }
+  }
+
   return null;
+}
+
+/** Tipo (growshop/asociacion/ambos) del mensaje de usuario más reciente que mencione alguno. */
+function tipoDirectorioDelHistorial(messages) {
+  const lista = Array.isArray(messages) ? messages : [];
+  const ventana = lista.slice(-8);
+  for (let i = ventana.length - 1; i >= 0; i--) {
+    const msg = ventana[i];
+    if (msg.role !== 'user') continue;
+    const t = (typeof msg.content === 'string' ? msg.content : '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    const mentionsGrowshop = /\b(growshop|growshops|grow shop|grow|grows|tienda de cultivo|tiendas de cultivo)\b/.test(t);
+    const mentionsClub = /\b(club|clubes|asociacion|asociaciones)\b/.test(t);
+    if (mentionsGrowshop && !mentionsClub) return 'growshop';
+    if (mentionsClub && !mentionsGrowshop) return 'asociacion';
+    if (mentionsGrowshop || mentionsClub) return 'ambos';
+  }
+  return 'ambos';
 }
 
 function detectDirectorySearchIntentConHistorial(messages, textoConsulta) {
   const directo = detectDirectorySearchIntent(textoConsulta);
   if (directo && directo.ciudad) return directo;
 
-  // El texto actual menciona growshop/club (con o sin ciudad) → intentar completar
-  // con la ciudad ya establecida en la conversación.
   const t = String(textoConsulta || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-  const mentionsGrowshop = /\b(growshop|grow shop|tienda de cultivo|tiendas de cultivo)\b/.test(t);
+  const mentionsGrowshop = /\b(growshop|growshops|grow shop|grow|grows|tienda de cultivo|tiendas de cultivo)\b/.test(t);
   const mentionsClub = /\b(club|clubes|asociacion|asociaciones)\b/.test(t);
 
   if (directo && !directo.ciudad) {
@@ -1197,26 +1253,15 @@ function detectDirectorySearchIntentConHistorial(messages, textoConsulta) {
     }
   }
 
-  // Turno de solo-ciudad respondiendo a la pregunta del bot (sin mencionar growshop/club en este mensaje).
-  const lista = Array.isArray(messages) ? messages : [];
-  if (lista.length < 2) return null;
-  const anterior = lista[lista.length - 2];
-  const anteriorTexto = anterior && typeof anterior.content === 'string' ? anterior.content : '';
-  const fueAskCity = anterior && anterior.role === 'assistant' && anteriorTexto.includes('Así te digo qué hay en el directorio de Cannabicultor');
-  if (!fueAskCity) return null;
-
-  const ciudad = String(textoConsulta || '').trim().replace(/[?.!]+$/, '');
-  if (!ciudad || ciudad.length < 2 || ciudad.length > 60) return null;
-
-  let tipo = 'ambos';
-  for (let i = lista.length - 3; i >= 0; i--) {
-    if (lista[i].role !== 'user') continue;
-    const txt = typeof lista[i].content === 'string' ? lista[i].content : '';
-    const previo = detectDirectorySearchIntent(txt);
-    if (previo) { tipo = previo.tipo; break; }
+  // Turno de solo-ciudad (sin mencionar growshop/club en este mensaje): delega a
+  // recuperarCiudadDelHistorial(), que ya cubre tanto nuestra pregunta fija como el
+  // caso robusto (el bot preguntó ubicación con sus propias palabras).
+  const ciudadPrevia = recuperarCiudadDelHistorial(messages);
+  if (ciudadPrevia && ciudadPrevia === String(textoConsulta || '').trim().replace(/[?.!]+$/, '')) {
+    return { tipo: tipoDirectorioDelHistorial(messages), ciudad: ciudadPrevia };
   }
 
-  return { tipo, ciudad };
+  return null;
 }
 
 async function handleChat(body, env) {
