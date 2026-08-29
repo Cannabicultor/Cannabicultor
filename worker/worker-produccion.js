@@ -1,3 +1,19 @@
+import {
+  AI_SALES_VERSION,
+  buildAiSalesExplanation,
+  buildAiSalesPlan,
+  buildAiSalesProductDossier,
+  mergeAiSalesConversationRequirements,
+  requestedSkus,
+  validateAiSalesRequest,
+} from './ai-sales.js';
+import {
+  MAX_TOOL_ROUNDS,
+  SALES_AGENT_TOOLS,
+  buildSalesAgentSystemPrompt,
+  executeSalesAgentTool,
+} from './sales-agent.js';
+
 /**
  * growers-alliance-ai — fuente de verdad del Worker de chat (Cannabicultor)
  *
@@ -369,6 +385,475 @@ async function buscarChunksRelevantes(embedding, env) {
   });
   if (!res.ok || !Array.isArray(res.data)) return [];
   return res.data;
+}
+
+// =========================================================================
+// AI SALES v0.1 — independent, deterministic recommendation endpoint
+// =========================================================================
+const AI_SALES_CATALOGUE_COLUMNS = 'sku,nombre,marca,categoria,descripcion_texto,precio_con_iva,stock,imagen_principal,slug';
+
+async function loadAiSalesInventory(env, skus) {
+  if (!skus.length) return [];
+  const encodedSkus = skus.map((sku) => encodeURIComponent(sku)).join(',');
+  const query = `demo_growshop_productos?select=${AI_SALES_CATALOGUE_COLUMNS}&sku=in.(${encodedSkus})&stock=gt.0`;
+  const result = await sbRequest(env, query, { method: 'GET' });
+  if (!result.ok) throw new Error(`catalogue_lookup_failed_${result.status}`);
+  return Array.isArray(result.data) ? result.data : [];
+}
+
+async function retrieveAiSalesEvidence(env) {
+  const query = 'Necesidades técnicas para cultivo indoor desde cero: armario 120x120, cuatro plantas, coco, ventilación, extracción, nutrición y medición.';
+  const embedding = await generarEmbeddingConsulta(query, env);
+  const chunks = await buscarChunksRelevantes(embedding, env);
+  return chunks.slice(0, 6).map((chunk) => ({
+    source: chunk.libro_propuesto || 'Base de conocimiento',
+    document_id: chunk.document_id || null,
+    chunk_id: chunk.id || null,
+    tags: Array.isArray(chunk.tags) ? chunk.tags : [],
+    reference: extractReferenciaBreve(chunk.content) || null,
+  }));
+}
+
+async function recordAiSalesRun(env, run) {
+  const result = await sbRequest(env, 'ai_sales_runs', {
+    method: 'POST',
+    headers: { Prefer: 'return=minimal' },
+    body: JSON.stringify(run),
+  });
+  return result.ok;
+}
+
+async function handleAiSalesRecommend(body, env) {
+  const runId = crypto.randomUUID();
+  const validated = validateAiSalesRequest(body);
+  if (!validated.ok) {
+    const response = { run_id: runId, version: AI_SALES_VERSION, status: 'invalid', errors: validated.errors, selected_items: [] };
+    const recorded = await recordAiSalesRun(env, {
+      id: runId, version: AI_SALES_VERSION, status: 'invalid', requirements: {}, response,
+    });
+    return recorded ? { status: 400, data: response } : { status: 503, data: { error: 'audit_log_unavailable', selected_items: [] } };
+  }
+
+  if (validated.questions.length) {
+    const response = {
+      run_id: runId, version: AI_SALES_VERSION, status: 'needs_clarification',
+      requirements: validated.requirements, questions: validated.questions, selected_items: [],
+      budget_exclusions: ['seeds', 'electrical_installation', 'advanced_climate_control', 'non_essential_accessories'],
+    };
+    const recorded = await recordAiSalesRun(env, {
+      id: runId, version: AI_SALES_VERSION, status: 'needs_clarification', requirements: validated.requirements, response,
+    });
+    return recorded ? { status: 200, data: response } : { status: 503, data: { error: 'audit_log_unavailable', selected_items: [] } };
+  }
+
+  try {
+    // The existing RAG functions are reused unchanged and only retrieve sources.
+    const evidence = await retrieveAiSalesEvidence(env);
+    const firstPassInventory = await loadAiSalesInventory(env, requestedSkus());
+    let plan = buildAiSalesPlan(validated.requirements, firstPassInventory);
+    let finalInventory = firstPassInventory;
+
+    // A second, fresh catalogue read immediately precedes a ready response.
+    if (plan.status === 'ready_for_revalidation') {
+      finalInventory = await loadAiSalesInventory(env, plan.selected_items.map((item) => item.sku));
+      plan = buildAiSalesPlan(validated.requirements, finalInventory);
+    }
+
+    const status = plan.status === 'ready_for_revalidation' ? 'ready' : 'blocked';
+    const responseData = {
+      run_id: runId,
+      version: AI_SALES_VERSION,
+      status,
+      requirements: validated.requirements,
+      evidence,
+      calculations: plan.calculations,
+      candidates_considered: plan.candidates_considered,
+      discarded: plan.discarded,
+      missing_components: plan.missing_components,
+      selected_items: status === 'ready' ? plan.selected_items : [],
+      total_eur: status === 'ready' ? plan.total_eur : null,
+      product_dossier: status === 'ready' ? buildAiSalesProductDossier(plan.selected_items, finalInventory) : [],
+    };
+    responseData.explanation = buildAiSalesExplanation(responseData, evidence);
+    const recorded = await recordAiSalesRun(env, {
+      id: runId,
+      version: AI_SALES_VERSION,
+      status,
+      requirements: validated.requirements,
+      evidence,
+      calculations: plan.calculations,
+      candidates_considered: plan.candidates_considered,
+      discarded: plan.discarded,
+      selected_items: responseData.selected_items,
+      total_eur: responseData.total_eur,
+      response: responseData,
+    });
+    if (!recorded) return { status: 503, data: { error: 'audit_log_unavailable', selected_items: [] } };
+    return { status: 200, data: responseData };
+  } catch (error) {
+    console.log(JSON.stringify({ event: 'ai_sales_recommendation_failed', run_id: runId, detail: String(error?.message || error).slice(0, 160) }));
+    return { status: 502, data: { error: 'ai_sales_dependency_unavailable', run_id: runId, selected_items: [] } };
+  }
+}
+
+function aiSalesChatKnownSummary(requirements) {
+  const known = [];
+  if (requirements.budget_eur) known.push(`presupuesto máximo ${requirements.budget_eur} €`);
+  known.push('espacio 120×120', 'cuatro plantas', 'coco');
+  if (requirements.height_cm) known.push(`altura útil ${requirements.height_cm} cm`);
+  if (requirements.seeds_in_budget === false) known.push('semillas excluidas');
+  return known.join(', ');
+}
+
+function parseAiSalesExtraction(raw) {
+  const text = String(raw || '').trim();
+  const candidate = text.match(/\{[\s\S]*\}/)?.[0] || text;
+  try {
+    const parsed = JSON.parse(candidate);
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed) || !parsed.updates || typeof parsed.updates !== 'object' || Array.isArray(parsed.updates)) return null;
+    return parsed.updates;
+  } catch (_) {
+    return null;
+  }
+}
+
+async function extractAiSalesConversationUpdate(messages, requirements, pendingField, env) {
+  // Deliberately forward only text authored by the shopper. Assistant output,
+  // catalogue data, RAG content and cart state never leave the Worker here.
+  const recent = [{
+    role: 'user',
+    content: messages.slice(-6).map((message) => String(message.content || '').slice(0, 1200)).join('\n'),
+  }];
+  const system = `Extrae únicamente actualizaciones JSON para Cannabicultor AI Sales v0.1.
+Alcance fijo e inmutable: indoor, armario 120x120 cm, 4 plantas, sustrato coco, máximo 900 EUR. No recomiendes productos ni expliques cultivo.
+Estado mínimo actual: ${JSON.stringify(requirements)}.
+Campo que se está preguntando ahora: ${pendingField || 'ninguno'}.
+Interpreta el último mensaje del usuario; si responde sí/no al campo pendiente, actualiza ese booleano. Si no hay dato nuevo, usa un objeto vacío.
+REGLA ESTRICTA ANTI-INVENCIÓN: solo puedes incluir una clave si el usuario la mencionó explícitamente (una cifra de altura, o una respuesta clara sí/no sobre semillas). PROHIBIDO deducir o rellenar height_cm o seeds_in_budget a partir de frases genéricas como "parto de cero", "para empezar" o similares -- esas frases NO dicen nada sobre semillas ni altura. Ante la duda, omite la clave.
+Devuelve SOLO JSON válido con esta forma exacta: {"updates":{"budget_eur":number,"height_cm":number,"seeds_in_budget":boolean}}. Omite las claves que no cambien. Nunca añadas otras claves, Markdown ni texto.`;
+  let raw;
+  try {
+    raw = await callDeepSeek(system, recent, env);
+  } catch (_) {
+    try {
+      raw = await callAnthropic(system, recent, false, env);
+    } catch (_) {
+      raw = await callOpenAI(system, recent, false, env);
+    }
+  }
+  return parseAiSalesExtraction(raw);
+}
+
+/**
+ * Post-recommendation sales conversation. Runs only after a 'ready' basket
+ * already exists. The LLM gets real product data (name/description/NPK/price
+ * from the catalogue, already loaded and revalidated by the deterministic
+ * engine) plus the RAG evidence already retrieved, and answers like a
+ * knowledgeable salesperson would — no template repetition.
+ *
+ * Hard boundary: this function NEVER changes selected_items, price, stock or
+ * total_eur. It can only talk about what's already in `recommendation`. If
+ * the shopper asks for a real change (swap a product, add something new,
+ * change budget/height), the model is instructed to say so in plain language
+ * and set change_requested=true; the Worker does not act on that flag here —
+ * a v0.2 would re-run the deterministic engine. This keeps "explain" and
+ * "decide" as two separate, non-overlapping responsibilities.
+ */
+function buildAiSalesSalesSystemPrompt(recommendation) {
+  const dossier = Array.isArray(recommendation.product_dossier) ? recommendation.product_dossier : [];
+  const catalogueBlock = dossier.map((item) => {
+    const parts = [
+      `SKU ${item.sku} (${item.component}${item.bundle ? ', bundle' : ''})`,
+      item.nombre ? `Nombre: ${item.nombre}` : null,
+      item.categoria ? `Categoría: ${item.categoria}` : null,
+      item.precio_eur != null ? `Precio: ${item.precio_eur.toFixed(2)} €` : null,
+      `Cantidad en la cesta: ${item.quantity}`,
+      item.descripcion ? `Descripción del fabricante/catálogo: ${item.descripcion}` : null,
+    ].filter(Boolean);
+    return parts.join('\n');
+  }).join('\n\n');
+
+  const evidenceBlock = (recommendation.evidence || [])
+    .map((e) => `- ${e.source}${e.reference ? ` (${e.reference})` : ''}${e.tags?.length ? ` [${e.tags.join(', ')}]` : ''}`)
+    .join('\n');
+
+  return `Eres un vendedor experto de Cannabicultor, atendiendo a un cliente que ya tiene una configuración de cultivo calculada y confirmada para: indoor 120×120 cm, 4 plantas, sustrato coco, presupuesto máximo ${recommendation.requirements.budget_eur} €, altura útil ${recommendation.requirements.height_cm} cm.
+
+TONO: vendedor humano, cercano, con autoridad técnica real. Tuteo. Respuestas naturales y breves (3-6 líneas salvo que pidan detalle), nunca en formato de ficha técnica ni listas a menos que ayude a leer mejor. Nada de plantillas ni de repetir siempre el mismo resumen.
+
+CESTA YA CONFIRMADA (total ${recommendation.total_eur} €, stock y precio revalidados justo antes de mostrarse — son datos reales y actuales, no los inventes ni los cambies):
+${catalogueBlock || 'Sin detalle de producto disponible.'}
+
+EVIDENCIA TÉCNICA CONSULTADA PARA ESTA CONFIGURACIÓN:
+${evidenceBlock || 'Sin fuentes adicionales para esta consulta.'}
+
+QUÉ PUEDES HACER:
+- Responder con criterio real sobre los productos de la cesta: para qué sirve cada uno, por qué se eligió, cómo se usa (ej. dosificación de fertilizantes si está en la descripción), qué pasa si se cambia algo.
+- Responder preguntas sobre categorías EXCLUIDAS explícitamente de esta v0.1 (semillas, instalación eléctrica, control climático avanzado, accesorios no imprescindibles): explica con honestidad que estos productos no forman parte de esta configuración calculada y por qué (p.ej. semillas: cada banco/genética tiene precio y necesidades distintas, así que se cotizan aparte).
+- Usar tu conocimiento general de cultivo para responder preguntas relacionadas (por qué coco y no tierra, cómo mezclar el fertilizante A+B, qué EC objetivo usar) siempre que no contradigas los datos del dossier.
+
+QUÉ NO PUEDES HACER (LÍMITES DUROS):
+- Nunca inventes un precio, stock, SKU o característica que no esté en el dossier de arriba o en la evidencia técnica. Si no lo sabes, dilo con naturalidad ("eso no lo tengo confirmado, pero...") y da tu mejor criterio de cultivador experto sin disfrazarlo de dato de catálogo.
+- Nunca digas que has añadido, quitado o cambiado un producto de la cesta: tú no tienes esa capacidad. Si el cliente pide un cambio real (otro extractor, añadir semillas al presupuesto, cambiar la altura, otro tamaño de maceta), reconócelo con naturalidad, indícale que vas a recalcular la configuración con ese nuevo dato, y responde SOLO con JSON: {"change_requested": true, "change_summary": "<resumen breve del cambio pedido>"}. No mezcles ese JSON con texto conversacional.
+- Si la pregunta no tiene nada que ver con esta configuración de cultivo ni con los productos de la cesta, redirige brevemente al ámbito de la conversación.`;
+}
+
+function parseAiSalesChangeRequest(text) {
+  const trimmed = String(text || '').trim();
+  const candidate = trimmed.match(/\{[\s\S]*\}/)?.[0];
+  if (!candidate) return null;
+  try {
+    const parsed = JSON.parse(candidate);
+    if (parsed && parsed.change_requested === true) {
+      return { change_requested: true, change_summary: typeof parsed.change_summary === 'string' ? parsed.change_summary.slice(0, 300) : null };
+    }
+  } catch (_) {
+    // Not JSON: a normal conversational reply, not a change request.
+  }
+  return null;
+}
+
+async function handleAiSalesSalesConversation(body, env, recommendation) {
+  const messages = body.messages;
+  const conversational = messages.slice(-10).map((m) => ({
+    role: m.role === 'assistant' ? 'assistant' : 'user',
+    content: String(m.content || '').slice(0, 1200),
+  }));
+  const system = buildAiSalesSalesSystemPrompt(recommendation);
+
+  let reply;
+  try {
+    const result = await generateChatReply(system, conversational, false, env);
+    reply = result.reply;
+  } catch (error) {
+    console.log(JSON.stringify({ event: 'ai_sales_conversation_failed', detail: String(error?.message || error).slice(0, 160) }));
+    return { status: 502, data: { error: 'ai_sales_dependency_unavailable' } };
+  }
+
+  const changeRequest = parseAiSalesChangeRequest(reply);
+  if (changeRequest) {
+    return {
+      status: 200,
+      data: {
+        version: AI_SALES_VERSION,
+        status: 'ready',
+        requirements: recommendation.requirements,
+        recommendation,
+        change_requested: true,
+        change_summary: changeRequest.change_summary,
+        assistant_message: changeRequest.change_summary
+          ? `Entendido: ${changeRequest.change_summary}. Voy a recalcular la configuración con ese dato — dime el valor exacto si aún no lo has dado.`
+          : 'Entendido, voy a recalcular la configuración con ese cambio — dime el valor exacto si aún no lo has dado.',
+      },
+    };
+  }
+
+  return {
+    status: 200,
+    data: {
+      version: AI_SALES_VERSION,
+      status: 'ready',
+      requirements: recommendation.requirements,
+      recommendation,
+      assistant_message: reply,
+    },
+  };
+}
+
+async function handleAiSalesChat(body, env) {
+  const messages = body && Array.isArray(body.messages) ? body.messages : null;
+  if (!messages || !messages.length || messages.length > 20 || !messages.every((message) => message && (message.role === 'user' || message.role === 'assistant') && typeof message.content === 'string' && message.content.length <= 1200)) {
+    return { status: 400, data: { error: 'invalid_messages' } };
+  }
+  const lastUser = [...messages].reverse().find((m) => m.role === 'user');
+  if (!lastUser || !lastUser.content.trim()) return { status: 400, data: { error: 'missing_user_message' } };
+
+  // Once a basket is ready and confirmed, hand the conversation to the sales
+  // layer instead of re-running requirement extraction on every turn.
+  const existingRecommendation = body.recommendation && body.recommendation.status === 'ready' ? body.recommendation : null;
+  if (existingRecommendation) {
+    return handleAiSalesSalesConversation(body, env, existingRecommendation);
+  }
+
+  const shopperOnly = messages.filter((m) => m.role === 'user');
+  const current = mergeAiSalesConversationRequirements(body.requirements, {});
+  if (!current.ok) return { status: 400, data: { error: 'invalid_requirements_state', errors: current.errors } };
+  const pendingField = body.pending_field === 'height_cm' || body.pending_field === 'seeds_in_budget' ? body.pending_field : null;
+
+  try {
+    const updates = await extractAiSalesConversationUpdate(shopperOnly, current.requirements, pendingField, env);
+    if (!updates) return { status: 422, data: { error: 'invalid_extraction_output' } };
+    const merged = mergeAiSalesConversationRequirements(current.requirements, updates);
+    if (!merged.ok) return { status: 422, data: { error: 'invalid_extracted_requirements', errors: merged.errors } };
+
+    const base = {
+      version: AI_SALES_VERSION,
+      requirements: merged.requirements,
+      understood: aiSalesChatKnownSummary(merged.requirements),
+    };
+    if (merged.questions.length) {
+      return {
+        status: 200,
+        data: {
+          ...base,
+          status: 'needs_clarification',
+          questions: merged.questions,
+          assistant_message: `He entendido: ${base.understood}. ${merged.questions.map((question) => question.question).join(' ')}`,
+        },
+      };
+    }
+
+    // This is the only final execution: it retrieves evidence, selects items
+    // deterministically and writes ai_sales_runs. No transcript is persisted.
+    const recommendation = await handleAiSalesRecommend({ requirements: merged.requirements }, env);
+    return {
+      status: recommendation.status,
+      data: {
+        ...base,
+        status: recommendation.data.status,
+        assistant_message: recommendation.data.explanation?.summary || 'La recomendación no se pudo completar.',
+        recommendation: recommendation.data,
+      },
+    };
+  } catch (error) {
+    console.log(JSON.stringify({ event: 'ai_sales_chat_failed', detail: String(error?.message || error).slice(0, 160) }));
+    return { status: 502, data: { error: 'ai_sales_chat_dependency_unavailable' } };
+  }
+}
+
+// =========================================================================
+// SALES AGENT — multi-tenant conversational seller (Claude tool use)
+// =========================================================================
+
+async function resolveSalesTenant(env, tenantSlug) {
+  const slug = String(tenantSlug || '').trim();
+  if (!slug) return null;
+  const path = `sales_tenants?slug=eq.${encodeURIComponent(slug)}&status=neq.churned&select=id,slug,display_name,status&limit=1`;
+  const result = await sbRequest(env, path, { method: 'GET' });
+  if (!result.ok || !Array.isArray(result.data) || !result.data.length) return null;
+  return result.data[0];
+}
+
+async function recordSalesAgentTurn(env, { tenantId, conversationId, userMessage, assistantMessage, toolCalls, model }) {
+  try {
+    await sbRequest(env, 'sales_agent_turns', {
+      method: 'POST',
+      headers: { Prefer: 'return=minimal' },
+      body: JSON.stringify({
+        tenant_id: tenantId,
+        conversation_id: conversationId,
+        user_message: userMessage,
+        assistant_message: assistantMessage || null,
+        tool_calls: toolCalls || [],
+        model: model || null,
+      }),
+    });
+  } catch (error) {
+    console.log(JSON.stringify({ event: 'sales_agent_audit_failed', detail: String(error?.message || error).slice(0, 160) }));
+  }
+}
+
+/**
+ * Claude tool-use loop. The model is given SALES_AGENT_TOOLS and can call
+ * them repeatedly (bounded by MAX_TOOL_ROUNDS) before producing its final
+ * text reply. Every tool execution is scoped to tenantId, fixed by the
+ * caller — the model never sees or controls that value.
+ */
+async function runSalesAgentConversation(env, tenantId, conversationId, system, initialMessages) {
+  if (!env.ANTHROPIC_API_KEY) throw new Error('missing_ANTHROPIC_API_KEY');
+  let messages = initialMessages;
+  const toolCallLog = [];
+  // Ground truth for anti-hallucination checks (e.g. an email the model
+  // claims the customer gave): only text the customer actually typed in
+  // THIS conversation counts, never something the model recalls or invents.
+  const shopperTranscript = initialMessages.filter((m) => m.role === 'user').map((m) => String(m.content || '')).join('\n');
+
+  for (let round = 0; round < MAX_TOOL_ROUNDS; round++) {
+    const response = await fetchWithTimeout('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': env.ANTHROPIC_API_KEY,
+        'anthropic-version': '2023-06-01',
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-5',
+        max_tokens: 1000,
+        system,
+        messages,
+        tools: SALES_AGENT_TOOLS,
+      }),
+    }, 20000);
+
+    const raw = await response.text();
+    if (!response.ok) throw new Error(`http_${response.status}: ${raw.slice(0, 300)}`);
+    const data = JSON.parse(raw);
+
+    const toolUseBlocks = (data.content || []).filter((b) => b.type === 'tool_use');
+    if (!toolUseBlocks.length || data.stop_reason !== 'tool_use') {
+      const text = (data.content || []).filter((b) => b.type === 'text').map((b) => b.text).join('\n').trim();
+      return { reply: text || 'No he podido generar una respuesta.', toolCalls: toolCallLog, model: data.model };
+    }
+
+    // Execute every requested tool call (hard-scoped to tenantId) and feed
+    // the results back so the model can continue reasoning or reply.
+    messages = [...messages, { role: 'assistant', content: data.content }];
+    const toolResults = [];
+    for (const block of toolUseBlocks) {
+      let result;
+      try {
+        result = await executeSalesAgentTool(env, sbRequest, tenantId, block.name, block.input, conversationId, shopperTranscript);
+      } catch (error) {
+        result = { error: String(error?.message || error).slice(0, 200) };
+      }
+      toolCallLog.push({ tool: block.name, input: block.input, result });
+      toolResults.push({ type: 'tool_result', tool_use_id: block.id, content: JSON.stringify(result) });
+    }
+    messages = [...messages, { role: 'user', content: toolResults }];
+  }
+
+  return { reply: 'He consultado varias veces el catálogo pero no he podido cerrar una respuesta clara. ¿Puedes reformular lo que necesitas?', toolCalls: toolCallLog, model: null };
+}
+
+async function handleSalesAgentChat(body, env) {
+  const tenantSlug = body?.tenant_slug;
+  const tenant = await resolveSalesTenant(env, tenantSlug);
+  if (!tenant) return { status: 404, data: { error: 'unknown_tenant' } };
+
+  const messages = Array.isArray(body?.messages) ? body.messages : null;
+  if (!messages || !messages.length || messages.length > 30 || !messages.every((m) => m && (m.role === 'user' || m.role === 'assistant') && typeof m.content === 'string' && m.content.length <= 2000)) {
+    return { status: 400, data: { error: 'invalid_messages' } };
+  }
+  const lastUser = [...messages].reverse().find((m) => m.role === 'user');
+  if (!lastUser || !lastUser.content.trim()) return { status: 400, data: { error: 'missing_user_message' } };
+
+  const conversationId = typeof body?.conversation_id === 'string' && body.conversation_id ? body.conversation_id : crypto.randomUUID();
+  const system = buildSalesAgentSystemPrompt(tenant);
+  const anthropicMessages = messages.slice(-20).map((m) => ({ role: m.role, content: m.content }));
+
+  try {
+    const { reply, toolCalls, model } = await runSalesAgentConversation(env, tenant.id, conversationId, system, anthropicMessages);
+    await recordSalesAgentTurn(env, {
+      tenantId: tenant.id,
+      conversationId,
+      userMessage: lastUser.content,
+      assistantMessage: reply,
+      toolCalls,
+      model,
+    });
+    return {
+      status: 200,
+      data: {
+        conversation_id: conversationId,
+        tenant: { slug: tenant.slug, display_name: tenant.display_name },
+        assistant_message: reply,
+        tool_calls: toolCalls,
+      },
+    };
+  } catch (error) {
+    console.log(JSON.stringify({ event: 'sales_agent_chat_failed', tenant: tenant.slug, detail: String(error?.message || error).slice(0, 200), stack: String(error?.stack || '').slice(0, 500) }));
+    return { status: 502, data: { error: 'sales_agent_dependency_unavailable' } };
+  }
 }
 
 // =========================================================================
@@ -2427,6 +2912,9 @@ export default {
         return json(result.data, result.status, cors);
       }
 
+      if (path === '/ai-sales/chat') { const r = await handleAiSalesChat(body, env); return json(r.data, r.status, cors); }
+      if (path === '/sales-agent/chat') { const r = await handleSalesAgentChat(body, env); return json(r.data, r.status, cors); }
+      if (path === '/ai-sales/recommend') { const r = await handleAiSalesRecommend(body, env); return json(r.data, r.status, cors); }
       if (path === '/asesor') { const r = await handleAsesor(body, env); return json(r.data, r.status, cors); }
       if (path === '/cultivo/guardar') { const r = await handleGuardarCultivo(body, env, request); return json(r.data, r.status, cors); }
       if (path === '/perfil/sala') { const r = await handleGuardarSala(body, env, request); return json(r.data, r.status, cors); }
