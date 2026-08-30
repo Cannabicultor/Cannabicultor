@@ -386,7 +386,7 @@ async function buscarChunksRelevantes(embedding, env) {
 async function resolveSalesTenant(env, tenantSlug) {
   const slug = String(tenantSlug || '').trim();
   if (!slug) return null;
-  const path = `sales_tenants?slug=eq.${encodeURIComponent(slug)}&status=neq.churned&select=id,slug,display_name,status&limit=1`;
+  const path = `sales_tenants?slug=eq.${encodeURIComponent(slug)}&status=neq.churned&select=id,slug,display_name,status,brand_profile&limit=1`;
   const result = await sbRequest(env, path, { method: 'GET' });
   if (!result.ok || !Array.isArray(result.data) || !result.data.length) return null;
   return result.data[0];
