@@ -411,63 +411,209 @@ async function recordSalesAgentTurn(env, { tenantId, conversationId, userMessage
   }
 }
 
+// Herramientas SALES_AGENT_TOOLS en formato function-calling de OpenAI/DeepSeek
+// (ambos son compatibles con el mismo esquema "function" de OpenAI).
+function salesAgentToolsAsOpenAIFunctions() {
+  return SALES_AGENT_TOOLS.map((t) => ({
+    type: 'function',
+    function: { name: t.name, description: t.description, parameters: t.input_schema },
+  }));
+}
+
 /**
- * Claude tool-use loop. The model is given SALES_AGENT_TOOLS and can call
- * them repeatedly (bounded by MAX_TOOL_ROUNDS) before producing its final
- * text reply. Every tool execution is scoped to tenantId, fixed by the
- * caller — the model never sees or controls that value.
+ * Un round de tool-use contra Anthropic. Lanza si la llamada HTTP falla
+ * (incluye falta de crédito, rate limit, etc.) para que el caller pueda
+ * pasar al siguiente proveedor de la cascada.
+ */
+async function salesAgentRoundAnthropic(env, system, messages) {
+  const response = await fetchWithTimeout('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': env.ANTHROPIC_API_KEY,
+      'anthropic-version': '2023-06-01',
+    },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-5',
+      max_tokens: 1000,
+      system,
+      messages,
+      tools: SALES_AGENT_TOOLS,
+    }),
+  }, 20000);
+  const raw = await response.text();
+  if (!response.ok) throw new Error(`http_${response.status}: ${raw.slice(0, 300)}`);
+  const data = JSON.parse(raw);
+
+  const toolUseBlocks = (data.content || []).filter((b) => b.type === 'tool_use');
+  if (!toolUseBlocks.length || data.stop_reason !== 'tool_use') {
+    const text = (data.content || []).filter((b) => b.type === 'text').map((b) => b.text).join('\n').trim();
+    return { done: true, text, model: data.model };
+  }
+  return {
+    done: false,
+    model: data.model,
+    assistantMessageForHistory: { role: 'assistant', content: data.content },
+    toolCalls: toolUseBlocks.map((b) => ({ id: b.id, name: b.name, input: b.input })),
+    buildToolResultMessage: (results) => ({
+      role: 'user',
+      content: results.map((r) => ({ type: 'tool_result', tool_use_id: r.id, content: JSON.stringify(r.result) })),
+    }),
+  };
+}
+
+/**
+ * Un round de tool-use contra un endpoint compatible OpenAI (OpenAI o
+ * DeepSeek). `messages` aquí ya está en formato Anthropic (role/content
+ * string u array de bloques); se traduce a formato OpenAI en cada round
+ * porque el historial se comparte entre proveedores dentro de la misma
+ * conversación si uno falla a medio camino.
+ */
+async function salesAgentRoundOpenAICompatible(env, { apiUrl, apiKey, model, missingKeyMsg }, system, messages) {
+  if (!apiKey) throw new Error(missingKeyMsg);
+
+  const openaiMessages = [{ role: 'system', content: system }, ...anthropicHistoryToOpenAIToolMessages(messages)];
+
+  const response = await fetchWithTimeout(apiUrl, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
+    body: JSON.stringify({
+      model,
+      max_tokens: 1000,
+      messages: openaiMessages,
+      tools: salesAgentToolsAsOpenAIFunctions(),
+    }),
+  }, 20000);
+  const raw = await response.text();
+  if (!response.ok) throw new Error(`http_${response.status}: ${raw.slice(0, 300)}`);
+  const data = JSON.parse(raw);
+  const choice = data.choices && data.choices[0];
+  const msg = choice && choice.message;
+  if (!msg) throw new Error('empty_or_unparseable_content');
+
+  const toolCalls = Array.isArray(msg.tool_calls) ? msg.tool_calls : [];
+  if (!toolCalls.length) {
+    const text = String(msg.content || '').trim();
+    return { done: true, text, model: data.model || model };
+  }
+
+  return {
+    done: false,
+    model: data.model || model,
+    // Se guarda tal cual (formato OpenAI) — anthropicHistoryToOpenAIToolMessages
+    // sabe reconocer y pasar por alto este shape en el siguiente round.
+    assistantMessageForHistory: { role: 'assistant', tool_calls: toolCalls, content: msg.content || null, _providerFormat: 'openai' },
+    toolCalls: toolCalls.map((tc) => ({ id: tc.id, name: tc.function.name, input: safeJsonParse(tc.function.arguments) })),
+    buildToolResultMessage: (results) => ({
+      role: 'user',
+      _toolResultsOpenAI: results.map((r) => ({ role: 'tool', tool_call_id: r.id, content: JSON.stringify(r.result) })),
+    }),
+  };
+}
+
+function safeJsonParse(text) {
+  try { return JSON.parse(text); } catch { return {}; }
+}
+
+/**
+ * Traduce el historial (que puede mezclar mensajes en formato Anthropic y
+ * mensajes ya guardados en formato OpenAI de un round anterior con otro
+ * proveedor) al formato de mensajes que espera un endpoint OpenAI-compatible.
+ */
+function anthropicHistoryToOpenAIToolMessages(messages) {
+  const out = [];
+  for (const m of messages) {
+    if (m._providerFormat === 'openai') {
+      out.push({ role: 'assistant', content: m.content, tool_calls: m.tool_calls });
+      continue;
+    }
+    if (m._toolResultsOpenAI) {
+      out.push(...m._toolResultsOpenAI);
+      continue;
+    }
+    if (typeof m.content === 'string') {
+      out.push({ role: m.role, content: m.content });
+      continue;
+    }
+    if (Array.isArray(m.content)) {
+      // Bloques estilo Anthropic: tool_use (del assistant) o tool_result (del user).
+      const toolUse = m.content.filter((b) => b.type === 'tool_use');
+      const toolResult = m.content.filter((b) => b.type === 'tool_result');
+      const text = m.content.filter((b) => b.type === 'text').map((b) => b.text).join('\n');
+      if (toolUse.length) {
+        out.push({
+          role: 'assistant',
+          content: text || null,
+          tool_calls: toolUse.map((b) => ({ id: b.id, type: 'function', function: { name: b.name, arguments: JSON.stringify(b.input || {}) } })),
+        });
+      } else if (toolResult.length) {
+        for (const tr of toolResult) out.push({ role: 'tool', tool_call_id: tr.tool_use_id, content: typeof tr.content === 'string' ? tr.content : JSON.stringify(tr.content) });
+      } else if (text) {
+        out.push({ role: m.role, content: text });
+      }
+      continue;
+    }
+  }
+  return out;
+}
+
+/**
+ * Tool-use loop con cascada de proveedores: Anthropic → OpenAI → DeepSeek.
+ * El modelo puede llamar a SALES_AGENT_TOOLS repetidamente (acotado por
+ * MAX_TOOL_ROUNDS) antes de dar su respuesta final. Cada llamada a
+ * herramienta sigue hard-scoped a tenantId, fijado por el caller — el
+ * modelo nunca lo ve ni lo controla, sea cual sea el proveedor activo.
+ *
+ * Si un proveedor falla a mitad de conversación (créditos agotados, rate
+ * limit, timeout), se reintenta ESE MISMO round con el siguiente proveedor
+ * de la cascada, conservando el historial acumulado — el cliente no nota
+ * el cambio de proveedor, solo que el asesor le sigue respondiendo.
  */
 async function runSalesAgentConversation(env, tenantId, conversationId, system, initialMessages) {
-  if (!env.ANTHROPIC_API_KEY) throw new Error('missing_ANTHROPIC_API_KEY');
+  const providers = [
+    { name: 'anthropic', enabled: Boolean(env.ANTHROPIC_API_KEY), run: (msgs) => salesAgentRoundAnthropic(env, system, msgs) },
+    { name: 'openai', enabled: Boolean(env.OPENAI_API_KEY), run: (msgs) => salesAgentRoundOpenAICompatible(env, { apiUrl: 'https://api.openai.com/v1/chat/completions', apiKey: env.OPENAI_API_KEY, model: 'gpt-4o', missingKeyMsg: 'missing_OPENAI_API_KEY' }, system, msgs) },
+    { name: 'deepseek', enabled: Boolean(env.DEEPSEEK_API_KEY), run: (msgs) => salesAgentRoundOpenAICompatible(env, { apiUrl: 'https://api.deepseek.com/v1/chat/completions', apiKey: env.DEEPSEEK_API_KEY, model: 'deepseek-chat', missingKeyMsg: 'missing_DEEPSEEK_API_KEY' }, system, msgs) },
+  ].filter((p) => p.enabled);
+  if (!providers.length) throw new Error('no_llm_provider_configured');
+
   let messages = initialMessages;
   const toolCallLog = [];
-  // Ground truth for anti-hallucination checks (e.g. an email the model
-  // claims the customer gave): only text the customer actually typed in
-  // THIS conversation counts, never something the model recalls or invents.
   const shopperTranscript = initialMessages.filter((m) => m.role === 'user').map((m) => String(m.content || '')).join('\n');
+  const providerErrors = [];
 
   for (let round = 0; round < MAX_TOOL_ROUNDS; round++) {
-    const response = await fetchWithTimeout('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': env.ANTHROPIC_API_KEY,
-        'anthropic-version': '2023-06-01',
-      },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-5',
-        max_tokens: 1000,
-        system,
-        messages,
-        tools: SALES_AGENT_TOOLS,
-      }),
-    }, 20000);
-
-    const raw = await response.text();
-    if (!response.ok) throw new Error(`http_${response.status}: ${raw.slice(0, 300)}`);
-    const data = JSON.parse(raw);
-
-    const toolUseBlocks = (data.content || []).filter((b) => b.type === 'tool_use');
-    if (!toolUseBlocks.length || data.stop_reason !== 'tool_use') {
-      const text = (data.content || []).filter((b) => b.type === 'text').map((b) => b.text).join('\n').trim();
-      return { reply: text || 'No he podido generar una respuesta.', toolCalls: toolCallLog, model: data.model };
-    }
-
-    // Execute every requested tool call (hard-scoped to tenantId) and feed
-    // the results back so the model can continue reasoning or reply.
-    messages = [...messages, { role: 'assistant', content: data.content }];
-    const toolResults = [];
-    for (const block of toolUseBlocks) {
-      let result;
+    let result = null;
+    let usedProvider = null;
+    for (const provider of providers) {
       try {
-        result = await executeSalesAgentTool(env, sbRequest, tenantId, block.name, block.input, conversationId, shopperTranscript);
+        result = await provider.run(messages);
+        usedProvider = provider.name;
+        break;
       } catch (error) {
-        result = { error: String(error?.message || error).slice(0, 200) };
+        providerErrors.push(`${provider.name}: ${String(error?.message || error).slice(0, 160)}`);
+        console.log(JSON.stringify({ event: 'sales_agent_provider_failed', tenant: tenantId, provider: provider.name, detail: String(error?.message || error).slice(0, 200) }));
       }
-      toolCallLog.push({ tool: block.name, input: block.input, result });
-      toolResults.push({ type: 'tool_result', tool_use_id: block.id, content: JSON.stringify(result) });
     }
-    messages = [...messages, { role: 'user', content: toolResults }];
+    if (!result) throw new Error(`all_providers_failed: ${providerErrors.join(' | ')}`);
+
+    if (result.done) {
+      return { reply: result.text || 'No he podido generar una respuesta.', toolCalls: toolCallLog, model: `${usedProvider}:${result.model}` };
+    }
+
+    messages = [...messages, result.assistantMessageForHistory];
+    const toolResults = [];
+    for (const call of result.toolCalls) {
+      let toolResult;
+      try {
+        toolResult = await executeSalesAgentTool(env, sbRequest, tenantId, call.name, call.input, conversationId, shopperTranscript);
+      } catch (error) {
+        toolResult = { error: String(error?.message || error).slice(0, 200) };
+      }
+      toolCallLog.push({ tool: call.name, input: call.input, result: toolResult });
+      toolResults.push({ id: call.id, result: toolResult });
+    }
+    messages = [...messages, result.buildToolResultMessage(toolResults)];
   }
 
   return { reply: 'He consultado varias veces el catálogo pero no he podido cerrar una respuesta clara. ¿Puedes reformular lo que necesitas?', toolCalls: toolCallLog, model: null };
