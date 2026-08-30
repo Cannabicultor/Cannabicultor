@@ -2851,6 +2851,14 @@ export default {
             headers: { ...cors, 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'public, max-age=300' },
           });
         }
+        if (path === '/preview-b2b/asesor-gb') {
+          const gh = await fetch('https://raw.githubusercontent.com/Cannabicultor/Cannabicultor/main/preview-b2b/asesor-gb.html');
+          if (!gh.ok) return new Response('Preview no disponible', { status: 502, headers: cors });
+          return new Response(await gh.text(), {
+            status: 200,
+            headers: { ...cors, 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store', 'X-Robots-Tag': 'noindex, nofollow' },
+          });
+        }
         if (path === '/resenas') {
           const r = await handleListResenas(url, env);
           return json(r.data, r.status, cors);
