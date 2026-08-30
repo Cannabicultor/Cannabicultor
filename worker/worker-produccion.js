@@ -571,9 +571,9 @@ function anthropicHistoryToOpenAIToolMessages(messages) {
  */
 async function runSalesAgentConversation(env, tenantId, conversationId, system, initialMessages) {
   const providers = [
+    { name: 'deepseek', enabled: Boolean(env.DEEPSEEK_API_KEY), run: (msgs) => salesAgentRoundOpenAICompatible(env, { apiUrl: 'https://api.deepseek.com/v1/chat/completions', apiKey: env.DEEPSEEK_API_KEY, model: 'deepseek-chat', missingKeyMsg: 'missing_DEEPSEEK_API_KEY' }, system, msgs) },
     { name: 'anthropic', enabled: Boolean(env.ANTHROPIC_API_KEY), run: (msgs) => salesAgentRoundAnthropic(env, system, msgs) },
     { name: 'openai', enabled: Boolean(env.OPENAI_API_KEY), run: (msgs) => salesAgentRoundOpenAICompatible(env, { apiUrl: 'https://api.openai.com/v1/chat/completions', apiKey: env.OPENAI_API_KEY, model: 'gpt-4o', missingKeyMsg: 'missing_OPENAI_API_KEY' }, system, msgs) },
-    { name: 'deepseek', enabled: Boolean(env.DEEPSEEK_API_KEY), run: (msgs) => salesAgentRoundOpenAICompatible(env, { apiUrl: 'https://api.deepseek.com/v1/chat/completions', apiKey: env.DEEPSEEK_API_KEY, model: 'deepseek-chat', missingKeyMsg: 'missing_DEEPSEEK_API_KEY' }, system, msgs) },
   ].filter((p) => p.enabled);
   if (!providers.length) throw new Error('no_llm_provider_configured');
 
