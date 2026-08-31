@@ -506,7 +506,7 @@
   $('wattreal').addEventListener('input',function(){state.wattReal=parseFloat(this.value);$('wattreal-val').textContent=fmt(state.wattReal,0);});
 
   // ---- Guardar mi sala → Worker POST /perfil/sala (perfil_cultivo.sala en Supabase) ----
-  var WORKER='https://growers-alliance-ai.enriquedorta.workers.dev';
+  var WORKER='https://growers-alliance-ai.nohumanclicks.workers.dev';
   function sessionJwt(){
     return localStorage.getItem('ga_jwt')||sessionStorage.getItem('ga_jwt')||localStorage.getItem('cc_token')||'';
   }

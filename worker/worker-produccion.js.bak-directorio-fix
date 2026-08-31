@@ -3,9 +3,7 @@ import {
   SALES_AGENT_TOOLS,
   buildSalesAgentSystemPrompt,
   executeSalesAgentTool,
-  detectPitchIntent,
 } from './sales-agent.js';
-import { runCatalogIngest } from './catalog-curation.js';
 
 /**
  * growers-alliance-ai — fuente de verdad del Worker de chat (Cannabicultor)
@@ -387,132 +385,10 @@ async function buscarChunksRelevantes(embedding, env) {
 async function resolveSalesTenant(env, tenantSlug) {
   const slug = String(tenantSlug || '').trim();
   if (!slug) return null;
-  const path = `sales_tenants?slug=eq.${encodeURIComponent(slug)}&status=neq.churned&select=id,slug,display_name,status,brand_profile&limit=1`;
+  const path = `sales_tenants?slug=eq.${encodeURIComponent(slug)}&status=neq.churned&select=id,slug,display_name,status&limit=1`;
   const result = await sbRequest(env, path, { method: 'GET' });
   if (!result.ok || !Array.isArray(result.data) || !result.data.length) return null;
   return result.data[0];
-}
-
-// =========================================================================
-// DEMOS B2B — servidas por token opaco (/demo/{token}), nunca por slug ni
-// nombre de cliente. El HTML completo vive en sales_tenant_demo_page
-// (Supabase, tras service key), NO en el repo público de GitHub — así un
-// cliente no puede enterarse de la existencia de otros demos navegando el
-// repo ni adivinando/enumerando URLs. Ver migración
-// add_demo_token_to_sales_tenants / create_sales_tenant_demo_page.
-// =========================================================================
-
-// Formato esperado del token: hex de 16 caracteres (8 bytes aleatorios,
-// generado con gen_random_bytes en Supabase). Validar formato antes de
-// tocar la DB evita malgastar una query con basura obvia.
-const DEMO_TOKEN_RE = /^[a-f0-9]{16}$/;
-
-async function resolveTenantByDemoToken(env, token) {
-  const clean = String(token || '').trim().toLowerCase();
-  if (!DEMO_TOKEN_RE.test(clean)) return null;
-  const path = `sales_tenants?demo_token=eq.${encodeURIComponent(clean)}&status=neq.churned&select=id,slug,display_name,status&limit=1`;
-  const result = await sbRequest(env, path, { method: 'GET' });
-  if (!result.ok || !Array.isArray(result.data) || !result.data.length) return null;
-  return result.data[0];
-}
-
-async function fetchDemoPageHtml(env, tenantId) {
-  const path = `sales_tenant_demo_page?tenant_id=eq.${encodeURIComponent(tenantId)}&select=html_content&limit=1`;
-  const result = await sbRequest(env, path, { method: 'GET' });
-  if (!result.ok || !Array.isArray(result.data) || !result.data.length) return null;
-  return result.data[0].html_content || null;
-}
-
-async function handleDemoPageRequest(env, token) {
-  // Respuesta idéntica para "token con formato inválido", "token no
-  // existe" y "tenant sin página guardada": nunca dar pistas de cuál de
-  // los tres casos fue, para no ayudar a quien intente enumerar tokens.
-  const NOT_FOUND = new Response('Demo no disponible', { status: 404 });
-  const tenant = await resolveTenantByDemoToken(env, token);
-  if (!tenant) return NOT_FOUND;
-  const html = await fetchDemoPageHtml(env, tenant.id);
-  if (!html) return NOT_FOUND;
-  return new Response(html, {
-    status: 200,
-    headers: {
-      'Content-Type': 'text/html; charset=utf-8',
-      'Cache-Control': 'no-store',
-      'X-Robots-Tag': 'noindex, nofollow',
-    },
-  });
-}
-
-// Pieza 3 — conocimiento de venta propio de Cannabicultor/NHC. Vive en
-// nhc_sales_profile (horizontal, no por tenant, ver migración
-// sales_agent_self_selling_pieces_3_4). Falla en silencio a null: si no
-// carga, buildSalesAgentSystemPrompt simplemente no añade ese bloque y el
-// asesor sigue funcionando con normalidad para el resto de la conversación.
-async function fetchNhcSalesProfile(env) {
-  try {
-    const path = 'nhc_sales_profile?activo=eq.true&select=cualidades,herramientas,niveles,objeciones,posicionamiento,notas_incertidumbre&order=updated_at.desc&limit=1';
-    const result = await sbRequest(env, path, { method: 'GET' });
-    if (!result.ok || !Array.isArray(result.data) || !result.data.length) return null;
-    return result.data[0];
-  } catch (error) {
-    console.log(JSON.stringify({ event: 'nhc_sales_profile_fetch_failed', detail: String(error?.message || error).slice(0, 160) }));
-    return null;
-  }
-}
-
-// Pieza 4b — preguntas de negocio ya revisadas y aprobadas por un humano.
-// Nunca se auto-promociona a 'revisado': eso lo hace Ernie a mano en
-// sales_pitch_knowledge tras ver la cola de preguntas repetidas (pieza 4a).
-async function fetchCuratedPitchKnowledge(env) {
-  try {
-    const path = 'sales_pitch_knowledge?estado=eq.revisado&select=pregunta_canonica,mejor_respuesta&order=veces_preguntada.desc&limit=12';
-    const result = await sbRequest(env, path, { method: 'GET' });
-    if (!result.ok || !Array.isArray(result.data)) return [];
-    return result.data;
-  } catch (error) {
-    console.log(JSON.stringify({ event: 'sales_pitch_knowledge_fetch_failed', detail: String(error?.message || error).slice(0, 160) }));
-    return [];
-  }
-}
-
-// Pieza 4a — log crudo de preguntas de negocio detectadas en una demo, más
-// agrupación por texto exacto normalizado en sales_pitch_knowledge (solo
-// sube el contador si ya existe la misma pregunta canónica; nunca crea ni
-// aprueba una respuesta sola — eso es cola de revisión humana, mismo
-// principio que product_dedupe_candidatos: nunca fusión automática
-// silenciosa de algo sensible como una respuesta sobre precio).
-async function recordSalesPitchQuestion(env, { tenantId, conversationId, pregunta, categoria }) {
-  try {
-    await sbRequest(env, 'sales_pitch_question', {
-      method: 'POST',
-      headers: { Prefer: 'return=minimal' },
-      body: JSON.stringify({
-        tenant_id: tenantId,
-        conversation_id: conversationId,
-        pregunta_cruda: pregunta.slice(0, 500),
-        categoria_detectada: categoria,
-      }),
-    });
-
-    const norm = pregunta.trim().toLowerCase().slice(0, 500);
-    const existingPath = `sales_pitch_knowledge?pregunta_canonica_norm=eq.${encodeURIComponent(norm)}&select=id,veces_preguntada&limit=1`;
-    const existing = await sbRequest(env, existingPath, { method: 'GET' });
-    if (existing.ok && Array.isArray(existing.data) && existing.data.length) {
-      const row = existing.data[0];
-      await sbRequest(env, `sales_pitch_knowledge?id=eq.${row.id}`, {
-        method: 'PATCH',
-        headers: { Prefer: 'return=minimal' },
-        body: JSON.stringify({ veces_preguntada: (row.veces_preguntada || 1) + 1, updated_at: new Date().toISOString() }),
-      });
-    } else {
-      await sbRequest(env, 'sales_pitch_knowledge', {
-        method: 'POST',
-        headers: { Prefer: 'return=minimal' },
-        body: JSON.stringify({ pregunta_canonica: pregunta.slice(0, 500), categoria, estado: 'pendiente' }),
-      });
-    }
-  } catch (error) {
-    console.log(JSON.stringify({ event: 'sales_pitch_question_log_failed', detail: String(error?.message || error).slice(0, 160) }));
-  }
 }
 
 async function recordSalesAgentTurn(env, { tenantId, conversationId, userMessage, assistantMessage, toolCalls, model }) {
@@ -534,209 +410,63 @@ async function recordSalesAgentTurn(env, { tenantId, conversationId, userMessage
   }
 }
 
-// Herramientas SALES_AGENT_TOOLS en formato function-calling de OpenAI/DeepSeek
-// (ambos son compatibles con el mismo esquema "function" de OpenAI).
-function salesAgentToolsAsOpenAIFunctions() {
-  return SALES_AGENT_TOOLS.map((t) => ({
-    type: 'function',
-    function: { name: t.name, description: t.description, parameters: t.input_schema },
-  }));
-}
-
 /**
- * Un round de tool-use contra Anthropic. Lanza si la llamada HTTP falla
- * (incluye falta de crédito, rate limit, etc.) para que el caller pueda
- * pasar al siguiente proveedor de la cascada.
- */
-async function salesAgentRoundAnthropic(env, system, messages) {
-  const response = await fetchWithTimeout('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': env.ANTHROPIC_API_KEY,
-      'anthropic-version': '2023-06-01',
-    },
-    body: JSON.stringify({
-      model: 'claude-sonnet-4-5',
-      max_tokens: 1000,
-      system,
-      messages,
-      tools: SALES_AGENT_TOOLS,
-    }),
-  }, 20000);
-  const raw = await response.text();
-  if (!response.ok) throw new Error(`http_${response.status}: ${raw.slice(0, 300)}`);
-  const data = JSON.parse(raw);
-
-  const toolUseBlocks = (data.content || []).filter((b) => b.type === 'tool_use');
-  if (!toolUseBlocks.length || data.stop_reason !== 'tool_use') {
-    const text = (data.content || []).filter((b) => b.type === 'text').map((b) => b.text).join('\n').trim();
-    return { done: true, text, model: data.model };
-  }
-  return {
-    done: false,
-    model: data.model,
-    assistantMessageForHistory: { role: 'assistant', content: data.content },
-    toolCalls: toolUseBlocks.map((b) => ({ id: b.id, name: b.name, input: b.input })),
-    buildToolResultMessage: (results) => ({
-      role: 'user',
-      content: results.map((r) => ({ type: 'tool_result', tool_use_id: r.id, content: JSON.stringify(r.result) })),
-    }),
-  };
-}
-
-/**
- * Un round de tool-use contra un endpoint compatible OpenAI (OpenAI o
- * DeepSeek). `messages` aquí ya está en formato Anthropic (role/content
- * string u array de bloques); se traduce a formato OpenAI en cada round
- * porque el historial se comparte entre proveedores dentro de la misma
- * conversación si uno falla a medio camino.
- */
-async function salesAgentRoundOpenAICompatible(env, { apiUrl, apiKey, model, missingKeyMsg }, system, messages) {
-  if (!apiKey) throw new Error(missingKeyMsg);
-
-  const openaiMessages = [{ role: 'system', content: system }, ...anthropicHistoryToOpenAIToolMessages(messages)];
-
-  const response = await fetchWithTimeout(apiUrl, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
-    body: JSON.stringify({
-      model,
-      max_tokens: 1000,
-      messages: openaiMessages,
-      tools: salesAgentToolsAsOpenAIFunctions(),
-    }),
-  }, 20000);
-  const raw = await response.text();
-  if (!response.ok) throw new Error(`http_${response.status}: ${raw.slice(0, 300)}`);
-  const data = JSON.parse(raw);
-  const choice = data.choices && data.choices[0];
-  const msg = choice && choice.message;
-  if (!msg) throw new Error('empty_or_unparseable_content');
-
-  const toolCalls = Array.isArray(msg.tool_calls) ? msg.tool_calls : [];
-  if (!toolCalls.length) {
-    const text = String(msg.content || '').trim();
-    return { done: true, text, model: data.model || model };
-  }
-
-  return {
-    done: false,
-    model: data.model || model,
-    // Se guarda tal cual (formato OpenAI) — anthropicHistoryToOpenAIToolMessages
-    // sabe reconocer y pasar por alto este shape en el siguiente round.
-    assistantMessageForHistory: { role: 'assistant', tool_calls: toolCalls, content: msg.content || null, _providerFormat: 'openai' },
-    toolCalls: toolCalls.map((tc) => ({ id: tc.id, name: tc.function.name, input: safeJsonParse(tc.function.arguments) })),
-    buildToolResultMessage: (results) => ({
-      role: 'user',
-      _toolResultsOpenAI: results.map((r) => ({ role: 'tool', tool_call_id: r.id, content: JSON.stringify(r.result) })),
-    }),
-  };
-}
-
-function safeJsonParse(text) {
-  try { return JSON.parse(text); } catch { return {}; }
-}
-
-/**
- * Traduce el historial (que puede mezclar mensajes en formato Anthropic y
- * mensajes ya guardados en formato OpenAI de un round anterior con otro
- * proveedor) al formato de mensajes que espera un endpoint OpenAI-compatible.
- */
-function anthropicHistoryToOpenAIToolMessages(messages) {
-  const out = [];
-  for (const m of messages) {
-    if (m._providerFormat === 'openai') {
-      out.push({ role: 'assistant', content: m.content, tool_calls: m.tool_calls });
-      continue;
-    }
-    if (m._toolResultsOpenAI) {
-      out.push(...m._toolResultsOpenAI);
-      continue;
-    }
-    if (typeof m.content === 'string') {
-      out.push({ role: m.role, content: m.content });
-      continue;
-    }
-    if (Array.isArray(m.content)) {
-      // Bloques estilo Anthropic: tool_use (del assistant) o tool_result (del user).
-      const toolUse = m.content.filter((b) => b.type === 'tool_use');
-      const toolResult = m.content.filter((b) => b.type === 'tool_result');
-      const text = m.content.filter((b) => b.type === 'text').map((b) => b.text).join('\n');
-      if (toolUse.length) {
-        out.push({
-          role: 'assistant',
-          content: text || null,
-          tool_calls: toolUse.map((b) => ({ id: b.id, type: 'function', function: { name: b.name, arguments: JSON.stringify(b.input || {}) } })),
-        });
-      } else if (toolResult.length) {
-        for (const tr of toolResult) out.push({ role: 'tool', tool_call_id: tr.tool_use_id, content: typeof tr.content === 'string' ? tr.content : JSON.stringify(tr.content) });
-      } else if (text) {
-        out.push({ role: m.role, content: text });
-      }
-      continue;
-    }
-  }
-  return out;
-}
-
-/**
- * Tool-use loop con cascada de proveedores: Anthropic → OpenAI → DeepSeek.
- * El modelo puede llamar a SALES_AGENT_TOOLS repetidamente (acotado por
- * MAX_TOOL_ROUNDS) antes de dar su respuesta final. Cada llamada a
- * herramienta sigue hard-scoped a tenantId, fijado por el caller — el
- * modelo nunca lo ve ni lo controla, sea cual sea el proveedor activo.
- *
- * Si un proveedor falla a mitad de conversación (créditos agotados, rate
- * limit, timeout), se reintenta ESE MISMO round con el siguiente proveedor
- * de la cascada, conservando el historial acumulado — el cliente no nota
- * el cambio de proveedor, solo que el asesor le sigue respondiendo.
+ * Claude tool-use loop. The model is given SALES_AGENT_TOOLS and can call
+ * them repeatedly (bounded by MAX_TOOL_ROUNDS) before producing its final
+ * text reply. Every tool execution is scoped to tenantId, fixed by the
+ * caller — the model never sees or controls that value.
  */
 async function runSalesAgentConversation(env, tenantId, conversationId, system, initialMessages) {
-  const providers = [
-    { name: 'deepseek', enabled: Boolean(env.DEEPSEEK_API_KEY), run: (msgs) => salesAgentRoundOpenAICompatible(env, { apiUrl: 'https://api.deepseek.com/v1/chat/completions', apiKey: env.DEEPSEEK_API_KEY, model: 'deepseek-chat', missingKeyMsg: 'missing_DEEPSEEK_API_KEY' }, system, msgs) },
-    { name: 'openai', enabled: Boolean(env.OPENAI_API_KEY), run: (msgs) => salesAgentRoundOpenAICompatible(env, { apiUrl: 'https://api.openai.com/v1/chat/completions', apiKey: env.OPENAI_API_KEY, model: 'gpt-4o', missingKeyMsg: 'missing_OPENAI_API_KEY' }, system, msgs) },
-    { name: 'anthropic', enabled: Boolean(env.ANTHROPIC_API_KEY), run: (msgs) => salesAgentRoundAnthropic(env, system, msgs) },
-  ].filter((p) => p.enabled);
-  if (!providers.length) throw new Error('no_llm_provider_configured');
-
+  if (!env.ANTHROPIC_API_KEY) throw new Error('missing_ANTHROPIC_API_KEY');
   let messages = initialMessages;
   const toolCallLog = [];
+  // Ground truth for anti-hallucination checks (e.g. an email the model
+  // claims the customer gave): only text the customer actually typed in
+  // THIS conversation counts, never something the model recalls or invents.
   const shopperTranscript = initialMessages.filter((m) => m.role === 'user').map((m) => String(m.content || '')).join('\n');
-  const providerErrors = [];
 
   for (let round = 0; round < MAX_TOOL_ROUNDS; round++) {
-    let result = null;
-    let usedProvider = null;
-    for (const provider of providers) {
-      try {
-        result = await provider.run(messages);
-        usedProvider = provider.name;
-        break;
-      } catch (error) {
-        providerErrors.push(`${provider.name}: ${String(error?.message || error).slice(0, 160)}`);
-        console.log(JSON.stringify({ event: 'sales_agent_provider_failed', tenant: tenantId, provider: provider.name, detail: String(error?.message || error).slice(0, 200) }));
-      }
-    }
-    if (!result) throw new Error(`all_providers_failed: ${providerErrors.join(' | ')}`);
+    const response = await fetchWithTimeout('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': env.ANTHROPIC_API_KEY,
+        'anthropic-version': '2023-06-01',
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-5',
+        max_tokens: 1000,
+        system,
+        messages,
+        tools: SALES_AGENT_TOOLS,
+      }),
+    }, 20000);
 
-    if (result.done) {
-      return { reply: result.text || 'No he podido generar una respuesta.', toolCalls: toolCallLog, model: `${usedProvider}:${result.model}` };
+    const raw = await response.text();
+    if (!response.ok) throw new Error(`http_${response.status}: ${raw.slice(0, 300)}`);
+    const data = JSON.parse(raw);
+
+    const toolUseBlocks = (data.content || []).filter((b) => b.type === 'tool_use');
+    if (!toolUseBlocks.length || data.stop_reason !== 'tool_use') {
+      const text = (data.content || []).filter((b) => b.type === 'text').map((b) => b.text).join('\n').trim();
+      return { reply: text || 'No he podido generar una respuesta.', toolCalls: toolCallLog, model: data.model };
     }
 
-    messages = [...messages, result.assistantMessageForHistory];
+    // Execute every requested tool call (hard-scoped to tenantId) and feed
+    // the results back so the model can continue reasoning or reply.
+    messages = [...messages, { role: 'assistant', content: data.content }];
     const toolResults = [];
-    for (const call of result.toolCalls) {
-      let toolResult;
+    for (const block of toolUseBlocks) {
+      let result;
       try {
-        toolResult = await executeSalesAgentTool(env, sbRequest, tenantId, call.name, call.input, conversationId, shopperTranscript);
+        result = await executeSalesAgentTool(env, sbRequest, tenantId, block.name, block.input, conversationId, shopperTranscript);
       } catch (error) {
-        toolResult = { error: String(error?.message || error).slice(0, 200) };
+        result = { error: String(error?.message || error).slice(0, 200) };
       }
-      toolCallLog.push({ tool: call.name, input: call.input, result: toolResult });
-      toolResults.push({ id: call.id, result: toolResult });
+      toolCallLog.push({ tool: block.name, input: block.input, result });
+      toolResults.push({ type: 'tool_result', tool_use_id: block.id, content: JSON.stringify(result) });
     }
-    messages = [...messages, result.buildToolResultMessage(toolResults)];
+    messages = [...messages, { role: 'user', content: toolResults }];
   }
 
   return { reply: 'He consultado varias veces el catálogo pero no he podido cerrar una respuesta clara. ¿Puedes reformular lo que necesitas?', toolCalls: toolCallLog, model: null };
@@ -755,8 +485,7 @@ async function handleSalesAgentChat(body, env) {
   if (!lastUser || !lastUser.content.trim()) return { status: 400, data: { error: 'missing_user_message' } };
 
   const conversationId = typeof body?.conversation_id === 'string' && body.conversation_id ? body.conversation_id : crypto.randomUUID();
-  const [nhcProfile, curatedQA] = await Promise.all([fetchNhcSalesProfile(env), fetchCuratedPitchKnowledge(env)]);
-  const system = buildSalesAgentSystemPrompt(tenant, { nhcProfile, curatedQA });
+  const system = buildSalesAgentSystemPrompt(tenant);
   const anthropicMessages = messages.slice(-20).map((m) => ({ role: m.role, content: m.content }));
 
   try {
@@ -769,10 +498,6 @@ async function handleSalesAgentChat(body, env) {
       toolCalls,
       model,
     });
-    const pitchCategoria = detectPitchIntent(lastUser.content);
-    if (pitchCategoria) {
-      await recordSalesPitchQuestion(env, { tenantId: tenant.id, conversationId, pregunta: lastUser.content, categoria: pitchCategoria });
-    }
     return {
       status: 200,
       data: {
@@ -785,65 +510,6 @@ async function handleSalesAgentChat(body, env) {
   } catch (error) {
     console.log(JSON.stringify({ event: 'sales_agent_chat_failed', tenant: tenant.slug, detail: String(error?.message || error).slice(0, 200), stack: String(error?.stack || '').slice(0, 500) }));
     return { status: 502, data: { error: 'sales_agent_dependency_unavailable' } };
-  }
-}
-
-// =========================================================================
-// CATALOG CURATION — ingesta continua de catálogo por growshop
-// =========================================================================
-
-/**
- * POST /catalog/ingest — un growshop (tenant) sube su catálogo (o una parte)
- * cuando quiere, vía API/webhook. Cada ítem se procesa contra el cerebro
- * compartido (product_intelligence) con el agente de curación: nunca fusiona
- * nada por debajo del umbral de auto-aprobación, nunca sobreescribe una
- * descripción activa sin registrar la fuente nueva primero. Ver
- * catalog-curation.js para el detalle del algoritmo.
- *
- * body: { tenant_slug, source_type?, items: [{ nombre, sku?, descripcion?,
- *         specs?, marca?, categoria?, categoria_l1?, categoria_l2?,
- *         source_url? }, ...] }
- */
-async function handleCatalogIngest(body, env) {
-  const tenantSlug = body?.tenant_slug;
-  const tenant = await resolveSalesTenant(env, tenantSlug);
-  if (!tenant) return { status: 404, data: { error: 'unknown_tenant' } };
-
-  const items = Array.isArray(body?.items) ? body.items : null;
-  if (!items || !items.length || items.length > 500) {
-    return { status: 400, data: { error: 'invalid_items' } };
-  }
-  if (!items.every((it) => it && typeof it.nombre === 'string' && it.nombre.trim())) {
-    return { status: 400, data: { error: 'item_missing_nombre' } };
-  }
-
-  const sourceType = ['manufacturer_official', 'catalogue_description', 'manual_curation', 'scraped'].includes(body?.source_type)
-    ? body.source_type
-    : 'catalogue_description';
-
-  try {
-    const result = await runCatalogIngest(env, sbRequest, {
-      tenantId: tenant.id,
-      items,
-      triggeredBy: 'webhook',
-      sourceType,
-    });
-    return {
-      status: 200,
-      data: {
-        run_id: result.runId,
-        tenant: { slug: tenant.slug, display_name: tenant.display_name },
-        items_matched_existing: result.items_matched_existing,
-        items_created_new: result.items_created_new,
-        candidates_generated: result.candidates_generated,
-        candidates_auto_approved: result.candidates_auto_approved,
-        conflicts_detected: result.conflicts_detected,
-        errors: result.errors,
-      },
-    };
-  } catch (error) {
-    console.log(JSON.stringify({ event: 'catalog_ingest_failed', tenant: tenant.slug, detail: String(error?.message || error).slice(0, 200), stack: String(error?.stack || '').slice(0, 500) }));
-    return { status: 502, data: { error: 'catalog_curation_dependency_unavailable' } };
   }
 }
 
@@ -894,11 +560,9 @@ async function brevoSendResetEmail(env, email, token) {
 // =========================================================================
 // CHAT
 // =========================================================================
-const SCOPE_PROMPT = `Eres el asistente de IA de Cannabicultor, especializado exclusivamente en cultivo de cannabis: variedades/genética, cultivo (luz, sustrato, riego, VPD, nutrientes, fertilizantes, plagas, floración, cosecha), diseño de espacios de cultivo, el DIRECTORIO de growshops/tiendas de cultivo y clubes/asociaciones cannábicas de España, y temas directamente relacionados con la comunidad cultivadora en España.
+const SCOPE_PROMPT = `Eres el asistente de IA de Cannabicultor, especializado exclusivamente en cultivo de cannabis: variedades/genética, cultivo (luz, sustrato, riego, VPD, nutrientes, fertilizantes, plagas, floración, cosecha), diseño de espacios de cultivo, y temas directamente relacionados con la comunidad cultivadora en España.
 
-El directorio de growshops y de clubes/asociaciones es parte del ámbito de esta plataforma: si el usuario pregunta por un growshop, tienda de cultivo o club/asociación cerca de él, en su ciudad, o pide recomendaciones de dónde comprar/asociarse, SÍ debes ayudarle usando la información del directorio que se te proporcione en el contexto (si la hay). Si no tienes datos del directorio para su ciudad, dilo con honestidad y sugiere que puede añadir la ficha desde la plataforma si conoce un sitio no listado.
-
-Si el usuario pregunta algo que NO tiene relación con cultivo de cannabis, el directorio de growshops/clubes, o el uso de esta plataforma (por ejemplo: reparar un coche, recetas de cocina no relacionadas, tareas de programación ajenas, preguntas generales de cultura, etc.), NO respondas la pregunta. En su lugar, responde brevemente (1-2 frases) indicando que solo puedes ayudar con temas de cultivo de cannabis y el directorio de Cannabicultor, y sugiere reformular la pregunta dentro de ese ámbito. No uses el contexto RAG en ese caso, no expliques el motivo con detalle, sé breve.`;
+Si el usuario pregunta algo que NO tiene relación con cultivo de cannabis o el uso de esta plataforma (por ejemplo: reparar un coche, recetas de cocina no relacionadas, tareas de programación ajenas, preguntas generales de cultura, etc.), NO respondas la pregunta. En su lugar, responde brevemente (1-2 frases) indicando que solo puedes ayudar con temas de cultivo de cannabis, y sugiere reformular la pregunta dentro de ese ámbito. No uses el contexto RAG en ese caso, no expliques el motivo con detalle, sé breve.`;
 
 const SCOPE_REJECT_REPLY =
   'Solo puedo ayudarte con cultivo de cannabis y el uso de Cannabicultor. Reformula tu pregunta en ese ámbito (luz, riego, nutrientes, genética, plagas, sala de cultivo, etc.) y te ayudo.';
@@ -929,17 +593,13 @@ function extractReferenciaBreve(chunkContent) {
   return autores ? `${autores}, ${anio}` : `estudio de ${anio}`;
 }
 
-function buildSystemPrompt(perfil, chunks, directorioContexto) {
+function buildSystemPrompt(perfil, chunks) {
   // Scope primero (antes del RAG); el LLM lo ve aunque la heurística no sea concluyente.
   let base = `${SCOPE_PROMPT}
 
 Eres Cannabicultor IA de Growers Alliance. Tono: autoridad con calidez. Tuteo respetuoso.
 Primera frase responde DIRECTAMENTE. Máx 8-12 líneas. Abre UNA puerta al final.
 NUNCA inventes estudios ni legislación.${VISION_PROMPT}`;
-
-  if (directorioContexto) {
-    base += `\n\nDIRECTORIO CANNABICULTOR (usa esto para responder, es la fuente real y actual — NUNCA inventes un growshop, club o dato de contacto que no esté aquí):\n${directorioContexto}`;
-  }
 
   if (chunks && chunks.length > 0) {
     const contexto = chunks.map((c, i) => {
@@ -1023,8 +683,6 @@ function isClearlyOffTopicCultivo(text, withVision) {
     'maceta', 'macetas', 'sala de cultivo', 'tienda de cultivo', 'grow shop', 'extraccion', 'filtro de carbon',
     'poda', 'lst', 'scrog', 'sog', 'topping', 'fim', 'deficiencia', 'exceso', 'quemadura',
     'thc', 'cbd', 'terpeno', 'landrace', 'breeder', 'banco de semillas', 'germinacion', 'plantula',
-    'growshop', 'growshops', 'club', 'clubes', 'asociacion', 'asociaciones', 'cannabico', 'cannabica',
-    'directorio', 'cerca de mi', 'donde comprar', 'donde hay',
   ];
 
   const offTopic = [
@@ -1394,253 +1052,6 @@ async function generateChatReply(system, anthropicMessages, withVision, env) {
   throw err;
 }
 
-/**
- * Detecta intención de "buscar growshop/club/asociación cerca de mí o en <ciudad>".
- * Heurística barata, sin red. Devuelve { tipo, ciudad } o null si no aplica.
- * tipo: 'growshop' | 'asociacion' | 'ambos'
- * ciudad: string si se detectó una ciudad en el texto, null si no (habrá que preguntarla).
- */
-/**
- * Términos de cultivo reconocidos (subconjunto de onTopic en isClearlyOffTopicCultivo),
- * usados solo para decidir si una pregunta de ubicación ambigua es "sobre cultivo en
- * general" (no aplica aclaración) o "posible directorio con palabra que no reconocemos".
- */
-const TERMINOS_CULTIVO_BASICOS = /\b(cannabis|marihuana|marijuana|weed|cogollo|cogollos|planta|plantas|cultivo|cultivar|cultivador|indoor|outdoor|invernadero|armario|sativa|indica|hibrida|hibrido|ruderalis|autoflor|fotoperiodo|fotoperiodica|genetica|variedad|variedades|semilla|semillas|esqueje|esquejes|clon|floracion|vegetativo|cosecha|secado|curado|trichoma|tricoma|resina|luz|led|hps|lumens|ppfd|dli|sustrato|coco|tierra|hydro|hidro|riego|regando|regar|ph|ec|ppm|vpd|humedad|temperatura|nutriente|nutrientes|fertilizante|abono|npk|calmag|nitrogeno|fosforo|potasio|plaga|plagas|hongo|oidio|mildiu|trips|arana|thrips|maceta|macetas|extraccion|poda|lst|scrog|sog|topping|fim|deficiencia|exceso|quemadura|thc|cbd|terpeno|landrace|breeder|germinacion|plantula)\b/;
-
-function detectDirectorySearchIntent(text) {
-  const raw = String(text || '').trim();
-  if (raw.length < 4) return null;
-  const t = raw.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-
-  const mentionsGrowshop = /\b(growshop|growshops|grow shop|grow|grows|tienda de cultivo|tiendas de cultivo)\b/.test(t);
-  const mentionsClub = /\b(club|clubes|asociacion|asociaciones|club cannabico|asociacion cannabica)\b/.test(t);
-
-  const asksLocation = /\b(cerca de mi|cerca mio|cerca|donde hay|donde esta|donde encuentro|donde puedo|en mi ciudad|recomiendame|recomienda|conoces alguno|conoces alguna)\b/.test(t);
-  // "growshop en Madrid" / "club en Barcelona": "en <algo>" cuenta como señal de ubicación
-  // aunque no haya verbo de búsqueda explícito.
-  const hasEnLugar = /\ben\s+[a-z]/.test(t);
-
-  if (!mentionsGrowshop && !mentionsClub) {
-    // No reconocemos ningún término de growshop/club, pero SÍ pide ubicación y no
-    // menciona nada de cultivo tampoco: zona gris real (el próximo coloquialismo que no
-    // cubrimos, ej. "tienda" a secas, "sitio" a secas). En vez de fallar en silencio o
-    // dejar que el LLM improvise, pedimos aclaración como haría un humano.
-    if ((asksLocation || hasEnLugar) && !TERMINOS_CULTIVO_BASICOS.test(t)) {
-      return { tipo: 'ambiguo', ciudad: null };
-    }
-    return null;
-  }
-
-  if (!asksLocation && !hasEnLugar) return null;
-
-  let tipo = 'ambos';
-  if (mentionsGrowshop && !mentionsClub) tipo = 'growshop';
-  if (mentionsClub && !mentionsGrowshop) tipo = 'asociacion';
-
-  // Intento simple de extraer ciudad: "en <ciudad>" al final o tras "de"
-  let ciudad = null;
-  const m = raw.match(/\ben\s+([A-ZÁÉÍÓÚÑa-záéíóúñ][A-ZÁÉÍÓÚÑa-záéíóúñ\s]{2,30})\s*[?.!]?$/);
-  if (m) {
-    const candidate = m[1].trim();
-    // Evitar falsos positivos tipo "en mi ciudad" / "en españa"
-    if (!/^(mi ciudad|espana|mi zona|mi barrio)$/i.test(candidate)) {
-      ciudad = candidate;
-    }
-  }
-
-  return { tipo, ciudad };
-}
-
-/** Consulta growshops y/o asociaciones activos por ciudad (ilike). Máx 5 cada uno. */
-async function buscarDirectorioPorCiudad(env, tipo, ciudad) {
-  // Normalizar a NFC: iOS/Safari a veces manda vocales acentuadas como NFD
-  // (letra base + acento combinante, ej. "a" + "´" en vez de "á" precompuesta).
-  // Los datos en Supabase están en NFC, así que sin esto "Alcalá" (NFD del móvil)
-  // no hace match por ilike contra "Alcalá" (NFC en la BD) aunque se vean idénticos.
-  const ciudadNormalizada = String(ciudad || '').normalize('NFC');
-  const qc = `*${encodeURIComponent(ciudadNormalizada)}*`;
-  const out = { growshops: [], asociaciones: [] };
-  if (tipo === 'growshop' || tipo === 'ambos') {
-    const r = await sbRequest(env, `growshops?select=nombre,ciudad,direccion,telefono,web,instagram&ciudad=ilike.${qc}&activo=eq.true&limit=5`, { method: 'GET' });
-    if (r.ok && Array.isArray(r.data)) out.growshops = r.data;
-  }
-  if (tipo === 'asociacion' || tipo === 'ambos') {
-    const r = await sbRequest(env, `asociaciones?select=nombre,ciudad,direccion,telefono,web,instagram&ciudad=ilike.${qc}&activo=eq.true&limit=5`, { method: 'GET' });
-    if (r.ok && Array.isArray(r.data)) out.asociaciones = r.data;
-  }
-  return out;
-}
-
-function formatDirectorioContexto(resultados) {
-  const lineas = [];
-  for (const g of resultados.growshops || []) {
-    lineas.push(`- [Growshop] ${g.nombre} · ${g.ciudad}${g.direccion ? ' · ' + g.direccion : ''}${g.telefono ? ' · tel: ' + g.telefono : ''}${g.web ? ' · ' + g.web : ''}`);
-  }
-  for (const a of resultados.asociaciones || []) {
-    lineas.push(`- [Club/Asociación] ${a.nombre} · ${a.ciudad}${a.direccion ? ' · ' + a.direccion : ''}${a.telefono ? ' · tel: ' + a.telefono : ''}${a.web ? ' · ' + a.web : ''}`);
-  }
-  return lineas.join('\n');
-}
-
-const DIRECTORY_ASK_CITY_REPLY =
-  '¡Claro! ¿En qué ciudad o zona buscas? Así te digo qué hay en el directorio de Cannabicultor.';
-
-const DIRECTORY_CLARIFY_REPLY =
-  '¿Te refieres a un growshop (tienda de cultivo) o a un club/asociación cannábica? Así te busco bien en el directorio de Cannabicultor.';
-
-/**
- * Si el turno anterior del asistente fue DIRECTORY_ASK_CITY_REPLY, el usuario está
- * respondiendo solo con una ciudad (ej. "Alcalá de Henares"), sin repetir "growshop"
- * ni "cerca de mí". detectDirectorySearchIntent() por sí sola no lo detecta porque
- * mira solo el último mensaje. Esta función mira el historial: si el assistant
- * acaba de pedir la ciudad, toma el texto del usuario tal cual como ciudad, y
- * recupera el "tipo" (growshop/asociacion/ambos) del mensaje de usuario anterior
- * a esa pregunta (el que sí mencionaba "growshop" o "club").
- */
-/**
- * Busca hacia atrás en el historial si el usuario ya dio una ciudad de directorio
- * en algún turno reciente (respondiendo a DIRECTORY_ASK_CITY_REPLY, o mencionándola
- * directamente). Permite sostener una conversación de varios turnos sobre el mismo
- * tema ("club en Alcalá" → "y algún growshop?") sin que el usuario repita la ciudad.
- * Mira como máximo los últimos 8 mensajes para no arrastrar contexto viejo de la
- * conversación si el usuario cambia de tema y vuelve más tarde.
- */
-/** Heurística barata: ¿el texto parece un topónimo suelto (respuesta de ubicación) y no una frase/pregunta normal? */
-function pareceSoloUnaCiudad(texto) {
-  const s = String(texto || '').trim();
-  if (!s || s.length < 2 || s.length > 60) return false;
-  // Sin verbos/preguntas típicos, pocas palabras, no termina en "?"
-  if (/[?]/.test(s)) return false;
-  const palabras = s.split(/\s+/).length;
-  if (palabras > 6) return false;
-  if (/\b(que|como|cuando|donde|por que|porque|cual|quiero|necesito|tengo|hay|puedo)\b/i.test(s)) return false;
-  return true;
-}
-
-function recuperarCiudadDelHistorial(messages) {
-  const lista = Array.isArray(messages) ? messages : [];
-  const ventana = lista.slice(-8);
-
-  // Vía 1: el assistant usó literalmente nuestra pregunta fija de ciudad.
-  for (let i = ventana.length - 1; i >= 0; i--) {
-    const msg = ventana[i];
-    if (msg.role !== 'assistant') continue;
-    const texto = typeof msg.content === 'string' ? msg.content : '';
-    const fueAskCity = texto.includes('Así te digo qué hay en el directorio de Cannabicultor');
-    if (fueAskCity && ventana[i + 1] && ventana[i + 1].role === 'user') {
-      const ciudad = String(ventana[i + 1].content || '').trim().replace(/[?.!]+$/, '');
-      if (ciudad && ciudad.length >= 2 && ciudad.length <= 60) return ciudad;
-    }
-  }
-
-  // Vía 2: algún mensaje de usuario reciente ya traía "en <ciudad>" explícito.
-  for (let i = ventana.length - 1; i >= 0; i--) {
-    const msg = ventana[i];
-    if (msg.role !== 'user') continue;
-    const texto = typeof msg.content === 'string' ? msg.content : '';
-    const previo = detectDirectorySearchIntent(texto);
-    if (previo && previo.ciudad) return previo.ciudad;
-  }
-
-  // Vía 3 (fallback robusto): un mensaje de usuario reciente mencionó growshop/club
-  // (aunque no lo detectáramos por vocabulario, ej. "grow" antes del fix), el assistant
-  // respondió algo (pidiendo ubicación por su cuenta, sin usar nuestra frase fija), y el
-  // siguiente mensaje del usuario parece un topónimo suelto. No exige coincidencia exacta
-  // de texto del bot — solo la secuencia: mención de directorio → turno del bot → topónimo.
-  for (let i = ventana.length - 1; i >= 1; i--) {
-    const msg = ventana[i];
-    if (msg.role !== 'user') continue;
-    const texto = typeof msg.content === 'string' ? msg.content : '';
-    if (!pareceSoloUnaCiudad(texto)) continue;
-    const anterior = ventana[i - 1];
-    if (!anterior || anterior.role !== 'assistant') continue;
-    // Buscar hacia atrás desde ahí un mensaje de usuario que mencionara growshop/club
-    for (let j = i - 2; j >= 0; j--) {
-      const previoMsg = ventana[j];
-      if (previoMsg.role !== 'user') continue;
-      const previoTexto = (typeof previoMsg.content === 'string' ? previoMsg.content : '')
-        .toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-      if (/\b(growshop|growshops|grow shop|grow|grows|tienda de cultivo|club|clubes|asociacion|asociaciones)\b/.test(previoTexto)) {
-        return texto.trim().replace(/[?.!]+$/, '');
-      }
-      break; // solo miramos el mensaje de usuario inmediatamente anterior al turno del bot
-    }
-  }
-
-  return null;
-}
-
-/** Tipo (growshop/asociacion/ambos) del mensaje de usuario más reciente que mencione alguno. */
-function tipoDirectorioDelHistorial(messages) {
-  const lista = Array.isArray(messages) ? messages : [];
-  const ventana = lista.slice(-8);
-  for (let i = ventana.length - 1; i >= 0; i--) {
-    const msg = ventana[i];
-    if (msg.role !== 'user') continue;
-    const t = (typeof msg.content === 'string' ? msg.content : '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-    const mentionsGrowshop = /\b(growshop|growshops|grow shop|grow|grows|tienda de cultivo|tiendas de cultivo)\b/.test(t);
-    const mentionsClub = /\b(club|clubes|asociacion|asociaciones)\b/.test(t);
-    if (mentionsGrowshop && !mentionsClub) return 'growshop';
-    if (mentionsClub && !mentionsGrowshop) return 'asociacion';
-    if (mentionsGrowshop || mentionsClub) return 'ambos';
-  }
-  return 'ambos';
-}
-
-function detectDirectorySearchIntentConHistorial(messages, textoConsulta) {
-  const directo = detectDirectorySearchIntent(textoConsulta);
-  if (directo && directo.tipo === 'ambiguo') return directo;
-  if (directo && directo.ciudad) return directo;
-
-  const t = String(textoConsulta || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-  const mentionsGrowshop = /\b(growshop|growshops|grow shop|grow|grows|tienda de cultivo|tiendas de cultivo)\b/.test(t);
-  const mentionsClub = /\b(club|clubes|asociacion|asociaciones)\b/.test(t);
-
-  // Respuesta a nuestra pregunta de aclaración ("¿growshop o club?"): el usuario contesta
-  // con el tipo, sin necesariamente repetir ubicación. Resolver el tipo y seguir el flujo
-  // normal (pedir ciudad, o usar la ya conocida de la conversación si existe).
-  const lista0 = Array.isArray(messages) ? messages : [];
-  const anterior0 = lista0.length >= 2 ? lista0[lista0.length - 2] : null;
-  const anteriorTexto0 = anterior0 && typeof anterior0.content === 'string' ? anterior0.content : '';
-  const fueClarify = anterior0 && anterior0.role === 'assistant' && anteriorTexto0.includes('¿Te refieres a un growshop');
-  if (fueClarify && (mentionsGrowshop || mentionsClub)) {
-    let tipoAclarado = 'ambos';
-    if (mentionsGrowshop && !mentionsClub) tipoAclarado = 'growshop';
-    if (mentionsClub && !mentionsGrowshop) tipoAclarado = 'asociacion';
-    const ciudadPrevia0 = recuperarCiudadDelHistorial(messages);
-    if (ciudadPrevia0) return { tipo: tipoAclarado, ciudad: ciudadPrevia0 };
-    return { tipo: tipoAclarado, ciudad: null };
-  }
-
-  if (directo && directo.tipo !== 'ambiguo' && !directo.ciudad) {
-    // "growshop cerca de mi" sin ciudad: ver si ya hay una ciudad establecida antes de pedirla de nuevo.
-    const ciudadPrevia = recuperarCiudadDelHistorial(messages);
-    if (ciudadPrevia) return { tipo: directo.tipo, ciudad: ciudadPrevia };
-    return directo;
-  }
-
-  if (mentionsGrowshop || mentionsClub) {
-    // Turno de seguimiento tipo "y algún growshop?" tras ya haber dado la ciudad.
-    const ciudadPrevia = recuperarCiudadDelHistorial(messages);
-    if (ciudadPrevia) {
-      let tipo = 'ambos';
-      if (mentionsGrowshop && !mentionsClub) tipo = 'growshop';
-      if (mentionsClub && !mentionsGrowshop) tipo = 'asociacion';
-      return { tipo, ciudad: ciudadPrevia };
-    }
-  }
-
-  // Turno de solo-ciudad (sin mencionar growshop/club en este mensaje): delega a
-  // recuperarCiudadDelHistorial(), que ya cubre tanto nuestra pregunta fija como el
-  // caso robusto (el bot preguntó ubicación con sus propias palabras).
-  const ciudadPrevia = recuperarCiudadDelHistorial(messages);
-  if (ciudadPrevia && ciudadPrevia === String(textoConsulta || '').trim().replace(/[?.!]+$/, '')) {
-    return { tipo: tipoDirectorioDelHistorial(messages), ciudad: ciudadPrevia };
-  }
-
-  return null;
-}
-
 async function handleChat(body, env) {
   const { messages, perfil } = body || {};
   if (!messages || !Array.isArray(messages) || !messages.length) {
@@ -1650,39 +1061,8 @@ async function handleChat(body, env) {
   const withVision = hasVision(anthropicMessages);
   const textoConsulta = extractLastUserText(messages);
 
-  // Directorio de growshops/clubes: intención explícita → consulta directa a Supabase,
-  // sin pasar por RAG/LLM si falta la ciudad (ahorra una llamada y es más rápido para el usuario).
-  const dirIntent = detectDirectorySearchIntentConHistorial(messages, textoConsulta);
-  if (dirIntent && dirIntent.tipo === 'ambiguo') {
-    // Como haría un humano que no entendió bien: pregunta qué quiso decir en vez de
-    // improvisar o fallar en silencio. Barato, sin LLM.
-    return {
-      status: 200,
-      data: { reply: DIRECTORY_CLARIFY_REPLY, provider: 'directory_heuristic' },
-    };
-  }
-  if (dirIntent && !dirIntent.ciudad) {
-    return {
-      status: 200,
-      data: { reply: DIRECTORY_ASK_CITY_REPLY, provider: 'directory_heuristic' },
-    };
-  }
-  let directorioContexto = null;
-  if (dirIntent && dirIntent.ciudad) {
-    try {
-      const resultados = await buscarDirectorioPorCiudad(env, dirIntent.tipo, dirIntent.ciudad);
-      const total = (resultados.growshops?.length || 0) + (resultados.asociaciones?.length || 0);
-      directorioContexto = total > 0
-        ? `Resultados del directorio de Cannabicultor para "${dirIntent.ciudad}":\n${formatDirectorioContexto(resultados)}`
-        : `No hay fichas activas en el directorio de Cannabicultor para "${dirIntent.ciudad}". Dilo con honestidad, no inventes nombres de growshops o clubes.`;
-    } catch (_) {
-      directorioContexto = null;
-    }
-  }
-
   // Guarda barata de scope: off-topic claro → respuesta fija sin RAG ni LLM
-  // (si ya detectamos intención de directorio, no aplica: es on-topic por definición)
-  if (!dirIntent && isClearlyOffTopicCultivo(textoConsulta, withVision)) {
+  if (isClearlyOffTopicCultivo(textoConsulta, withVision)) {
     logProvider('scope_heuristic', true, 'off_topic_rejected');
     return {
       status: 200,
@@ -1700,7 +1080,7 @@ async function handleChat(body, env) {
   } catch (_) {}
 
   // System incluye SCOPE_PROMPT al inicio; casos dudosos los resuelve el LLM
-  const system = buildSystemPrompt(perfil, chunks, directorioContexto);
+  const system = buildSystemPrompt(perfil, chunks);
 
   try {
     const { reply, provider } = await generateChatReply(system, anthropicMessages, withVision, env);
@@ -3125,19 +2505,6 @@ export default {
             headers: { ...cors, 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'public, max-age=300' },
           });
         }
-        if (path === '/preview-b2b/asesor-gb') {
-          // DEPRECADO — ruta vieja con el nombre del cliente en la URL y el
-          // HTML servido desde el repo público (ambos son justo lo que
-          // /demo/{token} + sales_tenant_demo_page vienen a resolver).
-          // Redirect temporal para no romper el link ya compartido con
-          // Growbarato; borrar este bloque una vez confirmado que el nuevo
-          // link está en uso (ver TODO_MIGRACION_DEMO_TOKEN.md).
-          return Response.redirect(`${url.origin}/demo/628ec1de21787dc4`, 302);
-        }
-        if (path.startsWith('/demo/')) {
-          const token = path.slice('/demo/'.length).split('/')[0];
-          return handleDemoPageRequest(env, token);
-        }
         if (path === '/resenas') {
           const r = await handleListResenas(url, env);
           return json(r.data, r.status, cors);
@@ -3203,7 +2570,6 @@ export default {
       }
 
       if (path === '/sales-agent/chat') { const r = await handleSalesAgentChat(body, env); return json(r.data, r.status, cors); }
-      if (path === '/catalog/ingest') { const r = await handleCatalogIngest(body, env); return json(r.data, r.status, cors); }
       if (path === '/asesor') { const r = await handleAsesor(body, env); return json(r.data, r.status, cors); }
       if (path === '/cultivo/guardar') { const r = await handleGuardarCultivo(body, env, request); return json(r.data, r.status, cors); }
       if (path === '/perfil/sala') { const r = await handleGuardarSala(body, env, request); return json(r.data, r.status, cors); }

@@ -3,5 +3,12 @@
     "@supabase/supabase-js": "^2.108.1",
     "cheerio": "^1.2.0",
     "pg": "^8.23.0"
+  },
+  "devDependencies": {
+    "wrangler": "^4.127.1"
+  },
+  "scripts": {
+    "deploy": "wrangler deploy",
+    "preview": "wrangler dev"
   }
 }

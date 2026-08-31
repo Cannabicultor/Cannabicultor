@@ -1,0 +1,10 @@
+worker/
+node_modules/
+.git/
+pipeline/
+research/
+Fotos/
+.catalogacion-fotos/
+.codebase-memory/
+*.md
+*.log

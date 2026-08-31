@@ -1,6 +1,6 @@
 /* Reseñas de variedad / breeder. GET público, POST con JWT. */
 (function (global) {
-  var WORKER = 'https://growers-alliance-ai.enriquedorta.workers.dev';
+  var WORKER = 'https://growers-alliance-ai.nohumanclicks.workers.dev';
 
   function esc(s) {
     return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {

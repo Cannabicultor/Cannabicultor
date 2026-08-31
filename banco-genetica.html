@@ -360,7 +360,7 @@ section.block{padding:36px 0}
 
 <script>
 (function(){
-  var WORKER='https://growers-alliance-ai.enriquedorta.workers.dev';
+  var WORKER='https://growers-alliance-ai.nohumanclicks.workers.dev';
   var ref=new URLSearchParams(location.search).get('ref');
   fetch(WORKER+'/track/page_view',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({page:'banco_genetica',ref:ref})}).catch(function(){});
   var tipo=new URLSearchParams(location.search).get('tipo');
