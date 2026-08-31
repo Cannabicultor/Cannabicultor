@@ -53,6 +53,22 @@ export const SALES_AGENT_TOOLS = [
     },
   },
   {
+    name: 'disenar_sala_visual',
+    description:
+      'Genera un diseño visual (plano a escala con macetas, luz y extractor) de una sala/armario de cultivo concreto, con un link para que el cliente lo vea. Úsala SIEMPRE justo después de recomendarle al cliente un armario/kit de cultivo concreto con medidas conocidas (del propio catálogo via buscar_productos, o porque el cliente ya te dio las medidas de su armario) — es lo que convierte una recomendación en texto en algo que el cliente puede visualizar antes de comprar. NUNCA inventes medidas: solo llama a esta herramienta cuando conozcas ancho y profundo reales (de una ficha de producto o de lo que ha dicho el cliente). Si el cliente todavía duda entre dos tallas, puedes llamarla dos veces (una por talla) para comparar.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        ancho: { type: 'number', description: 'Ancho de la sala/armario en metros (eje X), ej. 1.2.' },
+        profundo: { type: 'number', description: 'Profundidad de la sala/armario en metros (eje Y), ej. 1.2.' },
+        alto: { type: 'number', description: 'Altura en metros. Si no la sabes, omite el campo y se usa 2.0 m por defecto.' },
+        etapa: { type: 'string', enum: ['esquejes', 'veg', 'florini', 'floracion'], description: 'Etapa de cultivo actual o prevista del cliente.' },
+        tipo_luz: { type: 'string', enum: ['led', 'hps', 'cmh'], description: 'Tipo de luz recomendada o que el cliente ya tiene.' },
+      },
+      required: ['ancho', 'profundo', 'etapa', 'tipo_luz'],
+    },
+  },
+  {
     name: 'calcular_cesta',
     description:
       'Revalida en tiempo real precio y stock de una lista de SKU de este growshop y calcula el total. Llama a esto SIEMPRE justo antes de proponer un total o cerrar una cesta al cliente — nunca sumes precios de memoria de una búsqueda anterior, porque el stock/precio puede haber cambiado.',
@@ -174,6 +190,82 @@ async function buildBuscarProductosResult(env, sbRequest, rows) {
   };
 }
 
+// Motor de cálculo del Diseñador de Sala — MISMAS fórmulas que
+// disenador_sala_cultivo.html (calculadora B2C del diario de cultivo). Se
+// duplica aquí en vez de importarse porque ese archivo corre en el navegador
+// y este módulo corre en el Worker; si se toca una fórmula en un sitio,
+// tocar la otra para no desincronizar lo que ve el cliente en el chat de lo
+// que ve al abrir el link. Ver brainstorm: doc "Diseñador de Sala Visual en
+// el Asesor de Growshops" (Google Docs, 30 ago 2026).
+const DISENO_SALA_STAGES = {
+  esquejes: { label: 'Esquejes', temp: 24, rh: 75, vpdMin: 0.4, vpdMax: 0.8, lightMult: 0.35, airMult: 0.8, hours: 18, water: 1 },
+  veg: { label: 'Vegetativo', temp: 25, rh: 56, vpdMin: 0.9, vpdMax: 1.2, lightMult: 0.6, airMult: 0.9, hours: 18, water: 3 },
+  florini: { label: 'Flor inicial', temp: 25, rh: 47, vpdMin: 1.2, vpdMax: 1.45, lightMult: 1.0, airMult: 1.1, hours: 12, water: 5 },
+  floracion: { label: 'Floración', temp: 24, rh: 38, vpdMin: 1.4, vpdMax: 1.6, lightMult: 1.0, airMult: 1.15, hours: 12, water: 6 },
+};
+const DISENO_SALA_LIGHT = {
+  led: { name: 'LED', wm2: 400, airMult: 1.0, gw: [0.5, 1.2] },
+  hps: { name: 'HPS', wm2: 550, airMult: 1.25, gw: [0.5, 1.0] },
+  cmh: { name: 'CMH/LEC', wm2: 480, airMult: 1.1, gw: [0.5, 1.0] },
+};
+function disenoSalaDuctFor(ext) { if (ext <= 200) return 125; if (ext <= 380) return 150; if (ext <= 700) return 200; return 250; }
+
+/**
+ * Executes disenar_sala_visual: NO llama a Supabase (no depende de
+ * inventario), es cálculo puro sobre medidas conocidas + el enlace a la
+ * herramienta pública ya existente (disenador_sala_cultivo.html), a la que
+ * se le pasan las medidas por query string para que abra ya configurada
+ * igual que se lo describió el asesor. Fase 1 del plan (plano 2D por
+ * código, sin generación de imagen por IA — mismo criterio que los
+ * carteles de Cannabicultor).
+ */
+function runDisenarSalaVisual(input) {
+  const ancho = Number(input?.ancho);
+  const profundo = Number(input?.profundo);
+  const alto = input?.alto != null && Number(input.alto) > 0 ? Number(input.alto) : 2.0;
+  const etapa = String(input?.etapa || '');
+  const tipoLuz = String(input?.tipo_luz || '');
+
+  if (!Number.isFinite(ancho) || !Number.isFinite(profundo)) return { error: 'medidas_ancho_profundo_requeridas' };
+  if (!DISENO_SALA_STAGES[etapa]) return { error: 'etapa_invalida', valores_validos: Object.keys(DISENO_SALA_STAGES) };
+  if (!DISENO_SALA_LIGHT[tipoLuz]) return { error: 'tipo_luz_invalido', valores_validos: Object.keys(DISENO_SALA_LIGHT) };
+
+  const w = Math.min(Math.max(ancho, 0.4), 20);
+  const d = Math.min(Math.max(profundo, 0.4), 20);
+  const h = Math.min(Math.max(alto, 0.5), 20);
+  const st = DISENO_SALA_STAGES[etapa];
+  const lt = DISENO_SALA_LIGHT[tipoLuz];
+
+  const area = w * d;
+  const ext = Math.round(area * h * 60 * 1.35 * lt.airMult * st.airMult);
+  const wattFlor = Math.round(area * lt.wm2);
+  const watt = Math.round(area * lt.wm2 * st.lightMult);
+  const plantas = Math.max(1, Math.round(area * 4));
+  const fanW = Math.round(ext * 0.13);
+  const costMes = Number((((watt * st.hours + fanW * 24) / 1000) * 30 * 0.15).toFixed(2));
+  const yLow = Math.round(wattFlor * lt.gw[0]);
+  const yHigh = Math.round(wattFlor * lt.gw[1]);
+
+  const url = `https://www.cannabicultor.com/disenador_sala_cultivo.html?w=${w}&d=${d}&h=${h}&stage=${etapa}&light=${tipoLuz}`;
+
+  return {
+    url,
+    ancho_m: w,
+    profundo_m: d,
+    alto_m: h,
+    etapa,
+    tipo_luz: lt.name,
+    plantas_estimadas: plantas,
+    potencia_w: watt,
+    extraccion_m3h: ext,
+    tubo_extraccion_mm: disenoSalaDuctFor(ext),
+    coste_electrico_mes_eur: costMes,
+    cosecha_estimada_g: `${yLow}-${yHigh}`,
+    resumen: `Sala ${w}×${d}×${h} m, ${st.label.toLowerCase()}, ${lt.name}: ${plantas} plantas, ${watt} W, extracción ${ext} m³/h, cosecha estimada ${yLow}-${yHigh} g.`,
+    nota_para_el_cliente: 'Comparte el link (url) con el cliente como el diseño visual de su sala — ya viene con estas medidas cargadas, no hace falta que el cliente configure nada.',
+  };
+}
+
 /**
  * Executes calcular_cesta, hard-scoped to tenantId. Always re-reads the
  * database — never trusts a price/stock number the model may have seen
@@ -277,6 +369,7 @@ async function runRegistrarNecesidadNoCubierta(env, sbRequest, tenantId, convers
 
 export async function executeSalesAgentTool(env, sbRequest, tenantId, toolName, toolInput, conversationId, shopperTranscript) {
   if (toolName === 'buscar_productos') return runBuscarProductos(env, sbRequest, tenantId, toolInput);
+  if (toolName === 'disenar_sala_visual') return runDisenarSalaVisual(toolInput);
   if (toolName === 'calcular_cesta') return runCalcularCesta(env, sbRequest, tenantId, toolInput);
   if (toolName === 'registrar_necesidad_no_cubierta') return runRegistrarNecesidadNoCubierta(env, sbRequest, tenantId, conversationId, toolInput, shopperTranscript);
   return { error: `unknown_tool_${toolName}` };
@@ -411,6 +504,7 @@ QUIÉN TE DA LA INTELIGENCIA (Cannabicultor) — CUÁNDO Y CÓMO MENCIONARLO: po
 CÓMO TRABAJAS:
 - Antes de recomendar cualquier producto concreto (nombre, precio, características), tienes que haber llamado a buscar_productos para ese tipo de producto en ESTA conversación. No repitas de memoria resultados de hace muchos turnos si ha pasado tiempo — vuelve a buscar si tienes dudas de que el stock siga vigente.
 - Antes de dar un total de cesta o cerrar una venta, llama SIEMPRE a calcular_cesta con los SKU exactos. Nunca sumes precios a mano ni de memoria.
+- En cuanto recomiendes un armario/kit de cultivo CONCRETO con medidas conocidas (de una ficha real o porque el cliente te las dio), llama a disenar_sala_visual con esas medidas para darle un link con el diseño visual de su sala — no lo describas solo en texto, dale también el link para que lo vea. No inventes medidas para poder llamarla: si no las sabes, pregúntaselas primero.
 - Usa las specs técnicas (potencia, caudal, litros, NPK...) que te devuelven las herramientas para razonar de verdad: calcula superficie/volumen si hace falta dimensionar extracción, verifica compatibilidad de sustrato con nutrientes, etc. Usa tu criterio de cultivador experto para el razonamiento, pero los datos de producto (precio/stock/nombre) SIEMPRE vienen de la herramienta, nunca inventados.
 - Si el cliente pide cambiar algo de una cesta ya propuesta (otra maceta, quitar un producto, subir presupuesto), vuelve a llamar a buscar_productos/calcular_cesta con los nuevos datos — no finjas el cambio de palabra.
 - Si no tienes certeza de un dato de cultivo (una cifra exacta, un estudio), dilo con honestidad y da tu mejor criterio experto sin inventar cifras.

@@ -434,6 +434,12 @@
     ACCENT +
     "}" +
     ".config-add{width:100%;border:0;background:" + ACCENT + ";color:#fff;border-radius:10px;padding:10px 12px;font-size:13px;font-weight:600;cursor:pointer;margin:2px 0 12px}" +
+    ".sala-card{display:flex;align-items:center;gap:10px;background:#fff;border:1.5px dashed " + ACCENT + ";border-radius:12px;padding:10px 12px;text-decoration:none;color:inherit;margin:2px 0 12px}" +
+    ".sala-card .ic{flex:none;width:34px;height:34px;border-radius:8px;background:" + ACCENT + ";color:#fff;display:flex;align-items:center;justify-content:center;font-size:17px}" +
+    ".sala-card .t{min-width:0}" +
+    ".sala-card .t b{display:block;font-size:12.5px;font-weight:700;color:#222}" +
+    ".sala-card .t span{display:block;font-size:11px;color:#888;margin-top:1px}" +
+    ".sala-card .go{margin-left:auto;flex:none;color:" + ACCENT + ";font-size:16px}" +
     ".foot{border-top:1px solid #ececec;background:#fff;padding:10px}" +
     ".row{display:flex;gap:8px;align-items:flex-end}" +
     ".row textarea{flex:1;resize:none;border:1px solid #ddd;border-radius:12px;padding:10px 12px;font-size:14px;max-height:96px;outline:none}" +
@@ -546,6 +552,34 @@
     return out;
   }
 
+  // Extrae los diseños de sala visual generados en esta ronda: el resultado
+  // real de disenar_sala_visual (ver sales-agent.js) trae {url, resumen,
+  // ancho_m, profundo_m, ...} — un tool_call por cada sala/talla que el
+  // asesor haya diseñado (puede llamarla más de una vez si compara tallas).
+  function salaDesignsFromToolCalls(toolCalls) {
+    if (!Array.isArray(toolCalls)) return [];
+    return toolCalls
+      .filter(function (tc) { return tc && tc.tool === "disenar_sala_visual" && tc.result && tc.result.url; })
+      .map(function (tc) { return tc.result; });
+  }
+
+  function addSalaDesignCards(designs) {
+    if (!designs || !designs.length) return;
+    designs.forEach(function (d) {
+      var a = document.createElement("a");
+      a.className = "sala-card";
+      a.href = d.url;
+      a.target = "_blank";
+      a.rel = "noopener";
+      a.innerHTML =
+        "<div class='ic'>🌿</div><div class='t'><b>Ver diseño visual de tu sala</b><span>" +
+        esc(d.ancho_m + "×" + d.profundo_m + " m · " + (d.plantas_estimadas || "") + " macetas · " + (d.tipo_luz || "")) +
+        "</span></div><div class='go'>↗</div>";
+      body.appendChild(a);
+    });
+    scrollDown();
+  }
+
   function addCards(products) {
     if (!products || !products.length) return;
     var wrap = document.createElement("div");
@@ -644,6 +678,7 @@
       addMsg("assistant", reply);
       history.push({ role: "assistant", content: reply });
       addCards(productsFromToolCalls(data && data.tool_calls));
+      addSalaDesignCards(salaDesignsFromToolCalls(data && data.tool_calls));
     } catch (e) {
       typing.remove();
       addMsg("assistant", "Ha habido un problema al consultar el asesor. Inténtalo de nuevo en un momento.");

@@ -58,6 +58,22 @@
   .hud b{color:var(--forest);font-weight:700;}
   .hint{position:absolute;right:12px;top:10px;font-size:10.5px;color:var(--soft);}
 
+  /* ===== Vista de planta (2D top-down) — generada por código, no por IA:
+     mismo criterio que los carteles (skill cannabicultor-posters), para no
+     arriesgar geometría inventada en algo que el cliente usa para comprar. ===== */
+  .plano-wrap{padding:14px;display:flex;justify-content:center;background:linear-gradient(180deg,#eef4f0 0%,#e3ece6 100%);}
+  .plano-wrap svg{width:100%;max-width:280px;height:auto;}
+  .room{fill:rgba(26,92,50,.05);stroke:var(--forest2);stroke-width:2;}
+  .pot{fill:#fff;stroke:var(--forest2);stroke-width:1.5;}
+  .light{fill:#F0C040;stroke:#b9932c;stroke-width:1;}
+  .extractor{fill:#9aa0a4;stroke:#6f746f;stroke-width:1;}
+  .dim-label-svg{font-family:Inter,sans-serif;font-size:11px;fill:var(--muted);font-weight:600;}
+  .plano-legend{display:flex;gap:14px;flex-wrap:wrap;justify-content:center;padding:0 14px 14px;font-size:11.5px;color:var(--muted);font-weight:600;}
+  .plano-legend .dot{display:inline-block;width:9px;height:9px;margin-right:5px;vertical-align:middle;border-radius:3px;}
+  .plano-legend .dot.pot{background:#fff;border:1.5px solid var(--forest2);border-radius:50%;}
+  .plano-legend .dot.light{background:#F0C040;}
+  .plano-legend .dot.extractor{background:#9aa0a4;}
+
   /* ===== Steppers de dimensión (zona del pulgar) ===== */
   .dim-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--shadow);padding:6px 16px;margin-bottom:10px;}
   .dim-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 0;border-bottom:1px solid var(--border);}
@@ -170,6 +186,16 @@
         </div>
         <div class="hint">↻ arrastra para girar</div>
       </div>
+    </div>
+
+    <!-- VISTA DE PLANTA: capa visual 2D top-down (armario a escala, macetas,
+         luz y extractor) — lo que hoy faltaba para que un cliente vea de un
+         vistazo cómo quedaría montada la sala, no solo números y chips. -->
+    <div class="scene-card" id="plano-card">
+      <div class="plano-wrap" id="plano-wrap">
+        <svg id="plano-svg" viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg"></svg>
+      </div>
+      <div class="plano-legend" id="plano-legend"></div>
     </div>
 
     <!-- DIMENSIONES: botones al alcance del pulgar, justo bajo la imagen -->
@@ -362,6 +388,24 @@
   };
   var PRESETS = [[0.6,0.6,1.4],[0.8,0.8,1.6],[1.0,1.0,2.0],[1.2,1.2,2.0],[1.2,2.4,2.0],[1.5,1.5,2.0],[3.0,3.0,2.5]];
   var state = {w:1.2,d:1.2,h:2.0,stage:'floracion',light:'led',temp:STAGES.floracion.temp,rh:STAGES.floracion.rh,leaf:2,price:0.15};
+
+  // ---- Parámetros de URL: permite enlazar aquí con una configuración ya
+  // calculada en otro sitio (ej. el Asesor IA de un growshop, tras
+  // recomendar un armario+equipo concreto) — el cliente ve el MISMO diseño
+  // del que le habló el asesor, sin reconfigurar nada a mano. Silencioso si
+  // faltan o son inválidos: en ese caso se usan los valores por defecto.
+  (function applyUrlParams(){
+    try{
+      var qs=new URLSearchParams(window.location.search);
+      var qw=parseFloat(qs.get('w')),qd=parseFloat(qs.get('d')),qh=parseFloat(qs.get('h'));
+      if(qw>=0.4&&qw<=20) state.w=qw;
+      if(qd>=0.4&&qd<=20) state.d=qd;
+      if(qh>=0.5&&qh<=20) state.h=qh;
+      var qstage=qs.get('stage'); if(qstage&&STAGES[qstage]){state.stage=qstage;state.temp=STAGES[qstage].temp;state.rh=STAGES[qstage].rh;}
+      var qlight=qs.get('light'); if(qlight&&LIGHT[qlight]) state.light=qlight;
+    }catch(e){}
+  })();
+
   var $ = function(id){return document.getElementById(id);};
   var box=$('box'), scene=$('scene');
 
@@ -561,6 +605,54 @@
   scene.addEventListener('pointerup',endDrag);scene.addEventListener('pointercancel',endDrag);
   window.addEventListener('resize',sizeBox);
 
+  // ---- Vista de planta (2D top-down) ----
+  // Reparto de macetas por rejilla simple (misma cifra "plantas estimadas"
+  // que ya se muestra en Resultados: 4/m² estándar), luz centrada, extractor
+  // en la esquina. Plantilla por código, no imagen de IA — evita inventar
+  // geometría que un cliente podría usar para comprar mal dimensionado.
+  function renderPlano(){
+    var s=state, area=s.w*s.d, plantas=Math.max(1,Math.round(area*4));
+    var VB=300, pad=22, maxDim=Math.max(s.w,s.d);
+    var scale=(VB-pad*2)/maxDim;
+    var rw=s.w*scale, rd=s.d*scale;
+    var rx=(VB-rw)/2, ry=(VB-rd)/2-6;
+
+    var cols=Math.max(1,Math.round(Math.sqrt(plantas*(s.w/s.d))));
+    cols=Math.min(cols,plantas);
+    var rows=Math.max(1,Math.ceil(plantas/cols));
+
+    var cellW=rw/cols, cellD=rd/rows;
+    var potR=Math.max(4,Math.min(16,Math.min(cellW,cellD)*0.32));
+    var potsHtml='',n=0;
+    for(var r=0;r<rows&&n<plantas;r++){
+      var thisRowCount=Math.min(cols,plantas-n);
+      var rowOffset=(cols-thisRowCount)*cellW/2;
+      for(var c=0;c<thisRowCount;c++){
+        var cx=rx+rowOffset+cellW*(c+0.5), cy=ry+cellD*(r+0.5);
+        potsHtml+='<circle cx="'+cx.toFixed(1)+'" cy="'+cy.toFixed(1)+'" r="'+potR.toFixed(1)+'" class="pot"/>';
+        n++;
+      }
+    }
+
+    var lightW=rw*0.62, lightH=Math.max(6,rd*0.05);
+    var lightX=rx+(rw-lightW)/2, lightY=ry+rd*0.06;
+    var extSize=Math.max(12,Math.min(rw,rd)*0.14);
+    var extX=rx+rw-extSize-3, extY=ry+3;
+
+    $('plano-svg').innerHTML=
+      '<rect x="'+rx.toFixed(1)+'" y="'+ry.toFixed(1)+'" width="'+rw.toFixed(1)+'" height="'+rd.toFixed(1)+'" class="room" rx="3"/>'+
+      potsHtml+
+      '<rect x="'+lightX.toFixed(1)+'" y="'+lightY.toFixed(1)+'" width="'+lightW.toFixed(1)+'" height="'+lightH.toFixed(1)+'" class="light" rx="'+(lightH/2).toFixed(1)+'"/>'+
+      '<rect x="'+extX.toFixed(1)+'" y="'+extY.toFixed(1)+'" width="'+extSize.toFixed(1)+'" height="'+extSize.toFixed(1)+'" class="extractor" rx="3"/>'+
+      '<text x="'+(rx+rw/2).toFixed(1)+'" y="'+(ry+rd+17).toFixed(1)+'" class="dim-label-svg" text-anchor="middle">'+fmt(s.w,2)+' × '+fmt(s.d,2)+' m</text>';
+
+    $('plano-legend').innerHTML=
+      '<span><i class="dot pot"></i>'+plantas+' maceta'+(plantas===1?'':'s')+'</span>'+
+      '<span><i class="dot light"></i>Luz '+esc$($('r-light-name').textContent)+'</span>'+
+      '<span><i class="dot extractor"></i>Extractor Ø'+esc$($('r-duct').textContent)+' mm</span>';
+  }
+  function esc$(t){return String(t==null?'':t);}
+
   function update(){
     var s=state,st=STAGES[s.stage],lt=LIGHT[s.light];
     $('w-val').textContent=fmt(s.w,2);$('d-val').textContent=fmt(s.d,2);$('h-val').textContent=fmt(s.h,2);
@@ -625,6 +717,8 @@
 
     // Deshumidificación
     $('r-dehum').textContent=fmt(area*st.water,1);
+
+    renderPlano();
   }
 
   markPreset();update();
