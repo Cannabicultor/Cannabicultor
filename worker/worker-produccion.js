@@ -3,6 +3,7 @@ import {
   SALES_AGENT_TOOLS,
   buildSalesAgentSystemPrompt,
   executeSalesAgentTool,
+  detectPitchIntent,
 } from './sales-agent.js';
 import { runCatalogIngest } from './catalog-curation.js';
 
@@ -392,6 +393,79 @@ async function resolveSalesTenant(env, tenantSlug) {
   return result.data[0];
 }
 
+// Pieza 3 — conocimiento de venta propio de Cannabicultor/NHC. Vive en
+// nhc_sales_profile (horizontal, no por tenant, ver migración
+// sales_agent_self_selling_pieces_3_4). Falla en silencio a null: si no
+// carga, buildSalesAgentSystemPrompt simplemente no añade ese bloque y el
+// asesor sigue funcionando con normalidad para el resto de la conversación.
+async function fetchNhcSalesProfile(env) {
+  try {
+    const path = 'nhc_sales_profile?activo=eq.true&select=cualidades,herramientas,niveles,objeciones,posicionamiento,notas_incertidumbre&order=updated_at.desc&limit=1';
+    const result = await sbRequest(env, path, { method: 'GET' });
+    if (!result.ok || !Array.isArray(result.data) || !result.data.length) return null;
+    return result.data[0];
+  } catch (error) {
+    console.log(JSON.stringify({ event: 'nhc_sales_profile_fetch_failed', detail: String(error?.message || error).slice(0, 160) }));
+    return null;
+  }
+}
+
+// Pieza 4b — preguntas de negocio ya revisadas y aprobadas por un humano.
+// Nunca se auto-promociona a 'revisado': eso lo hace Ernie a mano en
+// sales_pitch_knowledge tras ver la cola de preguntas repetidas (pieza 4a).
+async function fetchCuratedPitchKnowledge(env) {
+  try {
+    const path = 'sales_pitch_knowledge?estado=eq.revisado&select=pregunta_canonica,mejor_respuesta&order=veces_preguntada.desc&limit=12';
+    const result = await sbRequest(env, path, { method: 'GET' });
+    if (!result.ok || !Array.isArray(result.data)) return [];
+    return result.data;
+  } catch (error) {
+    console.log(JSON.stringify({ event: 'sales_pitch_knowledge_fetch_failed', detail: String(error?.message || error).slice(0, 160) }));
+    return [];
+  }
+}
+
+// Pieza 4a — log crudo de preguntas de negocio detectadas en una demo, más
+// agrupación por texto exacto normalizado en sales_pitch_knowledge (solo
+// sube el contador si ya existe la misma pregunta canónica; nunca crea ni
+// aprueba una respuesta sola — eso es cola de revisión humana, mismo
+// principio que product_dedupe_candidatos: nunca fusión automática
+// silenciosa de algo sensible como una respuesta sobre precio).
+async function recordSalesPitchQuestion(env, { tenantId, conversationId, pregunta, categoria }) {
+  try {
+    await sbRequest(env, 'sales_pitch_question', {
+      method: 'POST',
+      headers: { Prefer: 'return=minimal' },
+      body: JSON.stringify({
+        tenant_id: tenantId,
+        conversation_id: conversationId,
+        pregunta_cruda: pregunta.slice(0, 500),
+        categoria_detectada: categoria,
+      }),
+    });
+
+    const norm = pregunta.trim().toLowerCase().slice(0, 500);
+    const existingPath = `sales_pitch_knowledge?pregunta_canonica_norm=eq.${encodeURIComponent(norm)}&select=id,veces_preguntada&limit=1`;
+    const existing = await sbRequest(env, existingPath, { method: 'GET' });
+    if (existing.ok && Array.isArray(existing.data) && existing.data.length) {
+      const row = existing.data[0];
+      await sbRequest(env, `sales_pitch_knowledge?id=eq.${row.id}`, {
+        method: 'PATCH',
+        headers: { Prefer: 'return=minimal' },
+        body: JSON.stringify({ veces_preguntada: (row.veces_preguntada || 1) + 1, updated_at: new Date().toISOString() }),
+      });
+    } else {
+      await sbRequest(env, 'sales_pitch_knowledge', {
+        method: 'POST',
+        headers: { Prefer: 'return=minimal' },
+        body: JSON.stringify({ pregunta_canonica: pregunta.slice(0, 500), categoria, estado: 'pendiente' }),
+      });
+    }
+  } catch (error) {
+    console.log(JSON.stringify({ event: 'sales_pitch_question_log_failed', detail: String(error?.message || error).slice(0, 160) }));
+  }
+}
+
 async function recordSalesAgentTurn(env, { tenantId, conversationId, userMessage, assistantMessage, toolCalls, model }) {
   try {
     await sbRequest(env, 'sales_agent_turns', {
@@ -632,7 +706,8 @@ async function handleSalesAgentChat(body, env) {
   if (!lastUser || !lastUser.content.trim()) return { status: 400, data: { error: 'missing_user_message' } };
 
   const conversationId = typeof body?.conversation_id === 'string' && body.conversation_id ? body.conversation_id : crypto.randomUUID();
-  const system = buildSalesAgentSystemPrompt(tenant);
+  const [nhcProfile, curatedQA] = await Promise.all([fetchNhcSalesProfile(env), fetchCuratedPitchKnowledge(env)]);
+  const system = buildSalesAgentSystemPrompt(tenant, { nhcProfile, curatedQA });
   const anthropicMessages = messages.slice(-20).map((m) => ({ role: m.role, content: m.content }));
 
   try {
@@ -645,6 +720,10 @@ async function handleSalesAgentChat(body, env) {
       toolCalls,
       model,
     });
+    const pitchCategoria = detectPitchIntent(lastUser.content);
+    if (pitchCategoria) {
+      await recordSalesPitchQuestion(env, { tenantId: tenant.id, conversationId, pregunta: lastUser.content, categoria: pitchCategoria });
+    }
     return {
       status: 200,
       data: {

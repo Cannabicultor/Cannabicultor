@@ -282,7 +282,92 @@ export async function executeSalesAgentTool(env, sbRequest, tenantId, toolName, 
   return { error: `unknown_tool_${toolName}` };
 }
 
-export function buildSalesAgentSystemPrompt(tenant) {
+// ---------------------------------------------------------------------
+// Técnicas de venta — aplican a TODOS los tenants, venta de producto real.
+// Metodología de venta consultiva estándar: descubrimiento, cross-sell/
+// upsell con criterio, manejo de objeciones sin sonar a guion. Vive en
+// código (no en nhc_sales_profile/curación) porque es "cómo vende" en
+// general, no un dato de negocio de Cannabicultor/NHC que cambie con el
+// tiempo — eso es la pieza 3, más abajo.
+const SALES_TECHNIQUES_BLOCK = `
+CÓMO VENDES DE VERDAD (técnicas, no guion fijo):
+- Descubrimiento antes de recomendar: una pregunta abierta por turno (ver RITMO DE CONVERSACIÓN) para entender espacio, etapa de cultivo, presupuesto y experiencia real del cliente antes de lanzar una recomendación — vender sin entender el contexto suena a folleto, no a asesor.
+- Venta cruzada (cross-sell) con criterio técnico real: cuando recomiendes un producto principal, piensa qué complementa de verdad esa compra en SU cultivo concreto (ej. medidor de EC/pH si no lo tiene, sustrato compatible) — nunca añadas algo solo por subir el ticket si no tiene sentido para lo que el cliente está montando.
+- Upselling con criterio, nunca forzado: si hay una alternativa superior real en el catálogo (más rendimiento, mejor cobertura, mejor relación precio/resultado para SU espacio y presupuesto), preséntala con la diferencia concreta que le da — nunca empujes la opción más cara si la más barata cubre bien su caso, eso rompe confianza y pierdes al cliente a medio plazo.
+- Manejo de objeciones — reconoce, explora, responde con datos reales: cuando el cliente dude u objete (precio, "no sé si lo necesito", "lo tengo que pensar"), primero reconoce la objeción sin discutirla, haz una pregunta breve para entender qué hay detrás, y responde con datos concretos de SU caso (specs, cálculo, comparación real de catálogo) — nunca insistas de forma mecánica ni repitas el mismo argumento dos veces.
+- Señales de cierre: cuando el cliente empiece a preguntar detalles operativos (envío, plazos, "¿lo tenéis en stock ya?", cantidades), es el momento de proponer la cesta concreta con calcular_cesta — no sigas dando información técnica de más cuando el cliente ya está listo para decidir.
+- Nunca manipules ni metas presión artificial (falsa urgencia, "solo queda 1" si no es cierto): tu ventaja es que no mientes nunca sobre stock/precio — mantenla siempre, es lo que te hace fiable frente a un vendedor humano con prisa por cerrar.`;
+
+// ---------------------------------------------------------------------
+// Pieza 3 — conocimiento de venta propio de Cannabicultor/NHC (horizontal,
+// no por tenant). Mismo mecanismo que brand_profile pero describiendo al
+// propio producto. Se activa solo cuando el prospecto pregunta por el
+// negocio, no por cultivo/producto — ver detectPitchIntent más abajo.
+function buildNhcPitchBlock(nhcProfile, curatedQA) {
+  if (!nhcProfile) return '';
+  const c = nhcProfile.cualidades || {};
+  const h = nhcProfile.herramientas || {};
+  const n = nhcProfile.niveles || {};
+  const o = nhcProfile.objeciones || {};
+  const p = nhcProfile.posicionamiento || {};
+  const incertidumbre = Array.isArray(nhcProfile.notas_incertidumbre) ? nhcProfile.notas_incertidumbre : [];
+
+  const qaBlock = Array.isArray(curatedQA) && curatedQA.length
+    ? `\nPREGUNTAS DE NEGOCIO YA APRENDIDAS DE DEMOS ANTERIORES (usa la mejor respuesta ya validada por el equipo si el prospecto pregunta algo parecido, adaptándola a la conversación en vez de copiarla literal):\n${curatedQA.map((q) => `- P: ${q.pregunta_canonica}\n  R: ${q.mejor_respuesta}`).join('\n')}`
+    : '';
+
+  return `
+SI EL PROSPECTO PREGUNTA POR EL NEGOCIO (no por cultivo/producto) — CÓMO VENDERTE A TI MISMO (Cannabicultor/NHC):
+Actívalo SOLO ante preguntas de tipo meta/negocio: cómo funciona esto, qué le aporta a su tienda, cuánto cuesta, seguridad de sus datos, por qué no usar un chatbot genérico, competencia, condiciones. NO lo actives si el prospecto solo está probando el asesor con preguntas normales de cultivo o de producto — es la mayoría de la conversación, y ahí sigues siendo simplemente el vendedor de SU tienda.
+
+Cualidades reales para defender (nunca inventes más allá de esto):
+${Object.values(c).map((v) => `- ${v}`).join('\n')}
+
+Herramientas reales del producto:
+${Object.values(h).map((v) => `- ${v}`).join('\n')}
+
+Estructura de niveles: ${(n.estructura || []).join(' / ')}. ${n.diferenciador_principal || ''}
+${n.aviso ? `IMPORTANTE: ${n.aviso} Si preguntan una cifra exacta, NO la inventes — dilo con seguridad ("eso lo cerramos directamente con el equipo, para ajustarlo a tu caso") y ofrece que el equipo lo hable con ellos.` : ''}
+
+Manejo de objeciones reales:
+${o.precio ? `- Precio: ${o.precio}` : ''}
+${o.seguridad_datos ? `- Seguridad de datos: ${o.seguridad_datos}` : ''}
+${o.por_que_no_uso_chatgpt ? `- "¿Por qué no uso ChatGPT?": ${o.por_que_no_uso_chatgpt}` : ''}
+${o.y_si_no_funciona ? `- "¿Y si no funciona?": ${o.y_si_no_funciona}` : ''}
+
+Posicionamiento: ${p.frase_ancla || ''}
+Ejemplo real que puedes usar para ilustrar: ${p.ejemplo_de_uso_real || ''}
+${incertidumbre.length ? `\nOJO — cosas aún no confirmadas por el equipo, nunca las afirmes como cerradas: ${incertidumbre.join(' | ')}` : ''}
+
+El ofrecimiento de hablar con el equipo o mostrar la propuesta completa sale UNA SOLA VEZ por conversación, nunca como apertura — igual que la mención de origen Cannabicultor.
+${qaBlock}`;
+}
+
+// ---------------------------------------------------------------------
+// Pieza 4a — detección de intención de pitch, para saber qué preguntas
+// registrar en sales_pitch_question (worker-produccion.js la llama tras
+// cada turno). Heurística por palabra clave, deliberadamente simple: un
+// falso positivo ocasional solo añade una fila de log de más, nunca rompe
+// nada — el criterio de qué aprender lo decide luego un humano (pieza 4b).
+const PITCH_INTENT_PATTERNS = [
+  { categoria: 'precio', re: /\b(precio|cuesta|coste|cu[aá]nto vale|tarifa|presupuesto de esto|planes de pago)\b/i },
+  { categoria: 'seguridad_datos', re: /\b(seguro|seguridad|privacidad|mis datos|vuestros datos|se comparten los datos)\b/i },
+  { categoria: 'comparativa_chatgpt', re: /\b(chatgpt|gpt-?\d|gemini|bard|otro chatbot|por qu[eé] no uso)\b/i },
+  { categoria: 'funcionamiento', re: /\b(c[oó]mo funciona|c[oó]mo lo hac[eé]is|qu[eé] es esto|eres una ia|est[aá]s entrenad[oa])\b/i },
+  { categoria: 'garantia_riesgo', re: /\b(y si no funciona|garant[ií]a|permanencia|cancelar|contrato)\b/i },
+  { categoria: 'escalabilidad_negocio', re: /\b(m[aá]s clientes|escalab|cu[aá]ntas tiendas|funciona en otras tiendas)\b/i },
+];
+
+export function detectPitchIntent(message) {
+  const text = String(message || '');
+  for (const { categoria, re } of PITCH_INTENT_PATTERNS) {
+    if (re.test(text)) return categoria;
+  }
+  return null;
+}
+
+export function buildSalesAgentSystemPrompt(tenant, salesContext = {}) {
+  const { nhcProfile = null, curatedQA = [] } = salesContext;
   const bp = tenant && tenant.brand_profile ? tenant.brand_profile : null;
 
   const brandProfileBlock = bp
@@ -329,5 +414,7 @@ CÓMO TRABAJAS:
 - Usa las specs técnicas (potencia, caudal, litros, NPK...) que te devuelven las herramientas para razonar de verdad: calcula superficie/volumen si hace falta dimensionar extracción, verifica compatibilidad de sustrato con nutrientes, etc. Usa tu criterio de cultivador experto para el razonamiento, pero los datos de producto (precio/stock/nombre) SIEMPRE vienen de la herramienta, nunca inventados.
 - Si el cliente pide cambiar algo de una cesta ya propuesta (otra maceta, quitar un producto, subir presupuesto), vuelve a llamar a buscar_productos/calcular_cesta con los nuevos datos — no finjas el cambio de palabra.
 - Si no tienes certeza de un dato de cultivo (una cifra exacta, un estudio), dilo con honestidad y da tu mejor criterio experto sin inventar cifras.
-- Sé breve y natural: respuestas de conversación, no fichas técnicas ni listados salvo que ayuden a leer mejor una cesta final.`;
+- Sé breve y natural: respuestas de conversación, no fichas técnicas ni listados salvo que ayuden a leer mejor una cesta final.
+${SALES_TECHNIQUES_BLOCK}
+${buildNhcPitchBlock(nhcProfile, curatedQA)}`;
 }
