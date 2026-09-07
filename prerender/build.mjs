@@ -334,6 +334,7 @@ ${bodyHtml}
 </footer>
 <script src="/assets/resenas.js"></script>
 <script src="/assets/ac-urgent-banner.js" defer></script>
+<script src="/track.js" defer></script>
 </body>
 </html>`;
 }

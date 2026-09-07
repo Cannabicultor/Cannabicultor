@@ -250,7 +250,7 @@ if(new URLSearchParams(window.location.search).get('logout')==='1'){
   if(window.GAAuth && GAAuth.clearSession) GAAuth.clearSession();
 }else if(GAAuth.redirectIfAuthenticated()){}
 </script>
-<script src="assets/analytics.js" defer></script>
+<script src="/track.js" defer></script>
 <script src="/assets/ac-urgent-banner.js" defer></script>
 </body>
 </html>

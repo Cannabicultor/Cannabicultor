@@ -418,7 +418,7 @@ footer{padding:32px 0;background:var(--white);border-top:1px solid var(--border)
     </div>
     <div class="nav-actions">
       <a href="/login.html" class="nav-login">Iniciar sesión</a>
-      <button class="nc" id="nav-cta" onclick="window.location.href='/register.html'">Solicitar acceso</button>
+      <button class="nc" id="nav-cta" onclick="window.location.href='/empezar.html'">Solicitar acceso</button>
     </div>
   </div>
 </nav>
@@ -432,7 +432,7 @@ footer{padding:32px 0;background:var(--white);border-top:1px solid var(--border)
   <div class="hero-badge"><span class="hero-badge-dot"></span>Sistema de IA activo · Acceso fundador abierto</div>
   <p class="hero-sub">Registra tu cultivo, recibe diagnósticos con IA y accede a la mayor base de conocimiento sobre cultivo avanzado en español.</p>
   <div class="hero-cta">
-    <button class="btn-primary" onclick="window.location.href='/register.html'">Empieza tu diario gratis</button>
+    <button class="btn-primary" onclick="window.location.href='/empezar.html'">Empieza tu diario gratis</button>
     <button class="btn-secondary" onclick="document.getElementById('herramientas').scrollIntoView({behavior:'smooth'})">Ver herramientas</button>
     <p class="hero-login-hint">¿Ya tienes cuenta? <a href="/login.html">Inicia sesión</a></p>
     <p class="hero-guide-link">Conoce el <a href="/cultivo-con-ia/">asistente de IA para tu cultivo</a></p>
@@ -629,7 +629,7 @@ footer{padding:32px 0;background:var(--white);border-top:1px solid var(--border)
     <p class="section-sub">El diario es la puerta de entrada. Detrás hay un ecosistema completo de herramientas y conocimiento para cultivar mejor.</p>
     <div class="tools-chips">
 
-      <a href="/register.html" class="tool-chip">
+      <a href="/empezar.html" class="tool-chip">
         <span class="chip-icon"><img src="assets/icons/03-tu-cultivo.svg" alt="" width="22" height="22"></span>
         <span class="chip-text">
           <span class="chip-title">Diario de Cultivo IA</span>
@@ -704,7 +704,7 @@ footer{padding:32px 0;background:var(--white);border-top:1px solid var(--border)
         <span class="chip-arrow">→</span>
       </a>
 
-      <a href="/register.html" class="tool-chip">
+      <a href="/empezar.html" class="tool-chip">
         <span class="chip-icon"><img src="assets/icons/04-subir-foto.svg" alt="" width="22" height="22"></span>
         <span class="chip-text">
           <span class="chip-title">Análisis de Foto con IA</span>
@@ -992,7 +992,7 @@ footer{padding:32px 0;background:var(--white);border-top:1px solid var(--border)
           <button type="submit" class="form-submit" id="submit-btn">Reservar plaza fundador</button>
         </div>
       </form>
-      <p class="form-note">Para acceso completo, <a href="/register.html" style="color:var(--forest)">crea tu cuenta</a> y completa el test de acceso. Solo mayores de 18 años. Datos protegidos bajo RGPD.</p>
+      <p class="form-note">Para acceso completo, <a href="/empezar.html" style="color:var(--forest)">crea tu cuenta</a> y completa el test de acceso. Solo mayores de 18 años. Datos protegidos bajo RGPD.</p>
       <div class="form-ok" id="form-ok">✓ Bienvenido a Growers Alliance. Revisa tu email y confirma tu suscripción para acceder al dashboard.<br><span style="font-size:11px;opacity:.7">Si no lo ves en 5 minutos, revisa la carpeta de spam.</span></div>
     </div>
   </div>
@@ -1074,7 +1074,7 @@ document.getElementById('brevo-form').addEventListener('submit', function(e) {
   document.getElementById('form-ok').style.display = 'block';
 });
 </script>
-<script src="assets/analytics.js" defer></script>
+<script src="/track.js" defer></script>
 <script src="/assets/ac-urgent-banner.js" defer></script>
 </body>
 </html>
