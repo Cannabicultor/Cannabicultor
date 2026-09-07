@@ -1,6 +1,17 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+<script>
+(function(){
+  var v=null;
+  try{ v=localStorage.getItem('cc_variante'); }catch(e){}
+  if(!v){
+    v = Math.random() < 0.5 ? 'A' : 'B';
+    try{ localStorage.setItem('cc_variante', v); }catch(e){}
+  }
+  if(v==='B'){ location.replace('/empezar-diario.html'); }
+})();
+</script>
 <!-- Google tag (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-XS18E0J277"></script>
 <script>
@@ -556,7 +567,7 @@ function registrar(){
   })
   .then(r => r.json())
   .then(d => {
-    if(d.ok && d.token){ medir('sign_up', { method: 'email' }); guardarSesion(d); window.location.href = destApp(); }
+    if(d.ok && d.token){ medir('sign_up', { method: 'email' }); if(window.cc&&window.cc.track) window.cc.track('registro_ok', email, {variante:'A'}); guardarSesion(d); window.location.href = destApp(); }
     else if(d.fundador_agotado){ window.location.href = d.stripe_semilla || 'https://buy.stripe.com/3cI00c9Ex8WH22PenB6AM04'; }
     else if(d.needs_login){ if(state.p===3){ syncCredsDesdeP3(); mostrar(5); } activarModoLogin(); }
     else { registrando=false; ctaActivo.disabled=false; ctaActivo.textContent = state.p===3 ? 'Guarda este análisis y entra en el diario' : 'Reclamar mi plaza de Fundador'; err.textContent=d.error||'No se pudo crear la cuenta.'; err.style.display='block'; }
@@ -636,5 +647,9 @@ document.getElementById('skipSave').addEventListener('click', () => mostrar(4));
 mostrar(0);
 medir('onboarding_view');
 </script>
+<script src="/track.js" defer></script>
+<script>window.addEventListener('load',function(){
+  if(window.cc&&window.cc.track) window.cc.track('variante','A');
+});</script>
 </body>
 </html>

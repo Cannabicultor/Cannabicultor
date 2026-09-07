@@ -13,6 +13,7 @@ HTML_FILES=(
   forgot-password.html
   reset-password.html
   empezar.html
+  empezar-diario.html
   google6cb08dd01808031a.html
   test.html
   trafico.html
