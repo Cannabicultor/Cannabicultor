@@ -45,6 +45,11 @@ if [ -f .htaccess ]; then
   /bin/cp -f .htaccess "$DEPLOYPATH/"
 fi
 
+# Script de tracking unificado (track.js en la raíz, incrustado en todas las páginas)
+if [ -f track.js ]; then
+  /bin/cp -f track.js "$DEPLOYPATH/"
+fi
+
 # Favicon raíz (favicon.ico multi-size + apple-touch-icon.png)
 for file in favicon.ico apple-touch-icon.png; do
   if [ -f "$file" ]; then
