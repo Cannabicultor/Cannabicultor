@@ -57,21 +57,28 @@ const PILOT = flagVal('pilot') ? parseInt(flagVal('pilot'), 10) : null;
 const DO_ALL_VARS = hasFlag('variedades');
 
 // ── PostgREST helper (paginado) ─────────────────────────────────────────────
-async function fetchAll(table, { select, filter = '', order = '' } = {}) {
-  const out = [];
-  const pageSize = 1000;
-  for (let from = 0; ; from += pageSize) {
+async function fetchAll(table, { select = '*', filter = '', order = 'id.asc', pageSize = 1000 } = {}) {
+  const rows = [];
+  let from = 0;
+  const orderQS = order ? `&order=${encodeURIComponent(order)}` : '';
+  for (;;) {
     const to = from + pageSize - 1;
-    const url = `${SUPABASE_URL}/rest/v1/${table}?select=${encodeURIComponent(select)}${filter}${order}`;
+    const url = `${SUPABASE_URL}/rest/v1/${table}?select=${encodeURIComponent(select)}${filter}${orderQS}`;
     const res = await fetch(url, {
-      headers: { apikey: SUPABASE_KEY, Range: `${from}-${to}`, Prefer: 'count=exact' },
+      headers: {
+        apikey: SUPABASE_KEY,
+        Authorization: `Bearer ${SUPABASE_KEY}`,
+        Range: `${from}-${to}`,
+        'Range-Unit': 'items',
+      },
     });
-    if (!res.ok) throw new Error(`PostgREST ${table} ${res.status}: ${await res.text()}`);
-    const rows = await res.json();
-    out.push(...rows);
-    if (rows.length < pageSize) break;
+    if (!res.ok) throw new Error(`fetchAll ${table} ${res.status}: ${await res.text()}`);
+    const page = await res.json();
+    rows.push(...page);
+    if (page.length < pageSize) break;
+    from += pageSize;
   }
-  return out;
+  return rows;
 }
 
 // ── Utilidades de texto ─────────────────────────────────────────────────────
@@ -214,7 +221,7 @@ function describe(v, breeder) {
   else if (v.tipo === 'regular') S.push('Se ofrece en formato de semilla regular.');
 
   // — CTA / enlace interno —
-  S.push(`Puedes comparar ${nombre} con otras genéticas en el <a href="/buscador-cannabicultor.html">buscador de variedades</a> o registrar tu cultivo en el <a href="/cultivo-con-ia/">asistente de IA para tu cultivo</a> de Cannabicultor.`);
+  S.push(`Empieza el <a href="/empezar.html?v=${v._slug || ''}&n=${encodeURIComponent(nombre)}">diario de cultivo con IA para tu ${esc(nombre)}</a> o compara con otras genéticas en el <a href="/buscador-cannabicultor.html">buscador de variedades</a>.`);
 
   return S.join(' ');
 }
@@ -340,6 +347,22 @@ ${bodyHtml}
 }
 
 // ── Página de variedad ───────────────────────────────────────────────────────
+function stickyCTA(href, tipo, nombre) {
+  const label = tipo === 'variedad'
+    ? 'Empieza el diario IA de tu'
+    : 'Cultiva variedades de';
+  return `
+<style>
+.cta-stick{position:fixed;bottom:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 18px;background:rgba(26,92,50,.97);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);color:#fff;font:500 15px/1.3 'Inter',system-ui,sans-serif;text-decoration:none;box-shadow:0 -4px 20px rgba(0,0,0,.15);transition:background .2s}
+.cta-stick:hover{background:#1a5c32;color:#fff;text-decoration:none}
+.cta-stick b{font-weight:600}
+.cta-stick-arrow{font-size:20px;flex-shrink:0;line-height:1}
+body{padding-bottom:80px}
+</style>
+<a class="cta-stick" href="${esc(href)}" data-track="cta_diario_${tipo}"><span>${label} <b>${esc(nombre)}</b></span><span class="cta-stick-arrow">→</span></a>
+`;
+}
+
 function varietyPage(v, breeder, breederSlug) {
   const bn = breeder?.breeder_name && !/unknown|legendary/i.test(breeder.breeder_name) ? breeder.breeder_name : null;
   const canonical = `${SITE}/variedades/${v._slug}/`;
@@ -406,6 +429,7 @@ ${img ? `<img src="${esc(img)}" alt="Foto de la variedad ${esc(v.nombre)}" loadi
 <div class="body"><p>${describe(v, breeder)}</p></div>
 ${bn ? `<a class="cta" href="/breeders/${breederSlug}/">Ver más variedades de ${esc(bn)}</a>` : `<a class="cta" href="/buscador-cannabicultor.html">Explorar el buscador de variedades</a>`}
 <div data-resenas data-tipo="variedad" data-id="${v.id}"></div>
+${stickyCTA(`/empezar.html?v=${v._slug || ''}&n=${encodeURIComponent(v.nombre)}`, 'variedad', v.nombre)}
 `;
   return shell({ title, desc, canonical, image: img, jsonld, bodyHtml: body });
 }
@@ -472,6 +496,7 @@ ${b.website ? `<p class="body"><a href="${esc(b.website)}" rel="nofollow noopene
 ${varsHtml}
 <a class="cta" href="/buscador-cannabicultor.html">Explorar todas las variedades</a>
 <div data-resenas data-tipo="breeder" data-id="${b.id}"></div>
+${stickyCTA(`/empezar.html?b=${b._slug || ''}&n=${encodeURIComponent(nombre)}`, 'breeder', nombre)}
 `;
   return shell({ title, desc, canonical, image: img, jsonld, bodyHtml: body });
 }
@@ -564,7 +589,7 @@ async function main() {
 
   const breeders = await fetchAll('breeders', {
     select: 'id,breeder_name,website,cantidad_variedades,pais_origen,año_fundacion,tipo_semillas,descripcion,variedades_famosas,premios,logo_url,updated_at',
-    order: '&order=breeder_name.asc',
+    order: 'breeder_name.asc',
   });
   assignBreederSlugs(breeders);
   const breederById = new Map(breeders.map((b) => [b.id, b]));
