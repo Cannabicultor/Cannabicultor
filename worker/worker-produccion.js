@@ -25,6 +25,7 @@ import { runCatalogIngest } from './catalog-curation.js';
 const ALLOWED_ORIGINS = [
   'https://cannabicultor.com',
   'https://www.cannabicultor.com',
+  'https://demo.cannabicultor.com',
   'http://localhost:8787',
   'http://127.0.0.1:8787',
 ];
