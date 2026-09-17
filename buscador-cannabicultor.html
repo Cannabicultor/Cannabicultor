@@ -143,6 +143,9 @@ h1 em{color:var(--forest);font-style:italic}
 .tag-row{display:flex;gap:6px;flex-wrap:wrap}
 .tag{font-size:11.5px;padding:5px 11px;border-radius:100px;background:var(--pale);border:1px solid rgba(26,92,50,.2);color:var(--forest);font-weight:500}
 .link-btn{display:block;text-align:center;margin-top:6px;padding:13px;border-radius:12px;background:var(--forest);color:#fff;font-weight:700;font-size:14px;text-decoration:none}
+.variety-cta{margin:22px 0 8px;padding:18px;background:var(--pale);border:1px solid rgba(26,92,50,.2);border-radius:14px;color:var(--text);font-size:13.5px;line-height:1.6}
+.variety-cta strong{display:block;margin-bottom:5px;color:var(--forest);font-size:15px;line-height:1.35}
+.variety-cta a{color:var(--forest);font-weight:700;text-decoration-thickness:1px;text-underline-offset:2px}
 .gen-line{font-family:var(--font-display);font-style:italic;font-size:15px;color:var(--text);line-height:1.5}
 .gen-line .x{color:var(--forest);font-style:normal;font-family:var(--font-ui);font-size:12px;font-weight:700;padding:0 4px}
 .rev-box{margin-top:22px;padding-top:16px;border-top:1px solid var(--border)}
@@ -375,6 +378,17 @@ function genLine(g){
   const parts = esc(g).split(/\s+[xX×]\s+/).join('<span class="x">×</span>');
   return '<div class="section"><div class="k">Genética</div><div class="gen-line">' + parts + '</div></div>';
 }
+function slugify(s){
+  return String(s || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase()
+    .replace(/ñ/g, "n").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+}
+function varietyCta(v){
+  const breeder = v.breeders?.breeder_name || "";
+  const slug = [slugify(v.nombre), slugify(breeder)].filter(Boolean).join("-") || String(v.id);
+  const diaryHref = "/empezar.html?v=" + encodeURIComponent(slug) + "&n=" + encodeURIComponent(v.nombre || "");
+  return '<aside class="variety-cta"><strong>¿Quieres cosechar el máximo potencial de la genética ' + esc(v.nombre) + '?</strong>' +
+    'Registra tu <a href="' + esc(diaryHref) + '">diario de cultivo en Cannabicultor</a>. Nuestro <a href="/disenador_sala_cultivo.html">Diseñador de Sala</a> y la <a href="/calculadora-vpd/">Calculadora de VPD</a>, integrada con nuestra <a href="/cultivo-con-ia/">IA Cannábica</a>, te guiarán paso a paso durante toda su floración.</aside>';
+}
 
 async function openVariedad(id) {
   openSheet('<div class="sk" style="height:120px"></div>');
@@ -405,6 +419,7 @@ async function openVariedad(id) {
       (v.descripcion ? '<div class="section"><div class="k">Descripción</div><p>' + esc(v.descripcion) + '</p></div>' : "") +
       (v.premios ? '<div class="section"><div class="k">Premios</div><p>' + esc(v.premios) + '</p></div>' : "") +
       (!clon && v.breeders?.website ? '<a class="link-btn" href="' + esc(v.breeders.website) + '" target="_blank" rel="noopener">Web del breeder →</a>' : "") +
+      varietyCta(v) +
       '<div id="revMount"></div>'
     );
     if (window.CCResenas) CCResenas.mount(document.getElementById('revMount'), 'variedad', v.id);
