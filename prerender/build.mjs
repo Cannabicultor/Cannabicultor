@@ -95,6 +95,32 @@ const esc = (s) =>
   String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 const cap = (s) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : s);
+const trimText = (text, max) => text.length <= max ? text : `${text.slice(0, max - 1).trimEnd()}…`;
+
+function varietySeoTitle(nombre, breeder) {
+  const subject = `${nombre}${breeder ? ` (${breeder})` : ''}`;
+  const full = `▷ Genética ${subject} | Ficha y Cultivo con IA`;
+  if (full.length <= 60) return full;
+
+  // Conserva variedad y breeder —las dos consultas de mayor intención— antes
+  // de abreviar el gancho comercial cuando exceden la longitud de un resultado móvil.
+  const compact = `▷ Genética ${subject} | Ficha + IA`;
+  if (compact.length <= 60) return compact;
+
+  const withoutBreeder = `▷ Genética ${nombre} | Ficha y Cultivo con IA`;
+  if (withoutBreeder.length <= 60) return withoutBreeder;
+  return trimText(`▷ Genética ${nombre} | Ficha + IA`, 60);
+}
+
+function varietySeoDescription(nombre, breeder) {
+  const suffix = 'Descubre su ficha técnica, días de floración y optimiza tu diario de cultivo indoor con nuestra IA. 🌱';
+  const full = `¿Cultivando ${nombre}${breeder ? ` de ${breeder}` : ''}? ${suffix}`;
+  if (full.length <= 155) return full;
+
+  const compact = `¿Cultivando ${nombre}${breeder ? ` de ${breeder}` : ''}? Ficha técnica, floración y diario de cultivo indoor con IA. 🌱`;
+  if (compact.length <= 155) return compact;
+  return trimText(`Ficha técnica de ${nombre}: genética, floración y diario de cultivo con IA. 🌱`, 155);
+}
 
 // Cruce genético «limpio» (A x B) vs prosa/etiquetas scrapeadas en inglés.
 const PROSE_WORDS = /\b(the|and|will|resulting|cross|strain|information|produce|hybrid|between|independent|standardized)\b/i;
@@ -373,8 +399,8 @@ function varietyPage(v, breeder, breederSlug) {
   const cross = parseCross(v.genetica);
   const thc = numOr(v.thc_max) ?? numOr(v.thc_pct);
   const cbd = numOr(v.cbd_max) ?? numOr(v.cbd_pct);
-  const title = `${v.nombre}${bn ? ` de ${bn}` : ''}: THC, floración y genética | Cannabicultor`;
-  const desc = metaDesc(v, breeder);
+  const title = varietySeoTitle(v.nombre, bn);
+  const desc = varietySeoDescription(v.nombre, bn);
 
   const rows = [];
   if (v.tipo) rows.push(['Tipo de semilla', cap(v.tipo)]);
@@ -430,7 +456,7 @@ ${img ? `<img src="${esc(img)}" alt="Foto de la variedad ${esc(v.nombre)}" loadi
 <table class="facts">${rows.map(([k, val]) => `<tr><th>${k}</th><td>${val}</td></tr>`).join('')}</table>
 </div>
 <div class="body"><p>${describe(v, breeder)}</p></div>
-<aside class="vpd-cta"><strong>¿Vas a cultivar esta variedad en interior?</strong>Configura los niveles climáticos óptimos con nuestra <a href="/calculadora-vpd/">Calculadora de VPD</a>.</aside>
+<aside class="vpd-cta"><strong>¿Quieres cosechar el máximo potencial de la genética ${esc(v.nombre)}?</strong>Registra tu <a href="/empezar.html?v=${v._slug || ''}&n=${encodeURIComponent(v.nombre)}">diario de cultivo en Cannabicultor</a>. Nuestro <a href="/disenador_sala_cultivo.html">Diseñador de Sala</a> y la <a href="/calculadora-vpd/">Calculadora de VPD</a>, integrada con nuestra <a href="/cultivo-con-ia/">IA Cannábica</a>, te guiarán paso a paso durante toda su floración.</aside>
 ${bn ? `<a class="cta" href="/breeders/${breederSlug}/">Ver más variedades de ${esc(bn)}</a>` : `<a class="cta" href="/buscador-cannabicultor.html">Explorar el buscador de variedades</a>`}
 <div data-resenas data-tipo="variedad" data-id="${v.id}"></div>
 ${stickyCTA(`/empezar.html?v=${v._slug || ''}&n=${encodeURIComponent(v.nombre)}`, 'variedad', v.nombre)}
