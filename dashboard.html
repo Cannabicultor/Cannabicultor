@@ -656,7 +656,7 @@ if(JWT && window.GAAuth && typeof GAAuth.isMobileDevice === 'function'
   var _isMobile = GAAuth.isMobileDevice();
   var _isDashboard = location.pathname.includes('dashboard');
   var _isApp = location.pathname.includes('app.html');
-  if(_isMobile && _isDashboard){ window.location.replace('/app.html'); }
+  if(_isMobile && _isDashboard){ window.location.replace('/app.html'+location.search); }
   else if(!_isMobile && _isApp){ window.location.replace('/dashboard.html'); }
 }
 
@@ -1501,6 +1501,14 @@ function openChat(){
   setTimeout(()=>document.getElementById('chatInput').focus(), 80);
 }
 function closeChat(){ document.getElementById('chatPanel').classList.remove('open'); }
+function openPendingChat(){
+  const prompt=localStorage.getItem('ga_pending_chat');
+  if(!prompt) return;
+  localStorage.removeItem('ga_pending_chat');
+  openChat();
+  const input=document.getElementById('chatInput');
+  if(input){ input.value=prompt; input.focus(); }
+}
 function addMsg(who, text){
   const wrap = document.createElement('div');
   wrap.className = 'msg ' + (who==='user'?'user':'ai');
@@ -1698,6 +1706,7 @@ function guardarCultivoStats(p){
 
 // ─── START ────────────────────────────────────────────────────────────────────
 init();
+openPendingChat();
 </script>
 <script src="/assets/ac-urgent-banner.js" defer></script>
 </body>

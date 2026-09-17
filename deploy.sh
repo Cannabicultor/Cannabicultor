@@ -79,6 +79,12 @@ for dir in breeders variedades cultivo-con-ia biblioteca informes ley-antitabaco
   fi
 done
 
+# Herramienta pública con ruta limpia: /calculadora-vpd/
+if [ -d calculadora-vpd ]; then
+  mkdir -p "$DEPLOYPATH/calculadora-vpd"
+  /bin/cp -Rf calculadora-vpd/. "$DEPLOYPATH/calculadora-vpd/"
+fi
+
 ASSET_FILES=(
   assets/analytics.js
   assets/auth.js
