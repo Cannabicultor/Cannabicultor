@@ -19,15 +19,17 @@ cd "$ROOT"
 # Localiza node (Setup Node.js App / nvm / ea-nodejs / sistema). Se puede forzar con NODE_BIN.
 find_node() {
   if [ -n "${NODE_BIN:-}" ] && [ -x "$NODE_BIN" ]; then echo "$NODE_BIN"; return; fi
+  # CloudLinux alt-nodejs: elegir version MODERNA por nombre exacto (evita coger node 9/10).
+  for v in 22 21 20 18 16; do
+    n="/opt/alt/alt-nodejs$v/root/usr/bin/node"
+    [ -x "$n" ] && { echo "$n"; return; }
+  done
   if command -v node >/dev/null 2>&1; then command -v node; return; fi
-  # Rutas comunes; se prueban por orden de version descendente donde hay glob.
   for c in \
     "$HOME"/nodevenv/*/*/bin/node \
     "$HOME"/.nvm/versions/node/*/bin/node \
-    /opt/alt/alt-nodejs*/root/usr/bin/node \
     /opt/cpanel/ea-nodejs*/bin/node \
     /usr/local/bin/node /usr/bin/node; do
-    # ordena descendente para coger la version mas nueva si hay varias
     for n in $(ls -d $c 2>/dev/null | sort -Vr); do [ -x "$n" ] && { echo "$n"; return; }; done
   done
   return 1
