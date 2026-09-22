@@ -39,7 +39,8 @@ body{font-family:var(--font-ui);background:var(--bg);color:var(--text);min-heigh
 .app{max-width:480px;margin:0 auto;padding:0 16px calc(40px + env(safe-area-inset-bottom))}
 header{padding:18px 0 6px;position:sticky;top:0;z-index:40;background:linear-gradient(to bottom,var(--bg) 78%,rgba(245,247,244,0))}
 .brand{display:flex;align-items:center;gap:10px;margin-bottom:12px;text-decoration:none;color:inherit}
-.brand .logo{width:34px;height:34px;border-radius:50%;background:var(--pale);border:1px solid var(--forest);display:flex;align-items:center;justify-content:center;font-size:17px}
+.brand .logo{width:34px;height:34px;border-radius:50%;background:var(--pale);border:1px solid var(--forest);display:flex;align-items:center;justify-content:center;font-size:17px;overflow:hidden}
+.brand .logo img{width:100%;height:100%;object-fit:cover;border-radius:50%}
 .brand .name{font-size:13px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
 .brand .name b{color:var(--text)}
 h1{font-family:var(--font-display);font-weight:600;font-size:27px;line-height:1.15;margin-bottom:4px}
@@ -125,7 +126,7 @@ footer{margin-top:34px;padding-top:16px;border-top:1px solid var(--border);font-
 <div class="app">
   <header>
     <a class="brand" href="/">
-      <div class="logo">🌿</div>
+      <div class="logo"><img src="/assets/icono.png" alt="Cannabicultor" width="34" height="34"></div>
       <div class="name"><b>Cannabicultor IA</b> · Growers Alliance</div>
     </a>
     <h1>Tiendas de <em>CBD</em> en España</h1>
