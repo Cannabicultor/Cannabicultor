@@ -56,12 +56,14 @@ h1 em{color:var(--forest);font-style:italic}
 }
 .searchbox input:focus{border-color:var(--forest)}
 .clear-btn{position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--muted);font-size:20px;padding:6px 10px;cursor:pointer;display:none}
-.add-row{display:flex;gap:8px;margin-bottom:12px}
+.add-row{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap}
 .add-btn{
-  flex:1;padding:11px 14px;border-radius:12px;border:1px solid var(--forest);
+  flex:1 1 auto;min-width:110px;padding:11px 14px;border-radius:12px;border:1px solid var(--forest);
   background:var(--forest);color:#fff;font:600 13.5px var(--font-ui);cursor:pointer;
 }
 .add-btn.ghost{background:var(--card);color:var(--forest)}
+.add-btn.on{background:var(--forest);color:#fff}
+.note{font-size:12.5px;line-height:1.55;color:var(--muted);background:var(--pale);border:1px solid rgba(26,92,50,.18);border-radius:12px;padding:10px 12px;margin-bottom:12px}
 .chips{display:flex;gap:8px;overflow-x:auto;padding:2px 0 12px;scrollbar-width:none}
 .chips::-webkit-scrollbar{display:none}
 .chip{
@@ -152,7 +154,9 @@ footer{margin-top:34px;padding-top:16px;border-top:1px solid var(--border);font-
     <div class="add-row">
       <button class="add-btn" id="addBtn" type="button">Añade tu tienda CBD</button>
       <button class="add-btn ghost" id="sortBtn" type="button">Mejor valoradas</button>
+      <button class="add-btn ghost" id="nearBtn" type="button">📍 Cerca de mí</button>
     </div>
+    <p class="note" id="nearMsg" style="display:none"></p>
   </header>
 
   <div class="chips" id="chips">
@@ -185,6 +189,7 @@ const PAGE = 25;
 const CCAA_ORDER = ["Madrid","Cataluña","Andalucía","Comunitat Valenciana","Galicia","País Vasco","Canarias","Illes Balears","Castilla y León","Castilla-La Mancha","Aragón","Murcia","Asturias","Extremadura","Navarra","Cantabria","La Rioja"];
 
 let query = "", filterCcaa = "", onlyRated = false, offset = 0, busy = false, lastToken = 0;
+let nearMode = false, userPos = null, nearPage = PAGE;
 
 const $ = id => document.getElementById(id);
 const list = $("list"), countLine = $("countLine"), moreBtn = $("moreBtn");
@@ -198,6 +203,20 @@ function jwt() {
 function starsTxt(n) {
   const v = Math.round(Number(n) || 0);
   return "★".repeat(v) + "☆".repeat(5 - v);
+}
+
+// Distancia entre dos puntos GPS (Haversine), en km
+function distKm(lat1, lon1, lat2, lon2) {
+  const R = 6371;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = Math.sin(dLat / 2) ** 2 +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+    Math.sin(dLon / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+function fmtKm(km) {
+  return km < 1 ? Math.round(km * 1000) + " m" : (km < 10 ? km.toFixed(1) : Math.round(km)) + " km";
 }
 
 async function pg(path, { count = false, signal } = {}) {
@@ -227,6 +246,7 @@ function buildUrl() {
 
 let controller;
 async function load(reset) {
+  if (nearMode) return loadNear(reset);
   if (busy) controller?.abort();
   busy = true;
   const token = ++lastToken;
@@ -257,14 +277,63 @@ async function load(reset) {
   }
 }
 
+// Modo "Cerca de mí": trae el listado completo (con lat/lon), calcula distancia
+// y ordena por cercanía (en cliente; Supabase no tiene PostGIS aquí).
+let nearCache = null;
+async function loadNear(reset) {
+  if (busy) controller?.abort();
+  busy = true;
+  const token = ++lastToken;
+  controller = new AbortController();
+  if (reset) {
+    nearPage = PAGE;
+    list.innerHTML = '<div class="sk"></div><div class="sk"></div><div class="sk"></div>';
+    moreBtn.style.display = "none";
+    countLine.textContent = "";
+  }
+  try {
+    if (!nearCache) {
+      const { data } = await pg(
+        TABLE + "?select=id,slug,nombre,direccion,ciudad,provincia,ccaa,telefono,web,instagram,logo_url,lat,lon,verificado,media_resenas,num_resenas&activo=is.true&lat=not.is.null&lon=not.is.null",
+        { signal: controller.signal }
+      );
+      nearCache = data;
+    }
+    if (token !== lastToken) return;
+    let rows = nearCache.map(g => ({ ...g, _dist: distKm(userPos.lat, userPos.lon, g.lat, g.lon) }));
+    const q = query.trim().toLowerCase();
+    if (q) rows = rows.filter(g => (g.nombre + " " + g.ciudad + " " + (g.provincia || "")).toLowerCase().includes(q));
+    if (filterCcaa) rows = rows.filter(g => g.ccaa === filterCcaa);
+    rows.sort((a, b) => a._dist - b._dist);
+    const total = rows.length;
+    const slice = rows.slice(0, nearPage);
+    if (reset) list.innerHTML = "";
+    if (!slice.length) {
+      list.innerHTML = '<div class="empty"><span class="big">No hay tiendas cerca</span>Prueba a quitar el filtro o busca por ciudad.</div>';
+      countLine.textContent = "";
+    } else {
+      list.innerHTML = "";
+      slice.forEach(g => list.appendChild(cardEl(g)));
+      countLine.innerHTML = "<b>" + nf.format(total) + "</b> tienda" + (total === 1 ? "" : "s") + " de CBD cerca de ti, de más a menos cercana";
+      moreBtn.style.display = slice.length < total ? "block" : "none";
+    }
+  } catch (e) {
+    if (e.name === "AbortError") return;
+    if (reset) list.innerHTML = '<div class="empty"><span class="big">No se pudo cargar</span>Reintenta en unos segundos.</div>';
+  } finally {
+    if (token === lastToken) busy = false;
+  }
+}
+
 function cardEl(g) {
   const btn = document.createElement("button");
   btn.className = "card";
   btn.type = "button";
-  const place = [g.ciudad, g.provincia || g.ccaa].filter(Boolean).join(" · ");
+  const place = g.direccion || [g.ciudad, g.provincia || g.ccaa].filter(Boolean).join(" · ");
   const rating = g.num_resenas
     ? '<span class="badge ok">' + starsTxt(g.media_resenas) + " " + esc(g.media_resenas) + " · " + g.num_resenas + "</span>"
     : '<span class="badge">Sin reseñas aún</span>';
+  const dist = typeof g._dist === "number" ? '<span class="badge ok">📍 ' + fmtKm(g._dist) + "</span>" : "";
   const logo = g.logo_url
     ? '<img class="logo" src="' + esc(g.logo_url) + '" alt="" onerror="this.parentNode.textContent=\'🌿\'">'
     : "🌿";
@@ -272,7 +341,7 @@ function cardEl(g) {
     '<div class="thumb">' + logo + '</div>' +
     '<div class="card-body"><div class="card-title">' + esc(g.nombre) + '</div>' +
     '<div class="card-sub">' + esc(place || "España") + '</div>' +
-    '<div class="badges">' + rating + (g.verificado ? '<span class="badge ok">Verificado</span>' : "") + "</div></div>";
+    '<div class="badges">' + dist + rating + (g.verificado ? '<span class="badge ok">Verificado</span>' : "") + "</div></div>";
   btn.onclick = () => openShop(g.id);
   return btn;
 }
@@ -429,7 +498,49 @@ $("sortBtn").onclick = () => {
   $("sortBtn").textContent = onlyRated ? "Ver todas" : "Mejor valoradas";
   load(true);
 };
-moreBtn.onclick = () => { offset += PAGE; load(false); };
+moreBtn.onclick = () => {
+  if (nearMode) { nearPage += PAGE; load(false); }
+  else { offset += PAGE; load(false); }
+};
+
+const nearBtn = $("nearBtn"), nearMsg = $("nearMsg");
+nearBtn.onclick = () => {
+  if (nearMode) {
+    nearMode = false;
+    nearBtn.classList.remove("on");
+    nearBtn.textContent = "📍 Cerca de mí";
+    nearMsg.style.display = "none";
+    load(true);
+    return;
+  }
+  if (!("geolocation" in navigator)) {
+    nearMsg.style.display = "block";
+    nearMsg.textContent = "Tu navegador no permite compartir ubicación.";
+    return;
+  }
+  nearBtn.disabled = true;
+  nearBtn.textContent = "Localizando…";
+  navigator.geolocation.getCurrentPosition(
+    pos => {
+      userPos = { lat: pos.coords.latitude, lon: pos.coords.longitude };
+      nearMode = true;
+      nearBtn.disabled = false;
+      nearBtn.classList.add("on");
+      nearBtn.textContent = "📍 Cerca de mí ✓";
+      nearMsg.style.display = "none";
+      load(true);
+    },
+    err => {
+      nearBtn.disabled = false;
+      nearBtn.textContent = "📍 Cerca de mí";
+      nearMsg.style.display = "block";
+      nearMsg.textContent = err.code === err.PERMISSION_DENIED
+        ? "Has bloqueado la ubicación. Actívala en los ajustes del navegador para usar esta función."
+        : "No se pudo obtener tu ubicación. Inténtalo de nuevo.";
+    },
+    { enableHighAccuracy: false, timeout: 10000, maximumAge: 300000 }
+  );
+};
 
 loadChips();
 load(true);
