@@ -2737,7 +2737,7 @@ function displayNameFromEmail(email) {
 function parseResenaTarget(tipoRaw, idRaw) {
   const tipo = String(tipoRaw || '').trim();
   const targetId = parseInt(idRaw, 10);
-  if (tipo !== 'variedad' && tipo !== 'breeder' && tipo !== 'growshop' && tipo !== 'asociacion') {
+  if (tipo !== 'variedad' && tipo !== 'breeder' && tipo !== 'growshop' && tipo !== 'asociacion' && tipo !== 'cbd_shop') {
     return { error: { status: 400, data: { error: 'tipo inválido' } } };
   }
   if (!Number.isFinite(targetId) || targetId < 1) return { error: { status: 400, data: { error: 'id inválido' } } };
@@ -2775,6 +2775,12 @@ async function handleCreateResena(body, env, request) {
     const exists = await sbRequest(env, `asociaciones?id=eq.${targetId}&select=id,activo`, { method: 'GET' });
     if (!exists.ok || !Array.isArray(exists.data) || !exists.data.length || exists.data[0].activo === false) {
       return { status: 404, data: { error: 'Asociación no encontrada' } };
+    }
+  }
+  if (tipo === 'cbd_shop') {
+    const exists = await sbRequest(env, `cbd_shops?id=eq.${targetId}&select=id,activo`, { method: 'GET' });
+    if (!exists.ok || !Array.isArray(exists.data) || !exists.data.length || exists.data[0].activo === false) {
+      return { status: 404, data: { error: 'Tienda CBD no encontrada' } };
     }
   }
   const puntuacion = parseInt(body.puntuacion, 10);
@@ -2880,6 +2886,63 @@ async function handleCreateGrowshop(body, env, request) {
   }
   const row = Array.isArray(res.data) ? res.data[0] : res.data;
   return { status: 200, data: { ok: true, growshop: row } };
+}
+
+async function handleCreateCbdShop(body, env, request) {
+  const auth = await authEmailFromRequest(request, env, body.email);
+  if (auth.error) return auth.error;
+  const nombre = String(body.nombre || '').trim().slice(0, 160);
+  const ciudad = String(body.ciudad || '').trim().slice(0, 80);
+  if (nombre.length < 2 || ciudad.length < 2) {
+    return { status: 400, data: { error: 'Nombre y ciudad son obligatorios' } };
+  }
+  const qn = encodeURIComponent(`"${nombre}"`);
+  const qc = encodeURIComponent(`"${ciudad}"`);
+  const dup = await sbRequest(
+    env,
+    `cbd_shops?select=id,nombre,ciudad&nombre=ilike.${qn}&ciudad=ilike.${qc}&limit=1`,
+    { method: 'GET' }
+  );
+  if (dup.ok && Array.isArray(dup.data) && dup.data.length) {
+    return { status: 409, data: { error: 'Ya hay una ficha con ese nombre en esa ciudad', cbd_shop: dup.data[0] } };
+  }
+  let slug = slugifyFicha(nombre, ciudad, 'tienda-cbd');
+  const taken = await sbRequest(env, `cbd_shops?select=slug&slug=like.${encodeURIComponent(slug)}*`, { method: 'GET' });
+  const slugs = new Set((Array.isArray(taken.data) ? taken.data : []).map((r) => r.slug));
+  if (slugs.has(slug)) {
+    let n = 2;
+    while (slugs.has(`${slug}-${n}`)) n += 1;
+    slug = `${slug}-${n}`;
+  }
+  const fila = {
+    slug,
+    nombre,
+    ciudad,
+    provincia: body.provincia ? String(body.provincia).trim().slice(0, 80) : null,
+    ccaa: body.ccaa ? String(body.ccaa).trim().slice(0, 80) : null,
+    direccion: body.direccion ? String(body.direccion).trim().slice(0, 200) : null,
+    telefono: body.telefono ? String(body.telefono).trim().slice(0, 40) : null,
+    web: cleanUrl(body.web),
+    instagram: body.instagram ? String(body.instagram).trim().slice(0, 80) : null,
+    logo_url: cleanUrl(body.logo_url),
+    email: body.email_contacto || body.email_tienda ? String(body.email_contacto || body.email_tienda).trim().slice(0, 120) : null,
+    notas_envio: body.notas_envio ? String(body.notas_envio).trim().slice(0, 400) : null,
+    fuente: 'manual',
+    verificado: false,
+    activo: true,
+    enviado_por: auth.email,
+  };
+  const res = await sbRequest(env, 'cbd_shops', {
+    method: 'POST',
+    headers: { Prefer: 'return=representation' },
+    body: JSON.stringify(fila),
+  });
+  if (!res.ok) {
+    const msg = res.data?.message || res.data?.error || 'No se pudo guardar la tienda CBD';
+    return { status: 500, data: { error: msg } };
+  }
+  const row = Array.isArray(res.data) ? res.data[0] : res.data;
+  return { status: 200, data: { ok: true, cbd_shop: row } };
 }
 
 async function handleCreateAsociacion(body, env, request) {
@@ -3211,6 +3274,7 @@ export default {
       if (path === '/diario/entrada') { const r = await handleDiarioEntrada(body, env, request); return json(r.data, r.status, cors); }
       if (path === '/resenas') { const r = await handleCreateResena(body, env, request); return json(r.data, r.status, cors); }
       if (path === '/growshops') { const r = await handleCreateGrowshop(body, env, request); return json(r.data, r.status, cors); }
+      if (path === '/cbd-shops') { const r = await handleCreateCbdShop(body, env, request); return json(r.data, r.status, cors); }
       if (path === '/asociaciones') { const r = await handleCreateAsociacion(body, env, request); return json(r.data, r.status, cors); }
       if (path === '/auth/save-perfil') { const r = await handleSavePerfil(body, env); return json(r.data, r.status, cors); }
       if (path === '/auth/register') { const r = await handleRegister(body, env, request); return json(r.data, r.status, cors); }
