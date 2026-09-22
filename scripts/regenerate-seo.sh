@@ -10,8 +10,30 @@
 # (RLS activo). No llama a ninguna IA ni a SerpAPI: solo lee Supabase y escribe HTML.
 set -euo pipefail
 
+# El cron trae un PATH minimo: lo ampliamos para encontrar curl/rsync/cp.
+export PATH="/usr/local/bin:/usr/bin:/bin:$HOME/bin:$PATH"
+
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
+
+# Localiza node (Setup Node.js App / nvm / ea-nodejs / sistema). Se puede forzar con NODE_BIN.
+find_node() {
+  if [ -n "${NODE_BIN:-}" ] && [ -x "$NODE_BIN" ]; then echo "$NODE_BIN"; return; fi
+  if command -v node >/dev/null 2>&1; then command -v node; return; fi
+  for c in \
+    "$HOME"/nodevenv/*/*/bin/node \
+    "$HOME"/.nvm/versions/node/*/bin/node \
+    /opt/cpanel/ea-nodejs*/bin/node \
+    /usr/local/bin/node /usr/bin/node; do
+    for n in $c; do [ -x "$n" ] && { echo "$n"; return; }; done
+  done
+  return 1
+}
+NODE="$(find_node || true)"
+if [ -z "$NODE" ]; then
+  echo "$(date -u +%FT%TZ) · ERROR: no se encontro node. Define NODE_BIN=/ruta/a/node en el cron." >&2
+  exit 1
+fi
 
 SUPABASE_URL="${SUPABASE_URL:-https://gfyrsrdnvgnhtsuexjkb.supabase.co}"
 SUPABASE_KEY="${SUPABASE_KEY:-sb_publishable_FdRmfirvOTAIfZFOcj2ZZg_Vic__TDw}"
@@ -34,7 +56,7 @@ if [ -n "$CURRENT" ] && [ "$CURRENT" = "$PREVIOUS" ]; then
 fi
 
 echo "$(date -u +%FT%TZ) · cambios detectados (nuevo=$CURRENT, anterior=${PREVIOUS:-ninguno}) · regenerando…"
-node prerender/build.mjs --breeders --variedades --cbd
+"$NODE" prerender/build.mjs --breeders --variedades --cbd
 bash deploy.sh
 echo "$CURRENT" > "$STATE_FILE"
 echo "$(date -u +%FT%TZ) · publicado."
