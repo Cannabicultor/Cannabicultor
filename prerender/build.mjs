@@ -36,6 +36,23 @@ import { writeFile, mkdir, rm } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import https from 'node:https';
+
+// GET via el modulo https nativo (NO undici/fetch) para evitar la reserva de
+// memoria WASM que peta en hostings CloudLinux con limite de memoria virtual.
+function httpGetJson(url, headers) {
+  return new Promise((resolve, reject) => {
+    const req = https.get(url, { headers }, (res) => {
+      let data = '';
+      res.setEncoding('utf8');
+      res.on('data', (c) => { data += c; });
+      res.on('end', () => resolve({ status: res.statusCode || 0, text: data }));
+    });
+    req.on('error', reject);
+    req.setTimeout(30000, () => req.destroy(new Error('timeout')));
+    req.end();
+  });
+}
 
 // ── Config ────────────────────────────────────────────────────────────────
 const SUPABASE_URL = process.env.SUPABASE_URL || 'https://gfyrsrdnvgnhtsuexjkb.supabase.co';
@@ -65,16 +82,14 @@ async function fetchAll(table, { select = '*', filter = '', order = 'id.asc', pa
   for (;;) {
     const to = from + pageSize - 1;
     const url = `${SUPABASE_URL}/rest/v1/${table}?select=${encodeURIComponent(select)}${filter}${orderQS}`;
-    const res = await fetch(url, {
-      headers: {
-        apikey: SUPABASE_KEY,
-        Authorization: `Bearer ${SUPABASE_KEY}`,
-        Range: `${from}-${to}`,
-        'Range-Unit': 'items',
-      },
+    const res = await httpGetJson(url, {
+      apikey: SUPABASE_KEY,
+      Authorization: `Bearer ${SUPABASE_KEY}`,
+      Range: `${from}-${to}`,
+      'Range-Unit': 'items',
     });
-    if (!res.ok) throw new Error(`fetchAll ${table} ${res.status}: ${await res.text()}`);
-    const page = await res.json();
+    if (res.status < 200 || res.status >= 300) throw new Error(`fetchAll ${table} ${res.status}: ${res.text}`);
+    const page = JSON.parse(res.text);
     rows.push(...page);
     if (page.length < pageSize) break;
     from += pageSize;
