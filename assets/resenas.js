@@ -41,6 +41,12 @@
           empty: 'Aún no hay reseñas de esta asociación. Ambiente, trato, variedades, cuota…',
           ph: '¿Cómo es el ambiente, el trato y el acceso? (opcional)'
         }
+      : tipo === 'cbd_shop'
+      ? {
+          h3: 'Reseñas de clientes',
+          empty: 'Aún no hay reseñas de esta tienda. Sé el primero: atención, productos, precios, asesoramiento.',
+          ph: '¿Cómo es la atención, los productos y el asesoramiento? (opcional)'
+        }
       : {
           h3: 'Reseñas de cultivadores',
           empty: 'Aún no hay reseñas. Sé el primero en contar tu experiencia.',
