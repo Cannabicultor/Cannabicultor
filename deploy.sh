@@ -27,6 +27,7 @@ HTML_FILES=(
   buscador-cannabicultor.html
   growshops.html
   asociaciones.html
+  tiendas-cbd.html
   fertilizantes.html
   disenador_sala_cultivo.html
   app.html
@@ -58,7 +59,7 @@ for file in favicon.ico apple-touch-icon.png; do
   fi
 done
 
-for file in sitemap.xml sitemap-static.xml sitemap-breeders.xml sitemap-strains.xml robots.txt; do
+for file in sitemap.xml sitemap-static.xml sitemap-breeders.xml sitemap-strains.xml sitemap-cbd.xml robots.txt; do
   if [ -f "$file" ]; then
     /bin/cp -f "$file" "$DEPLOYPATH/"
   fi
@@ -68,7 +69,7 @@ done
 # Son directorios completos y exclusivos del generador: se sincronizan con
 # --delete para que no queden fichas huérfanas de slugs que ya no existen.
 # Si el host no tiene rsync, cae a cp -R (sin borrado de huérfanos).
-for dir in breeders variedades cultivo-con-ia biblioteca informes ley-antitabaco; do
+for dir in breeders variedades tiendas-cbd cultivo-con-ia biblioteca informes ley-antitabaco; do
   if [ -d "$dir" ]; then
     if command -v rsync >/dev/null 2>&1; then
       rsync -a --delete "$dir/" "$DEPLOYPATH/$dir/"

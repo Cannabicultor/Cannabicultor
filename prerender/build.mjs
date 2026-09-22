@@ -55,6 +55,7 @@ const DRY = hasFlag('dry');
 const DO_BREEDERS = hasFlag('breeders');
 const PILOT = flagVal('pilot') ? parseInt(flagVal('pilot'), 10) : null;
 const DO_ALL_VARS = hasFlag('variedades');
+const DO_CBD = hasFlag('cbd');
 
 // ── PostgREST helper (paginado) ─────────────────────────────────────────────
 async function fetchAll(table, { select = '*', filter = '', order = 'id.asc', pageSize = 1000 } = {}) {
@@ -545,6 +546,194 @@ function composeBreederDesc(b) {
   return S.join(' ');
 }
 
+// ── Directorio de tiendas CBD (SEO/AEO local) ────────────────────────────────
+// Jerarquía: /tiendas-cbd/  ›  /tiendas-cbd/espana/{ciudad}/  ›  …/{tienda}/
+// Regla SEO: solo se indexan (y entran al sitemap) las fichas curadas
+// (editorial_status distinto de 'borrador'); el resto se genera con noindex.
+const CBD_CSS = `
+.map{height:280px;border-radius:14px;border:1px solid var(--border);margin:18px 0;z-index:0}
+.badge-open{display:inline-block;font-size:13px;font-weight:600;padding:4px 12px;border-radius:20px;margin:8px 0}
+.badge-open.on{background:#e6f4ea;color:#1a7d3f}.badge-open.off{background:#fdecec;color:#b94b42}.badge-open.na{background:var(--forest-pale);color:var(--text3)}
+.actions{display:flex;gap:10px;flex-wrap:wrap;margin:18px 0}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:11px 18px;border-radius:10px;font-weight:600;font-size:14px}
+.btn.primary{background:var(--forest);color:#fff}.btn.ghost{background:var(--forest-pale);color:var(--forest);border:1px solid var(--border)}
+.dir-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px;margin:20px 0}
+.dir-card{display:block;background:var(--white);border:1px solid var(--border);border-radius:14px;padding:16px}
+.dir-card b{display:block;font-size:16px;color:var(--text);margin-bottom:4px}
+.dir-card span{font-size:13px;color:var(--text3)}
+.faq{margin:30px 0}.faq h3{font-size:17px;margin:16px 0 6px}.faq p{color:var(--text2);margin:0 0 4px}
+.claim{margin:26px 0;padding:16px 18px;background:var(--forest-pale);border:1px solid var(--border);border-radius:14px;font-size:14px;color:var(--text2)}
+.city-list{columns:2;gap:20px;margin:16px 0}.city-list li{list-style:none;margin:0 0 8px}
+@media(max-width:560px){.city-list{columns:1}}`;
+
+const LEAFLET = `<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css">`;
+function leafletScript(lat, lon, nombre) {
+  return `<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+<script>document.addEventListener('DOMContentLoaded',function(){try{var m=L.map('map',{scrollWheelZoom:false}).setView([${lat},${lon}],15);L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap',maxZoom:19}).addTo(m);L.marker([${lat},${lon}]).addTo(m).bindPopup(${JSON.stringify(nombre)});}catch(e){}});</script>`;
+}
+
+function cbdCitySlug(shop) { return slugify(shop.ciudad || shop.provincia || 'espana'); }
+function assignCbdSlugs(shops) {
+  const seen = new Map();
+  for (const s of shops) {
+    const base = slugify(s.nombre) || `tienda-${s.id}`;
+    let slug = base;
+    const key = `${cbdCitySlug(s)}/${slug}`;
+    if (seen.has(key)) slug = `${base}-${s.id}`;
+    seen.set(`${cbdCitySlug(s)}/${slug}`, true);
+    s._slug = slug;
+    s._citySlug = cbdCitySlug(s);
+  }
+}
+
+function cbdShopPage(s) {
+  const citySlug = s._citySlug;
+  const canonical = `${SITE}/tiendas-cbd/espana/${citySlug}/${s._slug}/`;
+  const ciudad = s.ciudad || s.provincia || 'España';
+  const indexable = s.editorial_status && s.editorial_status !== 'borrador';
+  const addr = [s.direccion, s.cp, ciudad, s.provincia].filter(Boolean).join(', ');
+  const title = `${s.nombre} · Tienda de CBD en ${ciudad} | Cannabicultor`;
+  const desc = trimText(s.descripcion_tldr || s.descripcion ||
+    `${s.nombre} es una tienda de CBD en ${ciudad}. Dirección, teléfono, horario y cómo llegar.`, 160);
+  const img = s.logo_url || null;
+
+  const rows = [];
+  if (addr) rows.push(['Dirección', esc(addr)]);
+  if (s.telefono) rows.push(['Teléfono', `<a href="tel:${esc(s.telefono)}">${esc(s.telefono)}</a>`]);
+  if (s.horario) rows.push(['Horario', esc(s.horario)]);
+  if (s.web) rows.push(['Web', `<a href="${esc(s.web)}" rel="nofollow noopener" target="_blank">${esc(s.web)}</a>`]);
+
+  const store = {
+    '@type': 'Store',
+    name: s.nombre,
+    '@id': canonical,
+    url: canonical,
+    ...(img ? { image: img } : {}),
+    ...(s.telefono ? { telephone: s.telefono } : {}),
+    ...(s.web ? { sameAs: [s.web] } : {}),
+    address: {
+      '@type': 'PostalAddress',
+      ...(s.direccion ? { streetAddress: s.direccion } : {}),
+      addressLocality: ciudad,
+      ...(s.cp ? { postalCode: s.cp } : {}),
+      ...(s.provincia ? { addressRegion: s.provincia } : {}),
+      addressCountry: 'ES',
+    },
+    ...(s.lat && s.lon ? { geo: { '@type': 'GeoCoordinates', latitude: s.lat, longitude: s.lon } } : {}),
+    ...(s.num_resenas ? { aggregateRating: { '@type': 'AggregateRating', ratingValue: String(s.media_resenas), reviewCount: String(s.num_resenas) } } : {}),
+  };
+  const jsonld = {
+    '@context': 'https://schema.org',
+    '@graph': [
+      { '@type': 'BreadcrumbList', itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'Inicio', item: `${SITE}/` },
+        { '@type': 'ListItem', position: 2, name: 'Tiendas de CBD', item: `${SITE}/tiendas-cbd/` },
+        { '@type': 'ListItem', position: 3, name: ciudad, item: `${SITE}/tiendas-cbd/espana/${citySlug}/` },
+        { '@type': 'ListItem', position: 4, name: s.nombre, item: canonical },
+      ] },
+      store,
+    ],
+  };
+
+  const dir = (s.lat && s.lon)
+    ? `https://www.google.com/maps/dir/?api=1&destination=${s.lat},${s.lon}`
+    : (addr ? `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(addr)}` : '');
+
+  const body = `<style>${CBD_CSS}</style>${LEAFLET}
+<nav class="crumbs"><a href="/">Inicio</a> › <a href="/tiendas-cbd/">Tiendas de CBD</a> › <a href="/tiendas-cbd/espana/${citySlug}/">${esc(ciudad)}</a> › ${esc(s.nombre)}</nav>
+<h1>${esc(s.nombre)}<span class="by">Tienda de CBD en ${esc(ciudad)}</span></h1>
+<div class="badge-open na" id="openBadge">${s.horario ? 'Consulta el horario' : 'Horario no disponible'}</div>
+<table class="facts">${rows.map(([k, v]) => `<tr><th>${k}</th><td>${v}</td></tr>`).join('')}</table>
+${s.descripcion_tldr || s.descripcion ? `<div class="body"><p>${esc(s.descripcion_tldr || s.descripcion)}</p></div>` : ''}
+<div class="actions">
+${s.web ? `<a class="btn primary" href="${esc(s.web)}" rel="nofollow noopener" target="_blank">Visitar web</a>` : ''}
+${dir ? `<a class="btn ghost" href="${dir}" target="_blank" rel="noopener">🧭 Cómo llegar</a>` : ''}
+${s.telefono ? `<a class="btn ghost" href="tel:${esc(s.telefono)}">📞 Llamar</a>` : ''}
+</div>
+${s.lat && s.lon ? `<div id="map" class="map"></div>${leafletScript(s.lat, s.lon, s.nombre)}` : ''}
+<div class="claim"><strong>¿Eres el dueño de esta tienda?</strong> Verifica tu ficha, actualiza tus datos y responde reseñas. <a href="/login.html?next=/tiendas-cbd/espana/${citySlug}/${s._slug}/&reclamar=cbd_shop:${s.id}">Reclamar propiedad →</a></div>
+<div data-resenas data-tipo="cbd_shop" data-id="${s.id}"></div>
+<p class="body"><a href="/tiendas-cbd/espana/${citySlug}/">← Más tiendas de CBD en ${esc(ciudad)}</a></p>`;
+
+  return { html: shell({ title, desc, canonical, image: img, jsonld, bodyHtml: body }), canonical, indexable };
+}
+
+function cbdFaq(ciudad) {
+  return [
+    { q: `¿Es legal comprar flores de CBD en ${ciudad}?`,
+      a: `Sí. Los productos de CBD con un contenido de THC inferior al 0,2% se comercializan legalmente en España como artículos de coleccionismo, uso tópico o aromático. No están destinados al consumo humano según la normativa vigente.` },
+    { q: `¿Qué productos venden las tiendas de CBD en ${ciudad}?`,
+      a: `Habitualmente flores de CBD, aceites de espectro completo (full spectrum), cosmética con CBD, infusiones y vapeadores. La oferta concreta varía según cada tienda.` },
+    { q: `¿Cuánto cuesta el aceite de CBD en las tiendas locales?`,
+      a: `El precio de los aceites de CBD suele oscilar entre 25 € y 70 € según la concentración y el volumen del frasco.` },
+  ];
+}
+
+function cbdCityPage(citySlug, ciudad, shops) {
+  const canonical = `${SITE}/tiendas-cbd/espana/${citySlug}/`;
+  const title = `Tiendas de CBD en ${ciudad} (${shops.length}) | Directorio Cannabicultor`;
+  const desc = trimText(`Directorio de tiendas de CBD en ${ciudad}: ${shops.length} comercios con dirección, teléfono, horario y cómo llegar. Flores, aceites y cosmética CBD.`, 160);
+  const faq = cbdFaq(ciudad);
+
+  const jsonld = {
+    '@context': 'https://schema.org',
+    '@graph': [
+      { '@type': 'BreadcrumbList', itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'Inicio', item: `${SITE}/` },
+        { '@type': 'ListItem', position: 2, name: 'Tiendas de CBD', item: `${SITE}/tiendas-cbd/` },
+        { '@type': 'ListItem', position: 3, name: ciudad, item: canonical },
+      ] },
+      { '@type': 'CollectionPage', name: title, description: desc, url: canonical, inLanguage: 'es',
+        mainEntity: { '@type': 'ItemList', numberOfItems: shops.length,
+          itemListElement: shops.map((s, i) => ({ '@type': 'ListItem', position: i + 1, name: s.nombre,
+            url: `${canonical}${s._slug}/` })) } },
+      { '@type': 'FAQPage', mainEntity: faq.map((f) => ({ '@type': 'Question', name: f.q,
+        acceptedAnswer: { '@type': 'Answer', text: f.a } })) },
+    ],
+  };
+
+  const cards = shops.map((s) => `<a class="dir-card" href="/tiendas-cbd/espana/${citySlug}/${s._slug}/">
+<b>${esc(s.nombre)}</b><span>${esc([s.direccion, s.cp].filter(Boolean).join(', ') || ciudad)}</span>
+${s.telefono ? `<span>📞 ${esc(s.telefono)}</span>` : ''}</a>`).join('');
+
+  const body = `<style>${CBD_CSS}</style>
+<nav class="crumbs"><a href="/">Inicio</a> › <a href="/tiendas-cbd/">Tiendas de CBD</a> › ${esc(ciudad)}</nav>
+<h1>Tiendas de CBD en ${esc(ciudad)}</h1>
+<p class="body">Hemos recopilado <strong>${shops.length} tienda${shops.length === 1 ? '' : 's'} de CBD en ${esc(ciudad)}</strong> con su dirección, teléfono, horario y cómo llegar. Encuentra flores, aceites de espectro completo y cosmética con CBD cerca de ti.</p>
+<div class="dir-grid">${cards}</div>
+<div class="faq"><h2>Preguntas frecuentes sobre el CBD en ${esc(ciudad)}</h2>
+${faq.map((f) => `<h3>${esc(f.q)}</h3><p>${esc(f.a)}</p>`).join('')}</div>
+<p class="body"><a class="btn ghost" href="/tiendas-cbd/">← Ver todas las ciudades</a></p>`;
+
+  return { html: shell({ title, desc, canonical, image: null, jsonld, bodyHtml: body }), canonical };
+}
+
+function cbdHubPage(cityGroups) {
+  const canonical = `${SITE}/tiendas-cbd/`;
+  const total = [...cityGroups.values()].reduce((a, x) => a + x.shops.length, 0);
+  const title = `Tiendas de CBD en España | Directorio por ciudades – Cannabicultor`;
+  const desc = trimText(`Directorio de tiendas de CBD en España: ${total} comercios en ${cityGroups.size} ciudades. Flores, aceites y cosmética CBD con dirección, horario y mapa.`, 160);
+  const cities = [...cityGroups.values()].sort((a, b) => b.shops.length - a.shops.length);
+
+  const jsonld = {
+    '@context': 'https://schema.org',
+    '@graph': [
+      { '@type': 'BreadcrumbList', itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'Inicio', item: `${SITE}/` },
+        { '@type': 'ListItem', position: 2, name: 'Tiendas de CBD', item: canonical },
+      ] },
+      { '@type': 'CollectionPage', name: title, description: desc, url: canonical, inLanguage: 'es' },
+    ],
+  };
+  const body = `<style>${CBD_CSS}</style>
+<nav class="crumbs"><a href="/">Inicio</a> › Tiendas de CBD</nav>
+<h1>Tiendas de CBD en España</h1>
+<p class="body">Directorio de <strong>${total} tiendas de CBD</strong> en <strong>${cityGroups.size} ciudades</strong> de España, con dirección, teléfono, horario y cómo llegar. ¿Prefieres buscar por nombre? Usa el <a href="/tiendas-cbd.html">buscador de tiendas de CBD</a>.</p>
+<h2>Ciudades</h2>
+<ul class="city-list">${cities.map((c) => `<li><a href="/tiendas-cbd/espana/${c.slug}/">${esc(c.ciudad)}</a> <span style="color:var(--text3)">(${c.shops.length})</span></li>`).join('')}</ul>`;
+  return { html: shell({ title, desc, canonical, image: null, jsonld, bodyHtml: body }), canonical };
+}
+
 // ── Sitemaps ─────────────────────────────────────────────────────────────────
 function sitemapUrls(entries) {
   return `<?xml version="1.0" encoding="UTF-8"?>
@@ -684,8 +873,40 @@ async function main() {
     console.log(`  ✓ variedades escritas: ${nV}`);
   }
 
+  // — Tiendas de CBD (directorio local SEO/AEO) —
+  let cbdSitemap = [];
+  if (DO_CBD) {
+    const shops = await fetchAll('cbd_shops', {
+      select: 'id,slug,nombre,direccion,cp,ciudad,provincia,ccaa,lat,lon,telefono,web,instagram,horario,descripcion,descripcion_tldr,logo_url,media_resenas,num_resenas,editorial_status,updated_at',
+      filter: '&activo=is.true',
+      order: 'ciudad.asc',
+    });
+    assignCbdSlugs(shops);
+    const cityGroups = new Map();
+    for (const s of shops) {
+      if (!cityGroups.has(s._citySlug)) cityGroups.set(s._citySlug, { slug: s._citySlug, ciudad: s.ciudad || s.provincia || 'España', shops: [] });
+      cityGroups.get(s._citySlug).shops.push(s);
+    }
+    // Hub
+    await write(join(ROOT, 'tiendas-cbd', 'index.html'), cbdHubPage(cityGroups).html);
+    // Ciudades + fichas
+    let nFichas = 0;
+    for (const g of cityGroups.values()) {
+      await write(join(ROOT, 'tiendas-cbd', 'espana', g.slug, 'index.html'), cbdCityPage(g.slug, g.ciudad, g.shops).html);
+      cbdSitemap.push({ loc: `${SITE}/tiendas-cbd/espana/${g.slug}/`, priority: '0.8', changefreq: 'weekly' });
+      for (const s of g.shops) {
+        const page = cbdShopPage(s);
+        await write(join(ROOT, 'tiendas-cbd', 'espana', g.slug, s._slug, 'index.html'), page.html);
+        nFichas++;
+        // Solo las fichas curadas (no borrador) entran al sitemap para indexación.
+        if (page.indexable) cbdSitemap.push({ loc: page.canonical, priority: '0.6', changefreq: 'monthly', lastmod: (s.updated_at || TODAY).slice(0, 10) });
+      }
+    }
+    console.log(`  ✓ CBD: hub + ${cityGroups.size} ciudades + ${nFichas} fichas (${cbdSitemap.length - cityGroups.size} indexables en sitemap)`);
+  }
+
   // — Sitemaps —
-  if (!DRY && (DO_BREEDERS || pilotVars.length)) {
+  if (!DRY && (DO_BREEDERS || pilotVars.length || DO_CBD)) {
     await write(join(ROOT, 'sitemap-static.xml'), sitemapUrls(STATIC_URLS));
     const names = ['sitemap-static.xml'];
     if (DO_BREEDERS) {
@@ -697,6 +918,11 @@ async function main() {
       await write(join(ROOT, 'sitemap-strains.xml'),
         sitemapUrls(pilotVars.map((v) => ({ loc: `${SITE}/variedades/${v._slug}/`, priority: '0.6', changefreq: 'monthly', lastmod: (v.updated_at || TODAY).slice(0, 10) }))));
       names.push('sitemap-strains.xml');
+    }
+    if (DO_CBD && cbdSitemap.length) {
+      await write(join(ROOT, 'sitemap-cbd.xml'),
+        sitemapUrls([{ loc: `${SITE}/tiendas-cbd/`, priority: '0.8', changefreq: 'weekly', lastmod: TODAY }, ...cbdSitemap]));
+      names.push('sitemap-cbd.xml');
     }
     await write(join(ROOT, 'sitemap.xml'), sitemapIndex(names));
     console.log(`  ✓ sitemaps: ${names.join(', ')} + índice sitemap.xml`);
