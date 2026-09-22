@@ -65,11 +65,21 @@ for file in sitemap.xml sitemap-static.xml sitemap-breeders.xml sitemap-strains.
   fi
 done
 
-# Páginas pre-renderizadas (generadas por prerender/build.mjs).
-# Son directorios completos y exclusivos del generador: se sincronizan con
-# --delete para que no queden fichas huérfanas de slugs que ya no existen.
-# Si el host no tiene rsync, cae a cp -R (sin borrado de huérfanos).
-for dir in breeders variedades tiendas-cbd cultivo-con-ia biblioteca informes ley-antitabaco; do
+# Directorios EXCLUSIVOS del generador (prerender/build.mjs): REEMPLAZO LIMPIO.
+# Copia la version nueva a un temporal y hace swap, borrando asi las fichas
+# huerfanas de slugs que ya no existen. No depende de rsync (este host no lo tiene).
+for dir in breeders variedades tiendas-cbd; do
+  if [ -d "$dir" ]; then
+    tmp="$DEPLOYPATH/.$dir.new"
+    rm -rf "$tmp"
+    /bin/cp -Rf "$dir" "$tmp"
+    rm -rf "$DEPLOYPATH/$dir"
+    mv "$tmp" "$DEPLOYPATH/$dir"
+  fi
+done
+
+# Contenido hecho a mano (no exclusivo del generador): copia normal.
+for dir in cultivo-con-ia biblioteca informes ley-antitabaco; do
   if [ -d "$dir" ]; then
     if command -v rsync >/dev/null 2>&1; then
       rsync -a --delete "$dir/" "$DEPLOYPATH/$dir/"

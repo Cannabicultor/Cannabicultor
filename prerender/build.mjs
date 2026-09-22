@@ -817,6 +817,13 @@ async function write(path, content) {
   await writeFile(path, content, 'utf8');
 }
 
+// Vacia una carpeta del generador antes de regenerarla, para no dejar fichas
+// huerfanas de slugs que ya no existen.
+async function cleanDir(name) {
+  if (DRY) return;
+  await rm(join(ROOT, name), { recursive: true, force: true });
+}
+
 // ── Main ──────────────────────────────────────────────────────────────────────
 async function main() {
   console.log(`▸ Cannabicultor pre-render · ${TODAY}${DRY ? ' (DRY RUN)' : ''}`);
@@ -873,6 +880,7 @@ async function main() {
 
   let nB = 0, nV = 0;
   if (DO_BREEDERS) {
+    await cleanDir('breeders');
     for (const b of breeders) {
       await write(join(ROOT, 'breeders', b._slug, 'index.html'), breederPage(b, varsByBreeder.get(b.id) || []));
       nB++;
@@ -880,6 +888,7 @@ async function main() {
     console.log(`  ✓ breeders escritos: ${nB}`);
   }
   if (pilotVars.length) {
+    await cleanDir('variedades');
     for (const v of pilotVars) {
       const b = breederById.get(v.breeder_id);
       await write(join(ROOT, 'variedades', v._slug, 'index.html'), varietyPage(v, b, b?._slug));
@@ -902,6 +911,7 @@ async function main() {
       if (!cityGroups.has(s._citySlug)) cityGroups.set(s._citySlug, { slug: s._citySlug, ciudad: s.ciudad || s.provincia || 'España', shops: [] });
       cityGroups.get(s._citySlug).shops.push(s);
     }
+    await cleanDir('tiendas-cbd');
     // Hub
     await write(join(ROOT, 'tiendas-cbd', 'index.html'), cbdHubPage(cityGroups).html);
     // Ciudades + fichas
