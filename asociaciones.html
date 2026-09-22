@@ -56,12 +56,13 @@ h1 em{color:var(--forest);font-style:italic}
 }
 .searchbox input:focus{border-color:var(--forest)}
 .clear-btn{position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--muted);font-size:20px;padding:6px 10px;cursor:pointer;display:none}
-.add-row{display:flex;gap:8px;margin-bottom:12px}
+.add-row{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap}
 .add-btn{
-  flex:1;padding:11px 14px;border-radius:12px;border:1px solid var(--forest);
+  flex:1 1 auto;min-width:110px;padding:11px 14px;border-radius:12px;border:1px solid var(--forest);
   background:var(--forest);color:#fff;font:600 13.5px var(--font-ui);cursor:pointer;
 }
 .add-btn.ghost{background:var(--card);color:var(--forest)}
+.add-btn.on{background:var(--forest);color:#fff}
 .chips{display:flex;gap:8px;overflow-x:auto;padding:2px 0 12px;scrollbar-width:none}
 .chips::-webkit-scrollbar{display:none}
 .chip{
@@ -154,7 +155,9 @@ footer{margin-top:34px;padding-top:16px;border-top:1px solid var(--border);font-
     <div class="add-row">
       <button class="add-btn" id="addBtn" type="button">Añade tu asociación</button>
       <button class="add-btn ghost" id="sortBtn" type="button">Mejor valoradas</button>
+      <button class="add-btn ghost" id="nearBtn" type="button">📍 Cerca de mí</button>
     </div>
+    <p class="note" id="nearMsg" style="display:none"></p>
   </header>
 
   <div class="chips" id="chips">
@@ -163,10 +166,29 @@ footer{margin-top:34px;padding-top:16px;border-top:1px solid var(--border);font-
   <div class="count-line" id="countLine"></div>
   <div class="list" id="list"></div>
   <button class="more-btn" id="moreBtn" style="display:none">Cargar más</button>
+
+  <nav aria-label="Explora por ciudad" style="margin-top:26px;padding-top:16px;border-top:1px solid var(--border)">
+    <div style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:10px">Explora por ciudad</div>
+    <div style="display:flex;flex-wrap:wrap;gap:8px">
+      <a href="/asociaciones/barcelona/" style="font-size:12.5px;padding:6px 12px;border-radius:100px;background:var(--card);border:1px solid var(--border2);color:var(--forest);text-decoration:none;font-weight:500">Barcelona</a>
+      <a href="/asociaciones/madrid/" style="font-size:12.5px;padding:6px 12px;border-radius:100px;background:var(--card);border:1px solid var(--border2);color:var(--forest);text-decoration:none;font-weight:500">Madrid</a>
+      <a href="/asociaciones/alicante/" style="font-size:12.5px;padding:6px 12px;border-radius:100px;background:var(--card);border:1px solid var(--border2);color:var(--forest);text-decoration:none;font-weight:500">Alicante</a>
+      <a href="/asociaciones/sevilla/" style="font-size:12.5px;padding:6px 12px;border-radius:100px;background:var(--card);border:1px solid var(--border2);color:var(--forest);text-decoration:none;font-weight:500">Sevilla</a>
+      <a href="/asociaciones/santa-cruz-de-tenerife/" style="font-size:12.5px;padding:6px 12px;border-radius:100px;background:var(--card);border:1px solid var(--border2);color:var(--forest);text-decoration:none;font-weight:500">Sta. Cruz de Tenerife</a>
+      <a href="/asociaciones/valencia/" style="font-size:12.5px;padding:6px 12px;border-radius:100px;background:var(--card);border:1px solid var(--border2);color:var(--forest);text-decoration:none;font-weight:500">Valencia</a>
+      <a href="/asociaciones/marbella/" style="font-size:12.5px;padding:6px 12px;border-radius:100px;background:var(--card);border:1px solid var(--border2);color:var(--forest);text-decoration:none;font-weight:500">Marbella</a>
+      <a href="/asociaciones/malaga/" style="font-size:12.5px;padding:6px 12px;border-radius:100px;background:var(--card);border:1px solid var(--border2);color:var(--forest);text-decoration:none;font-weight:500">Málaga</a>
+      <a href="/asociaciones/baleares/" style="font-size:12.5px;padding:6px 12px;border-radius:100px;background:var(--card);border:1px solid var(--border2);color:var(--forest);text-decoration:none;font-weight:500">Baleares</a>
+      <a href="/asociaciones/tenerife/" style="font-size:12.5px;padding:6px 12px;border-radius:100px;background:var(--card);border:1px solid var(--border2);color:var(--forest);text-decoration:none;font-weight:500">Tenerife</a>
+      <a href="/asociaciones/ibiza/" style="font-size:12.5px;padding:6px 12px;border-radius:100px;background:var(--card);border:1px solid var(--border2);color:var(--forest);text-decoration:none;font-weight:500">Ibiza</a>
+      <a href="/asociaciones/bilbao/" style="font-size:12.5px;padding:6px 12px;border-radius:100px;background:var(--card);border:1px solid var(--border2);color:var(--forest);text-decoration:none;font-weight:500">Bilbao</a>
+    </div>
+  </nav>
+
   <footer>
     Directorio de asociaciones cannábicas de Cannabicultor · reseñas de socios.<br>
     Datos de listados públicos de España. Fichas abiertas a corrección por la propia asociación.<br>
-    Si buscas tiendas: <a href="/growshops.html">directorio de growshops</a>.<br>
+    Si buscas tiendas: <a href="/growshops.html">directorio de growshops</a> o <a href="/tiendas-cbd.html">tiendas de CBD</a>.<br>
     Solo mayores de 18 años. Consulta la legislación vigente. No son dispensarios.
   </footer>
 </div>
@@ -186,6 +208,7 @@ const PAGE = 25;
 const CCAA_ORDER = ["Madrid","Cataluña","Andalucía","Comunitat Valenciana","Galicia","País Vasco","Canarias","Illes Balears","Castilla y León","Castilla-La Mancha","Aragón","Murcia","Asturias","Extremadura","Navarra","Cantabria","La Rioja"];
 
 let query = "", filterCcaa = "", onlyRated = false, offset = 0, busy = false, lastToken = 0;
+let nearMode = false, userPos = null, nearAll = [], nearPage = PAGE;
 
 const $ = id => document.getElementById(id);
 const list = $("list"), countLine = $("countLine"), moreBtn = $("moreBtn");
@@ -201,6 +224,20 @@ function starsTxt(n) {
   return "★".repeat(v) + "☆".repeat(5 - v);
 }
 
+// Distancia entre dos puntos GPS (fórmula de Haversine), en km
+function distKm(lat1, lon1, lat2, lon2) {
+  const R = 6371;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = Math.sin(dLat / 2) ** 2 +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+    Math.sin(dLon / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+function fmtKm(km) {
+  return km < 1 ? Math.round(km * 1000) + " m" : (km < 10 ? km.toFixed(1) : Math.round(km)) + " km";
+}
+
 async function pg(path, { count = false, signal } = {}) {
   const h = { ...HEADERS };
   if (count) h.Prefer = "count=exact";
@@ -212,7 +249,7 @@ async function pg(path, { count = false, signal } = {}) {
 
 function buildUrl() {
   const q = query.trim().replace(/[,()*]/g, " ").trim();
-  let u = "asociaciones?select=id,slug,nombre,direccion,ciudad,provincia,ccaa,telefono,web,instagram,logo_url,lat,lon,acceso,verificado,media_resenas,num_resenas&activo=is.true";
+  let u = "asociaciones?select=id,slug,nombre,direccion,ciudad,provincia,ccaa,telefono,web,instagram,logo_url,lat,lon,acceso,verificado,media_resenas,num_resenas,slug_ciudad&activo=is.true";
   if (q) {
     const enc = encodeURIComponent(q);
     u += "&or=(nombre.ilike.*" + enc + "*,ciudad.ilike.*" + enc + "*,provincia.ilike.*" + enc + "*)";
@@ -228,6 +265,7 @@ function buildUrl() {
 
 let controller;
 async function load(reset) {
+  if (nearMode) return loadNear(reset);
   if (busy) controller?.abort();
   busy = true;
   const token = ++lastToken;
@@ -258,15 +296,65 @@ async function load(reset) {
   }
 }
 
+// Modo "Cerca de mí": trae el listado completo (con lat/lon), calcula distancia
+// al usuario y ordena por cercanía. Se pagina en el cliente porque la distancia
+// no se puede calcular dentro de la consulta a Supabase sin PostGIS.
+let nearCache = null;
+async function loadNear(reset) {
+  if (busy) controller?.abort();
+  busy = true;
+  const token = ++lastToken;
+  controller = new AbortController();
+  if (reset) {
+    nearPage = PAGE;
+    list.innerHTML = '<div class="sk"></div><div class="sk"></div><div class="sk"></div>';
+    moreBtn.style.display = "none";
+    countLine.textContent = "";
+  }
+  try {
+    if (!nearCache) {
+      const { data } = await pg(
+        "asociaciones?select=id,slug,nombre,direccion,ciudad,provincia,ccaa,telefono,web,instagram,logo_url,lat,lon,acceso,verificado,media_resenas,num_resenas,slug_ciudad&activo=is.true&lat=not.is.null&lon=not.is.null",
+        { signal: controller.signal }
+      );
+      nearCache = data;
+    }
+    if (token !== lastToken) return;
+    let rows = nearCache.map(g => ({ ...g, _dist: distKm(userPos.lat, userPos.lon, g.lat, g.lon) }));
+    const q = query.trim().toLowerCase();
+    if (q) rows = rows.filter(g => (g.nombre + " " + g.ciudad + " " + (g.provincia || "")).toLowerCase().includes(q));
+    if (filterCcaa) rows = rows.filter(g => g.ccaa === filterCcaa);
+    rows.sort((a, b) => a._dist - b._dist);
+    const total = rows.length;
+    const slice = rows.slice(0, nearPage);
+    if (reset) list.innerHTML = "";
+    if (!slice.length) {
+      list.innerHTML = '<div class="empty"><span class="big">No hay asociaciones cerca</span>Prueba a quitar el filtro o busca por ciudad.</div>';
+      countLine.textContent = "";
+    } else {
+      list.innerHTML = "";
+      slice.forEach(g => list.appendChild(cardEl(g)));
+      countLine.innerHTML = "<b>" + nf.format(total) + "</b> asociaci" + (total === 1 ? "ón" : "ones") + " cerca de ti, de más a menos cercana";
+      moreBtn.style.display = slice.length < total ? "block" : "none";
+    }
+  } catch (e) {
+    if (e.name === "AbortError") return;
+    if (reset) list.innerHTML = '<div class="empty"><span class="big">No se pudo cargar</span>Reintenta en unos segundos.</div>';
+  } finally {
+    if (token === lastToken) busy = false;
+  }
+}
+
 function cardEl(g) {
   const btn = document.createElement("button");
   btn.className = "card";
   btn.type = "button";
-  const place = [g.ciudad, g.provincia || g.ccaa].filter(Boolean).join(" · ");
+  const place = g.direccion || [g.ciudad, g.provincia || g.ccaa].filter(Boolean).join(" · ");
   const rating = g.num_resenas
     ? '<span class="badge ok">' + starsTxt(g.media_resenas) + " " + esc(g.media_resenas) + " · " + g.num_resenas + "</span>"
     : '<span class="badge">Sin reseñas aún</span>';
   const acceso = g.acceso ? '<span class="badge">' + esc(g.acceso) + "</span>" : "";
+  const dist = typeof g._dist === "number" ? '<span class="badge ok">📍 ' + fmtKm(g._dist) + "</span>" : "";
   const logo = g.logo_url
     ? '<img class="logo" src="' + esc(g.logo_url) + '" alt="" onerror="this.className=\'\';this.src=\'assets/icons/13-asociacion.svg\'">'
     : '<img src="assets/icons/13-asociacion.svg" alt="">';
@@ -274,7 +362,7 @@ function cardEl(g) {
     '<div class="thumb">' + logo + '</div>' +
     '<div class="card-body"><div class="card-title">' + esc(g.nombre) + '</div>' +
     '<div class="card-sub">' + esc(place || "España") + '</div>' +
-    '<div class="badges">' + rating + acceso + (g.verificado ? '<span class="badge ok">Verificado</span>' : "") + "</div></div>";
+    '<div class="badges">' + dist + rating + acceso + (g.verificado ? '<span class="badge ok">Verificado</span>' : "") + "</div></div>";
   btn.onclick = () => openClub(g.id);
   return btn;
 }
@@ -318,7 +406,7 @@ async function openClub(id) {
       (g.web ? '<a class="link-btn" href="' + esc(g.web) + '" target="_blank" rel="noopener">Visitar web →</a>' : "") +
       (g.instagram ? '<a class="link-btn ghost" href="' + esc(igUrl(g.instagram)) + '" target="_blank" rel="noopener">Instagram</a>' : "") +
       (maps ? '<a class="link-btn ghost" href="' + esc(maps) + '" target="_blank" rel="noopener">Ver zona en el mapa</a>' : "") +
-      '<div id="revMount"></div>'
+      fichaUrl(g) + '<div id="revMount"></div>'
     );
     if (window.CCResenas) CCResenas.mount(document.getElementById("revMount"), "asociacion", g.id);
     history.replaceState(null, "", "#id=" + g.id);
@@ -331,6 +419,20 @@ function igUrl(v) {
   const s = String(v || "").trim();
   if (/^https?:\/\//i.test(s)) return s;
   return "https://instagram.com/" + s.replace(/^@/, "");
+}
+
+function slugFallback(v) {
+  return String(v || "")
+    .toLowerCase()
+    .normalize("NFD").replace(/[̀-ͯ]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+function fichaUrl(g) {
+  if (!g.slug) return "";
+  const ciudadSlug = g.slug_ciudad || slugFallback(g.ciudad) || "espana";
+  const href = "/asociaciones/" + ciudadSlug + "/" + g.slug + "/";
+  return '<a class="link-btn ghost" href="' + esc(href) + '">Ver ficha completa →</a>';
 }
 
 function formHtml() {
@@ -435,7 +537,49 @@ $("sortBtn").onclick = () => {
   $("sortBtn").textContent = onlyRated ? "Ver todas" : "Mejor valoradas";
   load(true);
 };
-moreBtn.onclick = () => { offset += PAGE; load(false); };
+moreBtn.onclick = () => {
+  if (nearMode) { nearPage += PAGE; load(false); }
+  else { offset += PAGE; load(false); }
+};
+
+const nearBtn = $("nearBtn"), nearMsg = $("nearMsg");
+nearBtn.onclick = () => {
+  if (nearMode) {
+    nearMode = false;
+    nearBtn.classList.remove("on");
+    nearBtn.textContent = "📍 Cerca de mí";
+    nearMsg.style.display = "none";
+    load(true);
+    return;
+  }
+  if (!("geolocation" in navigator)) {
+    nearMsg.style.display = "block";
+    nearMsg.textContent = "Tu navegador no permite compartir ubicación.";
+    return;
+  }
+  nearBtn.disabled = true;
+  nearBtn.textContent = "Localizando…";
+  navigator.geolocation.getCurrentPosition(
+    pos => {
+      userPos = { lat: pos.coords.latitude, lon: pos.coords.longitude };
+      nearMode = true;
+      nearBtn.disabled = false;
+      nearBtn.classList.add("on");
+      nearBtn.textContent = "📍 Cerca de mí ✓";
+      nearMsg.style.display = "none";
+      load(true);
+    },
+    err => {
+      nearBtn.disabled = false;
+      nearBtn.textContent = "📍 Cerca de mí";
+      nearMsg.style.display = "block";
+      nearMsg.textContent = err.code === err.PERMISSION_DENIED
+        ? "Has bloqueado la ubicación. Actívala en los ajustes del navegador para usar esta función."
+        : "No se pudo obtener tu ubicación. Inténtalo de nuevo.";
+    },
+    { enableHighAccuracy: false, timeout: 10000, maximumAge: 300000 }
+  );
+};
 
 loadChips();
 load(true);
