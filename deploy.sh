@@ -8,6 +8,7 @@ mkdir -p "$DEPLOYPATH/assets"
 HTML_FILES=(
   index.html
   index-nuevo.html
+  index-anterior.html
   dashboard.html
   login.html
   register.html
