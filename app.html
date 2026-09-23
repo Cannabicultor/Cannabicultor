@@ -1395,7 +1395,7 @@ function openChat(){
   if(!document.getElementById('msgs').children.length){
     const nombre = PERFIL?.nombre ? `Cannabicultor ${PERFIL.nombre}` : 'Cannabicultor';
     const saludo = PERFIL
-      ? `Hola ${nombre}. Estoy al tanto de tu ${PERFIL.genetica||'cultivo'} en semana ${PERFIL.semana||'—'} de ${PERFIL.fase||'cultivo'}. pH ${PERFIL.ph||'—'}, EC ${PERFIL.ec||'—'}. ¿En qué te ayudo hoy? También puedes enviarme una 📷 foto para analizarla.`
+      ? `Hola ${nombre}. Estoy al tanto de tu ${PERFIL.genetica||'cultivo'} en semana ${PERFIL.semana||'—'} de ${PERFIL.fase||'cultivo'}. pH ${PERFIL.ph||'—'}, EC ${PERFIL.ec||'—'}. ¿En qué te ayudo hoy? También puedes enviarme una 📷 foto para analizarla (sin datos personales, puede ayudarnos a mejorar el diagnóstico; ver privacidad).`
       : `Hola Cannabicultor. Configura tu cultivo para que pueda ayudarte de forma personalizada. Puedes adjuntar una 📷 foto con el botón de la cámara.`;
     addMsg('ai', saludo);
   }
