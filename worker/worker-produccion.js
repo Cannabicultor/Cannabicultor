@@ -1812,7 +1812,10 @@ async function handleChat(body, env) {
       chunks = await buscarChunksRelevantes(embedding, env);
       const rr = await rerankChunks(textoConsulta, chunks, env);
       if (rr && rr.chunks) { chunks = rr.chunks; rerankTop = rr.top_score; }
-      else if (rr && rr.error) rerankError = rr.error;
+      else {
+        if (rr && rr.error) rerankError = rr.error;
+        if (chunks.length > 6) chunks = chunks.slice(0, 6); // sin rerank: los 6 mejores por similitud
+      }
       else if (chunks.length > 6) chunks = chunks.slice(0, 6);
     }
   } catch (_) {}
