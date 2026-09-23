@@ -7,3 +7,5 @@ compatibility_date = "2024-01-01"
 #   ANTHROPIC_API_KEY, DEEPSEEK_API_KEY, OPENAI_API_KEY (cascada de fallback)
 #   JWT_SECRET, SUPABASE_SERVICE_KEY, VOYAGE_API_KEY, SITE_URL
 #   BREVO_API_KEY, BREVO_LIST_ID, BREVO_RESET_TEMPLATE_ID
+#   STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET (créditos)
+#   CREDITOS_ACTIVOS = "1" para empezar a descontar créditos en el chat (sin él, solo se muestran)

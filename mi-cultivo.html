@@ -80,6 +80,19 @@ form.nueva{display:none}form.nueva.on{display:block}
 .campo.ancho{grid-column:1/-1}
 .msg-err{color:#b3261e;font-size:13px;margin-top:8px;display:none}
 .aviso{background:#fff9ec;border:1px solid rgba(180,140,40,.25);color:#6b4e10;border-radius:12px;padding:12px 14px;font-size:14px;margin-bottom:14px}
+.saldo-chip{border:1px solid var(--linea);background:#fff;border-radius:999px;padding:8px 14px;font:600 13px 'Inter',sans-serif;color:var(--verde);cursor:pointer;min-height:40px}
+.saldo-chip.bajo{border-color:#e0b04a;background:#fff9ec;color:#6b4e10}
+.saldo-grande{font:600 16px 'Inter',sans-serif;color:var(--gris);margin-bottom:6px}
+.saldo-grande b{font-family:'Sora',sans-serif;font-size:34px;color:var(--verde);letter-spacing:-.03em;margin-right:4px}
+.cred-info{font-size:13.5px;color:var(--gris);line-height:1.5;margin:0 0 12px}
+.packs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+@media(max-width:560px){.packs{grid-template-columns:1fr}}
+.pack{border:1px solid var(--linea);border-radius:14px;padding:14px;background:#fff;text-align:left;cursor:pointer;font-family:'Inter',sans-serif;min-height:44px}
+.pack:hover{border-color:var(--verde)}
+.pack .n{font:600 13px 'Inter',sans-serif;color:var(--gris2);text-transform:uppercase;letter-spacing:.08em}
+.pack .c{font:600 22px 'Sora',sans-serif;color:var(--tinta);letter-spacing:-.03em;margin:4px 0 2px}
+.pack .p{font-size:14px;color:var(--verde);font-weight:600}
+.pack:disabled{opacity:.5;cursor:default}
 </style>
 </head>
 <body class="cc-shell">
@@ -118,6 +131,7 @@ form.nueva{display:none}form.nueva.on{display:block}
       <h1 id="titulo">Mi cultivo</h1>
       <p id="subtitulo">Tu IA, tu diario y tu sala en un solo sitio.</p>
     </div>
+    <button type="button" class="saldo-chip" id="saldoChip" hidden>— créditos</button>
   </div>
 
   <div class="tabs" role="tablist">
@@ -195,6 +209,15 @@ form.nueva{display:none}form.nueva.on{display:block}
         <div class="fila-btn"><button class="btn pri" type="submit" id="btnGuardarPerfil">Guardar</button><button class="btn" type="button" id="btnCancelarPerfil">Cancelar</button></div>
         <div class="msg-err" id="errPerfil"></div>
       </form>
+    </div>
+    <div class="aviso" id="avisoPago" hidden></div>
+    <div class="card" id="cardCreditos">
+      <div class="k">Tus créditos</div>
+      <div class="saldo-grande"><b id="saldoNum">—</b> créditos</div>
+      <p class="cred-info" id="credInfo">Cada pregunta a la IA cuesta 1 crédito y cada diagnóstico por foto, 5. Cada mes recibes créditos gratis; si necesitas más, recarga aquí.</p>
+      <div class="packs" id="packs"></div>
+      <p class="cred-info" style="margin-top:10px">Pago seguro con Stripe. IVA incluido. Los créditos comprados no caducan.</p>
+      <div class="msg-err" id="errPago"></div>
     </div>
     <div class="card">
       <div class="k">Última lectura del diario</div>
@@ -338,7 +361,10 @@ function enviar(forzado){
   ev(f ? 'chat_foto' : 'chat_texto', 'mi_cultivo');
   fetch(WORKER + '/chat', { method:'POST', headers:{ 'Content-Type':'application/json', 'Authorization':'Bearer ' + JWT }, body: JSON.stringify({ messages: mensajes, perfil: perfilParaIA() }) })
     .then(function(r){ if(r.status === 401){ salir401(); throw new Error('401'); } return r.json(); })
-    .then(function(d){ pensando(false); var rep = (d && (d.reply || d.content)) || 'No he podido responder ahora. Prueba otra vez.'; burbuja('a', rep); HIST.push({ role:'assistant', content: rep }); if(f) setTimeout(cargarDiario, 1500); })
+    .then(function(d){ pensando(false); var rep = (d && (d.reply || d.content)) || 'No he podido responder ahora. Prueba otra vez.'; burbuja('a', rep);
+      if(d && d.sin_creditos){ ev('sin_creditos'); if(CRED){ CRED.saldo = d.saldo; pintarCreditos(); } return; }
+      HIST.push({ role:'assistant', content: rep }); if(f) setTimeout(cargarDiario, 1500);
+      if(d && d.creditos_gastados && CRED){ CRED.saldo = Math.max(0, CRED.saldo - d.creditos_gastados); pintarCreditos(); } })
     .catch(function(){ pensando(false); burbuja('a', 'No he podido conectar con la IA. Revisa tu conexión y prueba otra vez.'); })
     .then(function(){ enviando = false; });
 }
@@ -375,9 +401,48 @@ $('formPerfil').onsubmit = function(e){
     .catch(function(x){ err.textContent = (x && x.message) || 'No se pudo guardar.'; err.style.display = 'block'; })
     .then(function(){ btn.disabled = false; btn.textContent = 'Guardar'; });
 };
+
+// ── Créditos ──
+var CRED = null;
+function pintarCreditos(){
+  if(!CRED) return;
+  var chip = $('saldoChip'); chip.hidden = false;
+  chip.textContent = CRED.saldo + ' créditos'; chip.classList.toggle('bajo', CRED.saldo < 5);
+  $('saldoNum').textContent = CRED.saldo;
+  $('credInfo').textContent = 'Cada pregunta a la IA cuesta ' + CRED.costes.texto + ' crédito y cada diagnóstico por foto, ' + CRED.costes.foto + '. Cada mes recibes ' + CRED.mensuales + ' gratis; si necesitas más, recarga aquí.';
+  $('packs').innerHTML = CRED.packs.map(function(p){
+    return '<button type="button" class="pack" data-pack="' + esc(p.id) + '"><div class="n">' + esc(p.nombre) + '</div><div class="c">' + p.creditos + ' créditos</div><div class="p">' + (p.centimos/100).toFixed(2).replace('.', ',') + ' €</div></button>';
+  }).join('');
+}
+function cargarCreditos(){
+  return fetch(WORKER + '/creditos', { headers:{ 'Authorization':'Bearer ' + JWT } })
+    .then(function(r){ if(r.status === 401){ salir401(); throw new Error(); } return r.json(); })
+    .then(function(d){ if(d && d.ok){ CRED = d; pintarCreditos(); } }).catch(function(){});
+}
+$('saldoChip').onclick = function(){ mostrar('cultivo'); $('cardCreditos').scrollIntoView({ behavior:'smooth', block:'start' }); };
+$('packs').addEventListener('click', function(e){
+  var b = e.target.closest('.pack'); if(!b) return;
+  var err = $('errPago'); err.style.display = 'none';
+  document.querySelectorAll('.pack').forEach(function(x){ x.disabled = true; });
+  ev('creditos_checkout', b.dataset.pack);
+  fetch(WORKER + '/creditos/checkout', { method:'POST', headers:{ 'Content-Type':'application/json', 'Authorization':'Bearer ' + JWT }, body: JSON.stringify({ pack: b.dataset.pack }) })
+    .then(function(r){ return r.json(); })
+    .then(function(d){ if(d && d.url){ location.href = d.url; } else { throw new Error((d && d.error) || 'No se pudo iniciar el pago'); } })
+    .catch(function(x){ err.textContent = x.message; err.style.display = 'block'; document.querySelectorAll('.pack').forEach(function(y){ y.disabled = false; }); });
+});
+try{
+  var pago = new URLSearchParams(location.search).get('pago');
+  if(pago){
+    mostrar('cultivo');
+    var av = $('avisoPago'); av.hidden = false;
+    av.textContent = pago === 'ok' ? 'Pago recibido. Tus créditos se suman en unos segundos; si no los ves, recarga la página.' : 'Pago cancelado. No se ha cobrado nada.';
+    if(pago === 'ok'){ ev('creditos_pago_ok'); setTimeout(cargarCreditos, 3000); }
+  }
+}catch(_){}
 var sal = $('ccSalir'); if(sal) sal.onclick = function(e){ e.preventDefault(); if(window.GAAuth) GAAuth.clearSession(); location.href = '/'; };
 pintarCultivo();
 cargarDiario();
+cargarCreditos();
 // Usuario recién registrado: le pedimos los datos de su cultivo
 try{ if(new URLSearchParams(location.search).get('new') === 'true'){ var pf = fijos(); if(!(pf.genetica || pf.tipoLuz || pf.sustrato)){ mostrar('cultivo'); $('btnEditar').click(); } } }catch(_){}
 })();

@@ -1970,6 +1970,117 @@ async function anonConsumir(request, env, esFoto) {
   }
 }
 
+// =========================================================================
+// CRÉDITOS — ledger de solo inserción (creditos_movimientos). Saldo = suma.
+// El cobro en el chat solo se activa con env.CREDITOS_ACTIVOS === '1'.
+// =========================================================================
+const CREDITOS_MENSUALES = 20;
+const COSTE_TEXTO = 1;
+const COSTE_FOTO = 5;
+const PACKS_CREDITOS = {
+  starter:  { nombre: 'Starter',  creditos: 150,  centimos: 499 },
+  pro:      { nombre: 'Pro',      creditos: 600,  centimos: 1499 },
+  business: { nombre: 'Business', creditos: 2000, centimos: 3999 },
+};
+
+async function creditosMovimiento(env, email, delta, motivo, referencia, meta) {
+  const r = await sbRequest(env, 'creditos_movimientos' + (referencia ? '?on_conflict=referencia' : ''), {
+    method: 'POST',
+    headers: { Prefer: (referencia ? 'resolution=ignore-duplicates,' : '') + 'return=minimal' },
+    body: JSON.stringify({ usuario_email: String(email).toLowerCase(), delta, motivo, referencia: referencia || null, meta: meta || null }),
+  });
+  return r.ok;
+}
+
+/** Concede los créditos gratis del mes (idempotente por email+mes). */
+async function creditosAsegurarMensual(env, email) {
+  const mes = new Date().toISOString().slice(0, 7);
+  await creditosMovimiento(env, email, CREDITOS_MENSUALES, 'mensual', `mensual-${mes}-${String(email).toLowerCase()}`);
+}
+
+async function creditosSaldo(env, email) {
+  const r = await sbRequest(env, 'rpc/creditos_saldo', { method: 'POST', body: JSON.stringify({ p_email: String(email).toLowerCase() }) });
+  const v = typeof r.data === 'number' ? r.data : Number(r.data);
+  return Number.isFinite(v) ? v : 0;
+}
+
+async function handleCreditosGet(request, env) {
+  const auth = await authEmailFromRequest(request, env, null);
+  if (auth.error) return auth.error;
+  await creditosAsegurarMensual(env, auth.email);
+  const saldo = await creditosSaldo(env, auth.email);
+  const mov = await sbRequest(env, `creditos_movimientos?usuario_email=eq.${encodeURIComponent(auth.email)}&select=delta,motivo,created_at&order=created_at.desc&limit=30`, { method: 'GET' });
+  return { status: 200, data: {
+    ok: true, saldo, activo: env.CREDITOS_ACTIVOS === '1',
+    costes: { texto: COSTE_TEXTO, foto: COSTE_FOTO }, mensuales: CREDITOS_MENSUALES,
+    packs: Object.entries(PACKS_CREDITOS).map(([id, p]) => ({ id, ...p })),
+    movimientos: Array.isArray(mov.data) ? mov.data : [],
+  } };
+}
+
+/** POST /creditos/checkout {pack} → URL de Stripe Checkout (precio generado aquí, sin productos en el panel). */
+async function handleCreditosCheckout(body, env, request) {
+  const auth = await authEmailFromRequest(request, env, null);
+  if (auth.error) return auth.error;
+  const pack = PACKS_CREDITOS[String(body.pack || '')];
+  if (!pack) return { status: 400, data: { error: 'Pack no válido' } };
+  if (!env.STRIPE_SECRET_KEY) return { status: 503, data: { error: 'Pagos aún no activados' } };
+  const site = env.SITE_URL || 'https://www.cannabicultor.com';
+  const f = new URLSearchParams();
+  f.set('mode', 'payment');
+  f.set('customer_email', auth.email);
+  f.set('success_url', `${site}/mi-cultivo.html?pago=ok#cultivo`);
+  f.set('cancel_url', `${site}/mi-cultivo.html?pago=cancelado#cultivo`);
+  f.set('line_items[0][quantity]', '1');
+  f.set('line_items[0][price_data][currency]', 'eur');
+  f.set('line_items[0][price_data][unit_amount]', String(pack.centimos));
+  f.set('line_items[0][price_data][tax_behavior]', 'inclusive');
+  f.set('line_items[0][price_data][product_data][name]', `Créditos Cannabicultor IA · ${pack.nombre} (${pack.creditos})`);
+  f.set('metadata[email]', auth.email);
+  f.set('metadata[pack]', String(body.pack));
+  f.set('metadata[creditos]', String(pack.creditos));
+  f.set('payment_intent_data[metadata][email]', auth.email);
+  f.set('locale', 'es');
+  const r = await fetch('https://api.stripe.com/v1/checkout/sessions', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${env.STRIPE_SECRET_KEY}`, 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: f.toString(),
+  });
+  const d = await r.json().catch(() => ({}));
+  if (!r.ok || !d.url) return { status: 502, data: { error: (d.error && d.error.message) || 'No se pudo iniciar el pago' } };
+  return { status: 200, data: { ok: true, url: d.url } };
+}
+
+/** Verifica la firma Stripe-Signature (HMAC-SHA256, tolerancia 5 min). */
+async function stripeFirmaValida(raw, header, secret) {
+  if (!header || !secret) return false;
+  const partes = Object.fromEntries(header.split(',').map(x => x.split('=')).filter(x => x.length === 2).map(([k, v]) => [k.trim(), v.trim()]));
+  const t = partes.t;
+  const firmas = header.split(',').filter(x => x.trim().startsWith('v1=')).map(x => x.trim().slice(3));
+  if (!t || !firmas.length) return false;
+  if (Math.abs(Date.now() / 1000 - Number(t)) > 300) return false;
+  const key = await crypto.subtle.importKey('raw', new TextEncoder().encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+  const sig = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(`${t}.${raw}`));
+  const hex = [...new Uint8Array(sig)].map(b => b.toString(16).padStart(2, '0')).join('');
+  return firmas.some(f => f.length === hex.length && f === hex);
+}
+
+async function handleStripeWebhook(request, env) {
+  const raw = await request.text();
+  const ok = await stripeFirmaValida(raw, request.headers.get('Stripe-Signature'), env.STRIPE_WEBHOOK_SECRET);
+  if (!ok) return { status: 400, data: { error: 'Firma no válida' } };
+  let ev; try { ev = JSON.parse(raw); } catch { return { status: 400, data: { error: 'JSON' } }; }
+  if (ev.type === 'checkout.session.completed') {
+    const ses = ev.data && ev.data.object || {};
+    const md = ses.metadata || {};
+    const pack = PACKS_CREDITOS[md.pack];
+    if (ses.payment_status === 'paid' && pack && md.email) {
+      await creditosMovimiento(env, md.email, pack.creditos, 'compra', `stripe-${ses.id}`, { pack: md.pack, importe: ses.amount_total, moneda: ses.currency });
+    }
+  }
+  return { status: 200, data: { received: true } };
+}
+
 const FUNDADOR_TOPE = 500;
 const STRIPE_SEMILLA = 'https://buy.stripe.com/3cI00c9Ex8WH22PenB6AM04';
 
@@ -3408,6 +3519,10 @@ export default {
           const token = path.slice('/demo/'.length).split('/')[0];
           return handleDemoPageRequest(env, token);
         }
+        if (path === '/creditos') {
+          const r = await handleCreditosGet(request, env);
+          return json(r.data, r.status, cors);
+        }
         if (path === '/resenas') {
           const r = await handleListResenas(url, env);
           return json(r.data, r.status, cors);
@@ -3427,6 +3542,11 @@ export default {
       }
       if (path === '/admin/list-libros') {
         const r = await handleAdminListLibros(request, env);
+        return json(r.data, r.status, cors);
+      }
+
+      if (path === '/stripe/webhook') {
+        const r = await handleStripeWebhook(request, env);
         return json(r.data, r.status, cors);
       }
 
@@ -3488,7 +3608,21 @@ export default {
           }
           anonRestantes = uso.restantes;
         }
+        let costeCreditos = 0;
+        if (identity.email && env.CREDITOS_ACTIVOS === '1') {
+          const esFotoC = hasVision(normalizeMessages(body.messages || []));
+          costeCreditos = esFotoC ? COSTE_FOTO : COSTE_TEXTO;
+          await creditosAsegurarMensual(env, identity.email);
+          const saldo = await creditosSaldo(env, identity.email);
+          if (saldo < costeCreditos) {
+            return json({ sin_creditos: true, saldo, reply: `Te has quedado sin créditos (te quedan ${saldo} y esta consulta cuesta ${costeCreditos}). Cada mes recibes ${CREDITOS_MENSUALES} gratis; si necesitas más, puedes recargar desde Mi cultivo.` }, 200, cors);
+          }
+        }
         const result = await handleChat(body, env);
+        if (costeCreditos && result.status === 200 && result.data?.reply) {
+          ctx.waitUntil(creditosMovimiento(env, identity.email, -costeCreditos, costeCreditos === COSTE_FOTO ? 'consumo_foto' : 'consumo_texto'));
+          result.data.creditos_gastados = costeCreditos;
+        }
         if (anonRestantes !== null && result.data && typeof result.data === 'object') result.data.anon_restantes = anonRestantes;
         if (result.status === 200 && result.data?.reply) {
           const consultaId = crypto.randomUUID();
@@ -3504,6 +3638,7 @@ export default {
       if (path === '/cultivo/guardar') { const r = await handleGuardarCultivo(body, env, request); return json(r.data, r.status, cors); }
       if (path === '/perfil/sala') { const r = await handleGuardarSala(body, env, request); return json(r.data, r.status, cors); }
       if (path === '/diario/entrada') { const r = await handleDiarioEntrada(body, env, request); return json(r.data, r.status, cors); }
+      if (path === '/creditos/checkout') { const r = await handleCreditosCheckout(body, env, request); return json(r.data, r.status, cors); }
       if (path === '/resenas') { const r = await handleCreateResena(body, env, request); return json(r.data, r.status, cors); }
       if (path === '/growshops') { const r = await handleCreateGrowshop(body, env, request); return json(r.data, r.status, cors); }
       if (path === '/cbd-shops') { const r = await handleCreateCbdShop(body, env, request); return json(r.data, r.status, cors); }
