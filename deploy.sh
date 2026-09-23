@@ -9,6 +9,7 @@ HTML_FILES=(
   index.html
   index-nuevo.html
   index-anterior.html
+  mi-cultivo.html
   dashboard.html
   login.html
   register.html
