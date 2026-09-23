@@ -1816,7 +1816,6 @@ async function handleChat(body, env) {
         if (rr && rr.error) rerankError = rr.error;
         if (chunks.length > 6) chunks = chunks.slice(0, 6); // sin rerank: los 6 mejores por similitud
       }
-      else if (chunks.length > 6) chunks = chunks.slice(0, 6);
     }
   } catch (_) {}
 
