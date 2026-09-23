@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="robots" content="noindex, nofollow">
+<title>Prueba del asesor · Cannabicultor IA</title>
+<style>
+body{margin:0;background:#f6f7f4;font-family:Inter,system-ui,sans-serif;color:#13201a}
+.w{max-width:640px;margin:60px auto;padding:0 20px;line-height:1.55}
+h1{font-size:26px;margin:0 0 10px}p{color:#5b6b61}
+.fake{margin-top:28px;border:1px dashed #cfd6cc;border-radius:14px;padding:24px;background:#fff;color:#8a9990;font-size:14px}
+button{margin-top:14px;padding:12px 16px;border-radius:10px;border:none;background:#0F3020;color:#fff;font:600 14px system-ui;cursor:pointer}
+</style></head><body><div class="w">
+<h1>Así se verá el asesor en tu tienda</h1>
+<p>Este es el mismo botón que aparecerá abajo a la derecha de tu web, con tu color, tu nombre y tu catálogo. Pruébalo como si fueras un cliente.</p>
+<button type="button" onclick="window.Asesor&&Asesor.open()">Abrir el asesor</button>
+<div class="fake">Aquí iría el contenido normal de tu tienda.</div>
+</div>
+<script>
+(function(){var k=new URLSearchParams(location.search).get('k')||'';
+if(!/^[a-f0-9]{16}$/.test(k)){document.querySelector('p').textContent='Falta la clave del asesor en el enlace.';return;}
+var s=document.createElement('script');s.async=true;s.src='/assets/asesor.js?k='+k;document.body.appendChild(s);})();
+</script>
+</body></html>

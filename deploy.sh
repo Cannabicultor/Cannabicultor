@@ -11,6 +11,9 @@ HTML_FILES=(
   index-anterior.html
   mi-cultivo.html
   empresas.html
+  instalar-asesor.html
+  prueba-asesor.html
+  admin-growshops.html
   admin-campana.html
   dashboard.html
   login.html
@@ -116,6 +119,7 @@ ASSET_FILES=(
   assets/ac-urgent-banner.js
   assets/shell.css
   assets/shell.js
+  assets/asesor.js
 )
 
 for file in "${ASSET_FILES[@]}"; do

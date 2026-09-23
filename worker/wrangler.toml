@@ -9,3 +9,6 @@ compatibility_date = "2024-01-01"
 #   BREVO_API_KEY, BREVO_LIST_ID, BREVO_RESET_TEMPLATE_ID
 #   STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET (créditos)
 #   CREDITOS_ACTIVOS = "1" para empezar a descontar créditos en el chat (sin él, solo se muestran)
+# Sincronización diaria de catálogos de tiendas con feed (04:00 UTC)
+[triggers]
+crons = ["0 4 * * *"]

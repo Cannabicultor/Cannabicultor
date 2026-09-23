@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="robots" content="noindex, nofollow">
+<title>Tiendas con asesor · Admin</title>
+<style>
+:root{--v:#0F3020;--b:#e1e6df;--t:#5b6b61}
+*{box-sizing:border-box}
+body{margin:0;background:#f6f7f4;font-family:Inter,system-ui,sans-serif;color:#13201a}
+.w{max-width:980px;margin:32px auto;padding:0 20px}
+h1{font-size:24px;margin:0 0 4px}h2{font-size:17px;margin:0 0 12px}
+p.sub{color:var(--t);margin:0 0 22px;line-height:1.5}
+.card{background:#fff;border:1px solid var(--b);border-radius:14px;padding:18px;margin-bottom:14px}
+.top{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.top .n{font-weight:600;font-size:16px}.pill{font-size:12px;padding:3px 9px;border-radius:99px;background:#eef2ec;color:var(--v)}
+.pill.al{background:#fdecec;color:#9b1c1c}
+.bar{height:6px;background:#eef2ec;border-radius:9px;overflow:hidden;margin:10px 0 4px}.bar i{display:block;height:100%;background:var(--v)}
+.meta{font-size:13px;color:var(--t)}
+.snip{display:flex;gap:8px;margin-top:12px}
+.snip code{flex:1;min-width:0;background:#f6f7f4;border:1px solid var(--b);border-radius:10px;padding:10px;font-size:12px;overflow-x:auto;white-space:nowrap}
+button,.btn{padding:10px 14px;border-radius:10px;border:1px solid var(--v);font:600 13.5px system-ui;cursor:pointer;background:#fff;color:var(--v);text-decoration:none;display:inline-block}
+button.pri{background:var(--v);color:#fff}button:disabled{opacity:.5}
+.acc{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+form{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+label{display:flex;flex-direction:column;gap:5px;font-size:13px;font-weight:600}
+label small{font-weight:400;color:var(--t)}
+input,textarea{font:15px system-ui;padding:10px;border:1px solid #cfd6cc;border-radius:10px;width:100%}
+textarea{min-height:64px}
+.full{grid-column:1/-1}
+#msg{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--v);color:#fff;padding:11px 16px;border-radius:10px;font-size:14px;display:none;max-width:90vw}
+@media(max-width:640px){form{grid-template-columns:1fr}}
+</style></head><body><div class="w">
+<h1>Tiendas con asesor</h1>
+<p class="sub">Alta de una tienda en 3 pasos: 1) créala, 2) importa su catálogo (feed de Google Shopping o CSV), 3) mándale la línea de código o pégala tú. Todo lo demás se cambia aquí sin tocar su web.</p>
+
+<div class="card">
+  <h2 id="ft">Nueva tienda</h2>
+  <form id="f">
+    <input type="hidden" name="id">
+    <label>Nombre de la tienda<input name="display_name" required placeholder="Growshop La Huerta"></label>
+    <label>Web(s) de la tienda <small>Opcional. Si la pones, el asesor solo funciona en esa web.</small><input name="dominios" placeholder="lahuerta.es"></label>
+    <label>Nombre del asesor<input name="w_nombre" placeholder="Asesor de La Huerta"></label>
+    <label>Color de la marca<input name="w_color" type="color" value="#1f7a4d" style="height:44px;padding:4px"></label>
+    <label class="full">Saludo <small>Opcional</small><textarea name="w_saludo" placeholder="¡Hola! Soy el asesor de cultivo de La Huerta…"></textarea></label>
+    <label class="full">Feed de productos (Google Shopping) <small>Se actualiza solo cada noche. Si no tienen, deja vacío y sube un CSV.</small><input name="feed_url" type="url" placeholder="https://lahuerta.es/feed/google-shopping.xml"></label>
+    <label>Logo (URL) <small>Opcional</small><input name="w_logo" type="url"></label>
+    <label>Enlace a producto <small>Solo si el catálogo no trae URLs. Usa {sku}</small><input name="w_productHref" placeholder="https://lahuerta.es/buscar?q={sku}"></label>
+    <label>Conversaciones gratis/mes<input name="conversaciones_mes" type="number" value="300" min="0"></label>
+    <label>Conversaciones de packs (saldo)<input name="conversaciones_extra" type="number" value="0" min="0"></label>
+    <div class="full acc"><button class="pri" type="submit">Guardar tienda</button><button type="button" id="nuevo">Limpiar</button></div>
+  </form>
+</div>
+
+<div id="lista"><p class="sub">Cargando…</p></div>
+<input type="file" id="csv" accept=".csv,.txt,.xml,.tsv" hidden>
+<div id="msg"></div>
+</div>
+<script src="/assets/auth.js"></script>
+<script>
+var W='https://growers-alliance-ai.nohumanclicks.workers.dev';
+var jwt=window.GAAuth&&GAAuth.readSession?GAAuth.readSession():null;
+if(!jwt){location.href='/login.html?next='+encodeURIComponent('/admin-growshops.html');}
+var tiendas=[],csvPara=null,f=document.getElementById('f');
+function toast(t){var m=document.getElementById('msg');m.textContent=t;m.style.display='block';clearTimeout(toast.t);toast.t=setTimeout(function(){m.style.display='none';},4000);}
+function api(d){return fetch(W+'/admin/growshops',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+jwt},body:JSON.stringify(d)}).then(function(r){return r.json().then(function(j){if(!r.ok)throw new Error(j.error||('HTTP '+r.status));return j;});});}
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+function snippet(k){return '<script src="https://cannabicultor.com/assets/asesor.js?k='+k+'" async><\/script>';}
+function cargar(){api({accion:'listar'}).then(function(d){tiendas=d.tiendas||[];pintar();}).catch(function(e){document.getElementById('lista').innerHTML='<p class="sub">Error: '+esc(e.message)+'</p>';});}
+function pintar(){
+  document.getElementById('lista').innerHTML=tiendas.map(function(t,i){
+    var lim=(t.conversaciones_mes||0), pct=lim?Math.min(100,Math.round(100*t.conversaciones_usadas/lim)):100;
+    return '<div class="card"><div class="top"><span class="n">'+esc(t.display_name)+'</span>'+
+      '<span class="pill">'+t.productos+' productos</span>'+
+      (pct>=90?'<span class="pill al">'+pct+'% de la cuota</span>':'')+
+      (t.dominios&&t.dominios.length?'<span class="pill">'+esc(t.dominios.join(', '))+'</span>':'')+'</div>'+
+      '<div class="bar"><i style="width:'+pct+'%"></i></div>'+
+      '<div class="meta">'+t.conversaciones_usadas+' / '+lim+' conversaciones este mes · packs: '+(t.conversaciones_extra||0)+
+      (t.feed_estado?' · catálogo: '+esc(t.feed_estado)+(t.feed_sync_at?' ('+new Date(t.feed_sync_at).toLocaleString('es-ES')+')':''):' · sin catálogo importado')+'</div>'+
+      '<div class="snip"><code>'+esc(snippet(t.widget_key))+'</code><button data-a="copiar" data-i="'+i+'">Copiar</button></div>'+
+      '<div class="acc"><a class="btn" target="_blank" href="/prueba-asesor.html?k='+t.widget_key+'">Probar asesor</a>'+
+      (t.feed_url?'<button data-a="feed" data-i="'+i+'">Importar feed ahora</button>':'')+
+      '<button data-a="csv" data-i="'+i+'">Subir CSV / XML</button><button data-a="editar" data-i="'+i+'">Editar</button></div></div>';
+  }).join('')||'<p class="sub">Aún no hay tiendas.</p>';
+}
+document.getElementById('lista').addEventListener('click',function(e){
+  var b=e.target.closest('[data-a]');if(!b)return;var t=tiendas[+b.dataset.i];
+  if(b.dataset.a==='copiar'){navigator.clipboard.writeText(snippet(t.widget_key)).then(function(){toast('Código copiado');});}
+  if(b.dataset.a==='feed'){b.disabled=true;toast('Importando…');api({accion:'importar',id:t.id}).then(function(d){toast('Hecho: '+d.productos+' productos');cargar();}).catch(function(err){toast(err.message);b.disabled=false;});}
+  if(b.dataset.a==='csv'){csvPara=t;document.getElementById('csv').click();}
+  if(b.dataset.a==='editar'){
+    var c=t.widget_config||{};f.id.value=t.id;f.display_name.value=t.display_name;f.dominios.value=(t.dominios||[]).join(', ');
+    f.w_nombre.value=c.nombre||'';f.w_color.value=c.color||'#1f7a4d';f.w_saludo.value=c.saludo||'';f.w_logo.value=c.logo||'';f.w_productHref.value=c.productHref||'';
+    f.feed_url.value=t.feed_url||'';f.conversaciones_mes.value=t.conversaciones_mes;f.conversaciones_extra.value=t.conversaciones_extra||0;
+    document.getElementById('ft').textContent='Editar: '+t.display_name;scrollTo({top:0,behavior:'smooth'});
+  }
+});
+document.getElementById('csv').addEventListener('change',function(){
+  var file=this.files[0];if(!file||!csvPara)return;var t=csvPara;this.value='';
+  if(file.size>8e6){toast('Archivo demasiado grande (máx. 8 MB)');return;}
+  var r=new FileReader();r.onload=function(){toast('Importando '+file.name+'…');
+    api({accion:'importar',id:t.id,csv:String(r.result)}).then(function(d){toast('Hecho: '+d.productos+' productos');cargar();}).catch(function(err){toast(err.message);});};
+  r.readAsText(file);
+});
+document.getElementById('nuevo').onclick=function(){f.reset();f.id.value='';document.getElementById('ft').textContent='Nueva tienda';};
+f.addEventListener('submit',function(e){e.preventDefault();
+  var prev=(tiendas.find(function(x){return x.id===f.id.value;})||{}).widget_config||{};
+  var wc=Object.assign({},prev,{nombre:f.w_nombre.value.trim(),color:f.w_color.value,saludo:f.w_saludo.value.trim(),logo:f.w_logo.value.trim(),productHref:f.w_productHref.value.trim()});
+  Object.keys(wc).forEach(function(k){if(wc[k]==='')delete wc[k];});
+  api({accion:'guardar',tienda:{id:f.id.value||null,display_name:f.display_name.value,dominios:f.dominios.value,feed_url:f.feed_url.value,widget_config:wc,conversaciones_mes:f.conversaciones_mes.value,conversaciones_extra:f.conversaciones_extra.value}})
+  .then(function(){toast('Guardada');f.reset();f.id.value='';document.getElementById('ft').textContent='Nueva tienda';cargar();}).catch(function(err){toast(err.message);});
+});
+cargar();
+</script></body></html>

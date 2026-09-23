@@ -155,7 +155,7 @@ async function runBuscarProductos(env, sbRequest, tenantId, input) {
       orParts.push(`nombre.ilike.${encoded}`, `categoria.ilike.${encoded}`);
     }
     const orClause = orParts.join(',');
-    let path = `sales_tenant_inventory?tenant_id=eq.${tenantId}&active=eq.true&or=(${orClause})&select=sku,nombre,categoria,precio_con_iva,stock,product_intelligence_id&limit=${limite}`;
+    let path = `sales_tenant_inventory?tenant_id=eq.${tenantId}&active=eq.true&or=(${orClause})&select=sku,nombre,categoria,precio_con_iva,stock,product_intelligence_id,imagen_principal,url,marca,descripcion,slug&limit=${limite}`;
     if (soloConStock) path += '&stock=gt.0';
 
     const rows = await sbSelect(env, sbRequest, path);
@@ -184,7 +184,11 @@ async function buildBuscarProductosResult(env, sbRequest, rows) {
         precio_eur: Number(r.precio_con_iva),
         stock: r.stock,
         specs: pi?.specs || {},
-        descripcion: pi?.description ? String(pi.description).slice(0, 400) : null,
+        descripcion: pi?.description ? String(pi.description).slice(0, 400) : (r.descripcion ? String(r.descripcion).slice(0, 400) : null),
+        marca: r.marca || null,
+        imagen_principal: r.imagen_principal || null,
+        url: r.url || null,
+        slug: r.slug || null,
       };
     }),
   };
