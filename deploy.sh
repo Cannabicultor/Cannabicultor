@@ -10,6 +10,7 @@ HTML_FILES=(
   index-nuevo.html
   index-anterior.html
   mi-cultivo.html
+  empresas.html
   admin-campana.html
   dashboard.html
   login.html
