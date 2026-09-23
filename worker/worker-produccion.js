@@ -255,6 +255,9 @@ async function registrarConsulta(env, datos) {
       rag_top_score: datos.meta?.via_directorio ? null : (datos.meta?.rag_top_score ?? null),
       rag_n_chunks: datos.meta?.via_directorio ? null : (datos.meta?.rag_n_chunks ?? null),
       rag_rerank_score: datos.meta?.via_directorio ? null : (datos.meta?.rag_rerank_score ?? null),
+      intencion: datos.meta?.intencion ?? null,
+      intencion_conf: datos.meta?.intencion_conf ?? null,
+      intencion_via: datos.meta?.intencion_via ?? null,
       admite_hueco: /(no (tengo|dispongo|encuentro|cuento)|no aparece|no puedo confirmar|no hay datos)/i.test(datos.respuesta || ''),
     }),
   });
@@ -391,6 +394,48 @@ async function buscarChunksRelevantes(embedding, env) {
  * Rerank con Cohere Rerank 4: reordena los candidatos por relevancia real respecto a la pregunta.
  * Devuelve { chunks (top N), top_score } o null si no hay key / falla / tarda (el chat sigue sin rerank).
  */
+/**
+ * TypeSafe Jev: clasifica la intención del último mensaje (cultivo / directorio / fuera_ambito / incompleto)
+ * con confianza calibrada. ~300 ms, ~600 tokens (≈0,00003 $). Null si no hay key, falla o tarda.
+ */
+const JEV_MIN_CONF = 0.5;      // por debajo, mandan las reglas de siempre
+const JEV_REJECT_CONF = 0.8;   // para rechazar "fuera de ámbito" exigimos más seguridad
+const JEV_INTENCION_CRITERIA = {
+  cultivo: 'Pregunta, dato o comentario sobre cultivo de cannabis: plantas, genética/variedades, riego, nutrientes y marcas de abono, luz, clima, plagas, cosecha, legalidad del autocultivo, historia y personajes del cannabis, o sobre las respuestas previas del asistente. Incluye respuestas cortas que continúan una conversación de cultivo.',
+  directorio: 'Busca growshops, tiendas de cultivo, clubes o asociaciones cannábicas en un lugar, o dónde comprar algo; o responde con una ciudad/zona o un tipo de local cuando la conversación ya iba de buscar locales.',
+  fuera_ambito: 'No tiene relación con el cannabis ni con su cultivo ni con la comunidad cannábica (coches, cocina, deportes, política, programación...).',
+  incompleto: 'Saludo sin pregunta o mensaje cortado/incompleto que no se puede interpretar.',
+};
+function ultimoMensajeUsuarioAnterior(messages) {
+  const users = (Array.isArray(messages) ? messages : []).filter((m) => m.role === 'user' && typeof m.content === 'string');
+  return users.length >= 2 ? users[users.length - 2].content.slice(0, 500) : '';
+}
+async function clasificarIntencionJev(env, messages, texto) {
+  if (!env.TYPESAFE_API_KEY || !texto || !texto.trim()) return null;
+  try {
+    const res = await fetchWithTimeout('https://api.typesafe.ai/v1/systemone', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${env.TYPESAFE_API_KEY}` },
+      body: JSON.stringify({
+        model: 'jev-latest',
+        state: {
+          plataforma: 'Cannabicultor: asistente de cultivo de cannabis en español con directorio de growshops y clubes de España',
+          mensaje_anterior_del_usuario: ultimoMensajeUsuarioAnterior(messages) || null,
+          mensaje_actual: texto.slice(0, 1500),
+        },
+        questions: { intencion: { type: 'choice', instructions: '¿Qué intención tiene el mensaje_actual del usuario (usa el mensaje anterior como contexto)?', criteria: JEV_INTENCION_CRITERIA } },
+      }),
+    }, 1500);
+    if (!res.ok) { logProvider('jev', false, `http_${res.status}`); return null; }
+    const a = (await res.json())?.answers?.intencion;
+    if (!a || !a.choice) return null;
+    return { intencion: a.choice, confianza: Number(a.confidence) || 0 };
+  } catch (err) {
+    logProvider('jev', false, err?.message || String(err));
+    return null;
+  }
+}
+
 const RERANK_MODEL = 'rerank-v4.0-fast';
 const RERANK_TOP_N = 6;
 async function rerankChunks(query, chunks, env) {
@@ -1704,44 +1749,56 @@ async function handleChat(body, env) {
   const withVision = hasVision(anthropicMessages);
   const textoConsulta = extractLastUserText(messages);
 
-  // Directorio de growshops/clubes: intención explícita → consulta directa a Supabase,
-  // sin pasar por RAG/LLM si falta la ciudad (ahorra una llamada y es más rápido para el usuario).
-  const dirIntent = detectDirectorySearchIntentConHistorial(messages, textoConsulta);
-  if (dirIntent && dirIntent.tipo === 'ambiguo') {
-    // Como haría un humano que no entendió bien: pregunta qué quiso decir en vez de
-    // improvisar o fallar en silencio. Barato, sin LLM.
-    return {
-      status: 200,
-      data: { reply: DIRECTORY_CLARIFY_REPLY, provider: 'directory_heuristic' },
-    };
+  // 1) Intención con TypeSafe Jev (piloto: 71/72 aciertos vs 59/72 de las reglas). Si Jev no
+  //    responde o duda (confianza < 0.5), se usan las reglas de siempre.
+  const jev = withVision ? null : await clasificarIntencionJev(env, messages, textoConsulta);
+  const usarJev = !!(jev && jev.confianza >= JEV_MIN_CONF);
+  const intencionMeta = jev ? { intencion: jev.intencion, intencion_conf: jev.confianza, intencion_via: usarJev ? 'jev' : 'reglas' } : { intencion_via: 'reglas' };
+
+  let dirIntent = null;
+  if (usarJev) {
+    if (jev.intencion === 'directorio') {
+      const h = detectDirectorySearchIntentConHistorial(messages, textoConsulta);
+      dirIntent = {
+        tipo: h && h.tipo !== 'ambiguo' ? h.tipo : tipoDirectorioDelHistorial(messages),
+        ciudad: h && h.ciudad ? h.ciudad : null,
+      };
+    } else if (jev.intencion === 'fuera_ambito' && jev.confianza >= JEV_REJECT_CONF) {
+      logProvider('scope_jev', true, 'off_topic_rejected');
+      return { status: 200, data: { reply: SCOPE_REJECT_REPLY, provider: 'scope_jev' }, meta: intencionMeta };
+    }
+    // cultivo / incompleto → directo al RAG + LLM (el LLM pide aclaración si hace falta)
+  } else {
+    dirIntent = detectDirectorySearchIntentConHistorial(messages, textoConsulta);
+    if (dirIntent && dirIntent.tipo === 'ambiguo') {
+      return { status: 200, data: { reply: DIRECTORY_CLARIFY_REPLY, provider: 'directory_heuristic' }, meta: intencionMeta };
+    }
   }
-  if (dirIntent && !dirIntent.ciudad) {
-    return {
-      status: 200,
-      data: { reply: DIRECTORY_ASK_CITY_REPLY, provider: 'directory_heuristic' },
-    };
-  }
+
+  // 2) Directorio: la RPC busca qué ciudad del directorio aparece en el texto (mensaje actual +
+  //    anterior). Solo si no encuentra ninguna y no sabemos la ciudad, se la preguntamos.
   let directorioContexto = null;
-  if (dirIntent && dirIntent.ciudad) {
+  if (dirIntent) {
     try {
-      const resultados = await buscarDirectorioPorCiudad(env, dirIntent.tipo, dirIntent.ciudad, textoConsulta);
+      const prevUser = ultimoMensajeUsuarioAnterior(messages);
+      const resultados = await buscarDirectorioPorCiudad(env, dirIntent.tipo, dirIntent.ciudad || '', `${textoConsulta} ${dirIntent.ciudad ? '' : prevUser}`);
       const total = (resultados.growshops?.length || 0) + (resultados.asociaciones?.length || 0);
+      if (!total && !dirIntent.ciudad) {
+        return { status: 200, data: { reply: DIRECTORY_ASK_CITY_REPLY, provider: 'directory_heuristic' }, meta: intencionMeta };
+      }
+      const donde = dirIntent.ciudad || (resultados.growshops[0] || resultados.asociaciones[0] || {}).ciudad || 'esa zona';
       directorioContexto = total > 0
-        ? `Resultados del directorio de Cannabicultor para "${dirIntent.ciudad}":\n${formatDirectorioContexto(resultados)}`
-        : `No hay fichas activas en el directorio de Cannabicultor para "${dirIntent.ciudad}". Dilo con honestidad, no inventes nombres de growshops o clubes.`;
+        ? `Resultados del directorio de Cannabicultor para "${donde}":\n${formatDirectorioContexto(resultados)}`
+        : `No hay fichas activas en el directorio de Cannabicultor para "${donde}". Dilo con honestidad, no inventes nombres de growshops o clubes.`;
     } catch (_) {
       directorioContexto = null;
     }
   }
 
-  // Guarda barata de scope: off-topic claro → respuesta fija sin RAG ni LLM
-  // (si ya detectamos intención de directorio, no aplica: es on-topic por definición)
-  if (!dirIntent && isClearlyOffTopicCultivo(textoConsulta, withVision)) {
+  // 3) Guarda de scope por reglas (solo si Jev no decidió)
+  if (!usarJev && !dirIntent && isClearlyOffTopicCultivo(textoConsulta, withVision)) {
     logProvider('scope_heuristic', true, 'off_topic_rejected');
-    return {
-      status: 200,
-      data: { reply: SCOPE_REJECT_REPLY, provider: 'scope_heuristic' },
-    };
+    return { status: 200, data: { reply: SCOPE_REJECT_REPLY, provider: 'scope_heuristic' }, meta: intencionMeta };
   }
 
   // RAG: Voyage embedding + match_chunks (+ rerank Cohere si hay COHERE_API_KEY)
@@ -1769,7 +1826,7 @@ async function handleChat(body, env) {
       const w = (Number(c.factor_idioma_retrieval) || 1) * ((Number(c.peso_prioridad_retrieval) || 5) / 10);
       return (Number(c.similarity) || 0) / (w || 1);
     })) : null;
-    return { status: 200, data: { reply, provider }, meta: { rag_top_score: ragTop, rag_rerank_score: rerankTop, rag_n_chunks: chunks.length, via_directorio: !!directorioContexto } };
+    return { status: 200, data: { reply, provider }, meta: { ...intencionMeta, rag_top_score: ragTop, rag_rerank_score: rerankTop, rag_n_chunks: chunks.length, via_directorio: !!directorioContexto } };
   } catch (err) {
     if (err?.message === 'all_providers_failed') {
       return {
