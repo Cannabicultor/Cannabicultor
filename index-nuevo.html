@@ -64,9 +64,9 @@ a{color:var(--verde)}
 /* BIENVENIDA */
 .hola{min-height:calc(100dvh - 200px);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:10px 0 20px}
 .hola img{width:44px;height:44px;border-radius:50%;margin-bottom:22px}
-.hola h1{font-family:'Playfair Display',serif;font-weight:500;font-size:clamp(36px,5vw,48px);letter-spacing:-.01em;margin-bottom:10px}
+.hola h1{font-family:'Playfair Display',serif;font-weight:500;font-size:clamp(36px,5vw,48px);letter-spacing:-.01em;margin-bottom:28px}
 .hola h1 em{color:var(--verde)}
-.hola p{font-size:16px;color:var(--gris);max-width:520px;line-height:1.5;margin-bottom:28px}
+.hola .lema{font-size:15px;color:var(--gris);margin-top:18px}
 #cajaSlotHola{width:100%}
 .chips{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;width:100%;margin-top:14px}
 .chip{display:flex;align-items:center;gap:10px;padding:14px 16px;border:1px solid var(--linea);border-radius:14px;background:#fff;font:14px 'Inter',sans-serif;color:var(--tinta);text-align:left;cursor:pointer;min-height:48px}
@@ -139,7 +139,7 @@ body.chat .legal{display:none}
   .top .sobre{display:none}
   .chips{grid-template-columns:1fr}
   .info-grid{grid-template-columns:1fr}
-  .hola{min-height:auto;padding-top:24px}
+  .hola{min-height:calc(100dvh - 90px);padding-bottom:60px}
   .btn-foto{padding:10px 14px}
 }
 </style>
@@ -193,17 +193,9 @@ body.chat .legal{display:none}
     <div class="scroll" id="scroll">
       <div class="wrap">
         <section class="hola" id="hola">
-          <img src="/assets/icono_cannabicultor_small.webp" alt="Cannabicultor IA">
-          <h1>Cannabis <em>IA</em></h1>
-          <p>La inteligencia artificial del cannabis. Pregunta, sube una foto de tu planta o elige por dónde empezar.</p>
+          <h1>Cannabis IA</h1>
           <div id="cajaSlotHola"></div>
-          <div class="chips">
-            <button class="chip" type="button" data-q="Mis hojas amarillean, ¿qué le pasa a mi planta?"><svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l3 2"/></svg>Mis hojas amarillean, ¿qué le pasa?</button>
-            <button class="chip" type="button" data-q="¿Qué variedad me conviene para cultivar en interior?"><svg class="ico" viewBox="0 0 24 24"><path d="M12 21c-4-3-7-6.5-7-10a7 7 0 0 1 14 0c0 3.5-3 7-7 10z"/></svg>¿Qué variedad me conviene para interior?</button>
-            <button class="chip" type="button" data-q="Busco un growshop o club cerca de mí"><svg class="ico" viewBox="0 0 24 24"><path d="M12 21s-6-5.5-6-10a6 6 0 0 1 12 0c0 4.5-6 10-6 10z"/><circle cx="12" cy="11" r="2"/></svg>Growshop o club cerca de mí</button>
-            <button class="chip" type="button" data-q="Ayúdame a calcular el VPD de mi sala de cultivo"><svg class="ico" viewBox="0 0 24 24"><path d="M4 18V6M20 18V6M4 12h16"/></svg>Calcula el VPD de mi sala</button>
-          </div>
-          <div class="nota">3 preguntas y 1 foto gratis al día sin cuenta · Solo mayores de 18 · Datos protegidos (RGPD)</div>
+          <p class="lema">La inteligencia artificial del cannabis</p>
         </section>
 
         <div class="msgs" id="msgs" aria-live="polite"></div>
