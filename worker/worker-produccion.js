@@ -1929,6 +1929,47 @@ function clientIp(request) {
     || '';
 }
 
+// =========================================================================
+// Chat anónimo (home Cannabis IA): 3 mensajes + 1 foto al día por IP.
+// La IP se guarda hasheada (SHA-256 + JWT_SECRET como sal): no es reversible.
+// =========================================================================
+const ANON_MAX_MENSAJES = 3;
+const ANON_MAX_FOTOS = 1;
+
+async function anonIpHash(request, env) {
+  const ip = clientIp(request) || 'sin-ip';
+  const data = new TextEncoder().encode(`${ip}|${env.JWT_SECRET || ''}`);
+  const buf = await crypto.subtle.digest('SHA-256', data);
+  return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+/** Devuelve { ok, restantes } y, si ok, suma el uso. Si Supabase falla, deja pasar (no romper la home). */
+async function anonConsumir(request, env, esFoto) {
+  try {
+    const ipHash = await anonIpHash(request, env);
+    const dia = new Date().toISOString().slice(0, 10);
+    const r = await sbRequest(env, `anon_uso?ip_hash=eq.${ipHash}&dia=eq.${dia}&select=mensajes,fotos`, { method: 'GET' });
+    const fila = (Array.isArray(r.data) && r.data[0]) || { mensajes: 0, fotos: 0 };
+    if (esFoto ? fila.fotos >= ANON_MAX_FOTOS : fila.mensajes >= ANON_MAX_MENSAJES) {
+      return { ok: false, restantes: 0 };
+    }
+    const nueva = {
+      ip_hash: ipHash, dia,
+      mensajes: fila.mensajes + (esFoto ? 0 : 1),
+      fotos: fila.fotos + (esFoto ? 1 : 0),
+      updated_at: new Date().toISOString(),
+    };
+    await sbRequest(env, 'anon_uso?on_conflict=ip_hash,dia', {
+      method: 'POST',
+      headers: { Prefer: 'resolution=merge-duplicates,return=minimal' },
+      body: JSON.stringify(nueva),
+    });
+    return { ok: true, restantes: Math.max(0, ANON_MAX_MENSAJES - nueva.mensajes) };
+  } catch (_) {
+    return { ok: true, restantes: null };
+  }
+}
+
 const FUNDADOR_TOPE = 500;
 const STRIPE_SEMILLA = 'https://buy.stripe.com/3cI00c9Ex8WH22PenB6AM04';
 
@@ -3433,7 +3474,22 @@ export default {
           ? { email: claims.email, sid: body.session_id || null }
           : (claims.scope === 'onboarding' ? { email: null, sid: claims.sid } : null);
         if (!identity) return json({ error: 'No autorizado' }, 401, cors);
+        let anonRestantes = null;
+        if (!identity.email) {
+          const esFoto = hasVision(normalizeMessages(body.messages || []));
+          const uso = await anonConsumir(request, env, esFoto);
+          if (!uso.ok) {
+            return json({
+              limite_anonimo: true,
+              reply: esFoto
+                ? 'Ya has usado tu diagnóstico por foto gratis de hoy. Crea tu cuenta gratis y seguimos con tu planta.'
+                : 'Has usado tus 3 preguntas gratis de hoy. Crea tu cuenta gratis y seguimos hablando: guardo tu conversación y te acompaño todo el cultivo.',
+            }, 200, cors);
+          }
+          anonRestantes = uso.restantes;
+        }
         const result = await handleChat(body, env);
+        if (anonRestantes !== null && result.data && typeof result.data === 'object') result.data.anon_restantes = anonRestantes;
         if (result.status === 200 && result.data?.reply) {
           const consultaId = crypto.randomUUID();
           result.data.consulta_id = consultaId; // el frontend lo usa para el 👍/👎
