@@ -255,6 +255,7 @@ async function registrarConsulta(env, datos) {
       rag_top_score: datos.meta?.via_directorio ? null : (datos.meta?.rag_top_score ?? null),
       rag_n_chunks: datos.meta?.via_directorio ? null : (datos.meta?.rag_n_chunks ?? null),
       rag_rerank_score: datos.meta?.via_directorio ? null : (datos.meta?.rag_rerank_score ?? null),
+      rag_rerank_error: datos.meta?.rag_rerank_error ?? null,
       intencion: datos.meta?.intencion ?? null,
       intencion_conf: datos.meta?.intencion_conf ?? null,
       intencion_via: datos.meta?.intencion_via ?? null,
@@ -449,15 +450,15 @@ async function rerankChunks(query, chunks, env) {
         documents: chunks.map((c) => String(c.content || '').slice(0, 6000)),
       }),
     }, 2500);
-    if (!res.ok) { logProvider('cohere_rerank', false, `http_${res.status}`); return null; }
+    if (!res.ok) { const e = `http_${res.status}: ${(await res.text()).slice(0, 160)}`; logProvider('cohere_rerank', false, e); return { error: e }; }
     const data = await res.json();
     const results = Array.isArray(data.results) ? data.results : [];
-    if (!results.length) return null;
+    if (!results.length) return { error: 'sin_resultados' };
     const out = results.map((r) => ({ ...chunks[r.index], rerank_score: r.relevance_score }));
     return { chunks: out, top_score: results[0].relevance_score };
   } catch (err) {
     logProvider('cohere_rerank', false, err?.message || String(err));
-    return null;
+    return { error: String(err?.message || err).slice(0, 160) };
   }
 }
 
@@ -1804,12 +1805,14 @@ async function handleChat(body, env) {
   // RAG: Voyage embedding + match_chunks (+ rerank Cohere si hay COHERE_API_KEY)
   let chunks = [];
   let rerankTop = null;
+  let rerankError = env.COHERE_API_KEY ? null : 'sin_key';
   try {
     if (textoConsulta.trim().length > 3) {
       const embedding = await generarEmbeddingConsulta(textoConsulta, env);
       chunks = await buscarChunksRelevantes(embedding, env);
       const rr = await rerankChunks(textoConsulta, chunks, env);
-      if (rr) { chunks = rr.chunks; rerankTop = rr.top_score; }
+      if (rr && rr.chunks) { chunks = rr.chunks; rerankTop = rr.top_score; }
+      else if (rr && rr.error) rerankError = rr.error;
       else if (chunks.length > 6) chunks = chunks.slice(0, 6);
     }
   } catch (_) {}
@@ -1826,7 +1829,7 @@ async function handleChat(body, env) {
       const w = (Number(c.factor_idioma_retrieval) || 1) * ((Number(c.peso_prioridad_retrieval) || 5) / 10);
       return (Number(c.similarity) || 0) / (w || 1);
     })) : null;
-    return { status: 200, data: { reply, provider }, meta: { ...intencionMeta, rag_top_score: ragTop, rag_rerank_score: rerankTop, rag_n_chunks: chunks.length, via_directorio: !!directorioContexto } };
+    return { status: 200, data: { reply, provider }, meta: { ...intencionMeta, rag_top_score: ragTop, rag_rerank_score: rerankTop, rag_rerank_error: rerankError, rag_n_chunks: chunks.length, via_directorio: !!directorioContexto } };
   } catch (err) {
     if (err?.message === 'all_providers_failed') {
       return {
