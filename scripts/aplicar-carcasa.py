@@ -25,6 +25,8 @@ PAGINAS = {
 # cabeceras de marca antiguas a ocultar (patrones exactos por página)
 OCULTAR = [
   ('<a class="brand" href="/"><span aria-hidden="true"', '<a class="brand cc-ocultar" href="/"><span aria-hidden="true"'),
+  ('<nav>\n  <div class="ni">', '<nav class="cc-ocultar">\n  <div class="ni">'),
+  ('<header class="top"><a class="brand" href="/">', '<header class="top cc-ocultar"><a class="brand" href="/">'),
   ('<header class="site-head">', '<header class="site-head cc-ocultar">'),
   ('<nav class="top">', '<nav class="top cc-ocultar">'),
   ('<div class="topbar">\n    <a class="brand" href="/">', '<div class="topbar cc-ocultar">\n    <a class="brand" href="/">'),
@@ -43,6 +45,10 @@ def dock(tipo, ctx, ph):
             f'<input id="ccDockQ" type="text" maxlength="400" autocomplete="off" placeholder="{e(ph)}">'
             '<button type="submit" aria-label="Preguntar"><svg viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>'
             '</form></div>\n')
+
+for carpeta in ['biblioteca', 'informes', 'ley-antitabaco', 'cultivo-con-ia', 'calculadora-vpd', 'prensa']:
+    for f in sorted((ROOT / carpeta).rglob('*.html')):
+        PAGINAS.setdefault(str(f.relative_to(ROOT)), ('guia', '', 'Pregúntale a la IA del cannabis…') if carpeta in ('biblioteca', 'cultivo-con-ia') else None)
 
 for nombre, cfg in PAGINAS.items():
     p = ROOT / nombre
