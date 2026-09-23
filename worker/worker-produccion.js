@@ -1978,7 +1978,7 @@ const CREDITOS_MENSUALES = 20;
 const COSTE_TEXTO = 1;
 const COSTE_FOTO = 5;
 const PACKS_CREDITOS = {
-  starter:  { nombre: 'Starter',  creditos: 150,  centimos: 499 },
+  starter:  { nombre: 'Starter',  creditos: 180,  centimos: 499 },
   pro:      { nombre: 'Pro',      creditos: 600,  centimos: 1499 },
   business: { nombre: 'Business', creditos: 2000, centimos: 3999 },
 };
