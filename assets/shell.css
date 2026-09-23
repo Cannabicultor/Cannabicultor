@@ -59,3 +59,8 @@ body.cc-shell.cc-con-dock{padding-bottom:110px}
   body.cc-ancho .list{grid-template-columns:repeat(3,minmax(0,1fr))}
   body.cc-ancho .cc-dock form{max-width:1216px}
 }
+/* Caja de la IA arriba (escritorio, directorios y buscador) */
+.cc-dock.cc-dock-arriba{position:static;left:auto;right:auto;bottom:auto;padding:0;margin:16px 0 14px;background:none}
+.cc-dock.cc-dock-arriba form{max-width:none;border:1.5px solid var(--cc-verde);box-shadow:0 10px 30px rgba(15,48,32,.12);padding:10px 10px 10px 16px;border-radius:18px}
+.cc-dock.cc-dock-arriba input{font-size:16px}
+.cc-dock.cc-dock-arriba img{width:32px;height:32px}

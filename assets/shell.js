@@ -29,3 +29,31 @@
     location.href = '/?q=' + encodeURIComponent(pregunta.slice(0, 480));
   });
 })();
+
+/* Escritorio (directorios y buscador): la caja de la IA sube arriba, junto al título,
+   para que sea lo primero que se ve. En móvil se queda pegada abajo. */
+(function () {
+  'use strict';
+  var b = document.body;
+  if (!b.classList.contains('cc-ancho')) return;
+  var dock = document.querySelector('.cc-dock');
+  var header = document.querySelector('.app > header');
+  if (!dock || !header || !window.matchMedia) return;
+  var mq = window.matchMedia('(min-width:1024px)');
+  var sitioAbajo = document.createComment('cc-dock');
+  dock.parentNode.insertBefore(sitioAbajo, dock);
+  function colocar() {
+    if (mq.matches) {
+      var ref = header.querySelector('.searchbox');
+      if (ref) header.insertBefore(dock, ref); else header.appendChild(dock);
+      dock.classList.add('cc-dock-arriba');
+      b.classList.remove('cc-con-dock');
+    } else {
+      sitioAbajo.parentNode.insertBefore(dock, sitioAbajo.nextSibling);
+      dock.classList.remove('cc-dock-arriba');
+      b.classList.add('cc-con-dock');
+    }
+  }
+  colocar();
+  if (mq.addEventListener) mq.addEventListener('change', colocar); else if (mq.addListener) mq.addListener(colocar);
+})();
