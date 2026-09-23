@@ -25,6 +25,9 @@
 
   # Campaña Alianza Cannabicultores: /ley-antitabaco → directorio
   RewriteRule ^ley-antitabaco$ /ley-antitabaco/ [R=301,L]
+
+  # /informes/ no tiene portada: la lista de informes vive en la biblioteca
+  RewriteRule ^informes/?$ https://www.cannabicultor.com/biblioteca/informes/ [L,R=301]
 </IfModule>
 
 # Block sensitive files from web access

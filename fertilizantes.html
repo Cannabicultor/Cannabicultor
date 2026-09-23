@@ -30,7 +30,7 @@
   --border:rgba(0,0,0,.075);--border2:rgba(0,0,0,.12);
   --radius:14px;--shadow:0 1px 3px rgba(0,0,0,.04);
   --font-ui:'Inter',system-ui,sans-serif;
-  --font-display:'Lora',Georgia,serif;
+  --font-display:'Sora','Inter',sans-serif;
 }
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 body{font-family:var(--font-ui);background:var(--bg);color:var(--text);min-height:100dvh;-webkit-font-smoothing:antialiased}
@@ -105,7 +105,7 @@ footer{margin-top:28px;padding-top:16px;border-top:1px solid var(--border);font-
 <a class="cc-nav" href="/buscador-cannabicultor.html" data-match="/variedades/"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>Variedades y criadores</a>
 <a class="cc-nav" href="/disenador_sala_cultivo.html" data-match="/disenador_sala"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M9 4v16"/></svg>Sala y VPD</a>
 <a class="cc-nav" href="/fertilizantes.html" data-match="/fertilizantes"><svg viewBox="0 0 24 24"><path d="M9 3h6M10 3v6l-5 9a2 2 0 0 0 2 3h10a2 2 0 0 0 2-3l-5-9V3"/></svg>Fertilizantes</a>
-<a class="cc-nav" href="/biblioteca/" data-match="/biblioteca"><svg viewBox="0 0 24 24"><path d="M4 5h6a3 3 0 0 1 3 3v12a2 2 0 0 0-2-2H4z"/><path d="M20 5h-6a3 3 0 0 0-3 3v12a2 2 0 0 1 2-2h7z"/></svg>Guías</a>
+<a class="cc-nav" href="/biblioteca/" data-match="/biblioteca"><svg viewBox="0 0 24 24"><path d="M4 5h6a3 3 0 0 1 3 3v12a2 2 0 0 0-2-2H4z"/><path d="M20 5h-6a3 3 0 0 0-3 3v12a2 2 0 0 1 2-2h7z"/></svg>Biblioteca y guías</a>
 <div class="cc-grp">Directorio</div>
 <a class="cc-nav" href="/growshops.html" data-match="/growshops"><svg viewBox="0 0 24 24"><path d="M3 9l1-5h16l1 5"/><path d="M4 9v11h16V9"/><path d="M10 20v-6h4v6"/></svg>Growshops</a>
 <a class="cc-nav" href="/asociaciones.html" data-match="/asociaciones"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M3 20c0-3.5 2.5-6 6-6s6 2.5 6 6"/><path d="M16 11a2.5 2.5 0 1 0 0-5M17 14c2.5.3 4 2.5 4 6"/></svg>Clubes y asociaciones</a>
@@ -114,7 +114,7 @@ footer{margin-top:28px;padding-top:16px;border-top:1px solid var(--border);font-
 <a class="cc-nav" href="/banco-genetica.html" data-match="/banco-genetica"><svg viewBox="0 0 24 24"><path d="M12 21c-4-3-7-6.5-7-10a7 7 0 0 1 14 0c0 3.5-3 7-7 10z"/></svg>Cannabicultor Genetics</a>
 <div class="cc-grp">Empresas</div>
 <a class="cc-nav" href="/partners.html" data-match="/partners"><svg viewBox="0 0 24 24"><path d="M8 8l-4 4 4 4M16 8l4 4-4 4"/></svg>IA para tu tienda</a>
-<a class="cc-nav" href="/informes/" data-match="/informes"><svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Informes</a>
+<a class="cc-nav" href="/biblioteca/informes/" data-match="/biblioteca/informes"><svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Informes</a>
 <div class="cc-grp">Comunidad</div>
 <a class="cc-nav" href="/ley-antitabaco/" data-match="/ley-antitabaco"><svg viewBox="0 0 24 24"><path d="M4 21V4h11l-1 4h6v9H9l1-4H4"/></svg>Activismo</a>
 <a class="cc-nav" href="/growers-alliance.html" data-match="/growers-alliance"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>Quiénes somos</a>
@@ -134,7 +134,7 @@ footer{margin-top:28px;padding-top:16px;border-top:1px solid var(--border);font-
   </header>
 
   <div class="card">
-    <label class="k">Línea</label>
+    <label class="k" for="line">Marca y línea</label>
     <select id="line"></select>
     <div class="row2" style="margin-top:10px">
       <div>
@@ -151,18 +151,18 @@ footer{margin-top:28px;padding-top:16px;border-top:1px solid var(--border);font-
     </div>
   </div>
 
-  <div class="card">
+  <div class="card dep" hidden>
     <label class="k">Semana</label>
     <div class="weeks" id="weeks"></div>
   </div>
 
-  <div class="card">
+  <div class="card dep" hidden>
     <label class="k">Para este riego</label>
     <div class="dose-list" id="doses"></div>
     <div class="ec" id="ec"></div>
   </div>
 
-  <div class="card">
+  <div class="card dep" hidden>
     <label class="k">Tabla completa (ml / L a 100%)</label>
     <div class="table-wrap" id="table"></div>
     <p class="source" id="source"></p>
@@ -1396,7 +1396,7 @@ const LINES = [
   }
 ];
 
-let lineId = LINES[0].id, week = 0, inten = 1;
+let lineId = null, week = 0, inten = 1;  // sin marca preseleccionada: neutral entre fabricantes
 const $ = id => document.getElementById(id);
 const lineEl = $("line"), weeksEl = $("weeks"), dosesEl = $("doses");
 
@@ -1426,10 +1426,11 @@ function trim(n){ return Math.round(n*100)/100; }
 function renderSelect(){
   const groups = {};
   LINES.forEach(l => { (groups[l.brand] ||= []).push(l); });
-  lineEl.innerHTML = Object.entries(groups).map(([b, arr]) =>
+  lineEl.innerHTML = '<option value="" disabled selected>Elige tu marca y línea…</option>' +
+    Object.entries(groups).sort((a, b) => a[0].localeCompare(b[0], 'es')).map(([b, arr]) =>
     `<optgroup label="${b}">${arr.map(l => `<option value="${l.id}">${l.name}</option>`).join("")}</optgroup>`
   ).join("");
-  lineEl.value = lineId;
+  lineEl.value = lineId || "";
 }
 
 function renderWeeks(){
@@ -1474,10 +1475,14 @@ function renderDoses(){
   } else $("ec").textContent = "";
 }
 
-function render(){ renderWeeks(); renderTable(); renderDoses(); }
+function render(){
+  document.querySelectorAll(".dep").forEach(c => { c.hidden = !lineId; });
+  if (!lineId) return;
+  renderWeeks(); renderTable(); renderDoses();
+}
 
 lineEl.addEventListener("change", () => { lineId = lineEl.value; week = 0; render(); });
-$("liters").addEventListener("input", renderDoses);
+$("liters").addEventListener("input", () => { if (lineId) renderDoses(); });
 weeksEl.addEventListener("click", e => {
   const b = e.target.closest("[data-w]");
   if (!b) return;
@@ -1489,7 +1494,7 @@ $("inten").addEventListener("click", e => {
   if (!b) return;
   inten = parseFloat(b.dataset.i);
   $("inten").querySelectorAll(".chip").forEach(c => c.classList.toggle("active", c===b));
-  renderDoses();
+  if (lineId) renderDoses();
 });
 
 renderSelect();

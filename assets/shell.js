@@ -11,9 +11,12 @@
 
   // Marca la sección activa del menú
   var path = location.pathname;
+  var mejor = null;
   document.querySelectorAll('.cc-nav[data-match]').forEach(function (a) {
-    if (path.indexOf(a.getAttribute('data-match')) === 0) a.classList.add('on');
+    var m = a.getAttribute('data-match');
+    if (path.indexOf(m) === 0 && (!mejor || m.length > mejor.getAttribute('data-match').length)) mejor = a;
   });
+  if (mejor) mejor.classList.add('on');
 
   var form = document.getElementById('ccDock');
   if (!form) return;

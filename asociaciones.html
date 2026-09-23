@@ -32,7 +32,7 @@
   --radius:14px;
   --shadow:0 1px 3px rgba(0,0,0,.04);
   --font-ui:'Inter',system-ui,sans-serif;
-  --font-display:'Lora',Georgia,serif;
+  --font-display:'Sora','Inter',sans-serif;
 }
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 body{font-family:var(--font-ui);background:var(--bg);color:var(--text);min-height:100dvh;-webkit-font-smoothing:antialiased}
@@ -95,7 +95,7 @@ h1 em{color:var(--forest);font-style:italic}
 .sk{height:82px;border-radius:var(--radius);background:linear-gradient(100deg,var(--bg2) 40%,var(--pale) 50%,var(--bg2) 60%);background-size:200% 100%;animation:shine 1.3s infinite;border:1px solid var(--border)}
 @keyframes shine{to{background-position:-200% 0}}
 .empty{padding:40px 16px;text-align:center;color:var(--muted);font-size:14px;line-height:1.6}
-.empty .big{font-family:var(--font-display);font-style:italic;font-size:19px;color:var(--text);display:block;margin-bottom:6px}
+.empty .big{font-family:var(--font-display);font-style:normal;font-size:19px;color:var(--text);display:block;margin-bottom:6px}
 .more-btn{margin:14px auto 0;display:block;padding:11px 26px;border-radius:100px;background:var(--card);border:1px solid var(--forest);color:var(--forest);font:600 13.5px var(--font-ui);cursor:pointer}
 .overlay{position:fixed;inset:0;background:rgba(0,0,0,.35);opacity:0;pointer-events:none;transition:opacity .22s;z-index:60}
 .overlay.open{opacity:1;pointer-events:auto}
@@ -152,7 +152,7 @@ footer{margin-top:34px;padding-top:16px;border-top:1px solid var(--border);font-
 <a class="cc-nav" href="/buscador-cannabicultor.html" data-match="/variedades/"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>Variedades y criadores</a>
 <a class="cc-nav" href="/disenador_sala_cultivo.html" data-match="/disenador_sala"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M9 4v16"/></svg>Sala y VPD</a>
 <a class="cc-nav" href="/fertilizantes.html" data-match="/fertilizantes"><svg viewBox="0 0 24 24"><path d="M9 3h6M10 3v6l-5 9a2 2 0 0 0 2 3h10a2 2 0 0 0 2-3l-5-9V3"/></svg>Fertilizantes</a>
-<a class="cc-nav" href="/biblioteca/" data-match="/biblioteca"><svg viewBox="0 0 24 24"><path d="M4 5h6a3 3 0 0 1 3 3v12a2 2 0 0 0-2-2H4z"/><path d="M20 5h-6a3 3 0 0 0-3 3v12a2 2 0 0 1 2-2h7z"/></svg>Guías</a>
+<a class="cc-nav" href="/biblioteca/" data-match="/biblioteca"><svg viewBox="0 0 24 24"><path d="M4 5h6a3 3 0 0 1 3 3v12a2 2 0 0 0-2-2H4z"/><path d="M20 5h-6a3 3 0 0 0-3 3v12a2 2 0 0 1 2-2h7z"/></svg>Biblioteca y guías</a>
 <div class="cc-grp">Directorio</div>
 <a class="cc-nav" href="/growshops.html" data-match="/growshops"><svg viewBox="0 0 24 24"><path d="M3 9l1-5h16l1 5"/><path d="M4 9v11h16V9"/><path d="M10 20v-6h4v6"/></svg>Growshops</a>
 <a class="cc-nav" href="/asociaciones.html" data-match="/asociaciones"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M3 20c0-3.5 2.5-6 6-6s6 2.5 6 6"/><path d="M16 11a2.5 2.5 0 1 0 0-5M17 14c2.5.3 4 2.5 4 6"/></svg>Clubes y asociaciones</a>
@@ -161,7 +161,7 @@ footer{margin-top:34px;padding-top:16px;border-top:1px solid var(--border);font-
 <a class="cc-nav" href="/banco-genetica.html" data-match="/banco-genetica"><svg viewBox="0 0 24 24"><path d="M12 21c-4-3-7-6.5-7-10a7 7 0 0 1 14 0c0 3.5-3 7-7 10z"/></svg>Cannabicultor Genetics</a>
 <div class="cc-grp">Empresas</div>
 <a class="cc-nav" href="/partners.html" data-match="/partners"><svg viewBox="0 0 24 24"><path d="M8 8l-4 4 4 4M16 8l4 4-4 4"/></svg>IA para tu tienda</a>
-<a class="cc-nav" href="/informes/" data-match="/informes"><svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Informes</a>
+<a class="cc-nav" href="/biblioteca/informes/" data-match="/biblioteca/informes"><svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Informes</a>
 <div class="cc-grp">Comunidad</div>
 <a class="cc-nav" href="/ley-antitabaco/" data-match="/ley-antitabaco"><svg viewBox="0 0 24 24"><path d="M4 21V4h11l-1 4h6v9H9l1-4H4"/></svg>Activismo</a>
 <a class="cc-nav" href="/growers-alliance.html" data-match="/growers-alliance"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>Quiénes somos</a>
