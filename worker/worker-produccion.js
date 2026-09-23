@@ -2081,6 +2081,64 @@ async function handleStripeWebhook(request, env) {
   return { status: 200, data: { received: true } };
 }
 
+// =========================================================================
+// CAMPAÑA EMAIL: regalo de créditos (solo admin; prueba → enviar a todos)
+// =========================================================================
+const CAMPANA_CREDITOS = 'regalo-creditos-2026-09';
+function emailCampanaCreditos() {
+  const verde = '#0F3020';
+  return `<!doctype html><html lang="es"><body style="margin:0;padding:0;background:#f6f7f4;font-family:Arial,Helvetica,sans-serif;color:#13201a">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f6f7f4;padding:24px 12px"><tr><td align="center">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#ffffff;border:1px solid #e1e6df;border-radius:16px">
+<tr><td style="padding:28px 28px 8px">
+<div style="font-size:13px;color:#5b6b61;letter-spacing:.08em;text-transform:uppercase;font-weight:bold">Cannabicultor IA</div>
+<h1 style="font-size:24px;line-height:1.25;margin:10px 0 14px;color:${verde}">Tienes 100 créditos de regalo</h1>
+<p style="font-size:16px;line-height:1.6;margin:0 0 14px">Hola, cannabicultor:</p>
+<p style="font-size:16px;line-height:1.6;margin:0 0 14px">Hemos renovado Cannabicultor IA de arriba abajo. Ahora es más sencilla: entras, preguntas lo que quieras sobre tu cultivo o subes una foto de tu planta, y te respondo al momento.</p>
+<p style="font-size:16px;line-height:1.6;margin:0 0 14px">Por estar aquí desde el principio, te he dejado <b>100 créditos de regalo</b> en tu cuenta. Además, cada mes recibes 20 créditos gratis.</p>
+<table role="presentation" cellpadding="0" cellspacing="0" style="margin:6px 0 18px;background:#eef2ec;border-radius:12px;width:100%"><tr><td style="padding:14px 16px;font-size:15px;line-height:1.7">
+• 1 crédito = una pregunta a la IA<br>• 5 créditos = un diagnóstico por foto<br>• Tu diario de cultivo, siempre gratis
+</td></tr></table>
+<p style="text-align:center;margin:22px 0 10px"><a href="https://www.cannabicultor.com/mi-cultivo.html" style="display:inline-block;background:${verde};color:#ffffff;text-decoration:none;font-weight:bold;font-size:16px;padding:14px 26px;border-radius:12px">Usar mis créditos</a></p>
+<p style="font-size:14px;line-height:1.6;color:#5b6b61;margin:16px 0 0">¿Tu planta tiene algo raro? Hazle una foto y mándamela: es la mejor forma de probarlo.</p>
+<p style="font-size:15px;line-height:1.6;margin:18px 0 0">Un saludo,<br><b>Cannabicultor IA</b></p>
+</td></tr>
+<tr><td style="padding:18px 28px 24px;border-top:1px solid #e1e6df;font-size:12px;line-height:1.5;color:#6e7d73">Recibes este email porque tienes cuenta en cannabicultor.com. Solo para mayores de 18 años. Si no quieres recibir más emails, responde a este mensaje con "baja".</td></tr>
+</table></td></tr></table></body></html>`;
+}
+
+async function handleAdminCampanaCreditos(body, env, request) {
+  const auth = request.headers.get('Authorization') || '';
+  const claims = await verifyJwt(auth.startsWith('Bearer ') ? auth.slice(7) : '', env.JWT_SECRET);
+  if (!claims || claims.email !== 'enriquedorta@gmail.com') return { status: 401, data: { error: 'No autorizado' } };
+  const html = emailCampanaCreditos();
+  const enviar = async (to) => brevoFetch(env, '/smtp/email', {
+    sender: { email: 'noreply@cannabicultor.com', name: 'Cannabicultor IA' },
+    replyTo: { email: 'hola@cannabicultor.com', name: 'Cannabicultor IA' },
+    to: [{ email: to }],
+    subject: 'Tienes 100 créditos de regalo en Cannabicultor IA',
+    htmlContent: html,
+    tags: [CAMPANA_CREDITOS],
+  });
+  if (body.modo === 'prueba') {
+    const r = await enviar(claims.email);
+    return { status: r.ok ? 200 : 502, data: { ok: r.ok, prueba: claims.email, error: r.ok ? null : (r.data?.message || 'Error Brevo') } };
+  }
+  if (body.modo !== 'todos') return { status: 400, data: { error: 'modo: prueba | todos' } };
+  const us = await sbRequest(env, 'Usuarios?select=email&email=not.is.null', { method: 'GET' });
+  const ya = await sbRequest(env, `emails_campana?campana=eq.${CAMPANA_CREDITOS}&ok=is.true&select=email`, { method: 'GET' });
+  const enviados = new Set((Array.isArray(ya.data) ? ya.data : []).map(x => x.email));
+  const lista = [...new Set((Array.isArray(us.data) ? us.data : []).map(u => String(u.email).trim().toLowerCase()).filter(e => e.includes('@')))].filter(e => !enviados.has(e));
+  let ok = 0, fallos = [];
+  for (const e of lista) {
+    const r = await enviar(e);
+    await sbRequest(env, 'emails_campana?on_conflict=campana,email', { method: 'POST', headers: { Prefer: 'resolution=merge-duplicates,return=minimal' },
+      body: JSON.stringify({ campana: CAMPANA_CREDITOS, email: e, ok: !!r.ok, detalle: r.ok ? null : String(r.data?.message || r.status) }) });
+    if (r.ok) ok++; else fallos.push(e);
+  }
+  return { status: 200, data: { ok: true, enviados: ok, ya_enviados_antes: enviados.size, fallos } };
+}
+
 const FUNDADOR_TOPE = 500;
 const STRIPE_SEMILLA = 'https://buy.stripe.com/3cI00c9Ex8WH22PenB6AM04';
 
@@ -3638,6 +3696,7 @@ export default {
       if (path === '/cultivo/guardar') { const r = await handleGuardarCultivo(body, env, request); return json(r.data, r.status, cors); }
       if (path === '/perfil/sala') { const r = await handleGuardarSala(body, env, request); return json(r.data, r.status, cors); }
       if (path === '/diario/entrada') { const r = await handleDiarioEntrada(body, env, request); return json(r.data, r.status, cors); }
+      if (path === '/admin/campana-creditos') { const r = await handleAdminCampanaCreditos(body, env, request); return json(r.data, r.status, cors); }
       if (path === '/creditos/checkout') { const r = await handleCreditosCheckout(body, env, request); return json(r.data, r.status, cors); }
       if (path === '/resenas') { const r = await handleCreateResena(body, env, request); return json(r.data, r.status, cors); }
       if (path === '/growshops') { const r = await handleCreateGrowshop(body, env, request); return json(r.data, r.status, cors); }

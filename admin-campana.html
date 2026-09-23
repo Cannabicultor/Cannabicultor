@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="robots" content="noindex, nofollow">
+<title>Campaña créditos · Admin</title>
+<style>
+body{margin:0;background:#f6f7f4;font-family:Inter,system-ui,sans-serif;color:#13201a}
+.w{max-width:520px;margin:40px auto;padding:0 20px}
+h1{font-size:22px;margin:0 0 6px}p{color:#5b6b61;line-height:1.5}
+button{display:block;width:100%;padding:15px;margin:12px 0;border-radius:12px;border:1px solid #0F3020;font:600 15px system-ui;cursor:pointer;background:#fff;color:#0F3020}
+button.pri{background:#0F3020;color:#fff}button:disabled{opacity:.5}
+pre{background:#fff;border:1px solid #e1e6df;border-radius:12px;padding:14px;white-space:pre-wrap;font-size:13px}
+</style></head><body><div class="w">
+<h1>Email: 100 créditos de regalo</h1>
+<p>1) Envíatelo a ti de prueba y revísalo en tu correo. 2) Si está bien, envíalo a todos. No se envía dos veces a nadie.</p>
+<button id="prueba">Enviarme una prueba</button>
+<button id="todos" class="pri" disabled>Enviar a todos los usuarios</button>
+<pre id="out">Listo.</pre>
+</div>
+<script src="/assets/auth.js"></script>
+<script>
+var W='https://growers-alliance-ai.nohumanclicks.workers.dev', out=document.getElementById('out');
+var jwt=window.GAAuth&&GAAuth.readSession?GAAuth.readSession():null;
+if(!jwt){location.href='/login.html?next='+encodeURIComponent('/admin-campana.html');}
+function go(modo,btn){btn.disabled=true;out.textContent='Enviando…';
+ fetch(W+'/admin/campana-creditos',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+jwt},body:JSON.stringify({modo:modo})})
+ .then(function(r){return r.json();}).then(function(d){out.textContent=JSON.stringify(d,null,2); if(modo==='prueba'&&d.ok) document.getElementById('todos').disabled=false; else btn.disabled=false;})
+ .catch(function(){out.textContent='Error de conexión';btn.disabled=false;});}
+document.getElementById('prueba').onclick=function(){go('prueba',this);};
+document.getElementById('todos').onclick=function(){ if(confirm('¿Enviar el email a todos los usuarios?')) go('todos',this); };
+</script></body></html>
