@@ -37,6 +37,7 @@ import { existsSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import https from 'node:https';
+import { readFileSync } from 'node:fs';
 
 // GET via el modulo https nativo (NO undici/fetch) para evitar la reserva de
 // memoria WASM que peta en hostings CloudLinux con limite de memoria virtual.
@@ -347,7 +348,20 @@ const GA_SNIPPET = `<!-- Google tag (gtag.js) -->
 </script>
 `;
 
-function shell({ title, desc, canonical, image, jsonld, bodyHtml }) {
+// Carcasa común (menú lateral + chat contextual): misma que la home Cannabis IA.
+const SHELL_NAV = readFileSync(join(dirname(fileURLToPath(import.meta.url)), 'shell-nav.html'), 'utf8');
+
+function chatDock({ tipo, contexto, placeholder, diarioHref, diarioTxt }) {
+  return `<div class="cc-dock"><form id="ccDock" data-tipo="${esc(tipo)}" data-contexto="${esc(contexto || '')}" role="search">
+<img src="/assets/icono_cannabicultor_small.webp" alt="" width="28" height="28">
+<label class="cc-sr" for="ccDockQ">Pregunta a Cannabicultor IA</label>
+<input id="ccDockQ" type="text" maxlength="400" autocomplete="off" placeholder="${esc(placeholder)}">
+${diarioHref ? `<a class="cc-diario" href="${esc(diarioHref)}" data-track="cta_diario_${esc(tipo)}">${esc(diarioTxt || 'Empezar mi diario')}</a>` : ''}
+<button type="submit" aria-label="Preguntar"><svg viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
+</form></div>`;
+}
+
+function shell({ title, desc, canonical, image, jsonld, bodyHtml, dock }) {
   return `<!DOCTYPE html>
 <html lang="es">
 <head>
@@ -374,12 +388,13 @@ ${image ? `<meta property="og:image" content="${esc(image)}">
 ${image ? `<meta name="twitter:image" content="${esc(image)}">
 <meta name="twitter:image:alt" content="${esc(title)}">` : ''}
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>${CSS}</style>
+<link rel="stylesheet" href="/assets/shell.css">
 <script type="application/ld+json">${JSON.stringify(jsonld)}</script>
 </head>
-<body>
-<header class="top"><div class="top-in"><a class="brand" href="/">Cannabicultor</a></div></header>
+<body class="cc-shell">
+${SHELL_NAV}
 <main class="wrap">
 ${bodyHtml}
 </main>
@@ -387,8 +402,9 @@ ${bodyHtml}
 <p>Cannabicultor · Guía IA de cultivo de cannabis en español. Solo para mayores de 18 años. El cultivo de cannabis está regulado; consulta la legislación vigente en tu país. Fines educativos.</p>
 <p><a href="/">Inicio</a> · <a href="/buscador-cannabicultor.html">Buscador</a> · <a href="/atlas_landrace.html">Atlas landrace</a></p>
 </footer>
+${dock || chatDock({ tipo: 'pagina', placeholder: 'Pregúntale a la IA del cannabis…' })}
 <script src="/assets/resenas.js"></script>
-<script src="/assets/ac-urgent-banner.js" defer></script>
+<script src="/assets/shell.js" defer></script>
 <script src="/track.js" defer></script>
 </body>
 </html>`;
@@ -478,9 +494,15 @@ ${img ? `<img src="${esc(img)}" alt="Foto de la variedad ${esc(v.nombre)}" loadi
 <aside class="vpd-cta"><strong>¿Quieres cosechar el máximo potencial de la genética ${esc(v.nombre)}?</strong>Registra tu <a href="/empezar.html?v=${v._slug || ''}&n=${encodeURIComponent(v.nombre)}">diario de cultivo en Cannabicultor</a>. Nuestro <a href="/disenador_sala_cultivo.html">Diseñador de Sala</a> y la <a href="/calculadora-vpd/">Calculadora de VPD</a>, integrada con nuestra <a href="/cultivo-con-ia/">IA Cannábica</a>, te guiarán paso a paso durante toda su floración.</aside>
 ${bn ? `<a class="cta" href="/breeders/${breederSlug}/">Ver más variedades de ${esc(bn)}</a>` : `<a class="cta" href="/buscador-cannabicultor.html">Explorar el buscador de variedades</a>`}
 <div data-resenas data-tipo="variedad" data-id="${v.id}"></div>
-${stickyCTA(`/empezar.html?v=${v._slug || ''}&n=${encodeURIComponent(v.nombre)}`, 'variedad', v.nombre)}
 `;
-  return shell({ title, desc, canonical, image: img, jsonld, bodyHtml: body });
+  const dock = chatDock({
+    tipo: 'variedad',
+    contexto: `Sobre la variedad ${v.nombre}${bn ? ` de ${bn}` : ''}`,
+    placeholder: `¿Vas a cultivar ${v.nombre}? Pregúntame…`,
+    diarioHref: `/empezar.html?v=${v._slug || ''}&n=${encodeURIComponent(v.nombre)}`,
+    diarioTxt: 'Empezar diario con esta variedad',
+  });
+  return shell({ title, desc, canonical, image: img, jsonld, bodyHtml: body, dock });
 }
 
 // ── Página de breeder ────────────────────────────────────────────────────────
@@ -545,9 +567,15 @@ ${b.website ? `<p class="body"><a href="${esc(b.website)}" rel="nofollow noopene
 ${varsHtml}
 <a class="cta" href="/buscador-cannabicultor.html">Explorar todas las variedades</a>
 <div data-resenas data-tipo="breeder" data-id="${b.id}"></div>
-${stickyCTA(`/empezar.html?b=${b._slug || ''}&n=${encodeURIComponent(nombre)}`, 'breeder', nombre)}
 `;
-  return shell({ title, desc, canonical, image: img, jsonld, bodyHtml: body });
+  const dock = chatDock({
+    tipo: 'breeder',
+    contexto: `Sobre el criador ${nombre}`,
+    placeholder: `Pregúntame sobre ${nombre}…`,
+    diarioHref: `/empezar.html?b=${b._slug || ''}&n=${encodeURIComponent(nombre)}`,
+    diarioTxt: 'Empezar mi diario',
+  });
+  return shell({ title, desc, canonical, image: img, jsonld, bodyHtml: body, dock });
 }
 
 function composeBreederDesc(b) {

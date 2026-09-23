@@ -111,6 +111,8 @@ ASSET_FILES=(
   assets/chat-vision.js
   assets/resenas.js
   assets/ac-urgent-banner.js
+  assets/shell.css
+  assets/shell.js
 )
 
 for file in "${ASSET_FILES[@]}"; do
