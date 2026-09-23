@@ -1,0 +1,6 @@
+Logos oficiales de marcas de fertilizantes (con permiso de cada fabricante).
+Nombre del archivo = marca en minusculas, sin espacios (guion):
+  atami  athena  bac  biobizz  canna  ghe  hesi  plagron  powder-feeding  top-crop
+Formato: .svg (mejor), .png o .webp con fondo transparente, ~400 px de ancho.
+Ejemplo: canna.svg  |  powder-feeding.png
+Si falta un logo, la web muestra el nombre de la marca en texto.

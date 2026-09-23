@@ -88,6 +88,12 @@ td.hi{color:var(--forest);font-weight:700;background:var(--pale)}
 footer{margin-top:28px;padding-top:16px;border-top:1px solid var(--border);font-size:11px;color:var(--muted);line-height:1.6;text-align:center}
 .ec{font-size:12.5px;color:var(--muted);margin-top:8px}
 .ec b{color:var(--forest)}
+.marcas{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:4px}
+.marca{height:64px;border:1px solid var(--border);border-radius:12px;background:#fff;display:flex;align-items:center;justify-content:center;padding:10px;cursor:pointer;transition:border-color .15s,box-shadow .15s;font:600 14px 'Inter',sans-serif;color:var(--text)}
+.marca:hover{border-color:var(--forest)}
+.marca.on{border-color:var(--forest);box-shadow:0 0 0 2px var(--forest) inset}
+.marca img{max-width:100%;max-height:40px;object-fit:contain;display:block}
+@media(min-width:560px){.marcas{grid-template-columns:repeat(5,minmax(0,1fr))}}
 </style>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
@@ -132,6 +138,11 @@ footer{margin-top:28px;padding-top:16px;border-top:1px solid var(--border);font-
     <h1>Dosis de <em>fertilizantes</em></h1>
     <p class="note">Tablas oficiales del fabricante, en un sitio. Elige línea, litros y semana. Empieza al 50&nbsp;% si es tu primer ciclo con esa gama.</p>
   </header>
+
+  <div class="card">
+    <label class="k">Elige tu marca</label>
+    <div class="marcas" id="marcas"></div>
+  </div>
 
   <div class="card">
     <label class="k" for="line">Marca y línea</label>
@@ -1477,9 +1488,35 @@ function renderDoses(){
 
 function render(){
   document.querySelectorAll(".dep").forEach(c => { c.hidden = !lineId; });
+  if ($("marcas")) marcarMarca();
   if (!lineId) return;
   renderWeeks(); renderTable(); renderDoses();
 }
+
+// Rejilla de marcas: logo oficial si existe en /assets/marcas/<marca>.(svg|png|webp); si no, el nombre.
+const slugMarca = b => b.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+function marcaActiva(){ const L = line(); return L ? L.brand : null; }
+function renderMarcas(){
+  const marcas = [...new Set(LINES.map(l => l.brand))].sort((a, b) => a.localeCompare(b, "es"));
+  $("marcas").innerHTML = marcas.map(m => `<button type="button" class="marca" data-m="${m}" aria-label="${m}" title="${m}"><span>${m}</span></button>`).join("");
+  $("marcas").querySelectorAll(".marca").forEach(btn => {
+    const slug = slugMarca(btn.dataset.m), exts = ["svg", "png", "webp"];
+    let i = 0;
+    const img = new Image();
+    img.alt = btn.dataset.m;
+    img.onload = () => { btn.innerHTML = ""; btn.appendChild(img); };
+    img.onerror = () => { if (++i < exts.length) img.src = `/assets/marcas/${slug}.${exts[i]}`; };
+    img.src = `/assets/marcas/${slug}.${exts[0]}`;
+  });
+}
+function marcarMarca(){ const a = marcaActiva(); $("marcas").querySelectorAll(".marca").forEach(b => b.classList.toggle("on", b.dataset.m === a)); }
+$("marcas").addEventListener("click", e => {
+  const b = e.target.closest(".marca"); if (!b) return;
+  const primera = LINES.find(l => l.brand === b.dataset.m);
+  if (!primera) return;
+  lineId = primera.id; week = 0; lineEl.value = lineId; render();
+  try { if (window.cc && window.cc.track) window.cc.track("fertilizante_marca", b.dataset.m); } catch (_) {}
+});
 
 lineEl.addEventListener("change", () => { lineId = lineEl.value; week = 0; render(); });
 $("liters").addEventListener("input", () => { if (lineId) renderDoses(); });
@@ -1497,6 +1534,7 @@ $("inten").addEventListener("click", e => {
   if (lineId) renderDoses();
 });
 
+renderMarcas();
 renderSelect();
 render();
 </script>

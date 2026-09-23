@@ -128,6 +128,15 @@ for ext in png jpg jpeg gif webp svg ico; do
   done
 done
 
+# Logos de marcas de fertilizantes (con permiso de cada fabricante): assets/marcas/<marca>.svg|png|webp
+if [ -d assets/marcas ]; then
+  mkdir -p "$DEPLOYPATH/assets/marcas"
+  for file in assets/marcas/*; do
+    [ -f "$file" ] || continue
+    /bin/cp -f "$file" "$DEPLOYPATH/assets/marcas/"
+  done
+fi
+
 # Icono PWA / Add to Home Screen (app.html → /icons/icon-180.png)
 if [ -d icons ]; then
   mkdir -p "$DEPLOYPATH/icons"
