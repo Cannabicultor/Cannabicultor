@@ -252,6 +252,10 @@ async function registrarConsulta(env, datos) {
       canal: datos.canal || 'web',
       categoria: datos.categoria || 'diagnostico',
       nivel_usuario: datos.nivel || null,
+      rag_top_score: datos.meta?.via_directorio ? null : (datos.meta?.rag_top_score ?? null),
+      rag_n_chunks: datos.meta?.via_directorio ? null : (datos.meta?.rag_n_chunks ?? null),
+      rag_rerank_score: datos.meta?.via_directorio ? null : (datos.meta?.rag_rerank_score ?? null),
+      admite_hueco: /(no (tengo|dispongo|encuentro|cuento)|no aparece|no puedo confirmar|no hay datos)/i.test(datos.respuesta || ''),
     }),
   });
 }
@@ -328,7 +332,7 @@ function extraerFotoYPregunta(messages) {
   return { imagen, pregunta };
 }
 
-async function guardarDiagnostico(env, { identity, messages, reply }) {
+async function guardarDiagnostico(env, { identity, messages, reply, meta }) {
   try {
     const { imagen, pregunta } = extraerFotoYPregunta(messages);
     let imagenRuta = null;
@@ -345,7 +349,7 @@ async function guardarDiagnostico(env, { identity, messages, reply }) {
     await registrarConsulta(env, {
       email: identity.email || null,
       sessionId: identity.sid || null,
-      tipo, imagenRuta, pregunta, respuesta: reply, canal: 'web',
+      tipo, imagenRuta, pregunta, respuesta: reply, canal: 'web', meta,
     });
     // Foto en chat → crea/actualiza entrada del diario (solo usuarios autenticados)
     if (imagenRuta && identity.email) {
@@ -373,12 +377,43 @@ async function generarEmbeddingConsulta(texto, env) {
 
 async function buscarChunksRelevantes(embedding, env) {
   if (!embedding) return [];
+  // Con reranker: traemos 30 candidatos amplios y Cohere elige los 6 mejores. Sin él: 6 directos.
+  const conRerank = !!env.COHERE_API_KEY;
   const res = await sbRequest(env, 'rpc/match_chunks', {
     method: 'POST',
-    body: JSON.stringify({ query_embedding: embedding, match_count: 6, min_similarity: 0.3 }),
+    body: JSON.stringify({ query_embedding: embedding, match_count: conRerank ? 30 : 6, min_similarity: conRerank ? 0.2 : 0.3 }),
   });
   if (!res.ok || !Array.isArray(res.data)) return [];
   return res.data;
+}
+
+/**
+ * Rerank con Cohere Rerank 4: reordena los candidatos por relevancia real respecto a la pregunta.
+ * Devuelve { chunks (top N), top_score } o null si no hay key / falla / tarda (el chat sigue sin rerank).
+ */
+const RERANK_MODEL = 'rerank-v4.0-fast';
+const RERANK_TOP_N = 6;
+async function rerankChunks(query, chunks, env) {
+  if (!env.COHERE_API_KEY || !query || chunks.length <= 1) return null;
+  try {
+    const res = await fetchWithTimeout('https://api.cohere.com/v2/rerank', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${env.COHERE_API_KEY}` },
+      body: JSON.stringify({
+        model: RERANK_MODEL, query, top_n: Math.min(RERANK_TOP_N, chunks.length),
+        documents: chunks.map((c) => String(c.content || '').slice(0, 6000)),
+      }),
+    }, 2500);
+    if (!res.ok) { logProvider('cohere_rerank', false, `http_${res.status}`); return null; }
+    const data = await res.json();
+    const results = Array.isArray(data.results) ? data.results : [];
+    if (!results.length) return null;
+    const out = results.map((r) => ({ ...chunks[r.index], rerank_score: r.relevance_score }));
+    return { chunks: out, top_score: results[0].relevance_score };
+  } catch (err) {
+    logProvider('cohere_rerank', false, err?.message || String(err));
+    return null;
+  }
 }
 
 // =========================================================================
@@ -1452,22 +1487,24 @@ function detectDirectorySearchIntent(text) {
   return { tipo, ciudad };
 }
 
-/** Consulta growshops y/o asociaciones activos por ciudad (ilike). Máx 5 cada uno. */
-async function buscarDirectorioPorCiudad(env, tipo, ciudad) {
-  // Normalizar a NFC: iOS/Safari a veces manda vocales acentuadas como NFD
-  // (letra base + acento combinante, ej. "a" + "´" en vez de "á" precompuesta).
-  // Los datos en Supabase están en NFC, así que sin esto "Alcalá" (NFD del móvil)
-  // no hace match por ilike contra "Alcalá" (NFC en la BD) aunque se vean idénticos.
-  const ciudadNormalizada = String(ciudad || '').normalize('NFC');
-  const qc = `*${encodeURIComponent(ciudadNormalizada)}*`;
+/**
+ * Consulta growshops y/o asociaciones activos vía RPC directorio_buscar (Supabase).
+ * La RPC busca qué ciudad/provincia del directorio aparece en el texto del usuario
+ * (robusto a "Y en madrid", "clubes en Lanzarote que voy de viaje", tildes NFD de iOS).
+ */
+async function buscarDirectorioPorCiudad(env, tipo, ciudad, textoCompleto = '') {
+  const cand = String(ciudad || '').normalize('NFC');
+  const texto = `${cand} ${String(textoCompleto || '')}`.normalize('NFC');
   const out = { growshops: [], asociaciones: [] };
-  if (tipo === 'growshop' || tipo === 'ambos') {
-    const r = await sbRequest(env, `growshops?select=nombre,ciudad,direccion,telefono,web,instagram&ciudad=ilike.${qc}&activo=eq.true&limit=5`, { method: 'GET' });
-    if (r.ok && Array.isArray(r.data)) out.growshops = r.data;
-  }
-  if (tipo === 'asociacion' || tipo === 'ambos') {
-    const r = await sbRequest(env, `asociaciones?select=nombre,ciudad,direccion,telefono,web,instagram&ciudad=ilike.${qc}&activo=eq.true&limit=5`, { method: 'GET' });
-    if (r.ok && Array.isArray(r.data)) out.asociaciones = r.data;
+  const r = await sbRequest(env, 'rpc/directorio_buscar', {
+    method: 'POST',
+    body: JSON.stringify({ p_texto: texto, p_candidato: cand, p_tipo: tipo === 'asociacion' || tipo === 'growshop' ? tipo : 'ambos', p_limit: 10 }),
+  });
+  if (r.ok && Array.isArray(r.data)) {
+    for (const row of r.data) {
+      if (row.tipo === 'growshop' && out.growshops.length < 5) out.growshops.push(row);
+      if (row.tipo === 'asociacion' && out.asociaciones.length < 5) out.asociaciones.push(row);
+    }
   }
   return out;
 }
@@ -1571,6 +1608,14 @@ function recuperarCiudadDelHistorial(messages) {
   return null;
 }
 
+/** ¿Algún mensaje de usuario anterior (últimos 8) mencionó growshop/club? */
+function historialMencionaDirectorio(messages) {
+  const lista = Array.isArray(messages) ? messages.slice(-9, -1) : [];
+  return lista.some((msg) => msg.role === 'user' &&
+    /\b(growshop|growshops|grow shop|grow|grows|tienda de cultivo|club|clubes|asociacion|asociaciones)\b/.test(
+      (typeof msg.content === 'string' ? msg.content : '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')));
+}
+
 /** Tipo (growshop/asociacion/ambos) del mensaje de usuario más reciente que mencione alguno. */
 function tipoDirectorioDelHistorial(messages) {
   const lista = Array.isArray(messages) ? messages : [];
@@ -1590,7 +1635,15 @@ function tipoDirectorioDelHistorial(messages) {
 
 function detectDirectorySearchIntentConHistorial(messages, textoConsulta) {
   const directo = detectDirectorySearchIntent(textoConsulta);
-  if (directo && directo.tipo === 'ambiguo') return directo;
+  if (directo && directo.tipo === 'ambiguo') {
+    // Seguimiento tipo "Y en madrid" en una conversación que ya iba de growshops/clubes.
+    if (historialMencionaDirectorio(messages)) {
+      const m = String(textoConsulta || '').match(/\ben\s+(.{3,40})$/i);
+      const ciudad = (m ? m[1] : String(textoConsulta || '')).trim().replace(/[?.!]+$/, '');
+      return { tipo: tipoDirectorioDelHistorial(messages), ciudad };
+    }
+    return directo;
+  }
   if (directo && directo.ciudad) return directo;
 
   const t = String(textoConsulta || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
@@ -1671,7 +1724,7 @@ async function handleChat(body, env) {
   let directorioContexto = null;
   if (dirIntent && dirIntent.ciudad) {
     try {
-      const resultados = await buscarDirectorioPorCiudad(env, dirIntent.tipo, dirIntent.ciudad);
+      const resultados = await buscarDirectorioPorCiudad(env, dirIntent.tipo, dirIntent.ciudad, textoConsulta);
       const total = (resultados.growshops?.length || 0) + (resultados.asociaciones?.length || 0);
       directorioContexto = total > 0
         ? `Resultados del directorio de Cannabicultor para "${dirIntent.ciudad}":\n${formatDirectorioContexto(resultados)}`
@@ -1691,12 +1744,16 @@ async function handleChat(body, env) {
     };
   }
 
-  // RAG — sin cambios: Voyage embedding + match_chunks
+  // RAG: Voyage embedding + match_chunks (+ rerank Cohere si hay COHERE_API_KEY)
   let chunks = [];
+  let rerankTop = null;
   try {
     if (textoConsulta.trim().length > 3) {
       const embedding = await generarEmbeddingConsulta(textoConsulta, env);
       chunks = await buscarChunksRelevantes(embedding, env);
+      const rr = await rerankChunks(textoConsulta, chunks, env);
+      if (rr) { chunks = rr.chunks; rerankTop = rr.top_score; }
+      else if (chunks.length > 6) chunks = chunks.slice(0, 6);
     }
   } catch (_) {}
 
@@ -1706,7 +1763,13 @@ async function handleChat(body, env) {
   try {
     const { reply, provider } = await generateChatReply(system, anthropicMessages, withVision, env);
     // provider en el JSON es opcional para el frontend; útil en logs/cola de diagnóstico
-    return { status: 200, data: { reply, provider } };
+    // match_chunks devuelve similitud ponderada (coseno * factor idioma * peso/10). Para medir huecos
+    // guardamos el coseno puro: si ni el mejor fragmento se parece a la pregunta, falta conocimiento.
+    const ragTop = chunks.length ? Math.max(...chunks.map((c) => {
+      const w = (Number(c.factor_idioma_retrieval) || 1) * ((Number(c.peso_prioridad_retrieval) || 5) / 10);
+      return (Number(c.similarity) || 0) / (w || 1);
+    })) : null;
+    return { status: 200, data: { reply, provider }, meta: { rag_top_score: ragTop, rag_rerank_score: rerankTop, rag_n_chunks: chunks.length, via_directorio: !!directorioContexto } };
   } catch (err) {
     if (err?.message === 'all_providers_failed') {
       return {
@@ -3261,7 +3324,7 @@ export default {
         if (!identity) return json({ error: 'No autorizado' }, 401, cors);
         const result = await handleChat(body, env);
         if (result.status === 200 && result.data?.reply) {
-          ctx.waitUntil(guardarDiagnostico(env, { identity, messages: body.messages, reply: result.data.reply }));
+          ctx.waitUntil(guardarDiagnostico(env, { identity, messages: body.messages, reply: result.data.reply, meta: result.meta }));
         }
         return json(result.data, result.status, cors);
       }
