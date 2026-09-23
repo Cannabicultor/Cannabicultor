@@ -902,7 +902,14 @@ async function handleSalesAgentChat(body, env) {
  *         specs?, marca?, categoria?, categoria_l1?, categoria_l2?,
  *         source_url? }, ...] }
  */
-async function handleCatalogIngest(body, env) {
+async function handleCatalogIngest(body, env, request) {
+  // Solo el admin (JWT de Ernie) o quien tenga la clave de ingesta del servidor.
+  const authH = request.headers.get('Authorization') || '';
+  const tok = authH.startsWith('Bearer ') ? authH.slice(7) : '';
+  const claimsIng = await verifyJwt(tok, env.JWT_SECRET);
+  const esAdmin = !!(claimsIng && claimsIng.email === 'enriquedorta@gmail.com');
+  const esClave = !!(env.CATALOG_INGEST_KEY && request.headers.get('X-Ingest-Key') === env.CATALOG_INGEST_KEY);
+  if (!esAdmin && !esClave) return { status: 401, data: { error: 'No autorizado' } };
   const tenantSlug = body?.tenant_slug;
   const tenant = await resolveSalesTenant(env, tenantSlug);
   if (!tenant) return { status: 404, data: { error: 'unknown_tenant' } };
@@ -2940,7 +2947,15 @@ async function handleBrevoEmail(body, env) {
   const email = String(body.email || '').trim().toLowerCase();
   const templateId = body.templateId;
   if (!email || !templateId) return { status: 400, data: { error: 'Faltan email o templateId' } };
-  const res = await brevoSendTemplate(env, email, templateId, body.params || {});
+  // Solo plantillas de bienvenida (test.html) y solo a usuarios registrados, una vez por plantilla.
+  if (![6, 7].includes(Number(templateId))) return { status: 403, data: { error: 'Plantilla no permitida' } };
+  const user = await getUserByEmail(env, email);
+  if (!user) return { status: 404, data: { error: 'Usuario no encontrado' } };
+  const campana = `bienvenida-${Number(templateId)}`;
+  const ya = await sbRequest(env, `emails_campana?campana=eq.${campana}&email=eq.${encodeURIComponent(email)}&select=email`, { method: 'GET' });
+  if (Array.isArray(ya.data) && ya.data.length) return { status: 200, data: { ok: true, ya_enviado: true } };
+  await sbRequest(env, 'emails_campana', { method: 'POST', headers: { Prefer: 'return=minimal' }, body: JSON.stringify({ campana, email }) });
+  const res = await brevoSendTemplate(env, email, templateId, {});
   if (!res.ok) return { status: res.status, data: { error: res.data?.message || 'Error Brevo' } };
   return { status: 200, data: { ok: true, data: res.data } };
 }
@@ -3691,7 +3706,7 @@ export default {
       }
 
       if (path === '/sales-agent/chat') { const r = await handleSalesAgentChat(body, env); return json(r.data, r.status, cors); }
-      if (path === '/catalog/ingest') { const r = await handleCatalogIngest(body, env); return json(r.data, r.status, cors); }
+      if (path === '/catalog/ingest') { const r = await handleCatalogIngest(body, env, request); return json(r.data, r.status, cors); }
       if (path === '/asesor') { const r = await handleAsesor(body, env); return json(r.data, r.status, cors); }
       if (path === '/cultivo/guardar') { const r = await handleGuardarCultivo(body, env, request); return json(r.data, r.status, cors); }
       if (path === '/perfil/sala') { const r = await handleGuardarSala(body, env, request); return json(r.data, r.status, cors); }
