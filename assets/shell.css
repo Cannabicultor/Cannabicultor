@@ -46,3 +46,16 @@ body.cc-shell.cc-con-dock{padding-bottom:110px}
   .cc-dock .cc-diario{display:none}
   .cc-dock img{display:none}
 }
+/* Escritorio: directorios y buscador aprovechan el ancho (2 columnas). En móvil no cambia nada. */
+@media(min-width:1024px){
+  body.cc-ancho .app{max-width:1000px;padding-left:32px;padding-right:32px}
+  body.cc-ancho .app > header{max-width:680px}
+  body.cc-ancho .list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;align-items:stretch}
+  body.cc-ancho .list > *{margin:0}
+  body.cc-ancho .cc-dock form{max-width:936px}
+}
+@media(min-width:1500px){
+  body.cc-ancho .app{max-width:1280px}
+  body.cc-ancho .list{grid-template-columns:repeat(3,minmax(0,1fr))}
+  body.cc-ancho .cc-dock form{max-width:1216px}
+}
