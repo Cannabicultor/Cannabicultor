@@ -150,7 +150,7 @@ body.chat .legal{display:none}
 
     <nav>
       <div class="grp">Cultivar</div>
-      <a class="nav" href="/dashboard.html" data-privado="1"><svg viewBox="0 0 24 24"><path d="M4 19V5a2 2 0 0 1 2-2h12v18H6a2 2 0 0 1-2-2z"/><path d="M8 7h8M8 11h8M8 15h5"/></svg>Diario de cultivo</a>
+      <a class="nav" href="/mi-cultivo.html" data-privado="1"><svg viewBox="0 0 24 24"><path d="M4 19V5a2 2 0 0 1 2-2h12v18H6a2 2 0 0 1-2-2z"/><path d="M8 7h8M8 11h8M8 15h5"/></svg>Diario de cultivo</a>
       <button class="nav" type="button" data-accion="foto"><svg viewBox="0 0 24 24"><path d="M3 8a2 2 0 0 1 2-2h2l2-2h6l2 2h2a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><circle cx="12" cy="13" r="3.5"/></svg>Diagnóstico por foto</button>
       <a class="nav" href="/buscador-cannabicultor.html"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>Variedades y criadores</a>
       <a class="nav" href="/calculadora-vpd/"><svg viewBox="0 0 24 24"><path d="M12 3s-6 7-6 11a6 6 0 0 0 12 0c0-4-6-11-6-11z"/></svg>Calculadora VPD</a>
@@ -204,7 +204,7 @@ body.chat .legal{display:none}
           <div class="info-grid">
             <a href="/biblioteca/diagnostico-deficiencias-ia/"><b>Diagnóstico por foto</b><span>Carencias, plagas, hongos y estrés, con qué hacer paso a paso.</span></a>
             <a href="/buscador-cannabicultor.html"><b>Variedades y criadores</b><span>Genética, floración y genealogía de miles de variedades.</span></a>
-            <a href="/dashboard.html"><b>Diario de cultivo</b><span>La IA recuerda tu sala, tu sustrato y tu historial.</span></a>
+            <a href="/mi-cultivo.html"><b>Diario de cultivo</b><span>La IA recuerda tu sala, tu sustrato y tu historial.</span></a>
             <a href="/disenador_sala_cultivo.html"><b>Sala y VPD</b><span>Clima ideal por etapa, extracción, lámparas y consumo.</span></a>
             <a href="/growshops.html"><b>Growshops y clubes</b><span>Directorio por ciudad de growshops, asociaciones y tiendas CBD.</span></a>
             <a href="/partners.html"><b>Para empresas</b><span>El asesor de Cannabicultor IA dentro de tu tienda online.</span></a>
@@ -254,7 +254,7 @@ function initSesion(){
   if(tok){
     st.token = tok; st.logueado = true; st.email = localStorage.getItem('ga_email');
     $('navCuentaTxt').textContent = 'Mi cultivo';
-    $('navCuenta').href = (GAAuth.isMobileDevice && GAAuth.isMobileDevice()) ? '/app.html' : '/dashboard.html';
+    $('navCuenta').href = '/mi-cultivo.html';
     $('cupo').style.display = 'none';
     return Promise.resolve();
   }
@@ -362,7 +362,7 @@ function mostrarRegistro(motivo){
           ev(modoLogin ? 'login_chat' : 'registro_chat_ok');
           d.remove();
           $('navCuentaTxt').textContent = 'Mi cultivo';
-          $('navCuenta').href = (GAAuth.isMobileDevice && GAAuth.isMobileDevice()) ? '/app.html' : '/dashboard.html';
+          $('navCuenta').href = '/mi-cultivo.html';
           $('cupo').style.display = 'none';
           burbujaIA(modoLogin ? 'Ya estás dentro. Seguimos donde lo dejamos.' :
             '**Cuenta creada.** Esta conversación queda guardada y a partir de ahora recuerdo tu cultivo.\n\nSi me cuentas qué variedad cultivas, en qué fase está y tu sala (luz, sustrato, medidas), abro tu diario y te aviso cuando algo se salga de rango.');

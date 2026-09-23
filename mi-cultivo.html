@@ -174,11 +174,27 @@ form.nueva{display:none}form.nueva.on{display:block}
 
   <!-- MI CULTIVO -->
   <section class="vista" id="v-cultivo">
-    <div class="aviso" id="avisoPerfil" hidden>Aún no me has contado tu cultivo. Dímelo en el chat (variedad, fase, luz, sustrato y medidas de la sala) o rellénalo en <a href="/dashboard.html">parámetros</a>.</div>
+    <div class="aviso" id="avisoPerfil" hidden>Aún no me has contado tu cultivo. Dímelo en el chat (variedad, fase, luz, sustrato y medidas de la sala) o pulsa «Editar datos del cultivo».</div>
     <div class="card">
       <div class="k">Tu cultivo</div>
       <div class="datos" id="datosFijos"></div>
-      <div class="fila-btn"><a class="btn" href="/dashboard.html">Editar parámetros</a><a class="btn" href="/disenador_sala_cultivo.html">Mi sala</a></div>
+      <div class="fila-btn"><button class="btn" type="button" id="btnEditar">Editar datos del cultivo</button><a class="btn" href="/disenador_sala_cultivo.html">Mi sala</a></div>
+      <form class="nueva" id="formPerfil" novalidate style="margin-top:16px">
+        <div class="campos">
+          <div class="campo"><label for="p-nombre">Nombre del cultivo</label><input id="p-nombre" type="text" maxlength="60"></div>
+          <div class="campo"><label for="p-genetica">Genética</label><input id="p-genetica" type="text" maxlength="80"></div>
+          <div class="campo"><label for="p-tipo">Tipo</label><select id="p-tipo"><option value="">—</option><option value="automatica">Automática</option><option value="feminizada">Feminizada</option><option value="regular">Regular</option></select></div>
+          <div class="campo"><label for="p-fase">Fase</label><select id="p-fase"><option value="">—</option><option value="germinacion">Germinación</option><option value="esquejes">Esquejes</option><option value="crecimiento">Crecimiento</option><option value="floracion">Floración</option><option value="lavado">Lavado</option><option value="secado">Secado</option></select></div>
+          <div class="campo"><label for="p-espacio">Espacio</label><select id="p-espacio"><option value="">—</option><option value="interior">Interior</option><option value="exterior">Exterior</option><option value="invernadero">Invernadero</option></select></div>
+          <div class="campo"><label for="p-sustrato">Sustrato</label><select id="p-sustrato"><option value="">—</option><option value="tierra">Tierra</option><option value="coco">Coco</option><option value="hidro">Hidropónico</option><option value="otro">Otro</option></select></div>
+          <div class="campo"><label for="p-tipoLuz">Tipo de luz</label><select id="p-tipoLuz"><option value="">—</option><option>LED</option><option>HPS</option><option>CMH/LEC</option><option>Sol</option></select></div>
+          <div class="campo"><label for="p-luz">Potencia (W)</label><input id="p-luz" type="text" maxlength="20" placeholder="600W"></div>
+          <div class="campo"><label for="p-maceta">Maceta</label><input id="p-maceta" type="text" maxlength="20" placeholder="11 L"></div>
+          <div class="campo"><label for="p-fechaInicio">Fecha de inicio</label><input id="p-fechaInicio" type="date"></div>
+        </div>
+        <div class="fila-btn"><button class="btn pri" type="submit" id="btnGuardarPerfil">Guardar</button><button class="btn" type="button" id="btnCancelarPerfil">Cancelar</button></div>
+        <div class="msg-err" id="errPerfil"></div>
+      </form>
     </div>
     <div class="card">
       <div class="k">Última lectura del diario</div>
@@ -337,9 +353,33 @@ $('foto').addEventListener('change', function(e){
 });
 document.querySelectorAll('#sug button').forEach(function(b){ b.onclick = function(){ enviar(b.getAttribute('data-q')); }; });
 
+
+// ── Editar datos fijos del cultivo ──
+var CAMPOS = ['nombre','genetica','tipo','fase','espacio','sustrato','tipoLuz','luz','maceta','fechaInicio'];
+$('btnEditar').onclick = function(){
+  var p = fijos();
+  CAMPOS.forEach(function(k){ var el = $('p-' + k); if(el) el.value = p[k] || ''; });
+  $('formPerfil').classList.add('on'); this.hidden = true;
+};
+$('btnCancelarPerfil').onclick = function(){ $('formPerfil').classList.remove('on'); $('btnEditar').hidden = false; };
+$('formPerfil').onsubmit = function(e){
+  e.preventDefault();
+  var err = $('errPerfil'); err.style.display = 'none';
+  var btn = $('btnGuardarPerfil'); btn.disabled = true; btn.textContent = 'Guardando…';
+  var nuevos = {}; CAMPOS.forEach(function(k){ nuevos[k] = ($('p-' + k).value || '').trim(); });
+  var perfil = Object.assign({}, PERFIL || {}, nuevos);
+  perfil.cultivo = Object.assign({}, (PERFIL && PERFIL.cultivo) || {}, nuevos);
+  fetch(WORKER + '/auth/save-perfil', { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify({ token: JWT, perfil_cultivo: perfil }) })
+    .then(function(r){ if(r.status === 401){ salir401(); throw new Error('Sesión caducada'); } return r.json().then(function(d){ if(!r.ok || !d.ok) throw new Error(d.error || 'No se pudo guardar'); }); })
+    .then(function(){ PERFIL = perfil; try{ localStorage.setItem('ga_perfil', JSON.stringify(PERFIL)); }catch(_){} ev('perfil_guardado'); $('formPerfil').classList.remove('on'); $('btnEditar').hidden = false; pintarCultivo(); })
+    .catch(function(x){ err.textContent = (x && x.message) || 'No se pudo guardar.'; err.style.display = 'block'; })
+    .then(function(){ btn.disabled = false; btn.textContent = 'Guardar'; });
+};
 var sal = $('ccSalir'); if(sal) sal.onclick = function(e){ e.preventDefault(); if(window.GAAuth) GAAuth.clearSession(); location.href = '/'; };
 pintarCultivo();
 cargarDiario();
+// Usuario recién registrado: le pedimos los datos de su cultivo
+try{ if(new URLSearchParams(location.search).get('new') === 'true'){ var pf = fijos(); if(!(pf.genetica || pf.tipoLuz || pf.sustrato)){ mostrar('cultivo'); $('btnEditar').click(); } } }catch(_){}
 })();
 </script>
 <script src="/assets/shell.js" defer></script>

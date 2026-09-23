@@ -303,7 +303,7 @@
 // ============================================================
 const WORKER_URL = 'https://growers-alliance-ai.nohumanclicks.workers.dev';
 const TERMS_URL  = 'https://cannabicultor.com/terminos.html';
-const APP_URL    = 'https://cannabicultor.com/app.html?new=true';
+const APP_URL    = 'https://cannabicultor.com/mi-cultivo.html?new=true';
 // ============================================================
 
 const state = { p:0, token:null, sessionId:null, segmento:null, intencion:null, fase:null, fotoSubida:false, modoLogin:false };
@@ -529,7 +529,7 @@ document.getElementById('optsP4').addEventListener('click', e => {
 let registrando = false;   // candado: evita el doble disparo del registro
 function destApp(){
   const movil = (window.innerWidth||0) < 768 || /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent||'');
-  return movil ? '/app.html?new=true' : '/dashboard.html?new=true';
+  return '/mi-cultivo.html?new=true';
 }
 function syncCredsDesdeP3(){
   const e = document.getElementById('emailP3');

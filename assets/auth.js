@@ -165,7 +165,7 @@
     // Usuario verificado: interfaz según dispositivo.
     //   móvil / tablet -> app.html      (nav inferior, vista compacta)
     //   escritorio     -> dashboard.html (sidebar, vista amplia)
-    return isMobileDevice() ? '/app.html' : '/dashboard.html';
+    return '/mi-cultivo.html';
   }
 
   function redirectIfAuthenticated() {
