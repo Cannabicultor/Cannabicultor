@@ -17,7 +17,7 @@
 <meta name="description" content="Explora más de 44.000 variedades de cannabis. Filtra por genética, tiempos de floración, cannabinoides y más. Herramienta gratuita de Cannabicultor IA.">
 <link rel="canonical" href="https://www.cannabicultor.com/buscador-cannabicultor.html">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Lora:ital,wght@0,400;0,600;1,400;1,600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Sora:wght@500;600;700&display=swap" rel="stylesheet">
 <style>
 :root{
   --bg:#f5f7f4;--bg2:#eef1ec;--card:#fff;
@@ -29,7 +29,7 @@
   --shadow:0 1px 3px rgba(0,0,0,.04);
   --rojo:#E85C4A;
   --font-ui:'Inter',system-ui,sans-serif;
-  --font-display:'Lora',Georgia,serif;
+  --font-display:'Sora','Inter',sans-serif;
 }
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html{scroll-behavior:smooth}
@@ -49,7 +49,7 @@ header{padding:18px 0 6px;position:sticky;top:0;z-index:40;background:linear-gra
 .brand .name{font-size:13px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
 .brand .name b{color:var(--text)}
 h1{font-family:var(--font-display);font-weight:600;font-size:27px;line-height:1.15;margin-bottom:4px}
-h1 em{color:var(--forest);font-style:italic}
+h1 em{color:var(--forest);font-style:normal}
 .stats{font-size:12.5px;color:var(--muted);display:flex;align-items:center;gap:7px;margin-bottom:14px}
 .dot{width:7px;height:7px;border-radius:50%;background:var(--forest);animation:pulse 2.2s infinite}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
@@ -95,7 +95,7 @@ h1 em{color:var(--forest);font-style:italic}
 .thumb{
   width:58px;height:58px;flex:0 0 58px;border-radius:11px;background:var(--pale);
   display:flex;align-items:center;justify-content:center;font-family:var(--font-display);
-  font-size:21px;font-style:italic;color:var(--forest);overflow:hidden;border:1px solid var(--border);
+  font-size:21px;font-style:normal;color:var(--forest);overflow:hidden;border:1px solid var(--border);
 }
 .thumb img{width:100%;height:100%;object-fit:cover}
 .card-body{flex:1;min-width:0}
@@ -113,7 +113,7 @@ h1 em{color:var(--forest);font-style:italic}
 @media (prefers-reduced-motion:reduce){.sk{animation:none}.dot{animation:none}}
 
 .empty{padding:40px 16px;text-align:center;color:var(--muted);font-size:14px;line-height:1.6}
-.empty .big{font-family:var(--font-display);font-style:italic;font-size:19px;color:var(--text);display:block;margin-bottom:6px}
+.empty .big{font-family:var(--font-display);font-style:normal;font-size:19px;color:var(--text);display:block;margin-bottom:6px}
 .more-btn{margin:14px auto 0;display:block;padding:11px 26px;border-radius:100px;background:var(--card);border:1px solid var(--forest);color:var(--forest);font-family:var(--font-ui);font-weight:600;font-size:13.5px;cursor:pointer}
 
 /* ---------- Bottom sheet ---------- */
@@ -130,23 +130,23 @@ h1 em{color:var(--forest);font-style:italic}
 .sheet-scroll{overflow-y:auto;padding:8px 20px calc(28px + env(safe-area-inset-bottom))}
 .sheet-head{display:flex;gap:14px;align-items:center;margin-bottom:16px}
 .sheet-head .thumb{width:72px;height:72px;flex-basis:72px;font-size:27px}
-.sheet-title{font-family:var(--font-display);font-size:22px;font-weight:700;line-height:1.15}
+.sheet-title{font-family:var(--font-display);font-size:22px;font-weight:600;letter-spacing:-.03em;line-height:1.15}
 .sheet-breeder{font-size:12px;color:var(--forest);letter-spacing:.05em;text-transform:uppercase;font-weight:600;margin-top:3px}
 .grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:16px}
 .stat-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:11px 13px}
 .stat-card .k{font-size:10.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:4px}
 .stat-card .v{font-size:16px;font-weight:700}
-.stat-card .v em{font-family:var(--font-display);font-style:italic;color:var(--forest)}
+.stat-card .v em{font-family:var(--font-display);font-style:normal;color:var(--forest)}
 .section{margin-bottom:15px}
 .section .k{font-size:10.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:6px}
 .section p{font-size:13.5px;line-height:1.65;color:var(--text)}
 .tag-row{display:flex;gap:6px;flex-wrap:wrap}
 .tag{font-size:11.5px;padding:5px 11px;border-radius:100px;background:var(--pale);border:1px solid rgba(26,92,50,.2);color:var(--forest);font-weight:500}
-.link-btn{display:block;text-align:center;margin-top:6px;padding:13px;border-radius:12px;background:var(--forest);color:#fff;font-weight:700;font-size:14px;text-decoration:none}
+.link-btn{display:block;text-align:center;margin-top:4px;padding:8px;color:var(--muted);font-weight:500;font-size:13px;text-decoration:underline}
 .variety-cta{margin:22px 0 8px;padding:18px;background:var(--pale);border:1px solid rgba(26,92,50,.2);border-radius:14px;color:var(--text);font-size:13.5px;line-height:1.6}
 .variety-cta strong{display:block;margin-bottom:5px;color:var(--forest);font-size:15px;line-height:1.35}
 .variety-cta a{color:var(--forest);font-weight:700;text-decoration-thickness:1px;text-underline-offset:2px}
-.gen-line{font-family:var(--font-display);font-style:italic;font-size:15px;color:var(--text);line-height:1.5}
+.gen-line{font-family:var(--font-ui);font-weight:500;font-size:15px;color:var(--text);line-height:1.5}
 .gen-line .x{color:var(--forest);font-style:normal;font-family:var(--font-ui);font-size:12px;font-weight:700;padding:0 4px}
 .rev-box{margin-top:22px;padding-top:16px;border-top:1px solid var(--border)}
 .rev-box h3{font-size:15px;margin:0 0 10px}
@@ -164,6 +164,8 @@ h1 em{color:var(--forest);font-style:italic}
 .rev-msg{font-size:12px;color:#b94b42}
 
 footer{margin-top:34px;padding-top:16px;border-top:1px solid var(--border);font-size:11px;color:var(--muted);line-height:1.6;text-align:center}
+.ask-ia{display:block;text-align:center;margin:14px 0 8px;padding:14px;border-radius:12px;background:#0F3020;color:#fff!important;font-weight:600;font-size:15px;text-decoration:none!important}
+.ask-diario{display:block;text-align:center;margin:0 0 6px;padding:12px;border-radius:12px;border:1px solid var(--border);color:#0F3020!important;font-weight:500;font-size:14px;text-decoration:none!important}
 </style>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
@@ -402,8 +404,12 @@ sheet.querySelector(".sheet-handle").onclick = closeSheet;
 document.addEventListener("keydown", e => { if (e.key === "Escape") closeSheet(); });
 
 function statCard(k, v, em){ return v ? '<div class="stat-card"><div class="k">' + k + '</div><div class="v">' + (em ? '<em>' + v + '</em>' : v) + '</div></div>' : ""; }
+// Textos de relleno importados de otras webs (no son datos reales): no se muestran.
+const BASURA = /(independent, standardized information|you have experience with|no data available|sharing your information)/i;
+function limpio(t){ return t && !BASURA.test(String(t)) ? t : null; }
 function tagRow(k, arr){
-  if (!arr || !arr.length) return "";
+  arr = (arr || []).filter(t => limpio(t));
+  if (!arr.length) return "";
   return '<div class="section"><div class="k">' + k + '</div><div class="tag-row">' + arr.map(t => '<span class="tag">' + esc(cap(t)) + '</span>').join("") + '</div></div>';
 }
 function genLine(g){
@@ -419,8 +425,9 @@ function varietyCta(v){
   const breeder = v.breeders?.breeder_name || "";
   const slug = [slugify(v.nombre), slugify(breeder)].filter(Boolean).join("-") || String(v.id);
   const diaryHref = "/empezar.html?v=" + encodeURIComponent(slug) + "&n=" + encodeURIComponent(v.nombre || "");
-  return '<aside class="variety-cta"><strong>¿Quieres cosechar el máximo potencial de la genética ' + esc(v.nombre) + '?</strong>' +
-    'Registra tu <a href="' + esc(diaryHref) + '">diario de cultivo en Cannabicultor</a>. Nuestro <a href="/disenador_sala_cultivo.html">Diseñador de Sala</a> y la <a href="/calculadora-vpd/">Calculadora de VPD</a>, integrada con nuestra <a href="/cultivo-con-ia/">IA Cannábica</a>, te guiarán paso a paso durante toda su floración.</aside>';
+  const q = "Sobre la variedad " + (v.nombre || "") + (breeder ? " de " + breeder : "") + ": ¿cómo la cultivo para sacarle el máximo?";
+  return '<a class="ask-ia" href="/?q=' + encodeURIComponent(q) + '" data-track="cta_chat_buscador">Pregunta a la IA cómo cultivar ' + esc(v.nombre) + ' →</a>' +
+    '<a class="ask-diario" href="' + esc(diaryHref) + '" data-track="cta_diario_buscador">Empezar mi diario con esta variedad</a>';
 }
 
 async function openVariedad(id) {
@@ -449,10 +456,10 @@ async function openVariedad(id) {
       tagRow("Efectos", v.efectos) +
       tagRow("Sabores", v.sabores) +
       tagRow("Aromas", v.aromas) +
-      (v.descripcion ? '<div class="section"><div class="k">Descripción</div><p>' + esc(v.descripcion) + '</p></div>' : "") +
+      (limpio(v.descripcion) ? '<div class="section"><div class="k">Descripción</div><p>' + esc(v.descripcion) + '</p></div>' : "") +
       (v.premios ? '<div class="section"><div class="k">Premios</div><p>' + esc(v.premios) + '</p></div>' : "") +
-      (!clon && v.breeders?.website ? '<a class="link-btn" href="' + esc(v.breeders.website) + '" target="_blank" rel="noopener">Web del breeder →</a>' : "") +
       varietyCta(v) +
+      (!clon && v.breeders?.website ? '<a class="link-btn" href="' + esc(v.breeders.website) + '" target="_blank" rel="noopener">Web del breeder ↗</a>' : "") +
       '<div id="revMount"></div>'
     );
     if (window.CCResenas) CCResenas.mount(document.getElementById('revMount'), 'variedad', v.id);
@@ -473,7 +480,7 @@ async function openBreeder(id) {
         statCard("Variedades", b.cantidad_variedades ? nf.format(b.cantidad_variedades) : null, true) +
         statCard("Semillas", b.tipo_semillas ? esc(cap(b.tipo_semillas)) : null) +
       '</div>' +
-      (b.descripcion ? '<div class="section"><div class="k">Sobre el breeder</div><p>' + esc(b.descripcion) + '</p></div>' : "") +
+      (limpio(b.descripcion) ? '<div class="section"><div class="k">Sobre el breeder</div><p>' + esc(b.descripcion) + '</p></div>' : "") +
       (b.variedades_famosas ? '<div class="section"><div class="k">Variedades destacadas</div><p>' + esc(b.variedades_famosas) + '</p></div>' : "") +
       (b.premios ? '<div class="section"><div class="k">Premios</div><p>' + esc(b.premios) + '</p></div>' : "") +
       (b.instagram ? '<div class="section"><div class="k">Instagram</div><p>' + esc(b.instagram) + '</p></div>' : "") +
