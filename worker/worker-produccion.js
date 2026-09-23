@@ -243,6 +243,7 @@ async function registrarConsulta(env, datos) {
     method: 'POST',
     headers: { Prefer: 'return=minimal' },
     body: JSON.stringify({
+      ...(datos.meta?.consulta_id ? { id: datos.meta.consulta_id } : {}),
       email: datos.email || null,
       session_id: datos.sessionId || null,
       tipo: datos.tipo,
@@ -379,11 +380,26 @@ async function generarEmbeddingConsulta(texto, env) {
   return data.data?.[0]?.embedding || null;
 }
 
+/** Fichas de variedades mencionadas en la pregunta (o en el perfil del cultivo). [] si no hay o falla. */
+async function buscarVariedadesMencionadas(env, texto, perfil) {
+  try {
+    let genPerfil = '';
+    if (perfil) {
+      const p = typeof perfil === 'string' ? perfil : JSON.stringify(perfil);
+      genPerfil = (p.match(/gen[eé]tica"?\s*[:=]\s*"?([^",\n}]{3,60})/i) || [])[1] || '';
+    }
+    const q = `${texto || ''} . ${genPerfil}`.slice(0, 1200);
+    if (q.trim().length < 4) return [];
+    const res = await sbRequest(env, 'rpc/variedad_contexto', { method: 'POST', body: JSON.stringify({ p_texto: q, p_max: 2 }) });
+    return res.ok && Array.isArray(res.data) ? res.data : [];
+  } catch (_) { return []; }
+}
+
 async function buscarChunksRelevantes(embedding, env) {
   if (!embedding) return [];
   // Con reranker: traemos 30 candidatos amplios y Cohere elige los 6 mejores. Sin él: 6 directos.
   const conRerank = !!env.COHERE_API_KEY;
-  const res = await sbRequest(env, 'rpc/match_chunks', {
+  const res = await sbRequest(env, 'rpc/match_chunks_v2', {
     method: 'POST',
     body: JSON.stringify({ query_embedding: embedding, match_count: conRerank ? 30 : 6, min_similarity: conRerank ? 0.2 : 0.3 }),
   });
@@ -1011,7 +1027,15 @@ function extractReferenciaBreve(chunkContent) {
   return autores ? `${autores}, ${anio}` : `estudio de ${anio}`;
 }
 
-function buildSystemPrompt(perfil, chunks, directorioContexto) {
+const VALORES_IDEALES_CANNABICULTOR = `VALORES IDEALES CANNABICULTOR (tabla oficial de la plataforma; úsala para cifras de ambiente y sustrato, son rangos orientativos que dependen de genética, clima y agua):
+- Esquejes/enraizamiento (10-14 días): 24°C · HR 70-80% · VPD 0,4-0,8 kPa · CO2 ~400 ppm · Tierra pH 6,0-6,5 EC 0,4-0,8 · Coco pH 5,5-6,0 EC 0,3-0,6 · Hidro pH 5,5-5,8 EC 0,3-0,5
+- Vegetativo (18h luz): 25°C · HR 60% · VPD 0,9-1,2 kPa · CO2 400-800 ppm · Tierra pH 6,0-6,8 EC 1,0-1,6 · Coco pH 5,5-6,3 EC 1,2-1,8 · Hidro pH 5,5-6,0 EC 1,2-1,6
+- Flor inicial/estiramiento (12h luz): 25°C · HR 55% · VPD 1,2-1,45 kPa · CO2 800-1200 ppm · Tierra pH 6,0-6,8 EC 1,4-1,8 · Coco pH 5,5-6,3 EC 1,6-2,0 · Hidro pH 5,5-6,0 EC 1,6-2,0
+- Floración/engorde: 24°C · HR 48% · VPD 1,4-1,6 kPa · CO2 800-1000 ppm · Tierra pH 6,0-6,8 EC 1,6-2,0 · Coco pH 5,5-6,3 EC 1,8-2,4 · Hidro pH 5,5-6,0 EC 1,8-2,2 (bajar EC al extremo inferior las 2 últimas semanas, lavado de raíces)
+Temperatura, humedad y VPD son iguales en cualquier sustrato; pH y EC dependen del sustrato. Si citas estas cifras, preséntalas como "la tabla de valores de Cannabicultor" y recomienda la página cannabicultor.com/tabla-valores-ideales.html.`;
+const RE_VALORES_IDEALES = /\b(ph|ec|ppm|vpd|humedad|hr|temperatura|grados|co2|conductividad|riego|regar|nutriente|nutrientes|abono|fertiliz\w*|dosis|valores?)\b/i;
+
+function buildSystemPrompt(perfil, chunks, directorioContexto, extras = {}) {
   // Scope primero (antes del RAG); el LLM lo ve aunque la heurística no sea concluyente.
   let base = `${SCOPE_PROMPT}
 
@@ -1023,9 +1047,17 @@ NUNCA inventes estudios ni legislación.${VISION_PROMPT}`;
     base += `\n\nDIRECTORIO CANNABICULTOR (usa esto para responder, es la fuente real y actual — NUNCA inventes un growshop, club o dato de contacto que no esté aquí):\n${directorioContexto}`;
   }
 
+  if (extras.variedades && extras.variedades.length) {
+    base += `\n\nFICHAS DE VARIEDADES (base de datos de Cannabicultor, ${extras.variedades.map((v) => v.variantes_en_base + ' variantes de "' + v.mencion + '"').join(', ')}):\n${JSON.stringify(extras.variedades)}\nREGLAS FICHAS: usa estos datos (floración, tipo, genética, THC) en vez de tu memoria. Cada breeder vende su versión: si el usuario no dijo el breeder, da el RANGO entre variantes (ej. "entre 60 y 65 días según el banco") y pregúntale cuál tiene si importa. Los datos de catálogo son orientativos: dilo si das cifras exactas. Nunca inventes datos que no estén aquí.`;
+  }
+  if (extras.valoresIdeales) {
+    base += `\n\n${VALORES_IDEALES_CANNABICULTOR}`;
+  }
+
   if (chunks && chunks.length > 0) {
     const contexto = chunks.map((c, i) => {
-      const fuente = c.libro_propuesto || 'Base de conocimiento';
+      const esVideo = c.doc_tipo === 'YouTube';
+      const fuente = esVideo ? `VÍDEO DE ERNIE (criterio propio de Cannabicultor): «${c.doc_titulo}»` : (c.doc_titulo ? `«${c.doc_titulo}»` : (c.libro_propuesto || 'Base de conocimiento'));
       const referencia = extractReferenciaBreve(c.content);
       const etiqueta = referencia
         ? `[${i + 1}] ${fuente} | REFERENCIA EXACTA PARA CITAR ESTE FRAGMENTO: ${referencia}`
@@ -1041,7 +1073,9 @@ NUNCA inventes estudios ni legislación.${VISION_PROMPT}`;
 - Si no encuentras en los fragmentos el dato exacto que te piden (ej. semanas exactas, porcentaje exacto), NO inventes un rango aproximado ni una cifra "razonable". Di explicitamente que no tienes ese dato preciso en tu base de conocimiento y da tu mejor criterio de cultivador experto SIN disfrazarlo de cita ni de cifra exacta.
 - Ante la duda entre citar con precision o no citar, elige NO citar. Una respuesta sin cita es mejor que una cita que no sustenta lo dicho.
 - NO cites cuando el fragmento es de la base de conocimiento interna sin autor/estudio identificable (ej. "L1 Base principiantes", "L2 Cultivo indoor") ni en preguntas basicas de manual (regar, trasplantar, pH basico) donde no aporta valor citar.
-- Nunca inventes autor, revista o anio si el fragmento no los trae explicitamente.\n- Si el conocimiento no cubre la pregunta, responde con criterio de cultivador experto.`;
+- Nunca inventes autor, revista o anio si el fragmento no los trae explicitamente.\n- Si el conocimiento no cubre la pregunta, responde con criterio de cultivador experto.
+- CRITERIO ERNIE: los fragmentos marcados como "VÍDEO DE ERNIE" son la experiencia directa del fundador (30+ años cultivando). Si responden a la pregunta, dales prioridad sobre los libros genéricos y preséntalos así: "como explica Ernie en su vídeo «título»".
+- LINEA DE FUENTES: si tu respuesta se apoya de verdad en uno o más fragmentos, termina con una línea aparte: "📚 Fuentes: «título 1», «título 2»" (máximo 3, solo los títulos entre « » que usaste de verdad, sin inventar ninguno). Si no usaste ningún fragmento, NO pongas esa línea.`;
   } else {
     base += `\n\nNOTA INTERNA: No se encontraron documentos especificos en la base de conocimiento para esta consulta. Responde con tu criterio de cultivador experto con 30 anos de experiencia. Se honesto si algo excede tu conocimiento tecnico. No inventes fuentes ni estudios.`;
   }
@@ -1805,10 +1839,15 @@ async function handleChat(body, env) {
   // RAG: Voyage embedding + match_chunks (+ rerank Cohere si hay COHERE_API_KEY)
   let chunks = [];
   let rerankTop = null;
+  let variedadesCtx = [];
   let rerankError = env.COHERE_API_KEY ? null : 'sin_key';
   try {
     if (textoConsulta.trim().length > 3) {
-      const embedding = await generarEmbeddingConsulta(textoConsulta, env);
+      const [embedding, vars] = await Promise.all([
+        generarEmbeddingConsulta(textoConsulta, env),
+        buscarVariedadesMencionadas(env, textoConsulta, perfil),
+      ]);
+      variedadesCtx = vars;
       chunks = await buscarChunksRelevantes(embedding, env);
       const rr = await rerankChunks(textoConsulta, chunks, env);
       if (rr && rr.chunks) { chunks = rr.chunks; rerankTop = rr.top_score; }
@@ -1820,7 +1859,8 @@ async function handleChat(body, env) {
   } catch (_) {}
 
   // System incluye SCOPE_PROMPT al inicio; casos dudosos los resuelve el LLM
-  const system = buildSystemPrompt(perfil, chunks, directorioContexto);
+  const valoresIdeales = RE_VALORES_IDEALES.test(textoConsulta.normalize('NFD').replace(/[\u0300-\u036f]/g, ''));
+  const system = buildSystemPrompt(perfil, chunks, directorioContexto, { variedades: variedadesCtx, valoresIdeales });
 
   try {
     const { reply, provider } = await generateChatReply(system, anthropicMessages, withVision, env);
@@ -3375,6 +3415,15 @@ export default {
         return json(result.data, result.status, cors);
       }
 
+      // Valoración de una respuesta del chat (👍 = 1, 👎 = -1). El id es un UUID aleatorio que solo conoce quien recibió la respuesta.
+      if (path === '/feedback') {
+        const id = String(body.consulta_id || '');
+        const v = Number(body.valor);
+        if (!/^[0-9a-f-]{36}$/i.test(id) || (v !== 1 && v !== -1)) return json({ error: 'Datos no válidos' }, 400, cors);
+        const r = await sbRequest(env, `ia_consultas?id=eq.${id}`, { method: 'PATCH', headers: { Prefer: 'return=minimal' }, body: JSON.stringify({ feedback: v }) });
+        return json({ ok: r.ok }, r.ok ? 200 : 500, cors);
+      }
+
       if (path === '/' || path === '/chat') {
         const auth = request.headers.get('Authorization') || '';
         const token = auth.startsWith('Bearer ') ? auth.slice(7) : '';
@@ -3386,7 +3435,9 @@ export default {
         if (!identity) return json({ error: 'No autorizado' }, 401, cors);
         const result = await handleChat(body, env);
         if (result.status === 200 && result.data?.reply) {
-          ctx.waitUntil(guardarDiagnostico(env, { identity, messages: body.messages, reply: result.data.reply, meta: result.meta }));
+          const consultaId = crypto.randomUUID();
+          result.data.consulta_id = consultaId; // el frontend lo usa para el 👍/👎
+          ctx.waitUntil(guardarDiagnostico(env, { identity, messages: body.messages, reply: result.data.reply, meta: { ...(result.meta || {}), consulta_id: consultaId } }));
         }
         return json(result.data, result.status, cors);
       }

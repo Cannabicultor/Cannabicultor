@@ -1410,14 +1410,24 @@ function openPendingChat(){
   const input=document.getElementById('chatInput');
   if(input){ input.value=prompt; input.focus(); }
 }
-function addMsg(who, text){
+function addMsg(who, text, consultaId){
   const wrap = document.createElement('div');
   wrap.className = 'msg ' + (who==='user'?'user':'ai');
+  const fb = (who==='ai' && consultaId)
+    ? `<div class="fb" style="margin-top:6px;display:flex;gap:6px;align-items:center;font-size:12px;color:#9aa09a">¿Te ha servido?
+        <button type="button" onclick="sendFeedback('${consultaId}',1,this)" style="border:1px solid #d0e8d8;background:#fff;border-radius:999px;padding:2px 10px;cursor:pointer">👍</button>
+        <button type="button" onclick="sendFeedback('${consultaId}',-1,this)" style="border:1px solid #d0e8d8;background:#fff;border-radius:999px;padding:2px 10px;cursor:pointer">👎</button></div>`
+    : '';
   wrap.innerHTML = who==='ai'
-    ? `<div class="avatar ai">IA</div><div class="bubble">${escHtml(text).replace(/\n/g,'<br>')}</div>`
+    ? `<div class="avatar ai">IA</div><div class="bubble">${escHtml(text).replace(/\n/g,'<br>')}${fb}</div>`
     : `<div class="bubble">${escHtml(text).replace(/\n/g,'<br>')}</div><div class="avatar user">TÚ</div>`;
   document.getElementById('msgs').appendChild(wrap);
   document.getElementById('msgs').scrollTop = 99999;
+}
+async function sendFeedback(id, valor, btn){
+  const box = btn.closest('.fb');
+  box.innerHTML = valor===1 ? '¡Gracias! 🌱' : 'Gracias, lo revisaremos para mejorar la respuesta.';
+  try{ await fetch(WORKER + '/feedback', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ consulta_id:id, valor }) }); }catch(_){}
 }
 function escHtml(s){ return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m])); }
 
@@ -1480,7 +1490,7 @@ async function sendMsg(){
     removeTyping();
     const reply = data.reply || data.content || data.message || 'No pude interpretar la respuesta.';
     MSGS.push({role:'assistant', content:reply});
-    addMsg('ai', reply);
+    addMsg('ai', reply, data.consulta_id);
     if(hadImage) setTimeout(() => loadDiario(), 1200);
   }catch(e){
     removeTyping();
