@@ -2,7 +2,10 @@
    Se usa en fichas generadas (prerender/build.mjs) y páginas estáticas.
    La home (index.html) lleva su propia copia inline. */
 :root{--cc-verde:#0F3020;--cc-oro:#F0C040;--cc-fondo:#f6f7f4;--cc-tinta:#13201a;--cc-tinta2:#3d4a42;--cc-gris:#5b6b61;--cc-gris2:#6e7d73;--cc-linea:#e1e6df;--cc-linea2:#d9dfd6;--cc-suave:#eef2ec}
-body.cc-shell{margin:0;padding-left:260px;background:var(--cc-fondo);font-family:'Inter',system-ui,sans-serif}
+body.cc-shell{margin:0;padding-left:260px}
+body.cc-shell h1 em,body.cc-shell h2 em,body.cc-shell .title em{font-family:inherit;font-style:normal}
+/* La carcasa ya lleva marca y vuelta a inicio: se ocultan las cabeceras de marca antiguas */
+body.cc-shell .cc-ocultar{display:none!important}
 body.cc-shell h1,body.cc-shell h2,body.cc-shell h3{font-family:'Sora','Inter',sans-serif;letter-spacing:-.03em}
 .cc-side{position:fixed;top:0;left:0;bottom:0;width:260px;box-sizing:border-box;background:#fff;border-right:1px solid var(--cc-linea);display:flex;flex-direction:column;padding:18px 12px;overflow-y:auto;z-index:60;font-family:'Inter',system-ui,sans-serif}
 .cc-brand{display:flex;align-items:center;gap:10px;padding:4px 8px 14px;text-decoration:none!important}
