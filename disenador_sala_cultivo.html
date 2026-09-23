@@ -145,6 +145,14 @@
   footer{margin-top:22px;font-size:11px;color:var(--soft);text-align:center;line-height:1.7;padding:0 8px;}
   footer b{color:var(--forest2);}
   @media(prefers-reduced-motion:reduce){.box{transition:none!important;}}
+  /* Escritorio: dos columnas (sala a la izquierda, fija; cálculos a la derecha). Móvil sin cambios. */
+  @media(min-width:1024px){
+    .app{max-width:1180px;}
+    .scroll{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:28px;align-items:start;padding:6px 28px 12px;}
+    .dz-izq{position:sticky;top:12px;}
+    .dz-der > .panel:first-child{margin-top:0;}
+    .scroll > footer{grid-column:1 / -1;}
+  }
 </style>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
@@ -192,6 +200,7 @@
   </div>
 
   <div class="scroll">
+    <div class="dz-izq">
     <div class="kicker">Diseñador · Sala de cultivo</div>
     <div class="title">Diseña tu <em>sala de cultivo</em></div>
     <p class="lead" id="lead-text">Ajusta las medidas con los botones. El modelo y los cálculos —aire, luz, VPD, coste y cosecha— se actualizan al instante.</p>
@@ -221,16 +230,6 @@
         </div>
         <div class="hint">↻ arrastra para girar</div>
       </div>
-    </div>
-
-    <!-- VISTA DE PLANTA: capa visual 2D top-down (armario a escala, macetas,
-         luz y extractor) — lo que hoy faltaba para que un cliente vea de un
-         vistazo cómo quedaría montada la sala, no solo números y chips. -->
-    <div class="scene-card" id="plano-card">
-      <div class="plano-wrap" id="plano-wrap">
-        <svg id="plano-svg" viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg"></svg>
-      </div>
-      <div class="plano-legend" id="plano-legend"></div>
     </div>
 
     <!-- DIMENSIONES: botones al alcance del pulgar, justo bajo la imagen -->
@@ -264,6 +263,8 @@
     <p class="field-label">Medidas habituales de armario</p>
     <div class="chips" id="presets"></div>
 
+    </div>
+    <div class="dz-der">
     <!-- ETAPA Y LUZ -->
     <div class="panel">
       <h2>Etapa de cultivo</h2>
@@ -400,6 +401,7 @@
       </div>
     </div>
 
+    </div>
     <footer>
       Renovación de aire ≈ 1 vol/min + factores de filtro de carbón, calor de luz y etapa. Cosecha y coste son estimaciones honestas, no promesas.<br>
       <b>cannabicultor.com</b>
@@ -646,6 +648,7 @@
   // en la esquina. Plantilla por código, no imagen de IA — evita inventar
   // geometría que un cliente podría usar para comprar mal dimensionado.
   function renderPlano(){
+    if(!document.getElementById('plano-svg')) return; // vista de planta retirada
     var s=state, area=s.w*s.d, plantas=Math.max(1,Math.round(area*4));
     var VB=300, pad=22, maxDim=Math.max(s.w,s.d);
     var scale=(VB-pad*2)/maxDim;
