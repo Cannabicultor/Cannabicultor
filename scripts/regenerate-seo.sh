@@ -42,7 +42,7 @@ fi
 
 SUPABASE_URL="${SUPABASE_URL:-https://gfyrsrdnvgnhtsuexjkb.supabase.co}"
 SUPABASE_KEY="${SUPABASE_KEY:-sb_publishable_FdRmfirvOTAIfZFOcj2ZZg_Vic__TDw}"
-STATE_FILE="$ROOT/.seo-last-sync"
+STATE_FILE="$HOME/.seo-last-sync"
 
 # Ultima fecha de actualizacion entre las 3 tablas publicables (max updated_at).
 latest() {
@@ -61,6 +61,10 @@ if [ -n "$CURRENT" ] && [ "$CURRENT" = "$PREVIOUS" ]; then
 fi
 
 echo "$(date -u +%FT%TZ) · cambios detectados (nuevo=$CURRENT, anterior=${PREVIOUS:-ninguno}) · regenerando…"
+# Se genera FUERA del repo git: si no, el repo queda "sucio" y cPanel no deja desplegar.
+export PRERENDER_OUT="${PRERENDER_OUT:-$HOME/seo-build}"
+export SEO_OUT="$PRERENDER_OUT"
+mkdir -p "$PRERENDER_OUT"
 "$NODE" prerender/build.mjs --breeders --variedades --cbd
 bash deploy.sh
 echo "$CURRENT" > "$STATE_FILE"

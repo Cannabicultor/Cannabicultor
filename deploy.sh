@@ -59,9 +59,15 @@ for file in favicon.ico apple-touch-icon.png; do
   fi
 done
 
+# Paginas generadas (breeders, variedades, tiendas-cbd, sitemaps): si el cron las regenero en
+# $SEO_OUT (fuera del repo), esa version es la mas reciente; si no, se usa la del repo.
+SEO_OUT="${SEO_OUT:-$HOME/seo-build}"
+gen_src() { if [ -e "$SEO_OUT/$1" ]; then echo "$SEO_OUT/$1"; else echo "$1"; fi; }
+
 for file in sitemap.xml sitemap-static.xml sitemap-breeders.xml sitemap-strains.xml sitemap-cbd.xml robots.txt; do
-  if [ -f "$file" ]; then
-    /bin/cp -f "$file" "$DEPLOYPATH/"
+  src="$(gen_src "$file")"
+  if [ -f "$src" ]; then
+    /bin/cp -f "$src" "$DEPLOYPATH/"
   fi
 done
 
@@ -69,10 +75,11 @@ done
 # Copia la version nueva a un temporal y hace swap, borrando asi las fichas
 # huerfanas de slugs que ya no existen. No depende de rsync (este host no lo tiene).
 for dir in breeders variedades tiendas-cbd; do
-  if [ -d "$dir" ]; then
+  src="$(gen_src "$dir")"
+  if [ -d "$src" ]; then
     tmp="$DEPLOYPATH/.$dir.new"
     rm -rf "$tmp"
-    /bin/cp -Rf "$dir" "$tmp"
+    /bin/cp -Rf "$src" "$tmp"
     rm -rf "$DEPLOYPATH/$dir"
     mv "$tmp" "$DEPLOYPATH/$dir"
   fi

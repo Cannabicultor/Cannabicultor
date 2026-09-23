@@ -60,6 +60,9 @@ const SUPABASE_URL = process.env.SUPABASE_URL || 'https://gfyrsrdnvgnhtsuexjkb.s
 const SUPABASE_KEY = process.env.SUPABASE_KEY || 'sb_publishable_FdRmfirvOTAIfZFOcj2ZZg_Vic__TDw';
 const SITE = 'https://www.cannabicultor.com';
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
+// Donde se escriben las paginas generadas. En el servidor (cron) va FUERA del repo git
+// (PRERENDER_OUT=~/seo-build) para no ensuciarlo y no bloquear los despliegues de cPanel.
+const OUT = process.env.PRERENDER_OUT || ROOT;
 const TODAY = new Date().toISOString().slice(0, 10);
 
 const args = process.argv.slice(2);
@@ -821,7 +824,7 @@ async function write(path, content) {
 // huerfanas de slugs que ya no existen.
 async function cleanDir(name) {
   if (DRY) return;
-  await rm(join(ROOT, name), { recursive: true, force: true });
+  await rm(join(OUT, name), { recursive: true, force: true });
 }
 
 // ── Main ──────────────────────────────────────────────────────────────────────
@@ -882,7 +885,7 @@ async function main() {
   if (DO_BREEDERS) {
     await cleanDir('breeders');
     for (const b of breeders) {
-      await write(join(ROOT, 'breeders', b._slug, 'index.html'), breederPage(b, varsByBreeder.get(b.id) || []));
+      await write(join(OUT, 'breeders', b._slug, 'index.html'), breederPage(b, varsByBreeder.get(b.id) || []));
       nB++;
     }
     console.log(`  ✓ breeders escritos: ${nB}`);
@@ -891,7 +894,7 @@ async function main() {
     await cleanDir('variedades');
     for (const v of pilotVars) {
       const b = breederById.get(v.breeder_id);
-      await write(join(ROOT, 'variedades', v._slug, 'index.html'), varietyPage(v, b, b?._slug));
+      await write(join(OUT, 'variedades', v._slug, 'index.html'), varietyPage(v, b, b?._slug));
       nV++;
     }
     console.log(`  ✓ variedades escritas: ${nV}`);
@@ -913,15 +916,15 @@ async function main() {
     }
     await cleanDir('tiendas-cbd');
     // Hub
-    await write(join(ROOT, 'tiendas-cbd', 'index.html'), cbdHubPage(cityGroups).html);
+    await write(join(OUT, 'tiendas-cbd', 'index.html'), cbdHubPage(cityGroups).html);
     // Ciudades + fichas
     let nFichas = 0;
     for (const g of cityGroups.values()) {
-      await write(join(ROOT, 'tiendas-cbd', 'espana', g.slug, 'index.html'), cbdCityPage(g.slug, g.ciudad, g.shops).html);
+      await write(join(OUT, 'tiendas-cbd', 'espana', g.slug, 'index.html'), cbdCityPage(g.slug, g.ciudad, g.shops).html);
       cbdSitemap.push({ loc: `${SITE}/tiendas-cbd/espana/${g.slug}/`, priority: '0.8', changefreq: 'weekly' });
       for (const s of g.shops) {
         const page = cbdShopPage(s);
-        await write(join(ROOT, 'tiendas-cbd', 'espana', g.slug, s._slug, 'index.html'), page.html);
+        await write(join(OUT, 'tiendas-cbd', 'espana', g.slug, s._slug, 'index.html'), page.html);
         nFichas++;
         // Solo las fichas curadas (no borrador) entran al sitemap para indexación.
         if (page.indexable) cbdSitemap.push({ loc: page.canonical, priority: '0.6', changefreq: 'monthly', lastmod: (s.updated_at || TODAY).slice(0, 10) });
@@ -932,24 +935,24 @@ async function main() {
 
   // — Sitemaps —
   if (!DRY && (DO_BREEDERS || pilotVars.length || DO_CBD)) {
-    await write(join(ROOT, 'sitemap-static.xml'), sitemapUrls(STATIC_URLS));
+    await write(join(OUT, 'sitemap-static.xml'), sitemapUrls(STATIC_URLS));
     const names = ['sitemap-static.xml'];
     if (DO_BREEDERS) {
-      await write(join(ROOT, 'sitemap-breeders.xml'),
+      await write(join(OUT, 'sitemap-breeders.xml'),
         sitemapUrls(breeders.map((b) => ({ loc: `${SITE}/breeders/${b._slug}/`, priority: '0.7', changefreq: 'monthly', lastmod: (b.updated_at || TODAY).slice(0, 10) }))));
       names.push('sitemap-breeders.xml');
     }
     if (pilotVars.length) {
-      await write(join(ROOT, 'sitemap-strains.xml'),
+      await write(join(OUT, 'sitemap-strains.xml'),
         sitemapUrls(pilotVars.map((v) => ({ loc: `${SITE}/variedades/${v._slug}/`, priority: '0.6', changefreq: 'monthly', lastmod: (v.updated_at || TODAY).slice(0, 10) }))));
       names.push('sitemap-strains.xml');
     }
     if (DO_CBD && cbdSitemap.length) {
-      await write(join(ROOT, 'sitemap-cbd.xml'),
+      await write(join(OUT, 'sitemap-cbd.xml'),
         sitemapUrls([{ loc: `${SITE}/tiendas-cbd/`, priority: '0.8', changefreq: 'weekly', lastmod: TODAY }, ...cbdSitemap]));
       names.push('sitemap-cbd.xml');
     }
-    await write(join(ROOT, 'sitemap.xml'), sitemapIndex(names));
+    await write(join(OUT, 'sitemap.xml'), sitemapIndex(names));
     console.log(`  ✓ sitemaps: ${names.join(', ')} + índice sitemap.xml`);
   }
 
