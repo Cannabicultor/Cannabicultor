@@ -105,7 +105,20 @@ async function main() {
   const nuevos = [];
   let dupUrl = 0, dupKb = 0, excluidos = 0, bajaCalidad = 0;
 
-  for (const item of QUERIES.slice(0, LIMIT)) {
+  // Huecos detectados en consultas reales (kb_huecos) van PRIMERO: buscamos lo que los usuarios preguntan y el RAG no sabe.
+  const deHuecos = [];
+  if (process.env.SIN_HUECOS !== '1') {
+    const hs = await q(`select id, tema, query_busqueda from kb_huecos
+                        where estado='abierto' and accion='buscar_fuentes' and query_busqueda is not null
+                        order by prioridad, n_consultas desc`);
+    for (const h of hs)
+      for (const qq of h.query_busqueda.split(';').map(x => x.trim()).filter(Boolean))
+        deHuecos.push({ q: qq, categoria: 'Hueco', hueco_id: h.id });
+    console.log(`   Queries desde kb_huecos: ${deHuecos.length}`);
+  }
+  const TODAS = [...deHuecos, ...QUERIES];
+
+  for (const item of TODAS.slice(0, LIMIT + deHuecos.length)) {
     console.log(`• ${item.q}`);
     let resultados = [];
     try { resultados = await buscarQuery(item); }
@@ -162,6 +175,8 @@ async function main() {
     );
     if (rows.length) insertados++;
   }
+  const idsHueco = [...new Set(deHuecos.map(h => h.hueco_id))];
+  if (idsHueco.length) await q(`update kb_huecos set estado='en_curso', updated_at=now() where id = any($1)`, [idsHueco]);
   console.log(`\n✅ ${insertados} guardados en kb_candidates (estado=pendiente). Revísalos y aprueba.`);
 }
 
