@@ -427,13 +427,43 @@ body{padding-bottom:80px}
 `;
 }
 
-// Enlace a la genealogía de la variedad en genetica.cannabicultor.com (el buscador resuelve el nombre).
+// Enlace a la genealogía de la variedad en genetica.cannabicultor.com.
+// GENEALOGIA mapea una clave de nombre normalizada → slug de su página estática (/v/<slug>/), leída
+// del sitemap del subdominio al arrancar. Así enlazan también las fichas sin cruce en Supabase.
+const GENEALOGIA_SITE = 'https://genetica.cannabicultor.com';
+const GENEALOGIA = new Map();
+// misma normalización que el buscador de genealogía: sin tildes, "#4"/"Nr4" = "4", sin letras repetidas
+const genKey = (s) => String(s).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
+  .replace(/(#|\bn[ro]?\.?|nº)\s*(?=\d)/g, '').replace(/[^a-z0-9]+/g, '').replace(/(.)\1+/g, '$1');
 // El nombre del producto puede llevar sufijos ("Auto", "Fast", "Feminizada"); se quitan para buscar la variedad base.
+const baseName = (nombre) => String(nombre).replace(/\b(auto(matic|flower(ing)?)?|fast( version)?|feminizada|feminized|fem|regular|xl|cbd)\b/gi, '').replace(/\s+/g, ' ').trim() || String(nombre);
+
+async function loadGenealogia() {
+  try {
+    const r = await fetch(`${GENEALOGIA_SITE}/sitemap.xml`, { signal: AbortSignal.timeout(20000) });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    for (const [, s] of (await r.text()).matchAll(/\/v\/([^/<]+)\/<\/loc>/g)) {
+      const k = genKey(s.replace(/-/g, ' '));
+      if (k && !GENEALOGIA.has(k)) GENEALOGIA.set(k, s);
+    }
+    console.log(`  genealogía: ${GENEALOGIA.size} variedades con página`);
+  } catch (e) {
+    console.log(`  genealogía: no se pudo leer el sitemap (${e.message}); solo se enlazarán las fichas con cruce`);
+  }
+}
+
 function genealogyLink(v, cross) {
-  if (!cross && !v.es_landrace) return '';
-  const base = String(v.nombre).replace(/\b(auto(matic|flower(ing)?)?|fast( version)?|feminizada|feminized|fem|regular|xl|cbd)\b/gi, '').replace(/\s+/g, ' ').trim() || v.nombre;
-  const s = base.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
-  return `<p class="body"><a href="https://genetica.cannabicultor.com/?v=${s}" data-track="ficha_genealogia">Ver el árbol genealógico de ${esc(base)} →</a> Padres, abuelos y landraces de origen.</p>`;
+  const base = baseName(v.nombre);
+  const k = genKey(base);
+  // tolera singular/plural ("Girl Scout Cookie" = "Girl Scout Cookies")
+  const page = GENEALOGIA.get(k) || GENEALOGIA.get(k + 's') || (k.endsWith('s') ? GENEALOGIA.get(k.slice(0, -1)) : undefined);
+  let href;
+  if (page) href = `${GENEALOGIA_SITE}/v/${page}/`;
+  else if (cross || v.es_landrace) {
+    const s = base.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+    href = `${GENEALOGIA_SITE}/?v=${s}`;
+  } else return '';
+  return `<p class="body"><a href="${href}" data-track="ficha_genealogia">Ver el árbol genealógico de ${esc(base)} →</a> Padres, abuelos y landraces de origen.</p>`;
 }
 
 function varietyPage(v, breeder, breederSlug) {
@@ -878,6 +908,7 @@ async function main() {
     order: 'breeder_name.asc',
   });
   assignBreederSlugs(breeders);
+  await loadGenealogia();
   const breederById = new Map(breeders.map((b) => [b.id, b]));
   console.log(`  breeders cargados: ${breeders.length}`);
 
