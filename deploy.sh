@@ -12,6 +12,7 @@ HTML_FILES=(
   mi-cultivo.html
   empresas.html
   ia-tiendas-cbd.html
+  ia-clubes.html
   instalar-asesor.html
   prueba-asesor.html
   admin-growshops.html
