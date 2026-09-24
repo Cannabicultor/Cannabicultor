@@ -1501,7 +1501,7 @@ function renderMarcas(){
   const marcas = [...new Set(LINES.map(l => l.brand))].sort((a, b) => a.localeCompare(b, "es"));
   $("marcas").innerHTML = marcas.map(m => `<button type="button" class="marca" data-m="${m}" aria-label="${m}" title="${m}"><span>${m}</span></button>`).join("");
   $("marcas").querySelectorAll(".marca").forEach(btn => {
-    const slug = slugMarca(btn.dataset.m), exts = ["svg", "png", "webp"];
+    const slug = slugMarca(btn.dataset.m), exts = ["png", "svg", "webp"];
     let i = 0;
     const img = new Image();
     img.alt = btn.dataset.m;
