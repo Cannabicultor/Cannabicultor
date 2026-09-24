@@ -485,7 +485,7 @@ async function rerankChunks(query, chunks, env) {
 async function resolveSalesTenant(env, tenantSlug) {
   const slug = String(tenantSlug || '').trim();
   if (!slug) return null;
-  const path = `sales_tenants?slug=eq.${encodeURIComponent(slug)}&status=neq.churned&select=id,slug,display_name,status,brand_profile&limit=1`;
+  const path = `sales_tenants?slug=eq.${encodeURIComponent(slug)}&status=neq.churned&select=id,slug,display_name,status,brand_profile,vertical&limit=1`;
   const result = await sbRequest(env, path, { method: 'GET' });
   if (!result.ok || !Array.isArray(result.data) || !result.data.length) return null;
   return result.data[0];
@@ -1923,6 +1923,51 @@ async function handleBenchmarkGrok(body, env) {
   if (!response.ok) return { status: response.status, data: { error: 'Grok no disponible' } };
   const value = await response.json();
   return { status: 200, data: { reply: value.choices?.[0]?.message?.content || '' } };
+}
+
+// Benchmark: modelo "desnudo" (sin RAG ni prompt de Cannabicultor) con las claves del worker.
+// body: { provider: 'anthropic'|'openai'|'deepseek'|'xai', model, system?, messages, max_tokens?, temperature? }
+const BENCHMARK_OPENAI_COMPAT = {
+  openai: { url: 'https://api.openai.com/v1/chat/completions', key: 'OPENAI_API_KEY' },
+  deepseek: { url: 'https://api.deepseek.com/v1/chat/completions', key: 'DEEPSEEK_API_KEY' },
+  xai: { url: 'https://api.x.ai/v1/chat/completions', key: 'XAI_API_KEY' },
+};
+
+async function handleBenchmarkModel(body, env) {
+  const { provider, model, system = '', max_tokens = 1200, temperature } = body || {};
+  const messages = (body?.messages || []).filter((m) => m && typeof m.content === 'string');
+  if (!model || !messages.length) return { status: 400, data: { error: 'Faltan model o messages' } };
+  const t0 = Date.now();
+  let response;
+  if (provider === 'anthropic') {
+    response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-api-key': env.ANTHROPIC_API_KEY, 'anthropic-version': '2023-06-01' },
+      body: JSON.stringify({ model, max_tokens, system: system || undefined, messages, ...(temperature !== undefined ? { temperature } : {}) }),
+    });
+  } else if (BENCHMARK_OPENAI_COMPAT[provider]) {
+    const cfg = BENCHMARK_OPENAI_COMPAT[provider];
+    const isReasoning = provider === 'openai' && /^(o\d|gpt-5)/.test(model);
+    response = await fetch(cfg.url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${env[cfg.key]}` },
+      body: JSON.stringify({
+        model,
+        messages: system ? [{ role: 'system', content: system }, ...messages] : messages,
+        ...(isReasoning ? { max_completion_tokens: max_tokens * 4 } : { max_tokens }),
+        ...(temperature !== undefined && !isReasoning ? { temperature } : {}),
+      }),
+    });
+  } else {
+    return { status: 400, data: { error: 'provider no soportado' } };
+  }
+  const raw = await response.text();
+  if (!response.ok) return { status: response.status, data: { error: raw.slice(0, 400) } };
+  const data = JSON.parse(raw);
+  const reply = provider === 'anthropic'
+    ? (data.content || []).filter((c) => c.type === 'text').map((c) => c.text).join('')
+    : data.choices?.[0]?.message?.content || '';
+  return { status: 200, data: { reply, model: data.model || model, usage: data.usage || null, ms: Date.now() - t0 } };
 }
 
 // =========================================================================
@@ -3996,6 +4041,11 @@ export default {
       if (path === '/benchmark/grok') {
         if (!await hasBenchmarkAccess(request, env)) return json({ error: 'No autorizado' }, 401, cors);
         const result = await handleBenchmarkGrok(body, env);
+        return json(result.data, result.status, cors);
+      }
+      if (path === '/benchmark/model') {
+        if (!await hasBenchmarkAccess(request, env)) return json({ error: 'No autorizado' }, 401, cors);
+        const result = await handleBenchmarkModel(body, env);
         return json(result.data, result.status, cors);
       }
 
