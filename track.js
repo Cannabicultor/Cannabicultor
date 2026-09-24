@@ -102,6 +102,8 @@
   window.cc.track = track;
   window.cc.sid = sid;
   window.cc.interno = interno;
+  // Eventos disparados antes de que cargara este script (p. ej. /?q= al abrir la home)
+  try { (window.__ccq || []).forEach(function (e) { track(e[0], e[1], e[2]); }); window.__ccq = []; } catch (e) {}
 
   // ── 3. Clics de CTA (automático) ──
   // Marca manual preferente: <a data-track="cta_registro_hero">

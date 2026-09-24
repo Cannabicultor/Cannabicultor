@@ -245,7 +245,7 @@ var ENTRADAS = [], ULTIMA = null, HIST = [], foto = null, enviando = false;
 
 function esc(s){ return String(s == null ? '' : s).replace(/[&<>"']/g,function(m){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m];}); }
 function md(s){ return esc(s).replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/^#{1,4}\s*(.+)$/gm,'<strong>$1</strong>').replace(/^[-•]\s+/gm,'• ').replace(/\n/g,'<br>'); }
-function ev(n,v){ try{ if(window.cc && window.cc.track) window.cc.track(n, v); }catch(_){ } }
+function ev(n,v,m){ try{ if(window.cc && window.cc.track) window.cc.track(n, v, m); else (window.__ccq = window.__ccq || []).push([n, v, m]); }catch(_){ } }
 function salir401(){ if(window.GAAuth) GAAuth.clearSession(); location.replace('/login.html?next=' + encodeURIComponent('/mi-cultivo.html')); }
 
 // Fijos del perfil (el perfil puede traerlos en .cultivo)

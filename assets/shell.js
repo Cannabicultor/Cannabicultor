@@ -28,7 +28,7 @@
     if (!q) { inp.focus(); return; }
     var ctx = form.getAttribute('data-contexto') || '';
     var pregunta = ctx ? (ctx + ': ' + q) : q;
-    try { if (window.cc && window.cc.track) window.cc.track('chat_contextual', form.getAttribute('data-tipo') || 'pagina'); } catch (_) {}
+    try { if (window.cc && window.cc.track) window.cc.track('chat_contextual', form.getAttribute('data-tipo') || 'pagina', { pagina: location.pathname }, true); } catch (_) {}
     location.href = '/?q=' + encodeURIComponent(pregunta.slice(0, 480));
   });
 })();

@@ -245,7 +245,7 @@ var $ = function(id){ return document.getElementById(id); };
 var caja = $('caja'), q = $('q'), msgs = $('msgs'), scroll = $('scroll');
 $('cajaSlotHola').appendChild(caja);
 
-function ev(nombre, valor){ try{ if(window.cc && window.cc.track) window.cc.track(nombre, valor); gtag('event', nombre, { valor: valor||'' }); }catch(_){ } }
+function ev(nombre, valor, meta){ try{ if(window.cc && window.cc.track) window.cc.track(nombre, valor, meta); else (window.__ccq = window.__ccq || []).push([nombre, valor, meta]); gtag('event', nombre, { valor: valor||'' }); }catch(_){ } }
 
 // ── Sesión: logueado (JWT guardado) o anónimo (token de onboarding) ──
 function initSesion(){
@@ -370,6 +370,7 @@ function mostrarRegistro(motivo){
         } else if(dt && dt.fundador_agotado){
           fallo('Ahora mismo no podemos crear más cuentas gratuitas. Escríbenos desde Contacto.');
         } else {
+          ev(modoLogin ? 'login_chat_error' : 'registro_chat_error', (dt && dt.error) || '');
           fallo((dt && dt.error) || (modoLogin ? 'Email o contraseña incorrectos.' : 'No se pudo crear la cuenta.'));
         }
       })
@@ -409,6 +410,7 @@ function enviar(textoForzado){
     return r.json();
   }).then(function(d){
     pensando(false);
+    ev('chat_respuesta', d && d.limite_anonimo ? 'limite_anonimo' : (d && d.sin_creditos ? 'sin_creditos' : ((d && (d.reply || d.content)) ? 'ok' : 'vacia')), { tipo: foto ? 'foto' : 'texto', usuario: st.logueado ? 'usuario' : 'anonimo', restantes: d && d.anon_restantes });
     var reply = (d && (d.reply || d.content)) || 'No he podido responder ahora. Prueba de nuevo en un momento.';
     burbujaIA(reply, d && d.consulta_id);
     if(!(d && d.limite_anonimo)) st.hist.push({ role:'assistant', content: reply });
@@ -420,6 +422,7 @@ function enviar(textoForzado){
     }
   }).catch(function(e){
     pensando(false);
+    ev('chat_respuesta', 'error', { detalle: (e && e.message) || '' });
     burbujaIA(e && e.message === '401' ? 'Tu sesión ha caducado. Vuelve a enviar tu mensaje.' : 'No he podido conectar con la IA. Revisa tu conexión y prueba otra vez.');
   }).then(function(){
     st.enviando = false; $('btnEnviar').disabled = false;
@@ -460,7 +463,7 @@ document.querySelectorAll('[data-privado]').forEach(function(a){
   });
 });
 // ?q= en la URL: llega con la pregunta ya hecha (desde fichas, reels, etc.)
-try{ var pre = new URLSearchParams(location.search).get('q'); if(pre){ enviar(pre.slice(0,500)); } }catch(_){}
+try{ var pre = new URLSearchParams(location.search).get('q'); if(pre){ ev('chat_llegada_contextual', document.referrer ? new URL(document.referrer).pathname : ''); enviar(pre.slice(0,500)); } }catch(_){}
 actualizarCupo();
 })();
 </script>
