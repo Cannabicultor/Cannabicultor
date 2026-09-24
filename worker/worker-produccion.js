@@ -5,6 +5,7 @@ import {
   executeSalesAgentTool,
   detectPitchIntent,
 } from './sales-agent.js';
+import { handleInstagramWebhook } from './ig-channel.js';
 import { runCatalogIngest } from './catalog-curation.js';
 
 /**
@@ -3921,6 +3922,15 @@ export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
     const path = url.pathname.replace(/\/$/, '') || '/';
+    // Instagram DM → asesor (clubes, tiendas). Sin CORS: lo llama Meta, no un navegador.
+    if (path === '/ig/webhook') {
+      try {
+        return await handleInstagramWebhook(request, env, ctx, { sbRequest, handleSalesAgentChat });
+      } catch (err) {
+        console.log(JSON.stringify({ event: 'ig_webhook_error', detail: String(err?.message || err).slice(0, 200) }));
+        return new Response('ok', { status: 200 });
+      }
+    }
     // Widget de tiendas: CORS propio (cualquier web de tienda, o solo sus dominios si los fijamos).
     if (path.startsWith('/widget/')) {
       if (request.method === 'OPTIONS') return new Response(null, { headers: widgetCors(request, null) });
