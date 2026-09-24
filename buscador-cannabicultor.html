@@ -278,13 +278,24 @@ function thcLabel(v){
   return t ? (+t) + "%" : null;
 }
 
-async function pg(path, { count = false, signal } = {}) {
+// Conteo "estimated": exacto en resultados pequeños y estimado por el planificador en los grandes.
+// Un conteo exacto recorre las 45.000 variedades y, con la caché fría, supera el límite de 3 s de Supabase.
+// Si una petición falla por un error del servidor o de red, se reintenta una vez antes de mostrar el error.
+async function pg(path, { count = false, signal } = {}, retry = 1) {
   const h = { ...HEADERS };
-  if (count) h.Prefer = "count=exact";
-  const r = await fetch(SUPABASE_URL + "/rest/v1/" + path, { headers: h, signal });
-  if (!r.ok) throw new Error("HTTP " + r.status);
-  const total = count ? parseInt((r.headers.get("content-range") || "/0").split("/")[1], 10) : null;
-  return { data: await r.json(), total };
+  if (count) h.Prefer = "count=estimated";
+  try {
+    const r = await fetch(SUPABASE_URL + "/rest/v1/" + path, { headers: h, signal });
+    if (!r.ok) throw Object.assign(new Error("HTTP " + r.status), { status: r.status });
+    const total = count ? parseInt((r.headers.get("content-range") || "/0").split("/")[1], 10) : null;
+    return { data: await r.json(), total };
+  } catch (e) {
+    if (retry > 0 && e.name !== "AbortError" && !(e.status >= 400 && e.status < 500)) {
+      await new Promise(res => setTimeout(res, 800));
+      return pg(path, { count, signal }, retry - 1);
+    }
+    throw e;
+  }
 }
 
 /* ---------- stats en vivo ---------- */
@@ -328,7 +339,7 @@ async function load(reset = true) {
     if (token !== lastToken) return;
     if (reset) {
       list.innerHTML = "";
-      countLine.innerHTML = total ? "<b>" + nf.format(total) + "</b> resultados" : "";
+      countLine.innerHTML = total ? (total > 1000 ? "≈ " : "") + "<b>" + nf.format(total) + "</b> resultados" : "";
       if (!data.length) {
         list.innerHTML = '<div class="empty"><span class="big">Sin resultados</span>Prueba con otro nombre o quita filtros.<br>Ej.: «Kush», «Haze», «Gorilla»…</div>';
         busy = false; return;
