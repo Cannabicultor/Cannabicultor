@@ -427,6 +427,15 @@ body{padding-bottom:80px}
 `;
 }
 
+// Enlace a la genealogía de la variedad en genetica.cannabicultor.com (el buscador resuelve el nombre).
+// El nombre del producto puede llevar sufijos ("Auto", "Fast", "Feminizada"); se quitan para buscar la variedad base.
+function genealogyLink(v, cross) {
+  if (!cross && !v.es_landrace) return '';
+  const base = String(v.nombre).replace(/\b(auto(matic|flower(ing)?)?|fast( version)?|feminizada|feminized|fem|regular|xl|cbd)\b/gi, '').replace(/\s+/g, ' ').trim() || v.nombre;
+  const s = base.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+  return `<p class="body"><a href="https://genetica.cannabicultor.com/?v=${s}" data-track="ficha_genealogia">Ver el árbol genealógico de ${esc(base)} →</a> Padres, abuelos y landraces de origen.</p>`;
+}
+
 function varietyPage(v, breeder, breederSlug) {
   const bn = breeder?.breeder_name && !/unknown|legendary/i.test(breeder.breeder_name) ? breeder.breeder_name : null;
   const canonical = `${SITE}/variedades/${v._slug}/`;
@@ -491,6 +500,7 @@ ${img ? `<img src="${esc(img)}" alt="Foto de la variedad ${esc(v.nombre)}" loadi
 <table class="facts">${rows.map(([k, val]) => `<tr><th>${k}</th><td>${val}</td></tr>`).join('')}</table>
 </div>
 <div class="body"><p>${describe(v, breeder)}</p></div>
+${genealogyLink(v, cross)}
 <aside class="vpd-cta"><strong>¿Quieres cosechar el máximo potencial de la genética ${esc(v.nombre)}?</strong>Registra tu <a href="/empezar.html?v=${v._slug || ''}&n=${encodeURIComponent(v.nombre)}">diario de cultivo en Cannabicultor</a>. Nuestro <a href="/disenador_sala_cultivo.html">Diseñador de Sala</a> y la <a href="/calculadora-vpd/">Calculadora de VPD</a>, integrada con nuestra <a href="/cultivo-con-ia/">IA Cannábica</a>, te guiarán paso a paso durante toda su floración.</aside>
 ${bn ? `<a class="cta" href="/breeders/${breederSlug}/">Ver más variedades de ${esc(bn)}</a>` : `<a class="cta" href="/buscador-cannabicultor.html">Explorar el buscador de variedades</a>`}
 <div data-resenas data-tipo="variedad" data-id="${v.id}"></div>
