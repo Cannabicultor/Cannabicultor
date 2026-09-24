@@ -1,0 +1,49 @@
+{
+  "system_modelos_base": "Eres un asistente experto en cultivo de cannabis. Responde siempre en español, de forma clara y precisa.",
+  "max_tokens": 1200,
+  "concursantes": [
+    {
+      "id": "cannabicultor",
+      "nombre": "Cannabicultor IA",
+      "tipo": "cannabicultor",
+      "nota": "DeepSeek + RAG + prompt propio"
+    },
+    {
+      "id": "deepseek",
+      "nombre": "DeepSeek (sin RAG)",
+      "provider": "deepseek",
+      "model": "deepseek-chat"
+    },
+    {
+      "id": "gpt",
+      "nombre": "GPT-4o",
+      "provider": "openai",
+      "model": "gpt-4o"
+    },
+    {
+      "id": "claude",
+      "nombre": "Claude Sonnet 4.5",
+      "provider": "anthropic",
+      "model": "claude-sonnet-4-5",
+      "desactivado": true
+    },
+    {
+      "id": "grok",
+      "nombre": "Grok 4.1 Fast",
+      "provider": "xai",
+      "model": "grok-4-1-fast-reasoning"
+    }
+  ],
+  "jueces": [
+    {
+      "id": "juez-gpt",
+      "provider": "openai",
+      "model": "gpt-4o"
+    },
+    {
+      "id": "juez-grok",
+      "provider": "xai",
+      "model": "grok-4-1-fast-reasoning"
+    }
+  ]
+}

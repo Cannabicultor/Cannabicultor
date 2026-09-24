@@ -11,6 +11,9 @@ HTML_FILES=(
   index-anterior.html
   mi-cultivo.html
   empresas.html
+  benchmark-ia.html
+  benchmark-ia-respuestas.html
+  benchmark-ia-general.html
   ia-tiendas-cbd.html
   ia-clubes.html
   instalar-asesor.html

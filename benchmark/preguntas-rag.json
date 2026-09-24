@@ -1,0 +1,424 @@
+{
+  "version": "rag-2026-09-24",
+  "titulo": "Conocimiento propio de Cannabicultor",
+  "descripcion": "Preguntas cuya respuesta de referencia está en la base de conocimiento, el directorio o el catálogo de Cannabicultor (estudios recientes, vídeos de Ernie, tabla de valores, clubes y growshops, fichas de variedades). Mide el valor añadido del RAG: está diseñado para favorecer a quien tenga esas fuentes.",
+  "preguntas": [
+    {
+      "id": "ci-01",
+      "categoria": "Ciencia reciente en la base",
+      "tipo": "abierta",
+      "pregunta": "¿Hay algún estudio que mida qué pasa con los cannabinoides si cultivo con la humedad muy alta durante la floración? Dame cifras.",
+      "fuente": "Corredor-Perilla, Kwon y Park (2025), Frontiers in Plant Science, 'Elevated relative humidity significantly decreases cannabinoid concentrations while delaying flowering development in Cannabis sativa L.'",
+      "puntos_clave": [
+        "Estudio de Corredor-Perilla et al., 2025 (Frontiers in Plant Science) en una variedad CBD dominante",
+        "Compara HR baja (37-58%) con HR alta (78-98%); con HR alta el VPD cayó a 0,62-0,25 kPa",
+        "Con HR alta: biomasa total -75% y biomasa de flor -71%",
+        "La floración se retrasó unas tres semanas",
+        "CBD-A unas 4,9 veces menor, CBD unas 3,2 veces menor, CBC-A unas 13 veces menor"
+      ]
+    },
+    {
+      "id": "ci-02",
+      "categoria": "Ciencia reciente en la base",
+      "tipo": "abierta",
+      "pregunta": "¿De verdad hay que florecer a 12/12? He oído que hay estudios que usan más horas de luz en floración.",
+      "fuente": "Ahrens, Llewellyn y Zheng (2023), Plants (Basel), 'Is Twelve Hours Really the Optimum Photoperiod for Promoting Flowering in Indoor-Grown Cultivars of Cannabis sativa?'",
+      "puntos_clave": [
+        "Estudio de Ahrens, Llewellyn y Zheng (2023) con 10 cultivares y fotoperiodos de 12 a 15 h",
+        "Todos los cultivares iniciaron floración hasta 14 h de luz; retrasos de 0 a ~4 días frente a 12 h",
+        "A 15 h algunos iniciaron flor pero no llegaron a desarrollarla",
+        "Los parámetros óptimos de cosecha estuvieron entre 12 y 13 h según el cultivar",
+        "Más horas = más DLI y posible más rendimiento; conviene probar con cada variedad"
+      ]
+    },
+    {
+      "id": "ci-03",
+      "categoria": "Ciencia reciente en la base",
+      "tipo": "abierta",
+      "pregunta": "¿Cuántos días seguidos de noche larga necesita la planta para empezar a formar el cogollo, y qué hormona está implicada?",
+      "fuente": "Alter et al. (2024), Horticulture Research, 'Inflorescence development in female cannabis plants is mediated by photoperiod and gibberellin'",
+      "puntos_clave": [
+        "Al menos tres días consecutivos de fotoperiodo corto para iniciar la inflorescencia",
+        "El fotoperiodo corto debe mantenerse durante toda la maduración para el cogollo compacto",
+        "Hay una fase de elongación rápida entre el día 5 y el 10 de fotoperiodo corto",
+        "Implicada la giberelina (GA4), y también baja la auxina en el ápice",
+        "Volver a fotoperiodo largo sube GA4/auxina y desarma la inflorescencia (revegetación)"
+      ]
+    },
+    {
+      "id": "ci-04",
+      "categoria": "Ciencia reciente en la base",
+      "tipo": "abierta",
+      "pregunta": "¿Cuánto nitrógeno (en mg/L) necesita el cannabis en vegetativo según la investigación?",
+      "fuente": "Saloner y Bernstein (2020), Frontiers in Plant Science, 'Response of Medical Cannabis to Nitrogen Supply Under Long Photoperiod'",
+      "puntos_clave": [
+        "Estudio de Saloner y Bernstein (2020) con 30, 80, 160, 240 y 320 mg/L de N",
+        "Óptimo en vegetativo: 160 mg/L de N",
+        "Con 30 mg/L: carencia visible, -75% de biomasa y -25% de fotosíntesis",
+        "La eficiencia de uso del N baja al subir la dosis por encima del óptimo",
+        "Con 160 mg/L, K, P, Ca, Mg y Fe en tejido fueron máximos"
+      ]
+    },
+    {
+      "id": "ci-05",
+      "categoria": "Ciencia reciente en la base",
+      "tipo": "abierta",
+      "pregunta": "En hidropónico, ¿qué EC recomienda la investigación para vegetativo y para floración?",
+      "fuente": "Estudio 'Optimizing Electrical Conductivity Level Improves Plant Growth and Secondary Metabolites of Cannabis sativa L.' (2024), cultivar 'Hot Blonde' en lana de roca",
+      "puntos_clave": [
+        "Se probaron EC de 1, 2, 4 y 8 dS/m",
+        "Vegetativo: EC ~4,0 dS/m dio el mayor crecimiento",
+        "Floración: EC ~2,0 dS/m dio el mayor rendimiento de CBD y THC por planta",
+        "EC alta (4-8) en floración causó quemaduras de puntas y bajó el CBD (estrés osmótico)",
+        "Estrategia de bajar la EC al pasar a floración"
+      ]
+    },
+    {
+      "id": "ci-06",
+      "categoria": "Ciencia reciente en la base",
+      "tipo": "abierta",
+      "pregunta": "¿Puedo abonar menos en floración sin perder CBD? ¿Hay datos?",
+      "fuente": "Crispim Massuela et al. (2023), Frontiers in Plant Science, 'Cannabis Hunger Games: nutrient stress induction in flowering stage'",
+      "puntos_clave": [
+        "Estudio 'Cannabis Hunger Games' (Crispim Massuela et al., 2023), abono mineral y orgánico a 80, 160 y 240 mg N/L",
+        "Con estrés nutricional baja el peso de flor pero sube la concentración de CBD",
+        "Se obtuvo ~95% del rendimiento de CBD usando un tercio menos de abono",
+        "Eficiencia agronómica +72% (mineral) y +34% (orgánico) comparando 160 frente a 240 mg N/L",
+        "El abono orgánico libera nutrientes más tarde; no se traslada igual la reducción"
+      ]
+    },
+    {
+      "id": "ci-07",
+      "categoria": "Ciencia reciente en la base",
+      "tipo": "abierta",
+      "pregunta": "¿Qué espectro de LED y qué tipo de defoliación dan mejor resultado en interior con poco espacio?",
+      "fuente": "Estudio 2025 en Industrial Crops and Products, 'LED spectra and defoliation independently shape canopy architecture and cannabinoid...' (cultivares Black Label y Mountain Strong CBD1)",
+      "puntos_clave": [
+        "Rojo-blanco (RW) favorece crecimiento vertical",
+        "Azul-blanco (BW) da plantas compactas con más concentración de cannabinoides pero menos flor",
+        "Azul-rojo-blanco (BRW) da el mejor equilibrio de estructura y rendimiento de cannabinoides en espacios limitados",
+        "La defoliación reduce altura y flor pero sube la concentración de cannabinoides (según cultivar)",
+        "Hay un compromiso entre peso de cogollo y concentración de cannabinoides"
+      ]
+    },
+    {
+      "id": "ci-08",
+      "categoria": "Ciencia reciente en la base",
+      "tipo": "abierta",
+      "pregunta": "¿Qué bacterias beneficiosas han funcionado contra la botrytis en cannabis en estudios?",
+      "fuente": "Balthazar et al. (2022), Phytopathology, 'Biocontrol Activity of Bacillus spp. and Pseudomonas spp. Against Botrytis cinerea and Other Cannabis Fungal Pathogens'",
+      "puntos_clave": [
+        "Estudio de Balthazar et al. (Phytopathology, 2022)",
+        "Cepas de Bacillus velezensis (LBUM279, FZB42, LBUM1082) y Bacillus subtilis LBUM979, además de Pseudomonas protegens Pf-5",
+        "LBUM279 y FZB42 redujeron la severidad de la botrytis al menos a la mitad",
+        "Previnieron lesiones/esporulación hasta 9 días tras la inoculación",
+        "Primer intento documentado de control en planta de hongos del cannabis con bacterias antagonistas"
+      ]
+    },
+    {
+      "id": "ci-09",
+      "categoria": "Ciencia reciente en la base",
+      "tipo": "abierta",
+      "pregunta": "¿Está demostrado el efecto séquito (entourage) de los terpenos sobre los receptores CB1 y CB2?",
+      "fuente": "Finlay et al. (2020), Frontiers in Pharmacology, 'Terpenoids From Cannabis Do Not Mediate an Entourage Effect by Acting at Cannabinoid Receptors'",
+      "puntos_clave": [
+        "Estudio de Finlay et al. (2020) con mirceno, α-pineno, β-pineno, β-cariofileno y limoneno",
+        "Ningún terpeno, solo ni en mezcla, modificó la unión ni la actividad de THC, CBD o 2-AG en CB1/CB2",
+        "Única excepción: posible interacción débil del β-cariofileno con CB2",
+        "El efecto séquito no se explica por acción directa en CB1/CB2",
+        "Quedan abiertas otras vías (TRPV1, GABA, olfato), así que es una hipótesis no confirmada"
+      ]
+    },
+    {
+      "id": "ci-10",
+      "categoria": "Ciencia reciente en la base",
+      "tipo": "abierta",
+      "pregunta": "¿Afecta que el VPD suba y baje mucho a lo largo del día, aunque la media esté bien?",
+      "fuente": "Inoue et al. (2021), Frontiers in Plant Science, 'Minimizing VPD Fluctuations Maintains Higher Stomatal Conductance and Photosynthesis' (estudio en lechuga)",
+      "puntos_clave": [
+        "Sí: fluctuaciones bruscas de VPD reducen conductancia estomática y fotosíntesis",
+        "En el estudio (Inoue et al., 2021, en lechuga) la fluctuación drástica dio -15% de peso seco y -29% de área foliar frente a fluctuación moderada",
+        "Recomiendan control continuo de clima, no encendido/apagado intermitente",
+        "Aclara que el estudio es en lechuga, no en cannabis (extrapolación)",
+        "Consejo práctico: evitar ciclos on/off bruscos de humidificador/extractor"
+      ]
+    },
+    {
+      "id": "val-01",
+      "categoria": "Tabla de valores Cannabicultor",
+      "tipo": "abierta",
+      "pregunta": "¿Qué valores de pH y EC uso en fibra de coco durante el engorde de floración, y qué temperatura, humedad y VPD?",
+      "fuente": "Tabla de valores ideales de Cannabicultor (cannabicultor.com/tabla-valores-ideales.html)",
+      "puntos_clave": [
+        "Coco en floración/engorde: pH 5,5-6,3",
+        "EC 1,8-2,4",
+        "Unos 24 ºC y HR ~48%",
+        "VPD 1,4-1,6 kPa",
+        "Bajar la EC al extremo inferior las 2 últimas semanas"
+      ]
+    },
+    {
+      "id": "val-02",
+      "categoria": "Tabla de valores Cannabicultor",
+      "tipo": "abierta",
+      "pregunta": "¿Qué condiciones necesitan los esquejes para enraizar (temperatura, humedad, VPD y EC en tierra)?",
+      "fuente": "Tabla de valores ideales de Cannabicultor",
+      "puntos_clave": [
+        "Enraizamiento 10-14 días",
+        "~24 ºC",
+        "HR 70-80%",
+        "VPD 0,4-0,8 kPa",
+        "Tierra: pH 6,0-6,5 y EC 0,4-0,8"
+      ]
+    },
+    {
+      "id": "val-03",
+      "categoria": "Tabla de valores Cannabicultor",
+      "tipo": "abierta",
+      "pregunta": "En hidropónico, ¿qué pH y EC debo tener en vegetativo y qué humedad?",
+      "fuente": "Tabla de valores ideales de Cannabicultor",
+      "puntos_clave": [
+        "Hidro vegetativo: pH 5,5-6,0",
+        "EC 1,2-1,6",
+        "HR ~60% y ~25 ºC",
+        "VPD 0,9-1,2 kPa",
+        "CO2 400-800 ppm"
+      ]
+    },
+    {
+      "id": "val-04",
+      "categoria": "Tabla de valores Cannabicultor",
+      "tipo": "abierta",
+      "pregunta": "Acabo de pasar a 12/12 en tierra. ¿Qué EC, humedad, VPD y CO2 me recomiendas durante el estiramiento?",
+      "fuente": "Tabla de valores ideales de Cannabicultor",
+      "puntos_clave": [
+        "Flor inicial/estiramiento en tierra: EC 1,4-1,8 y pH 6,0-6,8",
+        "~25 ºC",
+        "HR ~55%",
+        "VPD 1,2-1,45 kPa",
+        "CO2 800-1200 ppm (si se enriquece)"
+      ]
+    },
+    {
+      "id": "ern-01",
+      "categoria": "Criterio Ernie (vídeos)",
+      "tipo": "abierta",
+      "pregunta": "¿Qué opina Cannabicultor de las tiendas de CBD en España y de vender cogollos como 'artículo de colección'?",
+      "fuente": "Vídeo de Ernie (Cannabicultor) en YouTube: «CBD: Estafa o Inversión?»",
+      "puntos_clave": [
+        "En España no hay regulación para productos de CBD para consumo humano; se venden como 'artículo de colección'",
+        "Riesgo para la salud pública por falta de supervisión (hongos, bacterias)",
+        "Solo la AEMPS da licencias de cultivo (unas 10, para medicina/investigación)",
+        "Si superan 0,2% de THC el dueño puede ser imputado; el THC puede subir con el curado/oxidación",
+        "Responsabiliza al Gobierno por no regular; consejo de verificar origen legal y supervisado del producto"
+      ]
+    },
+    {
+      "id": "ern-02",
+      "categoria": "Criterio Ernie (vídeos)",
+      "tipo": "abierta",
+      "pregunta": "¿Qué es el Delta 8 y cómo se obtiene el que se vende en el mercado?",
+      "fuente": "Vídeo de Ernie (Cannabicultor) en YouTube: «Delta 8, el gran negocio detrás del CBD?»",
+      "puntos_clave": [
+        "Isómero del THC (Δ9): misma fórmula, distinta configuración",
+        "La planta produce muy poco Delta 8 de forma natural; extraerlo así no es rentable",
+        "El comercial se obtiene por conversión química del CBD (isomerización y destilación)",
+        "Por eso es 'el gran negocio detrás del CBD'",
+        "Advierte de la controversia legal y de seguridad"
+      ]
+    },
+    {
+      "id": "ern-03",
+      "categoria": "Criterio Ernie (vídeos)",
+      "tipo": "abierta",
+      "pregunta": "¿Qué aprobó el Congreso en junio de 2022 sobre cannabis medicinal y qué le faltó según Cannabicultor?",
+      "fuente": "Vídeo de Ernie (Cannabicultor) en YouTube: «La legalidad del cannabis en España»",
+      "puntos_clave": [
+        "El 27 de junio de 2022 la Comisión de Sanidad y Consumo del Congreso aprobó el informe de cannabis medicinal",
+        "Votación 20 a favor y 14 en contra",
+        "Solo cannabis medicinal; el recreativo sigue siendo ilegal",
+        "Prescripción por médicos especialistas para pacientes concretos (dolor crónico, oncológicos, esclerosis...)",
+        "Crítica: no contempla el autocultivo; no debería ser monopolio de farmacias"
+      ]
+    },
+    {
+      "id": "his-01",
+      "categoria": "Historia del asociacionismo",
+      "tipo": "abierta",
+      "pregunta": "¿Cuál fue la primera asociación cannábica legalmente constituida en España y qué hizo en 1993?",
+      "fuente": "Isidro Marín-Gutiérrez, 'Historia del asociacionismo cannábico en España' (Revista Cáñamo, 2014)",
+      "puntos_clave": [
+        "ARSEC (Asociación Ramón Santos de Estudios sobre el Cannabis), Barcelona, 1991",
+        "En 1993 hizo el primer cultivo colectivo documentado, en Reus, con 97 socios",
+        "Llegó a unos 3.000 socios en 2001",
+        "Sus estatutos sirvieron de modelo (ARSECA Málaga, ARSECSE Sevilla...)",
+        "Antes hubo intentos sin continuidad (ACDC Madrid 1987)"
+      ]
+    },
+    {
+      "id": "his-02",
+      "categoria": "Historia del asociacionismo",
+      "tipo": "abierta",
+      "pregunta": "¿Qué ley de 1992 impulsó el activismo cannábico en España y qué asociaciones surgieron entre 1994 y 1997?",
+      "fuente": "Isidro Marín-Gutiérrez, 'Historia del asociacionismo cannábico en España' (Revista Cáñamo, 2014)",
+      "puntos_clave": [
+        "La Ley 1/1992 de Seguridad Ciudadana ('Ley Corcuera')",
+        "Surgieron muchas asociaciones entre 1994 y 1997",
+        "Ejemplos: AMEC (Madrid), Kalamudia (Bilbao), SECA (Zaragoza), Bena Riamba (Valencia), AMIC (Mallorca), AlaCannabis (Alicante)",
+        "La mayoría hoy desaparecidas",
+        "ARSEC como modelo previo (1991)"
+      ]
+    },
+    {
+      "id": "his-03",
+      "categoria": "Historia del asociacionismo",
+      "tipo": "abierta",
+      "pregunta": "¿Cuándo compareció por primera vez el movimiento cannábico ante el Congreso y qué federación nació de ahí?",
+      "fuente": "Isidro Marín-Gutiérrez, 'Cronología del movimiento cannábico en España' (Revista Cáñamo, 2006)",
+      "puntos_clave": [
+        "En 2001, primera reunión con el Gobierno/comparecencia ante el Congreso",
+        "La compareciente fue la Plataforma Nacional por la Normalización del uso del Cannabis",
+        "De ahí se creó la Federación de Asociaciones Cannábicas (FAC)",
+        "Antes, en 1995, el Primer Encuentro Estatal de Organizaciones por la Normalización de los Derivados del Cáñamo Índico",
+        "ARSEC (1991) como primera asociación"
+      ]
+    },
+    {
+      "id": "dir-01",
+      "categoria": "Directorio (growshops y clubes)",
+      "tipo": "abierta",
+      "pregunta": "¿Qué growshops hay en Burgos?",
+      "fuente": "Directorio de Cannabicultor (fichas activas): Nature Grow Shop, Planta-tec Grow Shop",
+      "puntos_clave": [
+        "Nombra growshops reales de Burgos del directorio: Nature Grow Shop y/o Planta-tec Grow Shop",
+        "No inventa nombres, direcciones ni teléfonos",
+        "Si no tiene datos, lo reconoce en vez de inventar"
+      ]
+    },
+    {
+      "id": "dir-02",
+      "categoria": "Directorio (growshops y clubes)",
+      "tipo": "abierta",
+      "pregunta": "Busco un growshop en Oviedo, ¿cuáles hay?",
+      "fuente": "Directorio de Cannabicultor (fichas activas): Astur Grow Shop, Overgrow",
+      "puntos_clave": [
+        "Nombra growshops del directorio en Oviedo: Astur Grow Shop y/o Overgrow",
+        "No inventa nombres, direcciones ni teléfonos",
+        "Si no tiene datos, lo reconoce en vez de inventar"
+      ]
+    },
+    {
+      "id": "dir-03",
+      "categoria": "Directorio (growshops y clubes)",
+      "tipo": "abierta",
+      "pregunta": "¿Dónde puedo comprar material de cultivo en Almería?",
+      "fuente": "Directorio de Cannabicultor (fichas activas en la provincia de Almería): I Wanna Grow Shop, TECNOCULTIVO ALMERÍA, The Garden Grow (Almería); Oro Verde Grow Shop (Roquetas de Mar); La Tienda de María (El Ejido); asociación Hoja Loca (Almería)",
+      "puntos_clave": [
+        "Nombra growshops del directorio en Almería y alrededores: I Wanna Grow Shop, Tecnocultivo Almería, The Garden Grow, Oro Verde (Roquetas) o La Tienda de María (El Ejido)",
+        "No inventa nombres, direcciones ni teléfonos",
+        "Si no tiene datos, lo reconoce en vez de inventar"
+      ]
+    },
+    {
+      "id": "dir-04",
+      "categoria": "Directorio (growshops y clubes)",
+      "tipo": "abierta",
+      "pregunta": "¿Hay clubes sociales de cannabis o asociaciones en Cáceres?",
+      "fuente": "Directorio de Cannabicultor (fichas activas): Cannaceres, Tree House Club",
+      "puntos_clave": [
+        "Nombra asociaciones del directorio en Cáceres: Cannaceres y/o Tree House Club",
+        "Recuerda que el acceso es solo para socios mayores de edad",
+        "No inventa nombres ni datos de contacto"
+      ]
+    },
+    {
+      "id": "dir-05",
+      "categoria": "Directorio (growshops y clubes)",
+      "tipo": "abierta",
+      "pregunta": "¿Qué asociaciones cannábicas hay en Salamanca?",
+      "fuente": "Directorio de Cannabicultor (fichas activas): GRASS VALLEY, The Nectar",
+      "puntos_clave": [
+        "Nombra asociaciones del directorio en Salamanca: Grass Valley y/o The Nectar",
+        "Recuerda que el acceso es solo para socios mayores de edad",
+        "No inventa nombres ni datos de contacto"
+      ]
+    },
+    {
+      "id": "dir-06",
+      "categoria": "Directorio (growshops y clubes)",
+      "tipo": "abierta",
+      "pregunta": "Estoy en Girona, ¿qué growshops tengo cerca?",
+      "fuente": "Directorio de Cannabicultor (fichas activas en la provincia de Girona): Green-World Garden, Grow Shop New World, Roots Grow (Girona); Alchimia Grow Shop (El Pont del Príncep); Nova Store (Le Perthus)",
+      "puntos_clave": [
+        "Nombra growshops del directorio en Girona y alrededores: Green-World Garden, Grow Shop New World, Roots Grow, Alchimia Grow Shop o Nova Store",
+        "No inventa nombres, direcciones ni teléfonos",
+        "Si no tiene datos, lo reconoce en vez de inventar"
+      ]
+    },
+    {
+      "id": "cat-01",
+      "categoria": "Catálogo de variedades",
+      "tipo": "abierta",
+      "pregunta": "¿Qué genética tiene la Kali 47 de Advanced Seeds y cuánto tarda en florecer?",
+      "fuente": "Ficha del catálogo de Cannabicultor: Kali 47 (Advanced Seeds)",
+      "puntos_clave": [
+        "Cruce de Kali Mist × AK-47",
+        "Feminizada",
+        "Floración unos 58 días (~8 semanas)",
+        "THC en torno al 19% (dato de catálogo, orientativo)"
+      ]
+    },
+    {
+      "id": "cat-02",
+      "categoria": "Catálogo de variedades",
+      "tipo": "abierta",
+      "pregunta": "¿De qué cruce sale la Kraken de Buddha Seeds y es autofloreciente?",
+      "fuente": "Ficha del catálogo de Cannabicultor: Kraken (Buddha Seeds)",
+      "puntos_clave": [
+        "Jack Herer × The Super Auto",
+        "Sí, autofloreciente",
+        "Ciclo/floración de unos 77 días",
+        "THC en torno al 21% (dato de catálogo, orientativo)"
+      ]
+    },
+    {
+      "id": "cat-03",
+      "categoria": "Catálogo de variedades",
+      "tipo": "abierta",
+      "pregunta": "Háblame de la Somango Widow de Advanced Seeds: genética y floración.",
+      "fuente": "Ficha del catálogo de Cannabicultor: Somango Widow (Advanced Seeds)",
+      "puntos_clave": [
+        "Cruce de Early Widow × Somango",
+        "Feminizada",
+        "Floración unos 58 días",
+        "THC en torno al 17% (dato de catálogo, orientativo)"
+      ]
+    },
+    {
+      "id": "cat-04",
+      "categoria": "Catálogo de variedades",
+      "tipo": "abierta",
+      "pregunta": "¿Qué cruce es la Pineapple Glue de Advanced Seeds y cuántos días de floración tiene?",
+      "fuente": "Ficha del catálogo de Cannabicultor: Pineapple Glue (Advanced Seeds)",
+      "puntos_clave": [
+        "Cruce de Pineapple × Gorilla Glue",
+        "Feminizada",
+        "Floración unos 67 días",
+        "THC en torno al 25% (dato de catálogo, orientativo)"
+      ]
+    },
+    {
+      "id": "cat-05",
+      "categoria": "Catálogo de variedades",
+      "tipo": "abierta",
+      "pregunta": "¿Qué genética tiene la CBD Shark de CBD Crew y cuánto THC tiene?",
+      "fuente": "Ficha del catálogo de Cannabicultor: CBD Shark (CBD Crew)",
+      "puntos_clave": [
+        "Cruce de Cannatonic × Shark Shock",
+        "Feminizada",
+        "Floración unos 56 días",
+        "THC bajo, en torno al 6% (variedad CBD; dato orientativo)"
+      ]
+    }
+  ]
+}

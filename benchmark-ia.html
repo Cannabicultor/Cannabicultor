@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-XS18E0J277"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-XS18E0J277');</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Benchmark: Cannabicultor IA frente a GPT-4o, Grok y DeepSeek</title>
+<meta name="description" content="Comparamos Cannabicultor IA con GPT-4o, Grok y DeepSeek en 31 preguntas de cultivo con datos reales: 8,8 sobre 10 frente a 4,6 y solo un 3% de respuestas con datos inventados.">
+<link rel="canonical" href="https://www.cannabicultor.com/benchmark-ia.html">
+<meta property="og:title" content="Benchmark: Cannabicultor IA frente a GPT-4o, Grok y DeepSeek">
+<meta property="og:description" content="8,8 sobre 10 frente a 4,6, y un 3% de datos inventados frente al 42-55%. Todas las respuestas publicadas.">
+<meta property="og:image" content="https://cannabicultor.com/assets/logo_publico_4.png">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,600&display=swap" rel="stylesheet">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"Article","headline":"Cannabicultor IA frente a GPT-4o, Grok y DeepSeek","datePublished":"2026-09-24","author":{"@type":"Organization","name":"Cannabicultor"},"publisher":{"@type":"Organization","name":"Cannabicultor","url":"https://www.cannabicultor.com/"}}</script>
+<style>
+:root{--verde:#1a1a19;--oro:#1a1a19;--fondo:#f6f5f2;--tinta:#0b0b0b;--tinta2:#52514e;--gris:#7a7974;--linea:#e4e2dc;--suave:#ecebe6;--azul:#256abf}
+*{box-sizing:border-box}
+body{margin:0;background:var(--fondo);color:var(--tinta);font-family:'Inter',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+h1,h2,h3{font-family:'Source Serif 4',Georgia,serif;letter-spacing:-.01em;margin:0}
+.w{max-width:980px;margin:0 auto;padding:36px 22px 60px}
+.eyebrow{font-size:12px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--gris);margin-bottom:12px}
+.hero h1{font-size:clamp(32px,4.6vw,48px);font-weight:600;line-height:1.08;max-width:760px}
+.sub2{font-size:20px!important;color:var(--tinta2)!important;margin:10px 0 18px!important}
+.hero p{font-size:18px;line-height:1.55;color:var(--tinta2);max-width:640px;margin:16px 0 26px}
+.btns{display:flex;gap:10px;flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;padding:13px 22px;border-radius:12px;font:600 15px 'Inter',sans-serif;text-decoration:none;border:1px solid var(--verde);color:var(--verde);background:#fff}
+.btn.pri{background:var(--verde);color:#fff}
+.btn.pri svg{stroke:var(--oro)}
+.btn svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.nota{font-size:13px;color:var(--gris);margin-top:12px}
+section{margin-top:56px}
+section>h2{font-size:26px;font-weight:600;margin-bottom:8px}
+section>p.sub{color:var(--gris);font-size:15.5px;line-height:1.55;margin:0 0 20px;max-width:640px}
+.g3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.g2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+@media(max-width:760px){.g3,.g2{grid-template-columns:1fr}}
+.card{background:#fff;border:1px solid var(--linea);border-radius:16px;padding:20px}
+.card h3{font-size:17px;font-weight:600;margin-bottom:8px}
+.card p{font-size:14.5px;line-height:1.55;color:var(--tinta2);margin:0}
+.cierre{background:var(--verde);color:#fff;border-radius:20px;padding:34px 26px;text-align:center}
+.cierre h2{color:#fff;font-size:26px}
+.cierre p{color:#cfe0d4;margin:10px auto 22px;max-width:520px;line-height:1.55}
+.cierre .btn{border-color:#fff}
+.cierre .btn.pri{background:var(--oro);color:var(--verde);border-color:var(--oro)}
+.cierre .btn.pri svg{stroke:var(--verde)}
+.kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:34px}
+@media(max-width:760px){.kpis{grid-template-columns:1fr}}
+.kpi{background:#fff;border:1px solid var(--linea);border-radius:16px;padding:18px 20px}
+.kv{font:700 34px 'Inter',sans-serif;letter-spacing:-.03em;color:var(--verde)}.kv small{font-size:16px;color:var(--gris)}
+.kl{font-weight:600;font-size:14.5px;margin-top:2px}.ks{font-size:13px;color:var(--gris);margin-top:2px}
+.bars{display:flex;flex-direction:column;gap:12px}
+.bar{display:grid;grid-template-columns:140px 1fr 44px;align-items:center;gap:10px;font-size:14.5px}
+.bl{color:var(--tinta2)}.bar.me .bl,.bar.me .bv{font-weight:700;color:var(--tinta)}
+.bt{height:18px;background:var(--suave);border-radius:4px;overflow:hidden}
+.bt i{display:block;height:100%;border-radius:0 4px 4px 0}
+.c-cc{background:#2a78d6}.c-ds{background:#eb6834}.c-gpt{background:#1baf7a}.c-grok{background:#e87ba4}
+.sw{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:7px;vertical-align:baseline}
+.h0{background:#cde2fb}.h1{background:#b7d3f6}.h2{background:#9ec5f4}.h3{background:#6da7ec}.h4{background:#3987e5;color:#fff}.h5{background:#256abf;color:#fff}.h6{background:#184f95;color:#fff}
+.tabla td.best{box-shadow:inset 0 0 0 2px var(--tinta);font-weight:700}
+.bv{font-variant-numeric:tabular-nums;text-align:right}
+@media(max-width:520px){.bar{grid-template-columns:100px 1fr 40px;font-size:13.5px}}
+.tabla{background:#fff;border:1px solid var(--linea);border-radius:16px;overflow-x:auto}
+.tabla table{border-collapse:collapse;width:100%;font-size:14.5px;min-width:560px}
+.tabla th,.tabla td{padding:11px 14px;border-bottom:1px solid var(--linea);text-align:left}
+.tabla th{font-size:12.5px;color:var(--gris);font-weight:600;white-space:nowrap}
+.tabla .n{text-align:right;font-variant-numeric:tabular-nums}.tabla .g{color:var(--gris)}
+.tabla td.me{font-weight:700}
+.tabla tr.tot td{font-weight:700;border-bottom:0}
+.ej{margin-bottom:18px}
+.ej .q{font:600 16px 'Inter',sans-serif;letter-spacing:-.02em;margin-bottom:10px}
+.r{background:#fff;border:1px solid var(--linea);border-radius:14px;padding:16px;font-size:14.5px;line-height:1.55;color:var(--tinta2)}
+.r.ok{border:2px solid #2a78d6}
+.r p{margin:6px 0 0}.r small{color:var(--gris)}
+.rh,.rh2{font-weight:700;color:var(--tinta);display:flex;justify-content:space-between;font-size:14px}
+.rh2{margin-top:14px}
+.rh span,.rh2 span{font-variant-numeric:tabular-nums;color:var(--gris)}.r.ok .rh span{color:#256abf}
+.metodo ul{margin:0;padding-left:18px;font-size:14.5px;line-height:1.65;color:var(--tinta2)}
+.metodo li{margin:6px 0}.metodo a,.w a{color:var(--azul)}
+.top{border-bottom:1px solid var(--linea);background:#fff}.top-in{max-width:980px;margin:0 auto;padding:14px 22px;display:flex;justify-content:space-between;gap:12px;font-size:13px;color:var(--gris)}
+.marca{font-weight:700;color:var(--tinta);letter-spacing:.02em}
+.autor{font-size:13.5px;color:var(--gris);margin:-8px 0 22px}
+.pie{border-top:1px solid var(--linea);margin-top:48px;padding-top:18px;font-size:13px;color:var(--gris);line-height:1.6}
+.cierre{background:#fff;border:1px solid var(--linea);color:var(--tinta);text-align:left}.cierre h2{color:var(--tinta)}.cierre p{color:var(--tinta2);margin-left:0}
+</style>
+</head>
+<body>
+<header class="top"><div class="top-in"><span class="marca">Benchmark de IA · Cultivo de cannabis</span><span class="fecha">Edición septiembre 2026</span></div></header>
+
+<div class="w">
+  <div class="hero">
+    <div class="eyebrow">Informe comparativo · 24 de septiembre de 2026</div>
+    <h1>¿Qué IA sabe más de cultivo de cannabis?</h1>
+    <p class="sub2">Cannabicultor IA, GPT-4o, Grok 4.1 y DeepSeek frente a las mismas preguntas</p>
+    <p>Hicimos a cuatro IAs las mismas 31 preguntas de cultivo que solo se responden bien con datos concretos: estudios científicos recientes, valores de cultivo, historia del cannabis en España, growshops y clubes reales y fichas de variedades. Estos son los resultados, con todas las respuestas publicadas.</p>
+    <p class="autor">Prueba realizada por el equipo de Cannabicultor · <a href="#metodologia">Metodología</a> · <a href="/benchmark-ia-respuestas.html" data-track="bench_respuestas">Todas las respuestas</a></p>
+  </div>
+
+  <div class="kpis">
+    <div class="kpi"><div class="kv">8,8<small>/10</small></div><div class="kl">Nota de Cannabicultor IA</div><div class="ks">El siguiente modelo saca 4,6</div></div>
+    <div class="kpi"><div class="kv">3%</div><div class="kl">Respuestas con datos inventados</div><div class="ks">42–55% en los otros modelos</div></div>
+    <div class="kpi"><div class="kv">6 de 6</div><div class="kl">Categorías en las que es el mejor</div><div class="ks">31 preguntas, 2 jueces</div></div>
+  </div>
+
+  <section>
+    <h2>Nota global</h2>
+    <p class="sub">Media de 0 a 10. La nota pondera exactitud (50%), cobertura de los datos clave (30%) y utilidad práctica (20%).</p>
+    <div class="card bars" role="img" aria-label="Nota global: Cannabicultor IA 8,8; DeepSeek 4,6; Grok 4,5; GPT-4o 4,3">
+      <div class="bar me"><span class="bl"><span class="sw c-cc"></span>Cannabicultor IA</span><span class="bt"><i class="c-cc" style="width:88.1%"></i></span><span class="bv">8,8</span></div>
+      <div class="bar"><span class="bl"><span class="sw c-ds"></span>DeepSeek</span><span class="bt"><i class="c-ds" style="width:46.1%"></i></span><span class="bv">4,6</span></div>
+      <div class="bar"><span class="bl"><span class="sw c-grok"></span>Grok 4.1 Fast</span><span class="bt"><i class="c-grok" style="width:44.9%"></i></span><span class="bv">4,5</span></div>
+      <div class="bar"><span class="bl"><span class="sw c-gpt"></span>GPT-4o</span><span class="bt"><i class="c-gpt" style="width:43.2%"></i></span><span class="bv">4,3</span></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Respuestas con datos inventados</h2>
+    <p class="sub">Porcentaje de respuestas en las que la mayoría de los jueces detectó cifras, estudios, tiendas o genéticas inventadas. Menos es mejor.</p>
+    <div class="card bars" role="img" aria-label="Datos inventados: Cannabicultor IA 3%; GPT-4o 42%; DeepSeek 52%; Grok 55%">
+      <div class="bar me"><span class="bl"><span class="sw c-cc"></span>Cannabicultor IA</span><span class="bt"><i class="c-cc" style="width:3.2%"></i></span><span class="bv">3%</span></div>
+      <div class="bar"><span class="bl"><span class="sw c-gpt"></span>GPT-4o</span><span class="bt"><i class="c-gpt" style="width:41.9%"></i></span><span class="bv">42%</span></div>
+      <div class="bar"><span class="bl"><span class="sw c-ds"></span>DeepSeek</span><span class="bt"><i class="c-ds" style="width:51.6%"></i></span><span class="bv">52%</span></div>
+      <div class="bar"><span class="bl"><span class="sw c-grok"></span>Grok 4.1 Fast</span><span class="bt"><i class="c-grok" style="width:54.8%"></i></span><span class="bv">55%</span></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Nota por categoría</h2>
+    <p class="sub">Media de 0 a 10 en cada tipo de pregunta. Más oscuro = mejor nota; el recuadro marca la mejor de cada fila.</p>
+    <div class="tabla">
+      <table>
+        <thead><tr><th>Categoría</th><th class="n">Preg.</th><th class="n"><span class="sw c-cc"></span>Cannabicultor IA</th><th class="n"><span class="sw c-ds"></span>DeepSeek</th><th class="n"><span class="sw c-grok"></span>Grok</th><th class="n"><span class="sw c-gpt"></span>GPT-4o</th></tr></thead>
+        <tbody><tr><td>Ciencia reciente (estudios con cifras)</td><td class="n g">10</td><td class="n h5 best">8,7</td><td class="n h2">5,0</td><td class="n h1">3,9</td><td class="n h1">3,7</td></tr><tr><td>Valores de cultivo (pH, EC, VPD…)</td><td class="n g">4</td><td class="n h5 best">9,6</td><td class="n h4">7,8</td><td class="n h3">7,1</td><td class="n h3">6,6</td></tr><tr><td>Criterio de Cannabicultor (vídeos)</td><td class="n g">3</td><td class="n h5 best">9,0</td><td class="n h3">6,3</td><td class="n h4">7,5</td><td class="n h2">4,9</td></tr><tr><td>Historia del asociacionismo en España</td><td class="n g">3</td><td class="n h5 best">8,6</td><td class="n h0">1,9</td><td class="n h2">4,4</td><td class="n h1">3,9</td></tr><tr><td>Growshops y clubes por ciudad</td><td class="n g">6</td><td class="n h4 best">8,4</td><td class="n h1">3,0</td><td class="n h1">3,0</td><td class="n h1">3,6</td></tr><tr><td>Fichas de variedades</td><td class="n g">5</td><td class="n h5 best">9,0</td><td class="n h1">3,8</td><td class="n h1">3,7</td><td class="n h2">4,6</td></tr><tr class="tot"><td>Global</td><td class="n g">31</td><td class="n">8,8</td><td class="n">4,6</td><td class="n">4,5</td><td class="n">4,3</td></tr></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <h2>Tres respuestas, lado a lado</h2>
+    <p class="sub">Fragmentos literales de las respuestas del benchmark. <a href="/benchmark-ia-respuestas.html" >Aquí están las 31 preguntas con cada respuesta completa</a>.</p>
+
+    <div class="ej">
+      <div class="q">«¿De qué cruce sale la Kraken de Buddha Seeds y es autofloreciente?»</div>
+      <div class="g2">
+        <div class="r ok"><div class="rh">Cannabicultor IA <span>9,6</span></div><p>«Sí, la Kraken de Buddha Seeds es autofloreciente, y nace del cruce <b>Jack Herer × The Super Auto</b>. […] floración de referencia de unos 77 días desde la germinación (dato de catálogo, orientativo).»</p></div>
+        <div class="r ko"><div class="rh">GPT-4o <span>1,8</span></div><p>«[…] la Kraken original no es autofloreciente; es fotoperiódica […]»</p><div class="rh2">DeepSeek <span>1,2</span></div><p>«Genética: Critical Auto × OG Kush Auto.»</p></div>
+      </div>
+    </div>
+
+    <div class="ej">
+      <div class="q">«¿Cuándo compareció por primera vez el movimiento cannábico ante el Congreso y qué federación nació de ahí?»</div>
+      <div class="g2">
+        <div class="r ok"><div class="rh">Cannabicultor IA <span>9,0</span></div><p>«[…] fue en <b>2001</b>, cuando la Plataforma Nacional por la Normalización del uso del Cannabis […]. De aquel hito nació la <b>Federación de Asociaciones Cannábicas (FAC)</b>.»</p></div>
+        <div class="r ko"><div class="rh">GPT-4o <span>2,2</span></div><p>«[…] ante el Congreso de los Diputados en España en 1997.»</p><div class="rh2">Grok <span>2,3</span></div><p>«[…] tuvo lugar en 2003.»</p></div>
+      </div>
+    </div>
+
+    <div class="ej">
+      <div class="q">«¿Hay algún estudio que mida qué pasa con los cannabinoides si cultivo con la humedad muy alta durante la floración?»</div>
+      <div class="g2">
+        <div class="r ok"><div class="rh">Cannabicultor IA <span>8,8</span></div><p>«[…] compararon HR baja (37-58%) frente a alta (78-98%) […] CBD-A bajó ~4,9 veces, CBD ~3,2 veces […]. La floración se retrasó 3 semanas.» <small>(Frontiers in Plant Science, 2025)</small></p></div>
+        <div class="r ko"><div class="rh">Grok <span>2,2</span></div><p>«No existe ningún estudio científico publicado […] que mida de forma directa y cuantitativa el efecto de la humedad relativa muy alta […]»</p><div class="rh2">GPT-4o <span>2,1</span></div><p>«Un estudio observó que […] superiores al 60% […] pueden reducir el rendimiento de THC entre un 5% y 10%.» <small>(cifra sin fuente)</small></p></div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Y en preguntas generales de cultivo</h2>
+    <p class="sub">También pasamos una prueba de 53 preguntas de manual (carencias, plagas, fotoperiodo, secado, legalidad…). Aquí todos los modelos aciertan casi todo y las notas quedan muy juntas: la ventaja de Cannabicultor IA aparece cuando la pregunta exige datos concretos, locales o recientes.</p>
+    <div class="card bars" role="img" aria-label="Preguntas generales: DeepSeek 9,8; Grok 9,5; Cannabicultor IA 9,0; GPT-4o 8,9">
+      <div class="bar"><span class="bl"><span class="sw c-ds"></span>DeepSeek</span><span class="bt"><i class="c-ds" style="width:97.6%"></i></span><span class="bv">9,8</span></div>
+      <div class="bar"><span class="bl"><span class="sw c-grok"></span>Grok 4.1 Fast</span><span class="bt"><i class="c-grok" style="width:94.6%"></i></span><span class="bv">9,5</span></div>
+      <div class="bar me"><span class="bl"><span class="sw c-cc"></span>Cannabicultor IA</span><span class="bt"><i class="c-cc" style="width:90.4%"></i></span><span class="bv">9,0</span></div>
+      <div class="bar"><span class="bl"><span class="sw c-gpt"></span>GPT-4o</span><span class="bt"><i class="c-gpt" style="width:89.1%"></i></span><span class="bv">8,9</span></div>
+    </div>
+    <p class="nota"><a href="/benchmark-ia-general.html"  data-track="bench_general">Ver las 53 preguntas generales con todas las respuestas</a></p>
+  </section>
+
+  <section id="metodologia">
+    <h2>Cómo lo medimos</h2>
+    <div class="metodo card">
+      <ul>
+        <li><b>Qué mide:</b> conocimiento especializado y local. Las 31 preguntas tienen su respuesta de referencia en fuentes verificables que usa Cannabicultor IA: estudios científicos publicados entre 2019 y 2025, la <a href="/tabla-valores-ideales.html">tabla de valores ideales</a>, los vídeos del canal, artículos sobre la historia del asociacionismo, el <a href="/growshops.html">directorio de growshops</a> y <a href="/asociaciones.html">clubes</a>, y el <a href="/buscador-cannabicultor.html">catálogo de variedades</a>. Está pensado para medir el valor de tener esas fuentes; no es una prueba de inteligencia general.</li>
+        <li><b>Modelos:</b> Cannabicultor IA (DeepSeek + base de conocimiento propia), y DeepSeek, GPT-4o y Grok 4.1 Fast con la misma indicación mínima: «Eres un asistente experto en cultivo de cannabis. Responde siempre en español».</li>
+        <li><b>Evaluación:</b> dos jueces automáticos (GPT-4o y Grok 4.1 Fast) puntúan cada respuesta a ciegas, sin saber qué modelo la escribió, comparándola con los datos de referencia y su fuente. Se promedian ambos.</li>
+        <li><b>Preguntas generales:</b> en un segundo banco de 53 preguntas de cultivo los cuatro modelos sacaron notas altas y parecidas, entre 8,9 y 9,8 (<a href="/benchmark-ia-general.html">ver resultados completos</a>).</li>
+        <li><b>Transparencia:</b> publicamos <a href="/benchmark-ia-respuestas.html">todas las preguntas, respuestas completas y notas de cada juez</a>.</li>
+        <li><b>Limitaciones:</b> 31 preguntas dan una idea clara, pero no son un estudio exhaustivo; los jueces automáticos pueden equivocarse; los modelos cambian con el tiempo. Fecha de la prueba: 24 de septiembre de 2026.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="cierre card">
+    <h2>Probar Cannabicultor IA</h2>
+    <p>El asistente evaluado está disponible en <a href="/" data-track="bench_probar_cierre">cannabicultor.com</a>, con tres preguntas gratis al día sin registro. Para growshops: <a href="/empresas.html" data-track="bench_empresas">asesor IA para tiendas</a>.</p>
+  </section>
+  <footer class="pie">Informe elaborado por Cannabicultor (cannabicultor.com), que desarrolla uno de los asistentes evaluados. Las preguntas, las respuestas completas de los cuatro modelos y las notas de cada juez están publicadas: <a href="/benchmark-ia-respuestas.html">conocimiento especializado</a> · <a href="/benchmark-ia-general.html">preguntas generales</a>.</footer>
+</div>
+<script src="/track.js" defer></script>
+<script>document.addEventListener('click',function(e){var a=e.target.closest('[data-track]');if(a&&window.cc&&window.cc.track)window.cc.track(a.getAttribute('data-track'));});</script>
+</body>
+</html>
