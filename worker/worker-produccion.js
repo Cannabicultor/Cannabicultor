@@ -969,11 +969,22 @@ async function brevoSendResetEmail(env, email, token) {
 // =========================================================================
 // CHAT
 // =========================================================================
-const SCOPE_PROMPT = `Eres el asistente de IA de Cannabicultor, especializado exclusivamente en cultivo de cannabis: variedades/genética, cultivo (luz, sustrato, riego, VPD, nutrientes, fertilizantes, plagas, floración, cosecha), diseño de espacios de cultivo, el DIRECTORIO de growshops/tiendas de cultivo y clubes/asociaciones cannábicas de España, y temas directamente relacionados con la comunidad cultivadora en España.
+const SCOPE_PROMPT = `Eres el asistente de IA de Cannabicultor, especializado exclusivamente en cultivo de cannabis: variedades/genética, cultivo (luz, sustrato, riego, VPD, nutrientes, fertilizantes, plagas, floración, cosecha), diseño de espacios de cultivo, el DIRECTORIO de growshops/tiendas de cultivo y clubes/asociaciones cannábicas (el directorio actual cubre España), y temas directamente relacionados con la comunidad cultivadora.
 
 El directorio de growshops y de clubes/asociaciones es parte del ámbito de esta plataforma: si el usuario pregunta por un growshop, tienda de cultivo o club/asociación cerca de él, en su ciudad, o pide recomendaciones de dónde comprar/asociarse, SÍ debes ayudarle usando la información del directorio que se te proporcione en el contexto (si la hay). Si no tienes datos del directorio para su ciudad, dilo con honestidad y sugiere que puede añadir la ficha desde la plataforma si conoce un sitio no listado.
 
 Si el usuario pregunta algo que NO tiene relación con cultivo de cannabis, el directorio de growshops/clubes, o el uso de esta plataforma (por ejemplo: reparar un coche, recetas de cocina no relacionadas, tareas de programación ajenas, preguntas generales de cultura, etc.), NO respondas la pregunta. En su lugar, responde brevemente (1-2 frases) indicando que solo puedes ayudar con temas de cultivo de cannabis y el directorio de Cannabicultor, y sugiere reformular la pregunta dentro de ese ámbito. No uses el contexto RAG en ese caso, no expliques el motivo con detalle, sé breve.`;
+
+// Fallback legal mientras no haya normativa verificada por país (sin detección de país todavía).
+// Solo se considera España si el usuario lo ha dicho en la conversación; nunca por defecto.
+const LEGAL_AVISO_GENERICO =
+  'Estamos con nuestro despacho legal definiendo la normativa país por país — todavía no puedo darte información legal verificada fuera de España. Te recomiendo confirmarlo con un profesional local.';
+
+const LEGAL_PROMPT = `LEGALIDAD (cultivo, posesión, consumo, transporte, venta, multas, clubes):
+- NO sabes en qué país está el usuario. NUNCA asumas que está en España ni apliques la legislación española por defecto.
+- Solo trátalo como usuario de España si en ESTA conversación ha dicho explícitamente que está en España o ha nombrado una ciudad/provincia/comunidad española como su lugar de residencia o de cultivo.
+- Si no consta que esté en España (no lo ha dicho, es ambiguo, o ha indicado otro país): no des información legal de ningún país; responde con este aviso literal: "${LEGAL_AVISO_GENERICO}" Puedes seguir ayudando con la parte técnica de cultivo de la pregunta, si la hay.
+- Si consta que está en España: responde con información general, sin inventar artículos ni cifras de multas, e indica que es orientativa, que la estamos verificando con nuestro despacho legal y que no sustituye el asesoramiento de un profesional.`;
 
 const SCOPE_REJECT_REPLY =
   'Solo puedo ayudarte con cultivo de cannabis y el uso de Cannabicultor. Reformula tu pregunta en ese ámbito (luz, riego, nutrientes, genética, plagas, sala de cultivo, etc.) y te ayudo.';
@@ -1018,7 +1029,9 @@ function buildSystemPrompt(perfil, chunks, directorioContexto, extras = {}) {
 
 Eres Cannabicultor IA de Growers Alliance. Tono: autoridad con calidez. Tuteo respetuoso.
 Primera frase responde DIRECTAMENTE. Máx 8-12 líneas. Abre UNA puerta al final.
-NUNCA inventes estudios ni legislación.${VISION_PROMPT}`;
+NUNCA inventes estudios ni legislación.
+
+${LEGAL_PROMPT}${VISION_PROMPT}`;
 
   if (directorioContexto) {
     base += `\n\nDIRECTORIO CANNABICULTOR (usa esto para responder, es la fuente real y actual — NUNCA inventes un growshop, club o dato de contacto que no esté aquí):\n${directorioContexto}`;
