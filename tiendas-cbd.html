@@ -201,7 +201,7 @@ footer{margin-top:34px;padding-top:16px;border-top:1px solid var(--border);font-
   <div class="list" id="list"></div>
   <button class="more-btn" id="moreBtn" style="display:none">Cargar más</button>
   <footer>
-    Directorio de tiendas de CBD de Cannabicultor · flores, aceites y cosmética CBD en España.<br>
+    Directorio de tiendas de CBD de Cannabicultor · flores, aceites y cosmética CBD en <span data-pais-nombre>España</span>.<br>
     Parte de los datos procede de fuentes públicas y de la comunidad.<br>
     También hay un <a href="/growshops.html">directorio de growshops</a> y de <a href="/asociaciones.html">asociaciones y clubes</a>.<br>
     Solo mayores de 18 años. Consulta la legislación vigente.
@@ -238,6 +238,7 @@ let nearMode = false, userPos = null, nearPage = PAGE;
 const $ = id => document.getElementById(id);
 if (!ES) {
   $("chips").style.display = "none";
+  document.querySelectorAll("[data-pais-nombre]").forEach(el => { el.textContent = PAIS_NOMBRE; });
   const porCiudad = document.querySelector('nav[aria-label="Explora por ciudad"]');
   if (porCiudad) porCiudad.style.display = "none";
   document.querySelector(".app > header h1").innerHTML = "Tiendas de <em>CBD</em> en " + PAIS_NOMBRE;

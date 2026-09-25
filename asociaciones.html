@@ -222,7 +222,7 @@ footer{margin-top:34px;padding-top:16px;border-top:1px solid var(--border);font-
 
   <footer>
     Directorio de asociaciones cannábicas de Cannabicultor · reseñas de socios.<br>
-    Datos de listados públicos de España. Fichas abiertas a corrección por la propia asociación.<br>
+    Datos de listados públicos de <span data-pais-nombre>España</span>. Fichas abiertas a corrección por la propia asociación.<br>
     Si buscas tiendas: <a href="/growshops.html">directorio de growshops</a> o <a href="/tiendas-cbd.html">tiendas de CBD</a>.<br>
     Solo mayores de 18 años. Consulta la legislación vigente. No son dispensarios.
   </footer>
@@ -257,6 +257,7 @@ let nearMode = false, userPos = null, nearAll = [], nearPage = PAGE;
 const $ = id => document.getElementById(id);
 if (!ES) {
   $("chips").style.display = "none";
+  document.querySelectorAll("[data-pais-nombre]").forEach(el => { el.textContent = PAIS_NOMBRE; });
   const porCiudad = document.querySelector('nav[aria-label="Explora por ciudad"]');
   if (porCiudad) porCiudad.style.display = "none";
 }
