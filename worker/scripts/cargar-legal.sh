@@ -1,18 +1,24 @@
 #!/usr/bin/env bash
 # Carga los documentos legales aprobados al RAG y pasa el test contra DeepSeek.
 # Uso (desde cualquier carpeta del repo): bash worker/scripts/cargar-legal.sh
+#   --solo-test: no recarga documentos; solo el test (pide SUPABASE_SERVICE_KEY y DEEPSEEK_API_KEY).
 # Pide las claves ocultas (read -s): no quedan en el historial ni en pantalla.
 set -uo pipefail
 
 cd "$(dirname "$0")/.." || exit 1   # carpeta worker/
 LOGS="$(mktemp -d)"
 
+SOLO_TEST=0
+[ "${1:-}" = "--solo-test" ] && SOLO_TEST=1
+
 read -rsp "SUPABASE_SERVICE_KEY: " SUPABASE_SERVICE_KEY; echo
-read -rsp "VOYAGE_API_KEY: " VOYAGE_API_KEY; echo
+[ "$SOLO_TEST" -eq 1 ] || { read -rsp "VOYAGE_API_KEY: " VOYAGE_API_KEY; echo; }
 read -rsp "DEEPSEEK_API_KEY: " DEEPSEEK_API_KEY; echo
-export SUPABASE_SERVICE_KEY VOYAGE_API_KEY DEEPSEEK_API_KEY
-for v in SUPABASE_SERVICE_KEY VOYAGE_API_KEY DEEPSEEK_API_KEY; do
-  [ -n "${!v}" ] || { echo "❌ Falta $v"; exit 1; }
+export SUPABASE_SERVICE_KEY DEEPSEEK_API_KEY
+[ "$SOLO_TEST" -eq 1 ] || export VOYAGE_API_KEY
+REQ="SUPABASE_SERVICE_KEY DEEPSEEK_API_KEY"; [ "$SOLO_TEST" -eq 1 ] || REQ="$REQ VOYAGE_API_KEY"
+for v in $REQ; do
+  [ -n "${!v:-}" ] || { echo "❌ Falta $v"; exit 1; }
 done
 
 P1="❌ no ejecutado"; P2="❌ no ejecutado"; P3="❌ no ejecutado"
@@ -25,6 +31,9 @@ resumen() {
   echo "Logs completos: $LOGS"
 }
 
+if [ "$SOLO_TEST" -eq 1 ]; then
+  P1="— omitido (--solo-test)"; P2="— omitido (--solo-test)"
+else
 echo; echo "── 1/3 Dry-run: verificación del modelo por coseno ──"
 DRY_RUN=1 node scripts/ingest-legal-aprobado.mjs 2>&1 | tee "$LOGS/1-dryrun.log"
 if [ "${PIPESTATUS[0]}" -ne 0 ] || ! grep -q "OK: voyage-multilingual-2, 1024 dims" "$LOGS/1-dryrun.log"; then
@@ -40,6 +49,8 @@ if [ "${PIPESTATUS[0]}" -ne 0 ]; then
   resumen; exit 1
 fi
 P2="✅ $(grep -c '✅' "$LOGS/2-carga.log") países cargados: $(grep '✅' "$LOGS/2-carga.log" | sed -E 's/.*✅ ([A-Z]{2}):.*· ([0-9]+) chunks.*/\1(\2)/' | tr '\n' ' ')"
+
+fi
 
 echo; echo "── 3/3 Test legal contra DeepSeek (documentos leídos de Supabase) ──"
 LEGAL_FROM_DB=1 node scripts/test-legal-prompt.mjs 2>&1 | tee "$LOGS/3-test.log"

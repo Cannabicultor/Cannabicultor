@@ -1122,6 +1122,26 @@ ${doc.texto}
 >>>`;
 }
 
+// País legal desconocido (sin país en la conversación ni subdominio, o lugar ambiguo): el modelo no
+// debe deducir España de una ciudad que existe en varios países.
+const LEGAL_PAIS_DESCONOCIDO_PROMPT = `PAÍS PARA LO LEGAL: DESCONOCIDO. El sistema no ha podido determinar el país del usuario (no lo ha dicho, o el lugar que nombra existe en varios países, p. ej. Guadalajara, Córdoba, Santiago, Mérida). NO lo trates como usuario de España aunque nombre una ciudad que también exista en España. Empieza la parte legal con el aviso literal: "${LEGAL_AVISO_GENERICO}" Después, si aporta, puedes añadir lo permitido para España SOLO en condicional ("Si estás en España, …"), sin cifras, y preguntarle en qué país está.`;
+
+const LEGAL_CIERRE_ABOGADO = 'Esta información es orientativa; confírmala con un abogado local.';
+const RE_RECOMIENDA_ABOGADO = /abogad|profesional (local|del derecho|especializad)|asesor(amiento|ía|ia)? (legal|jur[ií]dic)/i;
+
+/**
+ * Garantías deterministas en respuestas legales (no dependen del modelo):
+ * - país desconocido → la respuesta empieza con el aviso genérico si el modelo no lo ha dado;
+ * - siempre termina recomendando un abogado local si el modelo no lo ha hecho.
+ */
+function asegurarRespuestaLegal(reply, { paisLegal }) {
+  let out = String(reply || '').trim();
+  if (!out) return out;
+  if (!paisLegal && !out.includes(LEGAL_AVISO_GENERICO)) out = `${LEGAL_AVISO_GENERICO}\n\n${out}`;
+  if (!RE_RECOMIENDA_ABOGADO.test(out)) out += `\n\n${LEGAL_CIERRE_ABOGADO}`;
+  return out;
+}
+
 const SCOPE_REJECT_REPLY =
   'Solo puedo ayudarte con cultivo de cannabis y el uso de Cannabicultor. Reformula tu pregunta en ese ámbito (luz, riego, nutrientes, genética, plagas, sala de cultivo, etc.) y te ayudo.';
 
@@ -1174,6 +1194,8 @@ ${LEGAL_PROMPT}${VISION_PROMPT}`;
   }
   if (extras.legalDoc) {
     base += `\n\n${legalAprobadoPrompt(extras.legalDoc, extras.legalVia)}`;
+  } else if (extras.legalPaisDesconocido) {
+    base += `\n\n${LEGAL_PAIS_DESCONOCIDO_PROMPT}`;
   }
 
   if (directorioContexto) {
@@ -1997,15 +2019,18 @@ async function handleChat(body, env, request = null) {
   // Legal: solo el documento aprobado del país del usuario (conversación > subdominio); sin país → aviso genérico.
   let legalDoc = null;
   let legalMeta = {};
-  if (esPreguntaLegal(messages, textoConsulta)) {
+  const esLegal = esPreguntaLegal(messages, textoConsulta);
+  if (esLegal) {
     const { pais: paisLegal, via } = resolverPaisLegal(messages, request);
     legalDoc = paisLegal && paisLegal !== 'ES' ? await obtenerDocLegalPais(env, paisLegal) : null;
     legalMeta = { legal_pais: paisLegal, legal_via: via, legal_doc: !!legalDoc };
   }
-  const system = buildSystemPrompt(perfil, chunks, directorioContexto, { variedades: variedadesCtx, valoresIdeales, legalDoc, legalVia: legalMeta.legal_via }, pais);
+  const system = buildSystemPrompt(perfil, chunks, directorioContexto, { variedades: variedadesCtx, valoresIdeales, legalDoc, legalVia: legalMeta.legal_via, legalPaisDesconocido: esLegal && !legalMeta.legal_pais }, pais);
 
   try {
-    const { reply, provider } = await generateChatReply(system, anthropicMessages, withVision, env);
+    const gen = await generateChatReply(system, anthropicMessages, withVision, env);
+    const reply = esLegal ? asegurarRespuestaLegal(gen.reply, { paisLegal: legalMeta.legal_pais }) : gen.reply;
+    const { provider } = gen;
     // provider en el JSON es opcional para el frontend; útil en logs/cola de diagnóstico
     // match_chunks devuelve similitud ponderada (coseno * factor idioma * peso/10). Para medir huecos
     // guardamos el coseno puro: si ni el mejor fragmento se parece a la pregunta, falta conocimiento.

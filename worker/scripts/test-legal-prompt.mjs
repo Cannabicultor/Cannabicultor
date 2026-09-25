@@ -4,7 +4,8 @@
 // El documento legal de cada país (RPC legal_doc_pais) sale de legal/aprobado/*.md, con los mismos
 // chunks que carga ingest-legal-aprobado.mjs. Con LEGAL_FROM_DB=1 y SUPABASE_SERVICE_KEY se lee de Supabase.
 // Sale con código 1 si alguna respuesta da una cifra que no está en el documento de su país,
-// menciona normativa de otro país, o (con documento) no da la fecha de la fuente / no recomienda abogado.
+// menciona normativa de otro país, (con documento) no da la fecha de la fuente / no recomienda abogado,
+// o (país desconocido, legal_pais=null) no contiene el aviso genérico.
 import { readFileSync, writeFileSync, mkdtempSync, copyFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
@@ -18,6 +19,9 @@ for (const f of ['sales-agent.js', 'ig-channel.js', 'catalog-curation.js']) copy
 writeFileSync(join(tmp, 'worker.mjs'),
   readFileSync(join(src, 'worker-produccion.js'), 'utf8') + '\nexport { handleChat };\n');
 
+const workerSrc = readFileSync(join(src, 'worker-produccion.js'), 'utf8');
+const AVISO_GENERICO = (workerSrc.match(/const LEGAL_AVISO_GENERICO =\s*'([^']+)'/) || [])[1];
+if (!AVISO_GENERICO) throw new Error('No encuentro LEGAL_AVISO_GENERICO en worker-produccion.js');
 const DOCS = Object.fromEntries(leerDocsLegales().map((d) => [d.pais, d]));
 const LEGAL_FROM_DB = process.env.LEGAL_FROM_DB === '1' && process.env.SUPABASE_SERVICE_KEY;
 
@@ -101,6 +105,7 @@ for (const c of casos) {
     if (!/abogad/i.test(reply)) errores.push('no recomienda abogado local');
   }
   if (r.meta && c.pais && r.meta.legal_pais !== c.pais) errores.push(`país legal resuelto ${r.meta.legal_pais} (esperado ${c.pais})`);
+  if (r.meta && r.meta.legal_pais === null && reply && !reply.includes(AVISO_GENERICO)) errores.push('país desconocido (legal_pais=null) y la respuesta no contiene el aviso genérico');
   if (errores.length) fallos++;
   const cab = `${c.texto}${c.origin ? `  [${c.origin.replace('https://', '')}]` : ''}  → doc ${c.pais || '—'}`;
   console.log(`\n=== ${errores.length ? '❌' : '✅'} ${cab}\n[${r.data?.provider || r.status}] meta: ${JSON.stringify({ legal_pais: r.meta?.legal_pais, legal_via: r.meta?.legal_via, legal_doc: r.meta?.legal_doc })}`);
