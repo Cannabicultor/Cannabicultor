@@ -55,9 +55,14 @@ function normalizePais(code) {
  * Sin geolocalización por IP (VPN/viajeros la hacen poco fiable).
  */
 function resolvePais(request) {
+  return paisSubdominio(request) || PAIS_DEFAULT;
+}
+
+/** País del subdominio del Origin (ar.cannabicultor.com → AR) o null si no hay subdominio de país. */
+function paisSubdominio(request) {
   const origin = request ? (request.headers.get('Origin') || '') : '';
   const m = origin.match(/^https:\/\/([a-z]{2})\.cannabicultor\.com$/);
-  return (m && normalizePais(m[1])) || PAIS_DEFAULT;
+  return (m && normalizePais(m[1])) || null;
 }
 
 const SUPABASE_URL = 'https://gfyrsrdnvgnhtsuexjkb.supabase.co';
@@ -1015,11 +1020,107 @@ const LEGAL_AVISO_GENERICO =
   'Estamos con nuestro despacho legal definiendo la normativa país por país — todavía no puedo darte información legal verificada fuera de España. Te recomiendo confirmarlo con un profesional local.';
 
 const LEGAL_PROMPT = `LEGALIDAD (cultivo, posesión, consumo, transporte, venta, multas, clubes):
-- NO sabes en qué país está el usuario. NUNCA asumas que está en España ni apliques la legislación española por defecto.
-- Solo trátalo como usuario de España si en ESTA conversación ha dicho explícitamente que está en España o ha nombrado una ciudad/provincia/comunidad española como su lugar de residencia o de cultivo.
-- Si no consta que esté en España (no lo ha dicho, es ambiguo, o ha indicado otro país): no des información legal de ningún país; responde con este aviso literal: "${LEGAL_AVISO_GENERICO}" Puedes seguir ayudando con la parte técnica de cultivo de la pregunta, si la hay.
+- NO sabes en qué país está el usuario salvo que más abajo aparezca un bloque «MARCO LEGAL APROBADO — <país>». NUNCA asumas que está en España ni apliques la legislación española por defecto.
+- CON bloque «MARCO LEGAL APROBADO — <país>»: responde la parte legal SOLO con ese documento y SOLO para ese país; no mezcles normativa de otros países ni tu memoria. Puedes dar cifras (plantas, gramos, plazos, penas, números de ley o de artículo) ÚNICAMENTE si aparecen literalmente en ese documento, y siempre: (1) con la fecha de la fuente ("según el marco legal revisado por nuestro equipo jurídico a <fecha del bloque>"), (2) aclarando que es información general orientativa y que la normativa cambia, y (3) recomendando consultar a un abogado local. Si el documento no trae un dato (o dice que no incluye una cifra), dilo y no lo completes. Si el documento dice que algo está pendiente (p. ej. de un tribunal), preséntalo como pendiente sin afirmar su efecto.
+- SIN ese bloque: solo trátalo como usuario de España si en ESTA conversación ha dicho explícitamente que está en España o ha nombrado una ciudad/provincia/comunidad española como su lugar de residencia o de cultivo.
+- SIN ese bloque y sin que conste que esté en España (no lo ha dicho, es ambiguo, o ha indicado otro país): no des información legal de ningún país; responde con este aviso literal: "${LEGAL_AVISO_GENERICO}" Puedes seguir ayudando con la parte técnica de cultivo de la pregunta, si la hay.
 - Si consta que está en España: solo puedes decir que en España existe cierta tolerancia hacia el cultivo para consumo propio en el ámbito privado, que estamos verificando la normativa con nuestro despacho legal y que lo confirme con un profesional (abogado especializado). Nada más.
-- PROHIBIDO en cualquier país, España incluida: dar CUALQUIER número o cantidad legal (plantas, gramos, metros, multas, importes, años, artículos de ley), ni en cifras ni en palabras ("dos plantas", "una o dos", "unas pocas", "hasta X"). Aunque el usuario insista, aunque lo creas saber, aunque aparezca en el contexto de conocimiento: no hay contenido legal verificado todavía. Si pregunta "¿cuántas plantas puedo tener?", responde que no podemos darle una cifra verificada, no una aproximación.`;
+- PROHIBIDO dar CUALQUIER número o cantidad legal (plantas, gramos, metros, multas, importes, años, artículos de ley), ni en cifras ni en palabras ("dos plantas", "una o dos", "unas pocas", "hasta X"), que no esté literalmente en el bloque «MARCO LEGAL APROBADO» de esta respuesta. Sin ese bloque (España incluida) no das ninguna cifra legal: aunque el usuario insista, aunque lo creas saber, aunque aparezca en el contexto de conocimiento. Si pregunta "¿cuántas plantas puedo tener?" y no hay cifra en el bloque, responde que no podemos darle una cifra verificada, no una aproximación.`;
+
+// ---------------------------------------------------------------------------
+// LEGAL POR PAÍS: documentos aprobados por revisión jurídica (kb_documents.tipo_documento
+// = 'legal_aprobado', RPC legal_doc_pais). Solo se inyecta el documento del país del usuario.
+// ---------------------------------------------------------------------------
+const normTxt = (t) => String(t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+
+// Topónimos/gentilicios (sin tildes, minúsculas) → país o países candidatos si es ambiguo.
+// Los ambiguos (Córdoba, Guadalajara, Santiago...) solo se resuelven si el subdominio coincide.
+const UBICACIONES_PAIS = [
+  ['ES', 'espana|madrid|barcelona|sevilla|malaga|zaragoza|bilbao|alicante|murcia|valencia|mallorca|ibiza|menorca|tenerife|gran canaria|las palmas|lanzarote|fuerteventura|canarias|cataluna|andalucia|galicia|asturias|pais vasco|euskadi|navarra|cantabria|extremadura|castilla|aragon|granada|cadiz|vigo|a coruna|la coruna|valladolid|salamanca|pamplona|san sebastian|donostia|almeria|huelva|jaen|gijon|oviedo|tarragona|girona|lleida|castellon|badajoz|caceres|toledo|burgos|logrono|huesca|teruel|albacete|santiago de compostela|alcala de henares|getafe|mostoles|marbella|benidorm'],
+  ['AR', 'argentina|argentin[oa]s?|buenos aires|caba|capital federal|rosario|mendoza|la plata|mar del plata|tucuman|neuquen|bariloche|santa fe|jujuy|chubut|patagonia argentina|bahia blanca|parana'],
+  ['CL', 'chile|chilen[oa]s?|santiago de chile|valparaiso|vina del mar|concepcion|antofagasta|temuco|la serena|iquique|puerto montt|rancagua|talca|arica|punta arenas|valdivia'],
+  ['MX', 'mexico|mexican[oa]s?|cdmx|ciudad de mexico|monterrey|puebla|tijuana|cancun|queretaro|oaxaca|chihuahua|jalisco|nuevo leon|veracruz|acapulco|culiacan|hermosillo|aguascalientes|morelia|san luis potosi|toluca|saltillo|mazatlan|ensenada|playa del carmen|tulum|yucatan|baja california'],
+  ['CO', 'colombia|colombian[oa]s?|bogota|medellin|cali|barranquilla|bucaramanga|pereira|manizales|santa marta|cucuta|ibague|villavicencio|antioquia'],
+  ['AR|ES|CO', 'cordoba'],
+  ['ES|CO', 'santander'],
+  ['MX|ES', 'guadalajara|merida|leon'],
+  ['CL|ES', 'santiago'],
+  ['CO|ES', 'cartagena'],
+].flatMap(([paises, terms]) => terms.split('|').map((t) => ({ t, paises: paises.split('|') })))
+  .sort((a, b) => b.t.length - a.t.length); // frases largas primero ("santiago de chile" antes que "santiago")
+
+/** País que menciona un texto: { pais } si es claro, { multi } si nombra varios, { ambiguos } si solo hay topónimos ambiguos. */
+function paisMencionado(texto) {
+  let t = ` ${normTxt(texto)} `;
+  const claros = new Set();
+  const ambiguos = [];
+  for (const u of UBICACIONES_PAIS) {
+    const re = new RegExp(`(?<![a-z])${u.t}(?![a-z])`, 'g');
+    if (!re.test(t)) continue;
+    t = t.replace(re, ' ');
+    if (u.paises.length === 1) claros.add(u.paises[0]); else ambiguos.push(u.paises);
+  }
+  if (claros.size > 1) return { multi: true };
+  if (claros.size === 1) return { pais: [...claros][0] };
+  return ambiguos.length ? { ambiguos } : null;
+}
+
+/**
+ * País para responder lo legal: 1) lo que el usuario dice en la conversación (último mensaje suyo
+ * que lo aclare); 2) el subdominio (ar./cl./mx./co.); 3) null → aviso genérico.
+ */
+function resolverPaisLegal(messages, request) {
+  const sub = paisSubdominio(request);
+  const users = (Array.isArray(messages) ? messages : []).filter((m) => m && m.role === 'user').slice(-8).reverse();
+  for (const m of users) {
+    const texto = typeof m.content === 'string' ? m.content
+      : Array.isArray(m.content) ? m.content.filter((p) => p && p.type === 'text').map((p) => p.text || '').join(' ') : '';
+    const r = paisMencionado(texto);
+    if (!r) continue;
+    if (r.multi) return { pais: null, via: 'varios_paises' };
+    if (r.pais) return { pais: r.pais, via: 'conversacion' };
+    if (sub && r.ambiguos.every((c) => c.includes(sub))) return { pais: sub, via: 'conversacion_subdominio' };
+  }
+  return sub ? { pais: sub, via: 'subdominio' } : { pais: null, via: 'desconocido' };
+}
+
+const RE_PREGUNTA_LEGAL = /\b(legal\w*|ilegal\w*|legisla\w*|leye?s?|decretos?|normativa\w*|permisos?|permitid\w*|licencias?|multas?|sancion\w*|delitos?|penad\w*|penas?|carcel|policia\w*|denuncia\w*|reprocann|cofepris|tenencia|posesion|portar|dosis (personal|minima)|despenaliz\w*|autocultivo|autoconsumo|cuantas plantas|cuantos gramos|(puedo|podemos|se puede) (cultivar|plantar|tener|sembrar|llevar|fumar|consumir)|necesito (permiso|licencia|receta)|receta medica)\b/;
+
+/** ¿Pregunta legal? Mira el último mensaje; si es una continuación corta, también el anterior. */
+function esPreguntaLegal(messages, textoConsulta) {
+  if (RE_PREGUNTA_LEGAL.test(normTxt(textoConsulta))) return true;
+  return String(textoConsulta || '').length < 100 && RE_PREGUNTA_LEGAL.test(normTxt(ultimoMensajeUsuarioAnterior(messages)));
+}
+
+/** Documento legal aprobado del país (chunks concatenados) o null si no hay. */
+async function obtenerDocLegalPais(env, pais) {
+  if (!pais) return null;
+  try {
+    const r = await sbRequest(env, 'rpc/legal_doc_pais', { method: 'POST', body: JSON.stringify({ p_pais: pais }) });
+    if (!r.ok || !Array.isArray(r.data) || !r.data.length) return null;
+    const rows = r.data.filter((x) => x.pais === pais);
+    if (!rows.length) return null;
+    return { pais, fecha_revision: rows[0].fecha_revision, titulo: rows[0].titulo, texto: rows.map((x) => x.content).join('\n\n') };
+  } catch (_) { return null; }
+}
+
+function formatFechaEs(iso) {
+  const m = String(iso || '').match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (!m) return String(iso || '');
+  const meses = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+  return `${Number(m[3])} ${meses[Number(m[2]) - 1]} ${m[1]}`;
+}
+
+function legalAprobadoPrompt(doc, via) {
+  const nombre = (PAISES[doc.pais] || { nombre: doc.pais }).nombre;
+  const fecha = formatFechaEs(doc.fecha_revision);
+  const origen = via === 'subdominio' ? `entra por ${doc.pais.toLowerCase()}.cannabicultor.com y no ha indicado otro país` : `ha indicado ${nombre} en la conversación`;
+  return `MARCO LEGAL APROBADO — ${nombre} (revisión jurídica: ${fecha})
+El usuario ${origen}. Este es el documento legal de Cannabicultor aprobado por revisión jurídica para ${nombre}; es la ÚNICA fuente legal que puedes usar en esta respuesta:
+<<<
+${doc.texto}
+>>>`;
+}
 
 const SCOPE_REJECT_REPLY =
   'Solo puedo ayudarte con cultivo de cannabis y el uso de Cannabicultor. Reformula tu pregunta en ese ámbito (luz, riego, nutrientes, genética, plagas, sala de cultivo, etc.) y te ayudo.';
@@ -1070,6 +1171,9 @@ NUNCA inventes estudios ni legislación.
 ${LEGAL_PROMPT}${VISION_PROMPT}`;
   if (pais !== PAIS_DEFAULT) {
     base += `\n\nPAÍS DEL USUARIO: ${PAISES[pais].nombre}. El directorio que recibas es solo de ese país.`;
+  }
+  if (extras.legalDoc) {
+    base += `\n\n${legalAprobadoPrompt(extras.legalDoc, extras.legalVia)}`;
   }
 
   if (directorioContexto) {
@@ -1890,7 +1994,15 @@ async function handleChat(body, env, request = null) {
 
   // System incluye scopePrompt(pais) al inicio; casos dudosos los resuelve el LLM
   const valoresIdeales = RE_VALORES_IDEALES.test(textoConsulta.normalize('NFD').replace(/[\u0300-\u036f]/g, ''));
-  const system = buildSystemPrompt(perfil, chunks, directorioContexto, { variedades: variedadesCtx, valoresIdeales }, pais);
+  // Legal: solo el documento aprobado del país del usuario (conversación > subdominio); sin país → aviso genérico.
+  let legalDoc = null;
+  let legalMeta = {};
+  if (esPreguntaLegal(messages, textoConsulta)) {
+    const { pais: paisLegal, via } = resolverPaisLegal(messages, request);
+    legalDoc = paisLegal && paisLegal !== 'ES' ? await obtenerDocLegalPais(env, paisLegal) : null;
+    legalMeta = { legal_pais: paisLegal, legal_via: via, legal_doc: !!legalDoc };
+  }
+  const system = buildSystemPrompt(perfil, chunks, directorioContexto, { variedades: variedadesCtx, valoresIdeales, legalDoc, legalVia: legalMeta.legal_via }, pais);
 
   try {
     const { reply, provider } = await generateChatReply(system, anthropicMessages, withVision, env);
@@ -1901,7 +2013,7 @@ async function handleChat(body, env, request = null) {
       const w = (Number(c.factor_idioma_retrieval) || 1) * ((Number(c.peso_prioridad_retrieval) || 5) / 10);
       return (Number(c.similarity) || 0) / (w || 1);
     })) : null;
-    return { status: 200, data: { reply, provider }, meta: { ...intencionMeta, rag_top_score: ragTop, rag_rerank_score: rerankTop, rag_rerank_error: rerankError, rag_n_chunks: chunks.length, via_directorio: !!directorioContexto } };
+    return { status: 200, data: { reply, provider }, meta: { ...intencionMeta, rag_top_score: ragTop, rag_rerank_score: rerankTop, rag_rerank_error: rerankError, rag_n_chunks: chunks.length, via_directorio: !!directorioContexto, ...legalMeta } };
   } catch (err) {
     if (err?.message === 'all_providers_failed') {
       return {
