@@ -351,9 +351,10 @@ section.block{padding:36px 0}
   </div>
 </footer>
 
+<script src="/assets/config.js"></script>
 <script>
 (function(){
-  var WORKER='https://growers-alliance-ai.nohumanclicks.workers.dev';
+  var WORKER=window.CC_CONFIG.WORKER_URL;
   var ref=new URLSearchParams(location.search).get('ref');
   fetch(WORKER+'/track/page_view',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({page:'growers_alliance',ref:ref})}).catch(function(){});
 })();

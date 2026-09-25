@@ -1,6 +1,7 @@
 /* Reseñas de variedad / breeder. GET público, POST con JWT. */
 (function (global) {
-  var WORKER = 'https://growers-alliance-ai.nohumanclicks.workers.dev';
+  // Fichas generadas (variedades/, tiendas-cbd/) no cargan /assets/config.js: fallback propio.
+  var WORKER = (window.CC_CONFIG && window.CC_CONFIG.WORKER_URL) || 'https://growers-alliance-ai.nohumanclicks.workers.dev';
 
   function esc(s) {
     return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {

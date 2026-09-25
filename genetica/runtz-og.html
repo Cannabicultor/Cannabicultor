@@ -327,9 +327,10 @@ section.block{padding:36px 0}
   </div>
 </div>
 
+<script src="/assets/config.js"></script>
 <script>
 (function(){
-  var WORKER='https://growers-alliance-ai.nohumanclicks.workers.dev';
+  var WORKER=window.CC_CONFIG.WORKER_URL;
   var SLUG='runtz-og';
   function qp(k){return new URLSearchParams(location.search).get(k);}
   function getTier(){

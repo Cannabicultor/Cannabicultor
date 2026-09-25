@@ -249,10 +249,11 @@ body.chat .legal{display:none}
 
 <script src="/assets/auth.js"></script>
 <script src="/assets/chat-vision.js"></script>
+<script src="/assets/config.js"></script>
 <script>
 (function(){
 'use strict';
-var WORKER = 'https://growers-alliance-ai.nohumanclicks.workers.dev';
+var WORKER = window.CC_CONFIG.WORKER_URL;
 var ICONO = '/assets/icono_cannabicultor_small.webp';
 var st = { token:null, sid:null, email:null, logueado:false, hist:[], foto:null, enviando:false, regMostrado:false, restantes:3 };
 

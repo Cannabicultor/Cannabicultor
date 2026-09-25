@@ -31,6 +31,33 @@ const ALLOWED_ORIGINS = [
   'http://127.0.0.1:8787',
 ];
 
+// Cualquier subdominio HTTPS de cannabicultor.com (ar., cl., ...). Anclado para no aceptar
+// dominios tipo "cannabicultor.com.evil.com" ni "evilcannabicultor.com".
+const SUBDOMAIN_ORIGIN_RE = /^https:\/\/([a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+cannabicultor\.com$/;
+
+// Países soportados (ISO 3166-1 alfa-2). ES es el fallback cuando no se puede determinar.
+const PAISES = {
+  ES: { nombre: 'España' },
+  AR: { nombre: 'Argentina' },
+};
+const PAIS_DEFAULT = 'ES';
+
+function normalizePais(code) {
+  const c = String(code || '').trim().toUpperCase();
+  return PAISES[c] ? c : null;
+}
+
+/**
+ * País del usuario: body.pais explícito > subdominio del Origin (ar.cannabicultor.com → AR) > ES.
+ */
+function resolvePais(request, body) {
+  const explicito = normalizePais(body && body.pais);
+  if (explicito) return explicito;
+  const origin = request ? (request.headers.get('Origin') || '') : '';
+  const m = origin.match(/^https:\/\/([a-z]{2})\.cannabicultor\.com$/);
+  return (m && normalizePais(m[1])) || PAIS_DEFAULT;
+}
+
 const SUPABASE_URL = 'https://gfyrsrdnvgnhtsuexjkb.supabase.co';
 const JWT_TTL_SEC = 8 * 60 * 60;
 const RESET_TTL_MS = 60 * 60 * 1000;
@@ -42,11 +69,13 @@ const LOCAL_ORIGIN_RE = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/;
 function corsHeaders(request) {
   const origin = request.headers.get('Origin') || '';
   const isLocal = LOCAL_ORIGIN_RE.test(origin);
-  const allowed = (ALLOWED_ORIGINS.includes(origin) || isLocal) ? origin : ALLOWED_ORIGINS[0];
+  const allowed = (ALLOWED_ORIGINS.includes(origin) || SUBDOMAIN_ORIGIN_RE.test(origin) || isLocal) ? origin : ALLOWED_ORIGINS[0];
   return {
     'Access-Control-Allow-Origin': allowed,
     'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+
+    'Vary': 'Origin',
   };
 }
 
@@ -969,11 +998,14 @@ async function brevoSendResetEmail(env, email, token) {
 // =========================================================================
 // CHAT
 // =========================================================================
-const SCOPE_PROMPT = `Eres el asistente de IA de Cannabicultor, especializado exclusivamente en cultivo de cannabis: variedades/genética, cultivo (luz, sustrato, riego, VPD, nutrientes, fertilizantes, plagas, floración, cosecha), diseño de espacios de cultivo, el DIRECTORIO de growshops/tiendas de cultivo y clubes/asociaciones cannábicas de España, y temas directamente relacionados con la comunidad cultivadora en España.
+function scopePrompt(pais = PAIS_DEFAULT) {
+  const nombrePais = (PAISES[pais] || PAISES[PAIS_DEFAULT]).nombre;
+  return `Eres el asistente de IA de Cannabicultor, especializado exclusivamente en cultivo de cannabis: variedades/genética, cultivo (luz, sustrato, riego, VPD, nutrientes, fertilizantes, plagas, floración, cosecha), diseño de espacios de cultivo, el DIRECTORIO de growshops/tiendas de cultivo y clubes/asociaciones cannábicas de ${nombrePais}, y temas directamente relacionados con la comunidad cultivadora en ${nombrePais}.
 
 El directorio de growshops y de clubes/asociaciones es parte del ámbito de esta plataforma: si el usuario pregunta por un growshop, tienda de cultivo o club/asociación cerca de él, en su ciudad, o pide recomendaciones de dónde comprar/asociarse, SÍ debes ayudarle usando la información del directorio que se te proporcione en el contexto (si la hay). Si no tienes datos del directorio para su ciudad, dilo con honestidad y sugiere que puede añadir la ficha desde la plataforma si conoce un sitio no listado.
 
 Si el usuario pregunta algo que NO tiene relación con cultivo de cannabis, el directorio de growshops/clubes, o el uso de esta plataforma (por ejemplo: reparar un coche, recetas de cocina no relacionadas, tareas de programación ajenas, preguntas generales de cultura, etc.), NO respondas la pregunta. En su lugar, responde brevemente (1-2 frases) indicando que solo puedes ayudar con temas de cultivo de cannabis y el directorio de Cannabicultor, y sugiere reformular la pregunta dentro de ese ámbito. No uses el contexto RAG en ese caso, no expliques el motivo con detalle, sé breve.`;
+}
 
 const SCOPE_REJECT_REPLY =
   'Solo puedo ayudarte con cultivo de cannabis y el uso de Cannabicultor. Reformula tu pregunta en ese ámbito (luz, riego, nutrientes, genética, plagas, sala de cultivo, etc.) y te ayudo.';
@@ -1012,13 +1044,17 @@ const VALORES_IDEALES_CANNABICULTOR = `VALORES IDEALES CANNABICULTOR (tabla ofic
 Temperatura, humedad y VPD son iguales en cualquier sustrato; pH y EC dependen del sustrato. Si citas estas cifras, preséntalas como "la tabla de valores de Cannabicultor" y recomienda la página cannabicultor.com/tabla-valores-ideales.html.`;
 const RE_VALORES_IDEALES = /\b(ph|ec|ppm|vpd|humedad|hr|temperatura|grados|co2|conductividad|riego|regar|nutriente|nutrientes|abono|fertiliz\w*|dosis|valores?)\b/i;
 
-function buildSystemPrompt(perfil, chunks, directorioContexto, extras = {}) {
+function buildSystemPrompt(perfil, chunks, directorioContexto, extras = {}, pais = PAIS_DEFAULT) {
+  pais = normalizePais(pais) || PAIS_DEFAULT;
   // Scope primero (antes del RAG); el LLM lo ve aunque la heurística no sea concluyente.
-  let base = `${SCOPE_PROMPT}
+  let base = `${scopePrompt(pais)}
 
 Eres Cannabicultor IA de Growers Alliance. Tono: autoridad con calidez. Tuteo respetuoso.
 Primera frase responde DIRECTAMENTE. Máx 8-12 líneas. Abre UNA puerta al final.
 NUNCA inventes estudios ni legislación.${VISION_PROMPT}`;
+  if (pais !== PAIS_DEFAULT) {
+    base += `\n\nPAÍS DEL USUARIO: ${PAISES[pais].nombre}. Adapta vocabulario y referencias a ${PAISES[pais].nombre}; el directorio que recibas es solo de ese país.`;
+  }
 
   if (directorioContexto) {
     base += `\n\nDIRECTORIO CANNABICULTOR (usa esto para responder, es la fuente real y actual — NUNCA inventes un growshop, club o dato de contacto que no esté aquí):\n${directorioContexto}`;
@@ -1549,13 +1585,13 @@ function detectDirectorySearchIntent(text) {
  * La RPC busca qué ciudad/provincia del directorio aparece en el texto del usuario
  * (robusto a "Y en madrid", "clubes en Lanzarote que voy de viaje", tildes NFD de iOS).
  */
-async function buscarDirectorioPorCiudad(env, tipo, ciudad, textoCompleto = '') {
+async function buscarDirectorioPorCiudad(env, tipo, ciudad, textoCompleto = '', pais = PAIS_DEFAULT) {
   const cand = String(ciudad || '').normalize('NFC');
   const texto = `${cand} ${String(textoCompleto || '')}`.normalize('NFC');
   const out = { growshops: [], asociaciones: [] };
   const r = await sbRequest(env, 'rpc/directorio_buscar', {
     method: 'POST',
-    body: JSON.stringify({ p_texto: texto, p_candidato: cand, p_tipo: tipo === 'asociacion' || tipo === 'growshop' ? tipo : 'ambos', p_limit: 10 }),
+    body: JSON.stringify({ p_texto: texto, p_candidato: cand, p_tipo: tipo === 'asociacion' || tipo === 'growshop' ? tipo : 'ambos', p_limit: 10, p_pais: pais }),
   });
   if (r.ok && Array.isArray(r.data)) {
     for (const row of r.data) {
@@ -1752,8 +1788,9 @@ function detectDirectorySearchIntentConHistorial(messages, textoConsulta) {
   return null;
 }
 
-async function handleChat(body, env) {
+async function handleChat(body, env, request = null) {
   const { messages, perfil } = body || {};
+  const pais = resolvePais(request, body);
   if (!messages || !Array.isArray(messages) || !messages.length) {
     return { status: 400, data: { error: 'Faltan mensajes' } };
   }
@@ -1793,7 +1830,7 @@ async function handleChat(body, env) {
   if (dirIntent) {
     try {
       const prevUser = ultimoMensajeUsuarioAnterior(messages);
-      const resultados = await buscarDirectorioPorCiudad(env, dirIntent.tipo, dirIntent.ciudad || '', `${textoConsulta} ${dirIntent.ciudad ? '' : prevUser}`);
+      const resultados = await buscarDirectorioPorCiudad(env, dirIntent.tipo, dirIntent.ciudad || '', `${textoConsulta} ${dirIntent.ciudad ? '' : prevUser}`, pais);
       const total = (resultados.growshops?.length || 0) + (resultados.asociaciones?.length || 0);
       if (!total && !dirIntent.ciudad) {
         return { status: 200, data: { reply: DIRECTORY_ASK_CITY_REPLY, provider: 'directory_heuristic' }, meta: intencionMeta };
@@ -1835,9 +1872,9 @@ async function handleChat(body, env) {
     }
   } catch (_) {}
 
-  // System incluye SCOPE_PROMPT al inicio; casos dudosos los resuelve el LLM
+  // System incluye scopePrompt(pais) al inicio; casos dudosos los resuelve el LLM
   const valoresIdeales = RE_VALORES_IDEALES.test(textoConsulta.normalize('NFD').replace(/[\u0300-\u036f]/g, ''));
-  const system = buildSystemPrompt(perfil, chunks, directorioContexto, { variedades: variedadesCtx, valoresIdeales });
+  const system = buildSystemPrompt(perfil, chunks, directorioContexto, { variedades: variedadesCtx, valoresIdeales }, pais);
 
   try {
     const { reply, provider } = await generateChatReply(system, anthropicMessages, withVision, env);
@@ -3958,7 +3995,7 @@ export default {
       // ni persiste diagnósticos; solo atiende peticiones autorizadas por secreto.
       if (path === '/benchmark') {
         if (!await hasBenchmarkAccess(request, env)) return json({ error: 'No autorizado' }, 401, cors);
-        const result = await handleChat(body, env);
+        const result = await handleChat(body, env, request);
         return json(result.data, result.status, cors);
       }
       if (path === '/benchmark/grok') {
@@ -4014,7 +4051,7 @@ export default {
             return json({ sin_creditos: true, saldo, reply: `Te has quedado sin créditos (te quedan ${saldo} y esta consulta cuesta ${costeCreditos}). Cada mes recibes ${CREDITOS_MENSUALES} gratis; si necesitas más, puedes recargar desde Mi cultivo.` }, 200, cors);
           }
         }
-        const result = await handleChat(body, env);
+        const result = await handleChat(body, env, request);
         if (costeCreditos && result.status === 200 && result.data?.reply) {
           ctx.waitUntil(creditosMovimiento(env, identity.email, -costeCreditos, costeCreditos === COSTE_FOTO ? 'consumo_foto' : 'consumo_texto'));
           result.data.creditos_gastados = costeCreditos;

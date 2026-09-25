@@ -587,9 +587,10 @@
 
 <script src="assets/auth.js?v=20260813-logout"></script>
 <script src="https://cannabicultor.com/assets/chat-vision.js?v=3"></script>
+<script src="/assets/config.js"></script>
 <script>
 
-const WORKER = 'https://growers-alliance-ai.nohumanclicks.workers.dev';
+const WORKER = window.CC_CONFIG.WORKER_URL;
 
 // ─── GUARD DE SESIÓN JWT ──────────────────────────────────────────────────────
 // LOGIN ÚNICO: acepta el token venga del dashboard (ga_jwt) o del onboarding (cc_token).

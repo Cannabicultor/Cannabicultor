@@ -54,8 +54,9 @@ textarea{min-height:64px}
 <div id="msg"></div>
 </div>
 <script src="/assets/auth.js"></script>
+<script src="/assets/config.js"></script>
 <script>
-var W='https://growers-alliance-ai.nohumanclicks.workers.dev';
+var W=window.CC_CONFIG.WORKER_URL;
 var jwt=window.GAAuth&&GAAuth.readSession?GAAuth.readSession():null;
 if(!jwt){location.href='/login.html?next='+encodeURIComponent('/admin-growshops.html');}
 var tiendas=[],csvPara=null,f=document.getElementById('f');

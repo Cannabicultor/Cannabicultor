@@ -9,7 +9,8 @@
   if (window.__asesorCannabicultor) return;
   window.__asesorCannabicultor = true;
 
-  var API = "https://growers-alliance-ai.nohumanclicks.workers.dev";
+  // Se incrusta en webs de tiendas (sin /assets/config.js): fallback propio si no hay CC_CONFIG.
+  var API = (window.CC_CONFIG && window.CC_CONFIG.WORKER_URL) || "https://growers-alliance-ai.nohumanclicks.workers.dev";
   var me = document.currentScript || (function () {
     var s = document.querySelectorAll("script[src*='asesor.js']");
     return s[s.length - 1];
