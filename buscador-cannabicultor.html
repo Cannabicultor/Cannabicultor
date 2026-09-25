@@ -137,6 +137,7 @@ h1 em{color:var(--forest);font-style:normal}
 .stat-card .k{font-size:10.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:4px}
 .stat-card .v{font-size:16px;font-weight:700}
 .stat-card .v em{font-family:var(--font-display);font-style:normal;color:var(--forest)}
+.breeder-link{color:var(--forest);text-decoration:underline;text-underline-offset:2px;cursor:pointer}
 .stat-link{display:block;width:100%;text-align:left;font:inherit;color:inherit;cursor:pointer}
 .stat-link:hover{border-color:var(--forest)}
 .ver-variedades{display:block;width:100%;margin:14px 0 4px;padding:12px;border:0;border-radius:12px;background:var(--forest);color:#fff;font:600 14px var(--font-body,inherit);cursor:pointer}
@@ -318,7 +319,7 @@ async function pg(path, { count = false, signal } = {}, retry = 1) {
 function buildUrl() {
   const q = query.trim().replace(/[,()*]/g, " ").trim();
   if (tab === "variedades") {
-    let u = "variedades?select=id,nombre,tipo,thc_pct,thc_min,thc_max,floracion_dias,genetica,image_url,es_landrace,es_clon,breeders(breeder_name,tipo_semillas)"
+    let u = "variedades?select=id,breeder_id,nombre,tipo,thc_pct,thc_min,thc_max,floracion_dias,genetica,image_url,es_landrace,es_clon,breeders(breeder_name,tipo_semillas)"
           + "&activa=is.true";
     if (breederFiltro) u += "&breeder_id=eq." + breederFiltro.id;
     if (q) u += "&nombre=ilike.*" + encodeURIComponent(q) + "*";
@@ -383,7 +384,8 @@ function cardVariedad(v) {
   const clon = isClon(v);
   body.innerHTML =
     '<div class="card-title">' + esc(v.nombre) + '</div>' +
-    '<div class="card-sub">' + esc(clon ? "Solo clon · sin semillas" : (v.breeders?.breeder_name || "Breeder desconocido")) + '</div>' +
+    '<div class="card-sub">' + (clon || !v.breeder_id || !v.breeders?.breeder_name ? esc(clon ? "Solo clon · sin semillas" : (v.breeders?.breeder_name || "Breeder desconocido"))
+      : '<span class="breeder-link" role="link" tabindex="0" data-breeder="' + v.breeder_id + '">' + esc(v.breeders.breeder_name) + '</span>') + '</div>' +
     '<div class="badges">' +
       (clon ? '<span class="badge tipo">Solo clon</span>' : (v.tipo ? '<span class="badge tipo">' + esc(cap(v.tipo)) + '</span>' : "")) +
       (thc ? '<span class="badge thc">THC ' + thc + '</span>' : "") +
@@ -392,7 +394,12 @@ function cardVariedad(v) {
     '</div>';
   b.appendChild(body);
   b.insertAdjacentHTML("beforeend", '<span class="chev">›</span>');
-  b.onclick = () => openVariedad(v.id);
+  b.onclick = e => {
+    // el nombre del breeder abre su ficha en vez de la de la variedad
+    const bl = e.target.closest("[data-breeder]");
+    if (bl) { e.stopPropagation(); openBreeder(+bl.dataset.breeder); return; }
+    openVariedad(v.id);
+  };
   return b;
 }
 
@@ -461,7 +468,8 @@ async function openVariedad(id) {
     openSheet(
       '<div class="sheet-head">' + thumbEl(v.image_url, v.nombre).outerHTML +
         '<div><div class="sheet-title">' + esc(v.nombre) + '</div>' +
-        '<div class="sheet-breeder">' + esc(clon ? "Solo clon · sin semillas" : (v.breeders?.breeder_name || "")) + (!clon && v.breeders?.pais_origen ? " · " + esc(v.breeders.pais_origen) : "") + '</div></div>' +
+        '<div class="sheet-breeder">' + (clon || !v.breeder_id ? esc(clon ? "Solo clon · sin semillas" : (v.breeders?.breeder_name || ""))
+          : '<a href="#" class="breeder-link" data-breeder="' + v.breeder_id + '">' + esc(v.breeders?.breeder_name || "") + '</a>') + (!clon && v.breeders?.pais_origen ? " · " + esc(v.breeders.pais_origen) : "") + '</div></div>' +
       '</div>' +
       '<div class="grid">' +
         statCard("Tipo", clon ? "Solo clon" : (v.tipo ? esc(cap(v.tipo)) : null)) +
@@ -479,9 +487,10 @@ async function openVariedad(id) {
       (limpio(v.descripcion) ? '<div class="section"><div class="k">Descripción</div><p>' + esc(v.descripcion) + '</p></div>' : "") +
       (v.premios ? '<div class="section"><div class="k">Premios</div><p>' + esc(v.premios) + '</p></div>' : "") +
       varietyCta(v) +
-      (!clon && v.breeders?.website ? '<a class="link-btn" href="' + esc(v.breeders.website) + '" target="_blank" rel="noopener">Web del breeder ↗</a>' : "") +
+      (!clon && v.breeder_id && v.breeders?.breeder_name ? '<a href="#" class="link-btn" data-breeder="' + v.breeder_id + '">Ver ficha de ' + esc(v.breeders.breeder_name) + ' →</a>' : "") +
       '<div id="revMount"></div>'
     );
+    sheetContent.querySelectorAll("[data-breeder]").forEach(el => el.onclick = e => { e.preventDefault(); openBreeder(+el.dataset.breeder); });
     if (window.CCResenas) CCResenas.mount(document.getElementById('revMount'), 'variedad', v.id);
   } catch { closeSheet(); }
 }
