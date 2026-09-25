@@ -221,6 +221,14 @@ const SUPABASE_KEY = "sb_publishable_FdRmfirvOTAIfZFOcj2ZZg_Vic__TDw";
 const WORKER = window.CC_CONFIG.WORKER_URL;
 const TABLE = "cbd_shops";
 const HEADERS = { apikey: SUPABASE_KEY, Authorization: "Bearer " + SUPABASE_KEY };
+// País del subdominio (assets/config.js). Todas las consultas filtran por él; en ES todo sigue igual.
+const PAIS = (window.CC_CONFIG && window.CC_CONFIG.PAIS) || "ES";
+const ES = PAIS === "ES";
+const PAIS_NOMBRE = { ES: "España", AR: "Argentina", CL: "Chile", MX: "México", CO: "Colombia" }[PAIS] || PAIS;
+const PAIS_Q = "&pais=eq." + encodeURIComponent(PAIS);
+function vacioPais() {
+  return '<div class="empty"><span class="big">Todavía no tenemos tiendas de CBD registradas en ' + esc(PAIS_NOMBRE) + '</span>¿Tienes una o conoces alguna? Escríbenos a <a href="mailto:hola@cannabicultor.com">hola@cannabicultor.com</a> o añádela con «Añade tu tienda».</div>';
+}
 const PAGE = 25;
 const CCAA_ORDER = ["Madrid","Cataluña","Andalucía","Comunitat Valenciana","Galicia","País Vasco","Canarias","Illes Balears","Castilla y León","Castilla-La Mancha","Aragón","Murcia","Asturias","Extremadura","Navarra","Cantabria","La Rioja"];
 
@@ -228,6 +236,12 @@ let query = "", filterCcaa = "", onlyRated = false, offset = 0, busy = false, la
 let nearMode = false, userPos = null, nearPage = PAGE;
 
 const $ = id => document.getElementById(id);
+if (!ES) {
+  $("chips").style.display = "none";
+  const porCiudad = document.querySelector('nav[aria-label="Explora por ciudad"]');
+  if (porCiudad) porCiudad.style.display = "none";
+  document.querySelector(".app > header h1").innerHTML = "Tiendas de <em>CBD</em> en " + PAIS_NOMBRE;
+}
 const list = $("list"), countLine = $("countLine"), moreBtn = $("moreBtn");
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const nf = new Intl.NumberFormat("es-ES");
@@ -256,6 +270,7 @@ function fmtKm(km) {
 }
 
 async function pg(path, { count = false, signal } = {}) {
+  path = path.replace("activo=is.true", "activo=is.true" + PAIS_Q);
   const h = { ...HEADERS };
   if (count) h.Prefer = "count=exact";
   const r = await fetch(SUPABASE_URL + "/rest/v1/" + path, { headers: h, signal });
@@ -298,7 +313,7 @@ async function load(reset) {
     if (token !== lastToken) return;
     if (reset) list.innerHTML = "";
     if (!data.length && reset) {
-      list.innerHTML = '<div class="empty"><span class="big">Aún no hay fichas aquí</span>Prueba otra comunidad o añade tu tienda CBD para inaugurar la zona.</div>';
+      list.innerHTML = (!ES && !query.trim() && !filterCcaa && !onlyRated) ? vacioPais() : '<div class="empty"><span class="big">Aún no hay fichas aquí</span>Prueba otra comunidad o añade tu tienda CBD para inaugurar la zona.</div>';
       countLine.textContent = "";
     } else {
       data.forEach(g => list.appendChild(cardEl(g)));
@@ -376,7 +391,7 @@ function cardEl(g) {
   btn.innerHTML =
     '<div class="thumb">' + logo + '</div>' +
     '<div class="card-body"><div class="card-title">' + esc(g.nombre) + '</div>' +
-    '<div class="card-sub">' + esc(place || "España") + '</div>' +
+    '<div class="card-sub">' + esc(place || PAIS_NOMBRE) + '</div>' +
     '<div class="badges">' + dist + rating + (g.verificado ? '<span class="badge ok">Verificado</span>' : "") + "</div></div>";
   btn.onclick = () => openShop(g.id);
   return btn;
@@ -409,7 +424,7 @@ async function openShop(id) {
     openSheet(
       headLogo +
       '<div class="sheet-title">' + esc(g.nombre) + '</div>' +
-      '<div class="sheet-breeder">' + esc([g.ciudad, g.ccaa].filter(Boolean).join(" · ") || "España") +
+      '<div class="sheet-breeder">' + esc([g.ciudad, g.ccaa].filter(Boolean).join(" · ") || PAIS_NOMBRE) +
         (g.verificado ? " · verificado" : " · ficha abierta a reseñas") + '</div>' +
       (g.descripcion ? '<div class="section" style="margin-top:16px"><div class="k">Sobre la tienda</div><p>' + esc(g.descripcion) + '</p></div>' : "") +
       (addr ? '<div class="section"><div class="k">Dirección</div><p>' + esc(addr) + '</p></div>' : "") +
@@ -517,7 +532,7 @@ async function loadChips() {
   try {
     const { total } = await pg(TABLE + "?select=id&activo=is.true&limit=1", { count: true });
     $("statsLine").textContent = nf.format(total) + " tiendas de CBD · flores, aceites y cosmética";
-  } catch { $("statsLine").textContent = "Directorio de tiendas de CBD · España"; }
+  } catch { $("statsLine").textContent = "Directorio de tiendas de CBD · " + PAIS_NOMBRE; }
 })();
 
 let debounce;

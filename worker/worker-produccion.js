@@ -3416,7 +3416,7 @@ async function handleCreateGrowshop(body, env, request) {
   const qc = encodeURIComponent(`"${ciudad}"`);
   const dup = await sbRequest(
     env,
-    `growshops?select=id,nombre,ciudad&nombre=ilike.${qn}&ciudad=ilike.${qc}&limit=1`,
+    `growshops?select=id,nombre,ciudad&nombre=ilike.${qn}&ciudad=ilike.${qc}&pais=eq.${resolvePais(request)}&limit=1`,
     { method: 'GET' }
   );
   if (dup.ok && Array.isArray(dup.data) && dup.data.length) {
@@ -3446,6 +3446,7 @@ async function handleCreateGrowshop(body, env, request) {
     fuente: 'manual',
     verificado: false,
     activo: true,
+    pais: resolvePais(request),
     enviado_por: auth.email,
   };
   const res = await sbRequest(env, 'growshops', {
@@ -3473,7 +3474,7 @@ async function handleCreateCbdShop(body, env, request) {
   const qc = encodeURIComponent(`"${ciudad}"`);
   const dup = await sbRequest(
     env,
-    `cbd_shops?select=id,nombre,ciudad&nombre=ilike.${qn}&ciudad=ilike.${qc}&limit=1`,
+    `cbd_shops?select=id,nombre,ciudad&nombre=ilike.${qn}&ciudad=ilike.${qc}&pais=eq.${resolvePais(request)}&limit=1`,
     { method: 'GET' }
   );
   if (dup.ok && Array.isArray(dup.data) && dup.data.length) {
@@ -3503,6 +3504,7 @@ async function handleCreateCbdShop(body, env, request) {
     fuente: 'manual',
     verificado: false,
     activo: true,
+    pais: resolvePais(request),
     enviado_por: auth.email,
   };
   const res = await sbRequest(env, 'cbd_shops', {
@@ -3530,7 +3532,7 @@ async function handleCreateAsociacion(body, env, request) {
   const qc = encodeURIComponent(`"${ciudad}"`);
   const dup = await sbRequest(
     env,
-    `asociaciones?select=id,nombre,ciudad&nombre=ilike.${qn}&ciudad=ilike.${qc}&limit=1`,
+    `asociaciones?select=id,nombre,ciudad&nombre=ilike.${qn}&ciudad=ilike.${qc}&pais=eq.${resolvePais(request)}&limit=1`,
     { method: 'GET' }
   );
   if (dup.ok && Array.isArray(dup.data) && dup.data.length) {
@@ -3561,6 +3563,7 @@ async function handleCreateAsociacion(body, env, request) {
     fuente: 'manual',
     verificado: false,
     activo: true,
+    pais: resolvePais(request),
     enviado_por: auth.email,
   };
   const res = await sbRequest(env, 'asociaciones', {
