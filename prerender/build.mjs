@@ -440,9 +440,10 @@ const baseName = (nombre) => String(nombre).replace(/\b(auto(matic|flower(ing)?)
 
 async function loadGenealogia() {
   try {
-    const r = await fetch(`${GENEALOGIA_SITE}/sitemap.xml`, { signal: AbortSignal.timeout(20000) });
-    if (!r.ok) throw new Error('HTTP ' + r.status);
-    for (const [, s] of (await r.text()).matchAll(/\/v\/([^/<]+)\/<\/loc>/g)) {
+    // httpGetJson (módulo https) y no fetch: el Node del servidor puede no tener fetch global
+    const r = await httpGetJson(`${GENEALOGIA_SITE}/sitemap.xml`, { 'User-Agent': 'cannabicultor-prerender' });
+    if (r.status !== 200) throw new Error('HTTP ' + r.status);
+    for (const [, s] of r.text.matchAll(/\/v\/([^/<]+)\/<\/loc>/g)) {
       const k = genKey(s.replace(/-/g, ' '));
       if (k && !GENEALOGIA.has(k)) GENEALOGIA.set(k, s);
     }
