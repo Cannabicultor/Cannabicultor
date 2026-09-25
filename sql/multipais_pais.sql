@@ -38,10 +38,14 @@ as $function$
                     coalesce(nullif(upper(trim(p_pais)), ''), 'ES') as pais),
   base as (
     select 'growshop'::text tipo, g.nombre, g.ciudad, g.provincia, g.direccion, g.telefono, g.web, g.instagram
-      from growshops g, q where g.activo and g.pais = q.pais and p_tipo in ('growshop','ambos')
+      from growshops g, q where g.activo and g.pais = q.pais and p_tipo in ('growshop','ambos','todos')
     union all
     select 'asociacion', a.nombre, a.ciudad, a.provincia, a.direccion, a.telefono, a.web, a.instagram
-      from asociaciones a, q where a.activo and a.pais = q.pais and p_tipo in ('asociacion','ambos')
+      from asociaciones a, q where a.activo and a.pais = q.pais and p_tipo in ('asociacion','ambos','todos')
+    union all
+    -- CBD solo si se pide explícitamente ('cbd' o 'todos'): 'ambos' (chat) no cambia.
+    select 'cbd', c.nombre, c.ciudad, c.provincia, c.direccion, c.telefono, c.web, c.instagram
+      from cbd_shops c, q where c.activo and c.pais = q.pais and p_tipo in ('cbd','todos')
   ),
   scored as (
     select b.*, greatest(

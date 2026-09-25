@@ -48,11 +48,10 @@ function normalizePais(code) {
 }
 
 /**
- * País del usuario: body.pais explícito > subdominio del Origin (ar.cannabicultor.com → AR) > ES.
+ * País del usuario solo por subdominio del Origin (ar.cannabicultor.com → AR); si no, ES.
+ * Sin geolocalización por IP (VPN/viajeros la hacen poco fiable).
  */
-function resolvePais(request, body) {
-  const explicito = normalizePais(body && body.pais);
-  if (explicito) return explicito;
+function resolvePais(request) {
   const origin = request ? (request.headers.get('Origin') || '') : '';
   const m = origin.match(/^https:\/\/([a-z]{2})\.cannabicultor\.com$/);
   return (m && normalizePais(m[1])) || PAIS_DEFAULT;
@@ -1053,7 +1052,7 @@ Eres Cannabicultor IA de Growers Alliance. Tono: autoridad con calidez. Tuteo re
 Primera frase responde DIRECTAMENTE. Máx 8-12 líneas. Abre UNA puerta al final.
 NUNCA inventes estudios ni legislación.${VISION_PROMPT}`;
   if (pais !== PAIS_DEFAULT) {
-    base += `\n\nPAÍS DEL USUARIO: ${PAISES[pais].nombre}. Adapta vocabulario y referencias a ${PAISES[pais].nombre}; el directorio que recibas es solo de ese país.`;
+    base += `\n\nPAÍS DEL USUARIO: ${PAISES[pais].nombre}. El directorio que recibas es solo de ese país.`;
   }
 
   if (directorioContexto) {
@@ -1790,7 +1789,7 @@ function detectDirectorySearchIntentConHistorial(messages, textoConsulta) {
 
 async function handleChat(body, env, request = null) {
   const { messages, perfil } = body || {};
-  const pais = resolvePais(request, body);
+  const pais = resolvePais(request);
   if (!messages || !Array.isArray(messages) || !messages.length) {
     return { status: 400, data: { error: 'Faltan mensajes' } };
   }
