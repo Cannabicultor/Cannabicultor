@@ -4,7 +4,8 @@
 //   DRY_RUN=1 ... → verifica modelo y muestra los chunks sin escribir nada.
 // Requiere la migración sql/legal_aprobado_pais.sql (columnas pais / fecha_revision, legal_doc_pais).
 // 1) Verifica que voyage-multilingual-2 reproduce los embeddings ya guardados (coseno ≥ 0.99).
-// 2) Upsert del documento por drive_file_id = 'legal:<pais>', borra sus chunks y los reinserta.
+// 2) Upsert del documento por catalog_num (único real; 9100NN fijo por país), borra sus chunks y los reinserta.
+//    drive_file_id solo tiene un índice único parcial, que PostgREST no admite en on_conflict.
 import { leerDocsLegales, sha256 } from './legal-docs.mjs';
 
 const SUPABASE_URL = process.env.SUPABASE_URL || 'https://gfyrsrdnvgnhtsuexjkb.supabase.co';
@@ -69,7 +70,12 @@ async function cargarDoc(doc, inputType) {
     console.log(`  [DRY_RUN] ${doc.pais}: ${doc.chunks.length} chunks (${doc.chunks.map((c) => c.length).join(', ')} car.) · revisión ${doc.fecha_revision}`);
     return;
   }
-  const [row] = await sb('kb_documents?on_conflict=drive_file_id', {
+  // Seguridad: si catalog_num ya lo usa otro documento que no es el legal de este país, no se toca.
+  const previo = await sb(`kb_documents?catalog_num=eq.${catalog_num}&select=id,tipo_documento,pais`);
+  if (previo.length && (previo[0].tipo_documento !== 'legal_aprobado' || previo[0].pais !== doc.pais)) {
+    throw new Error(`${doc.pais}: catalog_num ${catalog_num} ya lo usa kb_documents #${previo[0].id} (${previo[0].tipo_documento}); no se sobrescribe`);
+  }
+  const [row] = await sb('kb_documents?on_conflict=catalog_num', {
     method: 'POST',
     prefer: 'resolution=merge-duplicates,return=representation',
     body: [{
