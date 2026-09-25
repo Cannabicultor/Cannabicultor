@@ -10,6 +10,9 @@
   var WORKERS_POR_PAIS = {
     ES: WORKER_DEFAULT,
     AR: WORKER_DEFAULT,
+    CL: WORKER_DEFAULT,
+    MX: WORKER_DEFAULT,
+    CO: WORKER_DEFAULT,
   };
   var m = /^([a-z]{2})\.cannabicultor\.com$/.exec(location.hostname);
   var pais = m && WORKERS_POR_PAIS[m[1].toUpperCase()] ? m[1].toUpperCase() : "ES";

@@ -39,6 +39,9 @@ const SUBDOMAIN_ORIGIN_RE = /^https:\/\/([a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)
 const PAISES = {
   ES: { nombre: 'España' },
   AR: { nombre: 'Argentina' },
+  CL: { nombre: 'Chile' },
+  MX: { nombre: 'México' },
+  CO: { nombre: 'Colombia' },
 };
 const PAIS_DEFAULT = 'ES';
 
@@ -48,7 +51,7 @@ function normalizePais(code) {
 }
 
 /**
- * País del usuario solo por subdominio del Origin (ar.cannabicultor.com → AR); si no, ES.
+ * País del usuario solo por subdominio del Origin (ar./cl./mx./co.cannabicultor.com → AR/CL/MX/CO); si no, ES.
  * Sin geolocalización por IP (VPN/viajeros la hacen poco fiable).
  */
 function resolvePais(request) {
