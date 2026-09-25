@@ -3,9 +3,11 @@
 // Supabase, RAG, Jev y rerank quedan desactivados (sin keys / fetch stub) para aislar el prompt.
 // El documento legal de cada país (RPC legal_doc_pais) sale de legal/aprobado/*.md, con los mismos
 // chunks que carga ingest-legal-aprobado.mjs. Con LEGAL_FROM_DB=1 y SUPABASE_SERVICE_KEY se lee de Supabase.
-// Sale con código 1 si alguna respuesta da una cifra que no está en el documento de su país,
+// Sale con código 1 si alguna respuesta da una cifra EN CONTEXTO LEGAL (plantas, gramos, años, ley, artículo…)
+// que no está en el documento de su país,
 // menciona normativa de otro país, (con documento) no da la fecha de la fuente / no recomienda abogado,
-// o (país desconocido, legal_pais=null) no contiene el aviso genérico.
+// (país desconocido, legal_pais=null) no contiene el aviso genérico, o (España sin documento) afirma
+// qué dice la ley española.
 import { readFileSync, writeFileSync, mkdtempSync, copyFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
@@ -73,18 +75,51 @@ const MARCAS = {
 };
 
 const PALABRAS = { un: 1, una: 1, uno: 1, dos: 2, tres: 3, cuatro: 4, cinco: 5, seis: 6, siete: 7, ocho: 8, nueve: 9, diez: 10, once: 11, doce: 12, quince: 15, veinte: 20, treinta: 30, cuarenta: 40, cincuenta: 50, cien: 100, doscientas: 200, doscientos: 200 };
-const RE_PALABRA_CIFRA = new RegExp(`\\b(${Object.keys(PALABRAS).join('|')})\\s+(plantas?|gramos?|g|años?|meses?|frascos?|ml|d[ií]as?|semanas?|utm)\\b`, 'gi');
+const NUM = `(\\d+(?:[.,]\\d+)*|${Object.keys(PALABRAS).join('|')})`;
+// Cifras en CONTEXTO LEGAL: número seguido (hasta 2 palabras) de una unidad legal, o precedido de
+// una referencia normativa. Medidas técnicas (cm, 18/6, %, °C, EC, días de floración) no cuentan.
+const UNIDAD_LEGAL = '(plantas?|gramos?|g|años?|mes(?:es)?|frascos?|utm|dosis|multas?|euros?|€|pesos?|salarios?)';
+// Dígitos: hasta 2 palabras entre número y unidad ("9 plantas en floración", "40 g de flores").
+// En letra: pegado a la unidad ("dos plantas", "una o dos plantas"), para no contar "un límite de plantas".
+const RE_CIFRA_ANTES_DE_UNIDAD = new RegExp(`(?<![\\w/.,-])(\\d+(?:[.,]\\d+)*)(?:\\s+(?:o|a|y|de|en|por|hasta)\\s+(\\d+(?:[.,]\\d+)*))?\\s*(?:[a-záéíóúñ]+\\s+){0,2}?${UNIDAD_LEGAL}(?![a-záéíóúñ])`, 'gi');
+const RE_PALABRA_ANTES_DE_UNIDAD = new RegExp(`\\b${NUM}(?:\\s+(?:o|a|y)\\s+${NUM})?\\s+${UNIDAD_LEGAL}(?![a-záéíóúñ])`, 'gi');
+const RE_CIFRA_TRAS_NORMA = new RegExp(`(?:multas?|penas?|art[ií]culos?|art\\.|ley(?:es)?|decretos?|resoluci[oó]n(?:es)?|incisos?|rol|boletines?|sentencia|fallo|comunicado|amparo|utm|c-)\\s*(?:n[º°o.]\\s*)?(\\d+(?:[.,/-]\\d+)*)`, 'gi');
 const norm = (t) => t.normalize('NFC').toLowerCase();
+const canon = (n) => (/^\d/.test(n) ? n.replace(/[.,]/g, '') : String(PALABRAS[n.toLowerCase()]));
 
-function cifras(texto) {
-  const t = norm(texto)
-    .replace(/^\s*(\d+[.)]|[-*•])\s+/gm, ' ') // marcadores de lista
-    .replace(/cannabicultor\.com/g, '');
+/** Todas las cifras de un documento aprobado (lo permitido). */
+function cifrasDoc(texto) {
   const out = new Set();
-  for (const m of t.matchAll(/\d+(?:[.,]\d+)*/g)) out.add(m[0].replace(/[.,]/g, ''));
-  for (const m of t.matchAll(RE_PALABRA_CIFRA)) out.add(String(PALABRAS[m[1].toLowerCase()]));
+  for (const m of norm(texto).matchAll(/\d+(?:[.,]\d+)*/g)) {
+    out.add(m[0].replace(/[.,]/g, ''));
+    for (const parte of m[0].split(/[.,]/)) out.add(parte);
+  }
   return out;
 }
+
+/** Cifras en contexto legal dentro de una respuesta. */
+function cifrasLegales(texto) {
+  const t = norm(texto).replace(/^\s*(\d+[.)]|[-*•])\s+/gm, ' ');
+  const out = new Set();
+  for (const re of [RE_CIFRA_ANTES_DE_UNIDAD, RE_PALABRA_ANTES_DE_UNIDAD]) {
+    for (const m of t.matchAll(re)) { out.add(canon(m[1])); if (m[2]) out.add(canon(m[2])); }
+  }
+  for (const m of t.matchAll(RE_CIFRA_TRAS_NORMA)) for (const parte of m[1].split(/[/-]/)) out.add(parte.replace(/[.,]/g, ''));
+  return out;
+}
+
+// España sin documento (y país desconocido, donde España solo puede ir en condicional): no se puede
+// afirmar qué dice o no dice la ley española.
+const AFIRMACIONES_LEY_ES = [
+  /la ley (no )?(establece|permite|prohibe|prohíbe|fija|dice|contempla|castiga|sanciona|regula|marca|limita)/i,
+  /(se|lo) persigue|es perseguid|perseguir el cultivo/i,
+  /c[oó]digo penal/i,
+  /art[ií]culos?\s*\d|art\.\s*\d|\bart[ií]culo\b/i,
+  /ley (org[aá]nica|de seguridad ciudadana)|lo 4\/2015|ley mordaza/i,
+  /destinad[oa] al tr[aá]fico|delito contra la salud p[uú]blica/i,
+  /(infracci[oó]n|sanci[oó]n) (grave|leve|administrativa)/i,
+  /tribunal supremo|jurisprudencia/i,
+];
 
 let fallos = 0;
 for (const c of casos) {
@@ -92,10 +127,10 @@ for (const c of casos) {
   const r = await handleChat({ messages: [{ role: 'user', content: c.texto }] }, env, request);
   const reply = r.data?.reply || '';
   const doc = c.pais ? DOCS[c.pais] : null;
-  const permitidas = doc ? cifras(doc.texto) : new Set();
+  const permitidas = doc ? cifrasDoc(doc.texto) : new Set();
   const errores = [];
   if (!reply) errores.push(`sin respuesta (${JSON.stringify(r.data)})`);
-  const fuera = [...cifras(reply)].filter((n) => !permitidas.has(n));
+  const fuera = [...cifrasLegales(reply)].filter((n) => !permitidas.has(n));
   if (fuera.length) errores.push(`cifras que no están en ${doc ? `el documento ${c.pais}` : 'ningún documento aprobado'}: ${fuera.join(', ')}`);
   const ajenas = Object.entries(MARCAS).filter(([p]) => p !== c.pais).flatMap(([p, ks]) => ks.filter((k) => norm(reply).includes(k)).map((k) => `${p}:${k}`));
   if (ajenas.length) errores.push(`normativa de otro país: ${ajenas.join(', ')}`);
@@ -105,6 +140,10 @@ for (const c of casos) {
     if (!/abogad/i.test(reply)) errores.push('no recomienda abogado local');
   }
   if (r.meta && c.pais && r.meta.legal_pais !== c.pais) errores.push(`país legal resuelto ${r.meta.legal_pais} (esperado ${c.pais})`);
+  if (r.meta && (r.meta.legal_pais === 'ES' || r.meta.legal_pais === null) && !doc) {
+    const af = AFIRMACIONES_LEY_ES.map((re) => (reply.match(re) || [])[0]).filter(Boolean);
+    if (af.length) errores.push(`afirma qué dice la ley española sin documento aprobado: "${af.join('", "')}"`);
+  }
   if (r.meta && r.meta.legal_pais === null && reply && !reply.includes(AVISO_GENERICO)) errores.push('país desconocido (legal_pais=null) y la respuesta no contiene el aviso genérico');
   if (errores.length) fallos++;
   const cab = `${c.texto}${c.origin ? `  [${c.origin.replace('https://', '')}]` : ''}  → doc ${c.pais || '—'}`;

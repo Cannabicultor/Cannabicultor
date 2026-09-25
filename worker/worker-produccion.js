@@ -1019,12 +1019,16 @@ Si el usuario pregunta algo que NO tiene relación con cultivo de cannabis, el d
 const LEGAL_AVISO_GENERICO =
   'Estamos con nuestro despacho legal definiendo la normativa país por país — todavía no puedo darte información legal verificada fuera de España. Te recomiendo confirmarlo con un profesional local.';
 
+// Única frase legal permitida para España mientras no haya documento aprobado.
+const LEGAL_ESPANA_FRASE =
+  'En España existe cierta tolerancia hacia el cultivo para consumo propio en el ámbito privado; estamos verificando la normativa con nuestro despacho legal. Confírmalo con un abogado especializado.';
+
 const LEGAL_PROMPT = `LEGALIDAD (cultivo, posesión, consumo, transporte, venta, multas, clubes):
 - NO sabes en qué país está el usuario salvo que más abajo aparezca un bloque «MARCO LEGAL APROBADO — <país>». NUNCA asumas que está en España ni apliques la legislación española por defecto.
 - CON bloque «MARCO LEGAL APROBADO — <país>»: responde la parte legal SOLO con ese documento y SOLO para ese país; no mezcles normativa de otros países ni tu memoria. Puedes dar cifras (plantas, gramos, plazos, penas, números de ley o de artículo) ÚNICAMENTE si aparecen literalmente en ese documento, y siempre: (1) con la fecha de la fuente ("según el marco legal revisado por nuestro equipo jurídico a <fecha del bloque>"), (2) aclarando que es información general orientativa y que la normativa cambia, y (3) recomendando consultar a un abogado local. Si el documento no trae un dato (o dice que no incluye una cifra), dilo y no lo completes. Si el documento dice que algo está pendiente (p. ej. de un tribunal), preséntalo como pendiente sin afirmar su efecto.
 - SIN ese bloque: solo trátalo como usuario de España si en ESTA conversación ha dicho explícitamente que está en España o ha nombrado una ciudad/provincia/comunidad española como su lugar de residencia o de cultivo.
 - SIN ese bloque y sin que conste que esté en España (no lo ha dicho, es ambiguo, o ha indicado otro país): no des información legal de ningún país; responde con este aviso literal: "${LEGAL_AVISO_GENERICO}" Puedes seguir ayudando con la parte técnica de cultivo de la pregunta, si la hay.
-- Si consta que está en España: solo puedes decir que en España existe cierta tolerancia hacia el cultivo para consumo propio en el ámbito privado, que estamos verificando la normativa con nuestro despacho legal y que lo confirme con un profesional (abogado especializado). Nada más.
+- Si consta que está en España (no hay documento aprobado de España): la parte legal es EXACTAMENTE esta frase, literal, y nada más sobre la ley española: "${LEGAL_ESPANA_FRASE}" PROHIBIDO afirmar qué dice o no dice la ley española (p. ej. "la ley no establece límite", "la ley permite", "se persigue el cultivo destinado al tráfico", Código Penal, artículos, Ley de Seguridad Ciudadana, multas, jurisprudencia), aunque lo creas saber. Puedes seguir con la parte técnica de cultivo.
 - PROHIBIDO dar CUALQUIER número o cantidad legal (plantas, gramos, metros, multas, importes, años, artículos de ley), ni en cifras ni en palabras ("dos plantas", "una o dos", "unas pocas", "hasta X"), que no esté literalmente en el bloque «MARCO LEGAL APROBADO» de esta respuesta. Sin ese bloque (España incluida) no das ninguna cifra legal: aunque el usuario insista, aunque lo creas saber, aunque aparezca en el contexto de conocimiento. Si pregunta "¿cuántas plantas puedo tener?" y no hay cifra en el bloque, responde que no podemos darle una cifra verificada, no una aproximación.`;
 
 // ---------------------------------------------------------------------------
@@ -1124,21 +1128,44 @@ ${doc.texto}
 
 // País legal desconocido (sin país en la conversación ni subdominio, o lugar ambiguo): el modelo no
 // debe deducir España de una ciudad que existe en varios países.
-const LEGAL_PAIS_DESCONOCIDO_PROMPT = `PAÍS PARA LO LEGAL: DESCONOCIDO. El sistema no ha podido determinar el país del usuario (no lo ha dicho, o el lugar que nombra existe en varios países, p. ej. Guadalajara, Córdoba, Santiago, Mérida). NO lo trates como usuario de España aunque nombre una ciudad que también exista en España. Empieza la parte legal con el aviso literal: "${LEGAL_AVISO_GENERICO}" Después, si aporta, puedes añadir lo permitido para España SOLO en condicional ("Si estás en España, …"), sin cifras, y preguntarle en qué país está.`;
+const LEGAL_PAIS_DESCONOCIDO_PROMPT = `PAÍS PARA LO LEGAL: DESCONOCIDO. El sistema no ha podido determinar el país del usuario (no lo ha dicho, o el lugar que nombra existe en varios países, p. ej. Guadalajara, Córdoba, Santiago, Mérida). NO lo trates como usuario de España aunque nombre una ciudad que también exista en España. Empieza la parte legal con el aviso literal: "${LEGAL_AVISO_GENERICO}" Después, si aporta, puedes añadir SOLO en condicional y literal: "Si estás en España: ${LEGAL_ESPANA_FRASE}" — nada más sobre la ley de ningún país, sin cifras — y preguntarle en qué país está.`;
+
+// España sin documento aprobado (el usuario lo ha indicado): solo la frase literal.
+const LEGAL_ESPANA_PROMPT = `PAÍS PARA LO LEGAL: ESPAÑA (sin documento legal aprobado). La parte legal de tu respuesta es EXACTAMENTE esta frase y nada más: "${LEGAL_ESPANA_FRASE}" No afirmes qué dice o no dice la ley española (límites, "no establece", "permite", "se persigue", tráfico, Código Penal, artículos, multas, Ley de Seguridad Ciudadana, jurisprudencia) ni des cifras. Si hay parte técnica de cultivo en la pregunta, respóndela aparte.`;
 
 const LEGAL_CIERRE_ABOGADO = 'Esta información es orientativa; confírmala con un abogado local.';
 const RE_RECOMIENDA_ABOGADO = /abogad|profesional (local|del derecho|especializad)|asesor(amiento|ía|ia)? (legal|jur[ií]dic)/i;
+const MESES_ES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+
+/** ¿La respuesta cita la fecha de revisión (25 sep 2026, 25 de septiembre de 2026, 25/09/2026)? */
+function contieneFecha(texto, iso) {
+  const m = String(iso || '').match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (!m) return false;
+  const [, y, mo, d] = m;
+  const dia = String(Number(d));
+  const mes = MESES_ES[Number(mo) - 1];
+  const t = normTxt(texto);
+  return new RegExp(`\\b0?${dia}\\s*(de\\s+)?${mes.slice(0, 3)}[a-z]*\\.?\\s*(de(l)?\\s+)?${y}\\b`).test(t)
+    || new RegExp(`\\b0?${dia}[/.-]0?${Number(mo)}[/.-]${y}\\b`).test(t);
+}
 
 /**
  * Garantías deterministas en respuestas legales (no dependen del modelo):
  * - país desconocido → la respuesta empieza con el aviso genérico si el modelo no lo ha dado;
- * - siempre termina recomendando un abogado local si el modelo no lo ha hecho.
+ * - con documento aprobado → línea final fija con la fecha de revisión + abogado si falta alguna de las dos;
+ * - sin documento → recomienda abogado local si el modelo no lo ha hecho.
  */
-function asegurarRespuestaLegal(reply, { paisLegal }) {
+function asegurarRespuestaLegal(reply, { paisLegal, legalDoc }) {
   let out = String(reply || '').trim();
   if (!out) return out;
   if (!paisLegal && !out.includes(LEGAL_AVISO_GENERICO)) out = `${LEGAL_AVISO_GENERICO}\n\n${out}`;
-  if (!RE_RECOMIENDA_ABOGADO.test(out)) out += `\n\n${LEGAL_CIERRE_ABOGADO}`;
+  if (legalDoc) {
+    if (!contieneFecha(out, legalDoc.fecha_revision) || !RE_RECOMIENDA_ABOGADO.test(out)) {
+      out += `\n\nFuente: marco legal revisado por nuestro equipo jurídico a ${formatFechaEs(legalDoc.fecha_revision)}. Información orientativa; confírmala con un abogado local.`;
+    }
+  } else if (!RE_RECOMIENDA_ABOGADO.test(out)) {
+    out += `\n\n${LEGAL_CIERRE_ABOGADO}`;
+  }
   return out;
 }
 
@@ -1196,6 +1223,8 @@ ${LEGAL_PROMPT}${VISION_PROMPT}`;
     base += `\n\n${legalAprobadoPrompt(extras.legalDoc, extras.legalVia)}`;
   } else if (extras.legalPaisDesconocido) {
     base += `\n\n${LEGAL_PAIS_DESCONOCIDO_PROMPT}`;
+  } else if (extras.legalPaisEspana) {
+    base += `\n\n${LEGAL_ESPANA_PROMPT}`;
   }
 
   if (directorioContexto) {
@@ -2025,11 +2054,11 @@ async function handleChat(body, env, request = null) {
     legalDoc = paisLegal && paisLegal !== 'ES' ? await obtenerDocLegalPais(env, paisLegal) : null;
     legalMeta = { legal_pais: paisLegal, legal_via: via, legal_doc: !!legalDoc };
   }
-  const system = buildSystemPrompt(perfil, chunks, directorioContexto, { variedades: variedadesCtx, valoresIdeales, legalDoc, legalVia: legalMeta.legal_via, legalPaisDesconocido: esLegal && !legalMeta.legal_pais }, pais);
+  const system = buildSystemPrompt(perfil, chunks, directorioContexto, { variedades: variedadesCtx, valoresIdeales, legalDoc, legalVia: legalMeta.legal_via, legalPaisDesconocido: esLegal && !legalMeta.legal_pais, legalPaisEspana: esLegal && legalMeta.legal_pais === 'ES' }, pais);
 
   try {
     const gen = await generateChatReply(system, anthropicMessages, withVision, env);
-    const reply = esLegal ? asegurarRespuestaLegal(gen.reply, { paisLegal: legalMeta.legal_pais }) : gen.reply;
+    const reply = esLegal ? asegurarRespuestaLegal(gen.reply, { paisLegal: legalMeta.legal_pais, legalDoc }) : gen.reply;
     const { provider } = gen;
     // provider en el JSON es opcional para el frontend; útil en logs/cola de diagnóstico
     // match_chunks devuelve similitud ponderada (coseno * factor idioma * peso/10). Para medir huecos
