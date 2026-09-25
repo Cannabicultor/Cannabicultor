@@ -1,8 +1,8 @@
 (function (global) {
   'use strict';
 
-  var SESSION_KEYS = ['ga_jwt', 'ga_email', 'ga_nivel', 'ga_test_passed', 'ga_chat_date', 'ga_chat_count', 'ga_perfil', 'cc_token'];
-  var COOKIE_KEYS = ['ga_jwt', 'ga_email', 'ga_nivel', 'ga_test_passed'];
+  var SESSION_KEYS = ['ga_jwt', 'ga_email', 'ga_nivel', 'ga_chat_date', 'ga_chat_count', 'ga_perfil', 'cc_token'];
+  var COOKIE_KEYS = ['ga_jwt', 'ga_email', 'ga_nivel'];
   var VALID_PLANS = ['libre', 'fundador', 'semilla', 'cultivador', 'master', 'genetista'];
   var COOKIE_DAYS = 30;
 
@@ -36,11 +36,10 @@
     }
   }
 
-  function writeSessionCookies(token, email, nivel, testPassed) {
+  function writeSessionCookies(token, email, nivel) {
     if (token) setCookie('ga_jwt', token);
     if (email) setCookie('ga_email', email);
     if (nivel) setCookie('ga_nivel', nivel);
-    if (testPassed) setCookie('ga_test_passed', 'true');
   }
 
   function clearSessionCookies() {
@@ -71,32 +70,17 @@
     return VALID_PLANS.indexOf(p) !== -1 ? p : 'libre';
   }
 
-  function isTestPassed() {
-    return localStorage.getItem('ga_test_passed') === 'true';
-  }
-
-  function testPassedFromApi(data) {
-    if (!data) return false;
-    if (data.test_passed || data.testPassed) return true;
-    if (data.user && (data.user.test_passed || data.user.testPassed)) return true;
-    return false;
-  }
-
   function saveSession(token, email, data) {
     var nivel = normalizePlan(
       data && (data.nivel || data.plan || (data.user && (data.user.nivel || data.user.plan)))
     );
-    var passed = testPassedFromApi(data);
     localStorage.setItem('ga_jwt', token);
     localStorage.setItem('ga_email', email);
     localStorage.setItem('ga_nivel', nivel);
-    if (passed) {
-      localStorage.setItem('ga_test_passed', 'true');
-    }
     // Cookie de primer partido: el icono de pantalla de inicio (iOS/Android)
     // a veces no comparte localStorage con Safari/Chrome. Así el acceso
     // directo entra sin volver a pedir login.
-    writeSessionCookies(token, email, nivel, passed);
+    writeSessionCookies(token, email, nivel);
   }
 
   function clearSession() {
@@ -120,13 +104,11 @@
       var nivel = getCookie('ga_nivel');
       if (email) localStorage.setItem('ga_email', email);
       if (nivel) localStorage.setItem('ga_nivel', nivel);
-      if (getCookie('ga_test_passed') === 'true') localStorage.setItem('ga_test_passed', 'true');
     }
     writeSessionCookies(
       token,
       localStorage.getItem('ga_email') || getCookie('ga_email'),
-      localStorage.getItem('ga_nivel') || getCookie('ga_nivel'),
-      localStorage.getItem('ga_test_passed') === 'true' || getCookie('ga_test_passed') === 'true'
+      localStorage.getItem('ga_nivel') || getCookie('ga_nivel')
     );
     return token;
   }
@@ -157,15 +139,7 @@
   }
 
   function postAuthDestination() {
-    // Registro nuevo (test sin superar): siempre al Test de Acceso, con
-    // independencia del dispositivo. Preserva el flujo register -> test.html.
-    if (!isTestPassed()) return '/test.html';
-    var next = safeNextPath();
-    if (next) return next;
-    // Usuario verificado: interfaz según dispositivo.
-    //   móvil / tablet -> app.html      (nav inferior, vista compacta)
-    //   escritorio     -> dashboard.html (sidebar, vista amplia)
-    return '/mi-cultivo.html';
+    return safeNextPath() || '/mi-cultivo.html';
   }
 
   function redirectIfAuthenticated() {
@@ -186,28 +160,6 @@
       return null;
     }
     return token;
-  }
-
-  function requireTestPassed() {
-    if (!isTestPassed()) {
-      window.location.replace('/test.html');
-      return false;
-    }
-    return true;
-  }
-
-  function finishTest(plan) {
-    localStorage.setItem('ga_nivel', normalizePlan(plan));
-    localStorage.setItem('ga_test_passed', 'true');
-    // Persistencia server-side: test.html ya inserta el resultado en
-    // test_resultados (fuente de verdad actual). La columna canónica
-    // users.test_passed debería escribirla el worker (service_role) — ver
-    // migración y nota de seguridad. Aquí NO escribimos con la anon key.
-    // Routing device-aware: pasa SIEMPRE por postAuthDestination (regla:
-    // ningún redirect del flujo de auth hardcodea dashboard). Conserva
-    // ?new=true; el onboarding lo atienden ambas interfaces (app/dashboard).
-    var dest = postAuthDestination();
-    window.location.href = dest + (dest.indexOf('?') === -1 ? '?' : '&') + 'new=true';
   }
 
   function getDisplayName() {
@@ -238,52 +190,20 @@
     window.location.replace('/login.html?logout=1');
   }
 
-  var SB_URL = 'https://gfyrsrdnvgnhtsuexjkb.supabase.co';
-  var SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdmeXJzcmRudmduaHRzdWV4amtiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg3MjIxNjUsImV4cCI6MjA5NDI5ODE2NX0.53peUmp28jF_b5tJFsHmP4STmGedRYUBV1WPItmdv50';
-
-  // Sincroniza el estado del test desde el servidor y cachea en localStorage.
-  // Fuente de verdad: RPC SECURITY DEFINER get_test_passed(email), que comprueba
-  // server-side TANTO "Usuarios".test_passed COMO un test_resultados aprobado
-  // (porcentaje >= 70). Importante: el cliente NO puede leer test_resultados con
-  // la anon key (RLS la devuelve vacía → content-range */0), por eso NO hay
-  // fallback client-side: todo pasa por la RPC. Async: se invoca en los puntos
-  // de entrada async (login/index/test) ANTES de decidir con postAuthDestination.
-  function syncTestPassedFromServer(email) {
-    if (!email || isTestPassed()) {
-      return Promise.resolve(isTestPassed());
-    }
-    return fetch(SB_URL + '/rest/v1/rpc/get_test_passed', {
-      method: 'POST',
-      headers: { apikey: SB_KEY, Authorization: 'Bearer ' + SB_KEY, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ p_email: email })
-    })
-      .then(function (res) { return res.ok ? res.json() : false; })
-      .then(function (val) {
-        if (val === true) { localStorage.setItem('ga_test_passed', 'true'); return true; }
-        return false;
-      })
-      .catch(function () { return false; });
-  }
-
   global.GAAuth = {
     parseJwt: parseJwt,
     isJwtValid: isJwtValid,
     normalizePlan: normalizePlan,
-    isTestPassed: isTestPassed,
     isMobileDevice: isMobileDevice,
-    testPassedFromApi: testPassedFromApi,
     saveSession: saveSession,
     clearSession: clearSession,
     readSession: readSession,
     postAuthDestination: postAuthDestination,
     redirectIfAuthenticated: redirectIfAuthenticated,
     requireAuth: requireAuth,
-    requireTestPassed: requireTestPassed,
-    finishTest: finishTest,
     getDisplayName: getDisplayName,
     loadDailyChatCount: loadDailyChatCount,
     saveDailyChatCount: saveDailyChatCount,
-    logout: logout,
-    syncTestPassedFromServer: syncTestPassedFromServer
+    logout: logout
   };
 })(window);

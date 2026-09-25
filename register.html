@@ -266,11 +266,6 @@ form.addEventListener('submit',async(e)=>{
     const data=await res.json().catch(()=>({}));
 
     if(!res.ok){
-      if(data.fundador_agotado && data.stripe_semilla){
-        showAlert(data.error||'Plazas Fundador agotadas. Te llevamos a Semilla.','error');
-        setTimeout(()=>{ window.location.href = data.stripe_semilla; }, 900);
-        return;
-      }
       const msg=data.error||data.message||(res.status===409?'Ese email ya está registrado.':'No se pudo crear la cuenta. Inténtalo de nuevo.');
       showAlert(msg,'error');
       btn.disabled=false;
@@ -281,14 +276,13 @@ form.addEventListener('submit',async(e)=>{
     fetch(API+'/brevo-contact',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({email,attributes:{PLAN:data.plan||'fundador'}})
+      body:JSON.stringify({email,attributes:{PLAN:data.plan||'libre'}})
     }).catch(()=>{});
     const token=data.token||data.jwt||data.access_token;
     if(token){
-      localStorage.removeItem('ga_test_passed');
       GAAuth.saveSession(token,email,data);
-      showAlert('Cuenta creada. Siguiente paso: test de acceso…','success');
-      setTimeout(()=>{window.location.href='/test.html'},800);
+      showAlert('Cuenta creada. Entrando en tu cultivo…','success');
+      setTimeout(()=>{window.location.href='/mi-cultivo.html'},800);
     }else{
       showAlert('Cuenta creada. Revisa tu email para confirmar el acceso.','success');
       btn.type='button';

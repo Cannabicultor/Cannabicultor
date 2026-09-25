@@ -2,7 +2,6 @@ User-agent: *
 Disallow: /dashboard.html
 Disallow: /app.html
 Disallow: /trafico.html
-Disallow: /test.html
 Disallow: /breeders.html
 Disallow: /login.html
 Disallow: /register.html

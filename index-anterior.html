@@ -1051,16 +1051,7 @@ footer{padding:32px 0;background:var(--white);border-top:1px solid var(--border)
     if(token) GAAuth.clearSession();
     return; // sin sesión válida -> landing normal (con "Iniciar sesión" visible)
   }
-  // Caso rápido (sin parpadeo): sesión válida y test ya conocido -> redirect ya.
-  if(GAAuth.isTestPassed()){
-    window.location.replace(GAAuth.postAuthDestination());
-    return;
-  }
-  // Sesión válida pero test desconocido en local (p. ej. ITP limpió el flag):
-  // se sincroniza desde el servidor ANTES de decidir, para no reenviar al test.
-  GAAuth.syncTestPassedFromServer(localStorage.getItem('ga_email'))
-    .catch(function(){})
-    .then(function(){ window.location.replace(GAAuth.postAuthDestination()); });
+  window.location.replace(GAAuth.postAuthDestination());
 })();
 
 const obs = new IntersectionObserver(e => {

@@ -382,8 +382,6 @@ function mostrarRegistro(motivo){
             '**Cuenta creada.** Esta conversación queda guardada y a partir de ahora recuerdo tu cultivo.\n\nSi me cuentas qué variedad cultivas, en qué fase está y tu sala (luz, sustrato, medidas), abro tu diario y te aviso cuando algo se salga de rango.');
         } else if(dt && dt.needs_login){
           aLogin(); fallo('Ese email ya tiene cuenta. Escribe tu contraseña para entrar.');
-        } else if(dt && dt.fundador_agotado){
-          fallo('Ahora mismo no podemos crear más cuentas gratuitas. Escríbenos desde Contacto.');
         } else {
           ev(modoLogin ? 'login_chat_error' : 'registro_chat_error', (dt && dt.error) || '');
           fallo((dt && dt.error) || (modoLogin ? 'Email o contraseña incorrectos.' : 'No se pudo crear la cuenta.'));

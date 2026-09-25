@@ -20,6 +20,11 @@
 
   RewriteRule ^analytics\.html$ /trafico.html [R=301,L]
 
+  # Onboarding antiguo → registro directo en el chat de la home
+  RewriteRule ^empezar\.html$ /? [R=301,L]
+  RewriteRule ^empezar-diario\.html$ /? [R=301,L]
+  RewriteRule ^test\.html$ /? [R=301,L]
+
   # Legacy atlas (guion) → misma versión canónica limpia
   RewriteRule ^atlas-landrace\.html$ https://www.cannabicultor.com/atlas-landraces/ [L,R=301]
 

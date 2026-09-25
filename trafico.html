@@ -125,7 +125,7 @@ th{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06
 <script src="assets/auth.js?v=20260813-logout"></script>
 <script src="assets/analytics.js" defer></script>
 <script>
-if(!GAAuth.requireAuth()||!GAAuth.requireTestPassed()){}
+GAAuth.requireAuth();
 function fmt(n){return (n||0).toLocaleString('es-ES')}
 function shortRef(url){
   if(!url||url==='(directo)') return 'Directo';

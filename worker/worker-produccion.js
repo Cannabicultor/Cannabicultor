@@ -266,21 +266,6 @@ async function registrarConsulta(env, datos) {
   });
 }
 
-async function handleOnboardingAnswer(body, env) {
-  const sessionId = String(body.session_id || '').trim();
-  const paso = String(body.paso || '').trim();
-  const clave = String(body.clave || '').trim();
-  const valor = body.valor != null ? String(body.valor) : null;
-  if (!sessionId || !paso || !clave) return { status: 400, data: { error: 'Faltan datos' } };
-  const res = await sbRequest(env, 'onboarding_respuestas', {
-    method: 'POST',
-    headers: { Prefer: 'return=minimal' },
-    body: JSON.stringify({ session_id: sessionId, paso, clave, valor }),
-  });
-  if (!res.ok) return { status: 500, data: { error: 'No se pudo guardar' } };
-  return { status: 200, data: { ok: true } };
-}
-
 async function backfillSesion(env, sessionId, email) {
   if (!sessionId || !email) return;
   await sbRequest(env, `ia_consultas?session_id=eq.${encodeURIComponent(sessionId)}&email=is.null`, {
@@ -288,29 +273,13 @@ async function backfillSesion(env, sessionId, email) {
     headers: { Prefer: 'return=minimal' },
     body: JSON.stringify({ email }),
   });
-  await sbRequest(env, `onboarding_respuestas?session_id=eq.${encodeURIComponent(sessionId)}&email=is.null`, {
-    method: 'PATCH',
-    headers: { Prefer: 'return=minimal' },
-    body: JSON.stringify({ email }),
-  });
 }
 
-async function volcarPerfilCultivo(env, userId, sessionId, perfilDirecto) {
+async function volcarPerfilCultivo(env, userId, perfilDirecto) {
   const perfil = {};
   if (perfilDirecto && typeof perfilDirecto === 'object') {
     for (const [k, v] of Object.entries(perfilDirecto)) {
       if (v != null && v !== '') perfil[k] = v;
-    }
-  }
-  if (sessionId) {
-    const q = `onboarding_respuestas?session_id=eq.${encodeURIComponent(sessionId)}&select=clave,valor`;
-    const res = await sbRequest(env, q, { method: 'GET' });
-    if (res.ok && Array.isArray(res.data)) {
-      for (const fila of res.data) {
-        if (fila.clave && fila.valor != null && perfil[fila.clave] == null) {
-          perfil[fila.clave] = fila.valor;
-        }
-      }
     }
   }
   if (Object.keys(perfil).length === 0) return;
@@ -2192,23 +2161,6 @@ async function handleAdminCampanaCreditos(body, env, request) {
   return { status: 200, data: { ok: true, enviados: ok, ya_enviados_antes: enviados.size, fallos } };
 }
 
-const FUNDADOR_TOPE = 500;
-const STRIPE_SEMILLA = 'https://buy.stripe.com/3cI00c9Ex8WH22PenB6AM04';
-
-function planTieneAccesoSemilla(plan) {
-  const p = String(plan || '').toLowerCase();
-  return p === 'fundador' || p === 'semilla' || p === 'cultivador'
-    || p === 'semilla_fundador' || p === 'master' || p === 'genetista';
-}
-
-async function countUsuariosPlan(env, plan) {
-  const res = await sbRequest(env, `Usuarios?plan=eq.${encodeURIComponent(plan)}&select=id`, {
-    method: 'GET',
-    headers: { Prefer: 'count=exact', Range: '0-0' },
-  });
-  return typeof res.count === 'number' ? res.count : 0;
-}
-
 async function handleRegister(body, env, request) {
   const email = String(body.email || '').trim().toLowerCase();
   const password = String(body.password || '');
@@ -2234,21 +2186,7 @@ async function handleRegister(body, env, request) {
     age: true, terms: true, marketing: !!consent.marketing,
     terms_version: 'v1', ts: new Date().toISOString(), ip: clientIp(request),
   };
-  const nFundador = await countUsuariosPlan(env, 'fundador');
-  if (nFundador >= FUNDADOR_TOPE) {
-    const stripe = email
-      ? `${STRIPE_SEMILLA}?prefilled_email=${encodeURIComponent(email)}`
-      : STRIPE_SEMILLA;
-    return {
-      status: 409,
-      data: {
-        fundador_agotado: true,
-        error: 'Las plazas Fundador se han agotado. Pasa a Semilla (5€/mes) para las mismas funciones.',
-        stripe_semilla: stripe,
-      },
-    };
-  }
-  const planNuevo = 'fundador';
+  const planNuevo = 'libre';
   const created = await createUser(env, {
     email, password_hash, plan: planNuevo, nombre: '',
     consentimiento, fecha_registro: new Date().toISOString(),
@@ -2263,7 +2201,7 @@ async function handleRegister(body, env, request) {
   try { await brevoAddContact(env, email, { PLAN: planNuevo }); } catch (_) {}
   const nuevoId = Array.isArray(created.data) && created.data[0] ? created.data[0].id : null;
   if (nuevoId) {
-    try { await volcarPerfilCultivo(env, nuevoId, sessionId, body.perfil); } catch (_) {}
+    try { await volcarPerfilCultivo(env, nuevoId, body.perfil); } catch (_) {}
   }
   const token = await signJwt(makeTokenClaims(email, planNuevo), env.JWT_SECRET);
   return { status: 200, data: { ok: true, token, plan: planNuevo } };
@@ -2277,9 +2215,6 @@ async function handleGuardarCultivo(body, env, request) {
   const email = claims.email;
   const userCultivo = await getUserByEmail(env, email);
   if (!userCultivo) return { status: 404, data: { error: 'Usuario no encontrado' } };
-  if (!planTieneAccesoSemilla(userCultivo.plan)) {
-    return { status: 403, data: { error: 'El análisis de cultivo está disponible desde Fundador.' } };
-  }
   const p = body || {};
   const fila = {
     espacio: p.espacio || null, tipo_luz: p.tipoLuz || p.tipo_luz || null,
@@ -2304,9 +2239,6 @@ async function handleSavePerfil(body, env) {
   if (!claims || !claims.email) return { status: 401, data: { error: 'No autorizado' } };
   const user = await getUserByEmail(env, claims.email);
   if (!user) return { status: 404, data: { error: 'Usuario no encontrado' } };
-  if (!planTieneAccesoSemilla(user.plan)) {
-    return { status: 403, data: { error: 'El análisis de cultivo está disponible desde Fundador.' } };
-  }
   const actual = (user.perfil_cultivo && typeof user.perfil_cultivo === 'object') ? user.perfil_cultivo : {};
   const nuevo = (body.perfil_cultivo && typeof body.perfil_cultivo === 'object') ? body.perfil_cultivo : {};
   const fusionado = { ...actual, ...nuevo, actualizado: new Date().toISOString() };
@@ -2342,9 +2274,6 @@ async function handleGuardarSala(body, env, request) {
 
   const user = await getUserByEmail(env, email);
   if (!user) return { status: 404, data: { error: 'Usuario no encontrado' } };
-  if (!planTieneAccesoSemilla(user.plan)) {
-    return { status: 403, data: { error: 'El análisis de cultivo está disponible desde Fundador.' } };
-  }
 
   const actual = (user.perfil_cultivo && typeof user.perfil_cultivo === 'object' && !Array.isArray(user.perfil_cultivo))
     ? user.perfil_cultivo
@@ -2935,17 +2864,6 @@ async function handleLogin(body, env) {
   }
   await updateUser(env, user.id, { last_login: new Date().toISOString() });
   await backfillSesion(env, body.session_id || null, email);
-  if (body.session_id) {
-    const base = (user.perfil_cultivo && typeof user.perfil_cultivo === 'object') ? user.perfil_cultivo : {};
-    const ob = await sbRequest(env, `onboarding_respuestas?session_id=eq.${encodeURIComponent(body.session_id)}&select=clave,valor`, { method: 'GET' });
-    if (ob.ok && Array.isArray(ob.data)) {
-      let cambio = false;
-      for (const f of ob.data) {
-        if (f.clave && f.valor != null && base[f.clave] == null) { base[f.clave] = f.valor; cambio = true; }
-      }
-      if (cambio) { base.actualizado = new Date().toISOString(); await updateUser(env, user.id, { perfil_cultivo: base }); }
-    }
-  }
   const token = await signJwt(makeTokenClaims(email, user.plan), env.JWT_SECRET);
   return {
     status: 200,
@@ -2993,7 +2911,7 @@ async function handleBrevoEmail(body, env) {
   const email = String(body.email || '').trim().toLowerCase();
   const templateId = body.templateId;
   if (!email || !templateId) return { status: 400, data: { error: 'Faltan email o templateId' } };
-  // Solo plantillas de bienvenida (test.html) y solo a usuarios registrados, una vez por plantilla.
+  // Solo plantillas de bienvenida y solo a usuarios registrados, una vez por plantilla.
   if (![6, 7].includes(Number(templateId))) return { status: 403, data: { error: 'Plantilla no permitida' } };
   const user = await getUserByEmail(env, email);
   if (!user) return { status: 404, data: { error: 'Usuario no encontrado' } };
@@ -4034,11 +3952,6 @@ export default {
         const sid = crypto.randomUUID();
         const token = await signJwt(makeOnboardingClaims(sid), env.JWT_SECRET);
         return json({ ok: true, token, session_id: sid }, 200, cors);
-      }
-
-      if (path === '/onboarding/answer') {
-        const r = await handleOnboardingAnswer(body, env);
-        return json(r.data, r.status, cors);
       }
 
       // Ruta privada para comparativas reproducibles. No usa una sesión de usuario

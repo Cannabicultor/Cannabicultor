@@ -226,17 +226,12 @@ form.addEventListener('submit',async(e)=>{
     }
 
     GAAuth.saveSession(token,email,data);
-    if(GAAuth.testPassedFromApi(data)){
-      localStorage.setItem('ga_test_passed','true');
-    }
     if(data.perfil_cultivo){
       localStorage.setItem('ga_perfil',JSON.stringify(data.perfil_cultivo));
     }
 
-    await GAAuth.syncTestPassedFromServer(email);
-
     const dest=GAAuth.postAuthDestination();
-    showAlert(dest.includes('test')?'Sesión iniciada. Continúa con el test de acceso…':'Sesión iniciada. Cargando dashboard…','success');
+    showAlert('Sesión iniciada. Cargando tu cultivo…','success');
     setTimeout(()=>{window.location.href=dest},500);
   }catch(err){
     showAlert('Error de conexión. Revisa tu red e inténtalo de nuevo.','error');

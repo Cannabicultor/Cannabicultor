@@ -28,7 +28,6 @@ HTML_FILES=(
   empezar.html
   empezar-diario.html
   google6cb08dd01808031a.html
-  test.html
   trafico.html
   breeders.html
   aviso-legal.html
