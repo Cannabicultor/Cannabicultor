@@ -640,8 +640,9 @@ button{cursor:pointer}
 
 <script src="assets/auth.js?v=20260813-logout"></script>
 <script src="assets/chat-vision.js"></script>
+<script src="/assets/config.js"></script>
 <script>
-const WORKER = 'https://growers-alliance-ai.nohumanclicks.workers.dev';
+const WORKER = window.CC_CONFIG.WORKER_URL;
 
 // ─── GUARD DE SESIÓN JWT ──────────────────────────────────────────────────────
 const JWT = localStorage.getItem('ga_jwt') || sessionStorage.getItem('ga_jwt');

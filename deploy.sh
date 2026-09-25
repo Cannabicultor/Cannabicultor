@@ -117,6 +117,7 @@ fi
 
 ASSET_FILES=(
   assets/analytics.js
+  assets/config.js
   assets/auth.js
   assets/chat-vision.js
   assets/resenas.js

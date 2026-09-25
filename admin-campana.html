@@ -16,8 +16,9 @@ pre{background:#fff;border:1px solid #e1e6df;border-radius:12px;padding:14px;whi
 <pre id="out">Listo.</pre>
 </div>
 <script src="/assets/auth.js"></script>
+<script src="/assets/config.js"></script>
 <script>
-var W='https://growers-alliance-ai.nohumanclicks.workers.dev', out=document.getElementById('out');
+var W=window.CC_CONFIG.WORKER_URL, out=document.getElementById('out');
 var jwt=window.GAAuth&&GAAuth.readSession?GAAuth.readSession():null;
 if(!jwt){location.href='/login.html?next='+encodeURIComponent('/admin-campana.html');}
 function go(modo,btn){btn.disabled=true;out.textContent='Enviando…';
