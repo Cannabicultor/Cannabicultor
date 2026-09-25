@@ -81,7 +81,7 @@ const NUM = `(\\d+(?:[.,]\\d+)*|${Object.keys(PALABRAS).join('|')})`;
 const UNIDAD_LEGAL = '(plantas?|gramos?|g|años?|mes(?:es)?|frascos?|utm|dosis|multas?|euros?|€|pesos?|salarios?)';
 // Dígitos: hasta 2 palabras entre número y unidad ("9 plantas en floración", "40 g de flores").
 // En letra: pegado a la unidad ("dos plantas", "una o dos plantas"), para no contar "un límite de plantas".
-const RE_CIFRA_ANTES_DE_UNIDAD = new RegExp(`(?<![\\w/.,-])(\\d+(?:[.,]\\d+)*)(?:\\s+(?:o|a|y|de|en|por|hasta)\\s+(\\d+(?:[.,]\\d+)*))?\\s*(?:[a-záéíóúñ]+\\s+){0,2}?${UNIDAD_LEGAL}(?![a-záéíóúñ])`, 'gi');
+const RE_CIFRA_ANTES_DE_UNIDAD = new RegExp(`(?<![\\w/.,\\-–—])(\\d+(?:[.,]\\d+)*)(?:\\s+(?:o|a|y|de|en|por|hasta)\\s+(\\d+(?:[.,]\\d+)*))?\\s*(?:[a-záéíóúñ]+\\s+){0,2}?${UNIDAD_LEGAL}(?![a-záéíóúñ])`, 'gi');
 const RE_PALABRA_ANTES_DE_UNIDAD = new RegExp(`\\b${NUM}(?:\\s+(?:o|a|y)\\s+${NUM})?\\s+${UNIDAD_LEGAL}(?![a-záéíóúñ])`, 'gi');
 const RE_CIFRA_TRAS_NORMA = new RegExp(`(?:multas?|penas?|art[ií]culos?|art\\.|ley(?:es)?|decretos?|resoluci[oó]n(?:es)?|incisos?|rol|boletines?|sentencia|fallo|comunicado|amparo|utm|c-)\\s*(?:n[º°o.]\\s*)?(\\d+(?:[.,/-]\\d+)*)`, 'gi');
 const norm = (t) => t.normalize('NFC').toLowerCase();
@@ -97,14 +97,22 @@ function cifrasDoc(texto) {
   return out;
 }
 
-/** Cifras en contexto legal dentro de una respuesta. */
+// Frase de recomendación técnica de cultivo (espacio, armario, cosecha…): sus "N plantas" no son
+// una cifra legal, salvo que la misma frase hable de ley/permiso/multa/etc.
+const RE_CONTEXTO_TECNICO = /\b(armarios?|carpas?|indoor|interior|exterior|outdoor|espacio|cosechas?|autoconsumo anual|rendimiento|producci[oó]n|trabajan con|caben|macetas?|litros?|por m2|por m²|metros? cuadrados?|m2|m²|lámparas?|l[aá]mparas?|vatios|w\b|variedad(es)?|gen[eé]ticas?|fotoperiodo|floraci[oó]n)/i;
+const RE_CONTEXTO_LEGAL = /\b(ley(es)?|legal\w*|ilegal\w*|legisla\w*|normativa|permis\w*|licencia|multas?|penas?|delito|sanci\w*|art[ií]culo|decreto|resoluci\w*|reprocann|cofepris|registro|registrad\w*|toleran\w*|despacho|abogad\w*|autoriza\w*|tenencia|portar|porte|transport\w*|polic[ií]a|tr[aá]fico|c[oó]digo|juzgad\w*|tribunal)\b/i;
+
+/** Cifras en contexto legal dentro de una respuesta (frase a frase; se saltan frases de recomendación técnica). */
 function cifrasLegales(texto) {
-  const t = norm(texto).replace(/^\s*(\d+[.)]|[-*•])\s+/gm, ' ');
   const out = new Set();
-  for (const re of [RE_CIFRA_ANTES_DE_UNIDAD, RE_PALABRA_ANTES_DE_UNIDAD]) {
-    for (const m of t.matchAll(re)) { out.add(canon(m[1])); if (m[2]) out.add(canon(m[2])); }
+  const frases = norm(texto).replace(/^\s*(\d+[.)]|[-*•])\s+/gm, ' ').split(/(?<=[.!?;])\s+|\n+/);
+  for (const f of frases) {
+    if (RE_CONTEXTO_TECNICO.test(f) && !RE_CONTEXTO_LEGAL.test(f)) continue;
+    for (const re of [RE_CIFRA_ANTES_DE_UNIDAD, RE_PALABRA_ANTES_DE_UNIDAD]) {
+      for (const m of f.matchAll(re)) { out.add(canon(m[1])); if (m[2]) out.add(canon(m[2])); }
+    }
+    for (const m of f.matchAll(RE_CIFRA_TRAS_NORMA)) for (const parte of m[1].split(/[/-]/)) out.add(parte.replace(/[.,]/g, ''));
   }
-  for (const m of t.matchAll(RE_CIFRA_TRAS_NORMA)) for (const parte of m[1].split(/[/-]/)) out.add(parte.replace(/[.,]/g, ''));
   return out;
 }
 
