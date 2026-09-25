@@ -1,3 +1,13 @@
+/* Menú según país: en subdominios de país (ar./cl./mx./co.) carga assets/menu-pais.js.
+   En cannabicultor.com (España) no carga nada. */
+(function () {
+  if (!/^[a-z]{2}\.cannabicultor\.com$/.test(location.hostname) || window.__ccMenuPais) return;
+  if (document.querySelector('script[src*="menu-pais.js"]')) return;
+  var s = document.createElement('script');
+  s.src = '/assets/menu-pais.js';
+  document.head.appendChild(s);
+})();
+
 /* Cannabicultor IA — carcasa común: menú móvil + chat contextual.
    El chat de las fichas no responde aquí: envía la pregunta a la home (/?q=), que
    la contesta con el límite anónimo y el registro dentro del chat. */
