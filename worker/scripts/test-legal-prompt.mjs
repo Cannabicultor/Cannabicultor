@@ -35,5 +35,7 @@ const casos = [
 ];
 for (const texto of casos) {
   const r = await handleChat({ messages: [{ role: 'user', content: texto }] }, env);
-  console.log(`\n=== ${texto}\n[${r.data?.provider || r.status}]\n${r.data?.reply || JSON.stringify(r.data)}`);
+  const reply = r.data?.reply || '';
+  const numeros = reply.match(/\d+|\b(una?|dos|tres|cuatro|cinco|seis|diez|pocas)\s+(plantas?|gramos?|euros?)\b/gi);
+  console.log(`\n=== ${texto}\n[${r.data?.provider || r.status}]${numeros ? `  ⚠ NÚMEROS: ${numeros.join(', ')}` : ''}\n${reply || JSON.stringify(r.data)}`);
 }

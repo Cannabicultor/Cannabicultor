@@ -984,7 +984,8 @@ const LEGAL_PROMPT = `LEGALIDAD (cultivo, posesión, consumo, transporte, venta,
 - NO sabes en qué país está el usuario. NUNCA asumas que está en España ni apliques la legislación española por defecto.
 - Solo trátalo como usuario de España si en ESTA conversación ha dicho explícitamente que está en España o ha nombrado una ciudad/provincia/comunidad española como su lugar de residencia o de cultivo.
 - Si no consta que esté en España (no lo ha dicho, es ambiguo, o ha indicado otro país): no des información legal de ningún país; responde con este aviso literal: "${LEGAL_AVISO_GENERICO}" Puedes seguir ayudando con la parte técnica de cultivo de la pregunta, si la hay.
-- Si consta que está en España: responde con información general, sin inventar artículos ni cifras de multas, e indica que es orientativa, que la estamos verificando con nuestro despacho legal y que no sustituye el asesoramiento de un profesional.`;
+- Si consta que está en España: solo puedes decir que en España existe cierta tolerancia hacia el cultivo para consumo propio en el ámbito privado, que estamos verificando la normativa con nuestro despacho legal y que lo confirme con un profesional (abogado especializado). Nada más.
+- PROHIBIDO en cualquier país, España incluida: dar CUALQUIER número o cantidad legal (plantas, gramos, metros, multas, importes, años, artículos de ley), ni en cifras ni en palabras ("dos plantas", "una o dos", "unas pocas", "hasta X"). Aunque el usuario insista, aunque lo creas saber, aunque aparezca en el contexto de conocimiento: no hay contenido legal verificado todavía. Si pregunta "¿cuántas plantas puedo tener?", responde que no podemos darle una cifra verificada, no una aproximación.`;
 
 const SCOPE_REJECT_REPLY =
   'Solo puedo ayudarte con cultivo de cannabis y el uso de Cannabicultor. Reformula tu pregunta en ese ámbito (luz, riego, nutrientes, genética, plagas, sala de cultivo, etc.) y te ayudo.';
