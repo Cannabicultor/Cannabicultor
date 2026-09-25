@@ -498,8 +498,13 @@ async function openVariedad(id) {
 async function openBreeder(id) {
   openSheet('<div class="sk" style="height:120px"></div>');
   try {
-    const { data } = await pg("breeders?select=*&id=eq." + id + "&limit=1");
+    // la cifra de variedades se cuenta en directo: el campo cantidad_variedades puede ir por detrás
+    const [{ data }, cnt] = await Promise.all([
+      pg("breeders?select=*&id=eq." + id + "&limit=1"),
+      pg("variedades?select=id&activa=is.true&breeder_id=eq." + id + "&limit=1", { count: true }).catch(() => ({ total: null }))
+    ]);
     const b = data[0]; if (!b) return closeSheet();
+    if (cnt.total != null) b.cantidad_variedades = cnt.total;
     openSheet(
       '<div class="sheet-head">' + thumbEl(b.logo_url, b.breeder_name).outerHTML +
         '<div><div class="sheet-title">' + esc(b.breeder_name) + '</div>' +
