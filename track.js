@@ -1,7 +1,16 @@
 /* Cannabicultor — tracking unificado v1
    Sustituye a cualquier snippet de page_views suelto.
-   Se incluye en TODAS las páginas: <script src="/track.js" defer></script>
-   Escribe en Supabase: page_views (vistas) y eventos (embudo). */
+   Se incluye en TODAS las páginas: <script src="/track.js?v=YYYYMMDD-slug" defer></script>
+   Escribe en Supabase: page_views (vistas) y eventos (embudo).
+
+   CACHE-BUSTING: el navegador y (si lo hay) el CDN delante del sitio cachean
+   este archivo por su URL. Cualquier cambio futuro aquí NO llegará a quien
+   ya visitó el sitio a menos que también subas el "?v=" del <script> en:
+     - todas las páginas HTML mantenidas a mano que lo incluyen
+     - prerender/build.mjs (plantilla de las páginas generadas: variedades/,
+       breeders/, tiendas-cbd/)
+   Sin ese cambio de versión, la URL "/track.js" no cambia y el navegador
+   sigue sirviendo la copia cacheada de antes. */
 (function () {
   'use strict';
 
