@@ -81,7 +81,8 @@
     user_agent: navigator.userAgent || '',
     screen_width: base.screen_width,
     language: navigator.language || '',
-    interno: interno
+    interno: interno,
+    host: location.hostname
   });
 
   // ── 2. API pública para eventos manuales: cc.track('registro_ok', email) ──
@@ -94,7 +95,8 @@
       session_id: sid,
       screen_width: base.screen_width,
       meta: meta || null,
-      interno: interno
+      interno: interno,
+      host: location.hostname
     };
     post('eventos', row, beacon);
   }
