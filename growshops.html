@@ -444,7 +444,8 @@ async function openShop(id) {
       : "";
     openSheet(
       headLogo +
-      '<div class="sheet-title">' + esc(g.nombre) + '</div>' +
+      '<div class="sheet-title">' + esc(g.nombre) +
+        (g.verificado ? ' <span class="verified-check" title="Verificado por Cannabicultor" aria-label="Verificado por Cannabicultor">✓</span>' : "") + '</div>' +
       '<div class="sheet-breeder">' + esc([g.ciudad, g.ccaa].filter(Boolean).join(" · ") || PAIS_NOMBRE) +
         (g.verificado ? " · verificado" : " · ficha abierta a reseñas") + '</div>' +
       (addr ? '<div class="section" style="margin-top:16px"><div class="k">Dirección</div><p>' + esc(addr) + '</p></div>' : "") +
