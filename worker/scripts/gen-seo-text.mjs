@@ -2,7 +2,8 @@
 // propios (evita contenido duplicado/thin). Un párrafo de 50-70 palabras con
 // DeepSeek, SOLO a partir de los datos de la ficha — nunca inventa cifras,
 // premios ni genética. Publica en lotes de 500 con verificación automática
-// (cifras + similitud) y todo es reversible por lote.
+// (cifras + similitud + ortografía + adornos no soportados) y todo es
+// reversible por lote.
 //
 // Ejecutar desde el Mac (ver worker/scripts/ingest-legal-aprobado.mjs para el
 // mismo patrón: el entorno cloud no tiene salida a DeepSeek/Supabase):
@@ -27,6 +28,21 @@
 // Si `descripcion` de la ficha es idéntica a la de otra(s) ficha(s) (plantilla/
 // boilerplate scrapeado), NO se pasa como notas_existentes al prompt: solo se
 // usa cuando es un texto único de esa variedad.
+//
+// Verificaciones sobre el texto generado (aparte de las cifras):
+//   - Ortografía: tildes obligatorias en un puñado de palabras que DeepSeek
+//     tiende a escribir sin ellas. Los decimales se normalizan a coma en
+//     post-proceso (no depende del modelo).
+//   - Adornos: una segunda llamada a DeepSeek (temperature 0, barata) lista
+//     afirmaciones del texto que no están literalmente en la ficha.
+//   - Esqueleto repetido: si las primeras 6 palabras (con los números
+//     enmascarados) ya son la apertura de >15% de los textos de este lote o
+//     de este breeder, se regenera con otra apertura (no se rechaza por
+//     esto).
+// Cualquiera de similitud / ortografía / adornos / esqueleto dispara COMO
+// MUCHO una regeneración (con otra apertura); si persiste algo que no sea el
+// esqueleto, se rechaza. Las cifras inventadas rechazan directamente, sin
+// regenerar (ese fallo no lo arregla probar otra apertura).
 
 import { randomUUID } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
@@ -48,6 +64,7 @@ const MIN_SENALES = flagVal('min-senales') ? parseInt(flagVal('min-senales'), 10
 const BATCH_SIZE = 500;
 const MAX_NUEVAS_INDEXABLES_DIA = 1000;
 const SIM_MAX = 0.5;
+const ESQUELETO_MAX = 0.15;
 const WORDS_MIN = 50, WORDS_MAX = 70;
 
 if (ES_ENTRYPOINT && !SB_KEY) { console.error('Falta SUPABASE_SERVICE_KEY'); process.exit(1); }
@@ -64,7 +81,7 @@ async function sb(path, { method = 'GET', body, prefer } = {}) {
   return txt ? JSON.parse(txt) : null;
 }
 
-const CAMPOS ='id,breeder_id,nombre,tipo,tipo_semilla,thc_pct,thc_max,cbd_pct,cbd_max,terpenos,aromas,efecto,efectos,sabor,sabores,floracion_dias,produccion,altura,genetica,descripcion,es_landrace,origen_geografico,anio_lanzamiento,indexable,slug';
+const CAMPOS = 'id,breeder_id,nombre,tipo,tipo_semilla,thc_pct,thc_max,cbd_pct,cbd_max,terpenos,aromas,efecto,efectos,sabor,sabores,floracion_dias,produccion,altura,genetica,descripcion,es_landrace,origen_geografico,anio_lanzamiento,indexable,slug';
 
 async function fetchCandidatas() {
   // Trae todo lo pendiente (seo_text_status IS NULL) y filtra/ordena por señales en JS:
@@ -110,18 +127,8 @@ async function cargarDescripcionesDuplicadas() {
   return dup;
 }
 
-// ── Prompt DeepSeek ─────────────────────────────────────────────────────────
-// Varía la instrucción de apertura entre llamadas para no producir textos que
-// empiecen todos igual (ayuda también a bajar la similitud Jaccard entre fichas).
-const ABERTURAS = [
-  'Empieza la primera frase nombrando el tipo de planta o su origen genético, NO el nombre de la variedad.',
-  'Empieza la primera frase con un dato de cultivo (floración, producción o altura) si lo hay, NO el nombre de la variedad.',
-  'Empieza la primera frase con el nombre de la variedad seguido directamente de su rasgo más distintivo.',
-  'Empieza la primera frase con una pregunta breve dirigida al cultivador, y responde el resto del párrafo con los datos.',
-  'Empieza la primera frase mencionando el criador (breeder) si se conoce, y qué representa esta genética en su catálogo.',
-];
-
-function buildPrompt(v, breeder, aberturaIdx, descripcionesDuplicadas) {
+// ── Ficha que ve el modelo (misma fuente para el prompt y para las cifras permitidas) ──
+function buildFicha(v, breeder, descripcionesDuplicadas) {
   const descUnica = v.descripcion && !descripcionesDuplicadas.has(v.descripcion.trim());
   const ficha = {
     nombre: v.nombre,
@@ -145,8 +152,31 @@ function buildPrompt(v, breeder, aberturaIdx, descripcionesDuplicadas) {
     notas_existentes: descUnica ? v.descripcion.slice(0, 500) : undefined,
   };
   Object.keys(ficha).forEach((k) => ficha[k] === undefined && delete ficha[k]);
+  return ficha;
+}
 
-  const system = `Eres un redactor técnico de cannabis para Cannabicultor, un medio español especializado en cultivo. Escribes en español de España, con tono experto y directo, sin superlativos vacíos ni emojis. Usas EXCLUSIVAMENTE los datos que te dan en el JSON de la ficha: si un dato no aparece, no lo mencionas, no lo inventas y no lo estimas. Prohibido inventar cifras (THC, CBD, floración, año, premios) o genética que no esté en la ficha.`;
+// ── Prompt DeepSeek ─────────────────────────────────────────────────────────
+// Varía la instrucción de apertura entre llamadas para no producir textos que
+// empiecen todos igual (ayuda también a bajar la similitud Jaccard y a que no
+// se repita el mismo "esqueleto" de primeras palabras dentro del lote).
+const ABERTURAS = [
+  'Empieza la primera frase nombrando el tipo de planta o su origen genético, NO el nombre de la variedad.',
+  'Empieza la primera frase con un dato de cultivo (floración, producción o altura) si lo hay, NO el nombre de la variedad, pero evita la construcción "Con [floración] días de floración y una producción de..."; busca otra forma gramatical de presentarlo.',
+  'Empieza la primera frase con el nombre de la variedad seguido directamente de su rasgo más distintivo.',
+  'Empieza la primera frase con una pregunta breve dirigida al cultivador, y responde el resto del párrafo con los datos.',
+  'Empieza la primera frase mencionando el criador (breeder) si se conoce, y qué representa esta genética en su catálogo.',
+  'Empieza la primera frase describiendo el perfil aromático o terpénico si consta en la ficha.',
+  'Empieza la primera frase por el tipo de semilla (autofloreciente, feminizada o regular) y lo que implica para el cultivo.',
+  'Empieza la primera frase señalando la predominancia genética (índica, sativa o híbrida) si se puede deducir del cruce.',
+  'Empieza la primera frase con el linaje o cruce genético, sin nombrar antes la variedad.',
+  'Empieza la primera frase con un tono de ficha técnica impersonal (p. ej. "Variedad desarrollada por…", "Genética procedente de…").',
+  'Empieza la primera frase con el sabor o el efecto si constan literalmente en la ficha.',
+  'Empieza la primera frase con la altura o el porte de la planta si consta en la ficha.',
+  'Empieza la primera frase con el año de lanzamiento o el origen geográfico si constan en la ficha.',
+];
+
+function buildPrompt(ficha, aberturaIdx) {
+  const system = `Eres un redactor técnico de cannabis para Cannabicultor, un medio español especializado en cultivo. Escribes en español de España, con tono experto y directo, sin superlativos vacíos ni emojis. Usas EXCLUSIVAMENTE los datos que te dan en el JSON de la ficha: si un dato no aparece, no lo mencionas, no lo inventas y no lo estimas. Prohibido inventar cifras (THC, CBD, floración, año, premios) o genética que no esté en la ficha. Escribe con ortografía española correcta, incluidas todas las tildes (genética, floración, producción, días, selección, terpénico, herbáceo…), aunque los datos del JSON vengan sin ellas. Los decimales se escriben con coma (19,5%), nunca con punto. No añadas calificativos, sabores, aromas ni efectos que no estén literalmente en la ficha: si dice "Queso", no escribas "queso curado"; no digas "compacta", "vigorosa", "tropical" ni cualidades parecidas salvo que consten tal cual en el JSON.`;
   const user = `Ficha de la variedad (JSON):
 ${JSON.stringify(ficha, null, 2)}
 
@@ -154,62 +184,97 @@ Escribe UN SOLO párrafo de ${WORDS_MIN} a ${WORDS_MAX} palabras para la página
   return { system, user };
 }
 
-async function callDeepSeek(system, user) {
+async function callDeepSeek(system, user, { temperature = 0.7, maxTokens = 300 } = {}) {
   const res = await fetch('https://api.deepseek.com/v1/chat/completions', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${DEEPSEEK_API_KEY}` },
     body: JSON.stringify({
       model: 'deepseek-chat',
       messages: [{ role: 'system', content: system }, { role: 'user', content: user }],
-      temperature: 0.7,
-      max_tokens: 300,
+      temperature,
+      max_tokens: maxTokens,
     }),
   });
   if (!res.ok) throw new Error(`DeepSeek ${res.status}: ${(await res.text()).slice(0, 300)}`);
   const data = await res.json();
   const text = data?.choices?.[0]?.message?.content?.trim();
   if (!text) throw new Error('DeepSeek: respuesta vacía');
+  return text;
+}
+
+async function generarTexto(system, user) {
+  const text = await callDeepSeek(system, user);
   return text.replace(/^["“]|["”]$/g, '').trim();
+}
+
+// ── Post-proceso: decimales con punto -> con coma (español) ────────────────
+// Solo cuando hay dígito a ambos lados del punto, así no toca puntos finales
+// de frase ("...63 días. Es ideal...") ni abreviaturas.
+function decimalesConComa(texto) {
+  return texto.replace(/(\d+)\.(\d+)/g, '$1,$2');
 }
 
 // ── Verificación: cifras del texto deben existir en la ficha ───────────────
 function numerosDeTexto(texto) {
   return [...texto.matchAll(/\d+(?:[.,]\d+)?/g)].map((m) => m[0].replace(',', '.'));
 }
-// Cifras permitidas: los campos numéricos de siempre (con su redondeo) MÁS
-// cualquier número que aparezca en cualquier campo de TEXTO que se pasa al
-// prompt (nombre, breeder, genetica, produccion, altura, terpenos, sabor,
-// efecto, tipo_semilla, notas_existentes). Sin esto, "400-500 g/m²" en
-// produccion, "00 Seeds Bank" en breeder o "Skunk #1" en genetica se
-// confundían con cifras inventadas y rechazaban el texto casi siempre.
-// notas_existentes solo cuenta si de verdad se pasó al prompt (descripcion
-// única, no repetida en otras fichas — mismo criterio que buildPrompt()).
-function numerosDeFicha(v, breeder, descripcionesDuplicadas) {
-  const ns = new Set();
-  for (const val of [v.thc_pct, v.thc_max, v.cbd_pct, v.cbd_max, v.floracion_dias, v.anio_lanzamiento]) {
-    if (val != null && val !== '') {
-      const n = Number(val);
-      if (!Number.isNaN(n)) { ns.add(String(n)); ns.add(String(Math.round(n))); }
-    }
+// Cifras permitidas: cualquier número que aparezca en el JSON de la ficha que
+// ve el modelo (exactamente el mismo objeto que buildPrompt serializa), más
+// el redondeo de los decimales y las semanas derivadas de floracion_dias (no
+// aparecen como cifra literal en la ficha). Antes solo miraba thc/cbd/
+// floracion/año a mano: cualquier cifra en produccion ("400-500 g/m²"),
+// nombre ("00 Cheese"), breeder ("00 Seeds Bank") o genetica ("Skunk #1") se
+// confundía con una cifra inventada y rechazaba el texto casi siempre.
+function numerosDeFicha(ficha) {
+  const ns = new Set(numerosDeTexto(JSON.stringify(ficha)));
+  for (const n of [...ns]) {
+    if (n.includes('.')) ns.add(String(Math.round(Number(n))));
   }
-  if (v.floracion_dias) ns.add(String(Math.round(v.floracion_dias / 7))); // semanas, derivado de un dato real
-
-  const descUnica = v.descripcion && descripcionesDuplicadas && !descripcionesDuplicadas.has(v.descripcion.trim());
-  const camposTexto = [
-    v.nombre, breeder, v.genetica, v.produccion, v.altura, v.terpenos,
-    v.sabor || (v.sabores?.length ? v.sabores.join(' ') : null),
-    v.efecto || (v.efectos?.length ? v.efectos.join(' ') : null),
-    v.tipo || v.tipo_semilla,
-    descUnica ? v.descripcion.slice(0, 500) : null,
-  ].filter(Boolean).join(' ');
-  for (const n of numerosDeTexto(camposTexto)) ns.add(n);
-
+  if (ficha.floracion_dias) ns.add(String(Math.round(ficha.floracion_dias / 7))); // semanas
   return ns;
 }
-function cifrasVerificadas(texto, v, breeder, descripcionesDuplicadas) {
-  const enFicha = numerosDeFicha(v, breeder, descripcionesDuplicadas);
+function cifrasVerificadas(texto, ficha) {
+  const enFicha = numerosDeFicha(ficha);
   const enTexto = numerosDeTexto(texto);
   return enTexto.every((n) => enFicha.has(n) || enFicha.has(String(Math.round(Number(n)))));
+}
+
+// ── Verificación: ortografía (tildes que DeepSeek tiende a comerse) ────────
+const PALABRAS_SIN_TILDE = /\b(genetica|floracion|produccion|dias|seleccion|terpenico|herbaceo)\b/i;
+function tieneErroresOrtografia(texto) {
+  return PALABRAS_SIN_TILDE.test(texto);
+}
+
+// ── Verificación: adornos/afirmaciones no respaldadas por la ficha ─────────
+// Segunda llamada a DeepSeek, barata (temperature 0, pocos tokens): le pedimos
+// que liste lo que el texto añade y la ficha no dice. Si no se puede parsear
+// la respuesta lo tratamos como "sin adornos" (fail-open) — más vale una
+// afirmación de más colarse alguna vez que repetir el bug de numerosDeFicha,
+// donde un fallo de verificación rechazaba el 100% de los textos.
+async function verificarAdornos(ficha, texto) {
+  const system = 'Comparas un texto sobre una variedad de cannabis con los datos de su ficha. Señalas SOLO afirmaciones del texto (calificativos, sabores, aromas, efectos o cualidades) que NO estén literalmente respaldadas por el JSON de la ficha. Responde EXCLUSIVAMENTE con un array JSON de strings, cada uno una afirmación no respaldada (breve, tal como aparece en el texto); si no hay ninguna, responde exactamente [].';
+  const user = `Ficha (JSON):
+${JSON.stringify(ficha, null, 2)}
+
+Texto a revisar:
+${texto}
+
+Devuelve solo el array JSON, sin explicaciones ni markdown.`;
+  let raw;
+  try {
+    raw = await callDeepSeek(system, user, { temperature: 0, maxTokens: 200 });
+  } catch (e) {
+    console.error(`  ⚠ verificarAdornos: fallo de red/API, se trata como "sin adornos": ${e.message}`);
+    return { adornos: [], parseFallo: true };
+  }
+  const match = raw.match(/\[[\s\S]*\]/);
+  try {
+    const arr = JSON.parse(match ? match[0] : raw);
+    return { adornos: Array.isArray(arr) ? arr.filter(Boolean).map(String) : [], parseFallo: false };
+  } catch {
+    console.error(`  ⚠ verificarAdornos: respuesta no parseable, se trata como "sin adornos": ${raw.slice(0, 150)}`);
+    return { adornos: [], parseFallo: true };
+  }
 }
 
 // ── Similitud: shingles de 3 palabras (Jaccard) ─────────────────────────────
@@ -236,14 +301,37 @@ function maxSimilitud(texto, comparar) {
   return max;
 }
 
+// ── Esqueleto: primeras 6 palabras normalizadas, números enmascarados ──────
+// Detecta aperturas repetidas tipo "Con 63 días de floración y una..." /
+// "Con 56 días de floración y una..." aunque cambien las cifras.
+function esqueleto(texto) {
+  return normWords(texto)
+    .map((w) => (/^\d+$/.test(w) ? '#' : w))
+    .slice(0, 6)
+    .join(' ');
+}
+function nuevoContadorEsqueletos() {
+  return { mapa: new Map(), total: 0 };
+}
+function frecuenciaEsqueleto(contador, sk) {
+  if (!contador.total) return 0;
+  return (contador.mapa.get(sk) || 0) / contador.total;
+}
+function registrarEsqueleto(contador, sk) {
+  contador.mapa.set(sk, (contador.mapa.get(sk) || 0) + 1);
+  contador.total++;
+}
+
 async function textosParaComparar(breederId) {
-  const [delBreeder, muestraGlobal] = await Promise.all([
+  const [delBreederRows, muestraGlobalRows] = await Promise.all([
     breederId
       ? sb(`variedades?select=seo_description_text&breeder_id=eq.${breederId}&seo_text_status=eq.ok&seo_description_text=not.is.null&limit=200`)
       : Promise.resolve([]),
     sb(`variedades?select=seo_description_text&seo_text_status=eq.ok&seo_description_text=not.is.null&order=id.desc&limit=200`),
   ]);
-  return [...delBreeder, ...muestraGlobal].map((r) => r.seo_description_text).filter(Boolean);
+  const delBreederTextos = delBreederRows.map((r) => r.seo_description_text).filter(Boolean);
+  const muestraGlobalTextos = muestraGlobalRows.map((r) => r.seo_description_text).filter(Boolean);
+  return { comparar: [...delBreederTextos, ...muestraGlobalTextos], delBreederTextos };
 }
 
 // ── Salvaguarda: cuántas indexable=true nuevas se han escrito ya hoy ───────
@@ -278,7 +366,8 @@ async function main() {
   if (DRY_RUN) {
     for (const { v, senales } of lote.slice(0, 3)) {
       const bn = await breederName(v.breeder_id);
-      const { system, user } = buildPrompt(v, bn, v.id, descripcionesDuplicadas);
+      const ficha = buildFicha(v, bn, descripcionesDuplicadas);
+      const { system, user } = buildPrompt(ficha, v.id);
       console.log(`\n--- #${v.id} ${v.nombre} (${senales} señales) ---\n${system}\n\n${user}`);
     }
     console.log(`\nDRY RUN: no se ha llamado a DeepSeek ni escrito nada. (${lote.length} candidatas en el lote)`);
@@ -286,9 +375,11 @@ async function main() {
   }
 
   let yaIndexablesHoy = await nuevasIndexablesHoy();
-  let generadas = 0, rechazadas = 0, saltadasPorTope = 0;
+  let generadas = 0, rechazadas = 0, saltadasPorTope = 0, regeneradas = 0, parseFallosAdornos = 0;
   const similitudes = [];
   const muestra = [];
+  const esqueletosLote = nuevoContadorEsqueletos();
+  const esqueletosPorBreeder = new Map(); // breeder_id -> contador, sembrado desde sus textos ya publicados
 
   for (const { v, senales } of lote) {
     try {
@@ -297,23 +388,48 @@ async function main() {
         continue; // deja seo_text_status=null: se recoge en la siguiente corrida/día
       }
       const bn = await breederName(v.breeder_id);
-      const comparar = await textosParaComparar(v.breeder_id);
+      const ficha = buildFicha(v, bn, descripcionesDuplicadas);
+      const { comparar, delBreederTextos } = await textosParaComparar(v.breeder_id);
 
-      let { system, user } = buildPrompt(v, bn, v.id, descripcionesDuplicadas);
-      let texto = await callDeepSeek(system, user);
-      let sim = maxSimilitud(texto, comparar);
-      let cifrasOk = cifrasVerificadas(texto, v, bn, descripcionesDuplicadas);
+      let contadorBreeder = esqueletosPorBreeder.get(v.breeder_id);
+      if (!contadorBreeder) {
+        contadorBreeder = nuevoContadorEsqueletos();
+        for (const t of delBreederTextos) registrarEsqueleto(contadorBreeder, esqueleto(t));
+        esqueletosPorBreeder.set(v.breeder_id, contadorBreeder);
+      }
 
-      if (cifrasOk && sim > SIM_MAX) {
-        // una regeneración con abertura distinta antes de rechazar por similitud
-        ({ system, user } = buildPrompt(v, bn, v.id + 1, descripcionesDuplicadas));
-        texto = await callDeepSeek(system, user);
-        sim = maxSimilitud(texto, comparar);
-        cifrasOk = cifrasVerificadas(texto, v, bn, descripcionesDuplicadas);
+      let { system, user } = buildPrompt(ficha, v.id);
+      let texto = decimalesConComa(await generarTexto(system, user));
+      let cifrasOk = cifrasVerificadas(texto, ficha);
+      let sim = cifrasOk ? maxSimilitud(texto, comparar) : 0;
+      let ortoMal = cifrasOk && tieneErroresOrtografia(texto);
+      let sk = esqueleto(texto);
+      let skRepetido = cifrasOk && (frecuenciaEsqueleto(esqueletosLote, sk) > ESQUELETO_MAX || frecuenciaEsqueleto(contadorBreeder, sk) > ESQUELETO_MAX);
+      let adornosRes = { adornos: [], parseFallo: false };
+      if (cifrasOk) {
+        adornosRes = await verificarAdornos(ficha, texto);
+        if (adornosRes.parseFallo) parseFallosAdornos++;
+      }
+
+      if (cifrasOk && (sim > SIM_MAX || ortoMal || adornosRes.adornos.length > 0 || skRepetido)) {
+        // como mucho una regeneración, con otra apertura
+        regeneradas++;
+        ({ system, user } = buildPrompt(ficha, v.id + 1));
+        texto = decimalesConComa(await generarTexto(system, user));
+        cifrasOk = cifrasVerificadas(texto, ficha);
+        sim = cifrasOk ? maxSimilitud(texto, comparar) : 0;
+        ortoMal = cifrasOk && tieneErroresOrtografia(texto);
+        sk = esqueleto(texto);
+        adornosRes = { adornos: [], parseFallo: false };
+        if (cifrasOk) {
+          adornosRes = await verificarAdornos(ficha, texto);
+          if (adornosRes.parseFallo) parseFallosAdornos++;
+        }
       }
 
       const nPalabras = normWords(texto).length;
-      const aprobado = cifrasOk && sim <= SIM_MAX && nPalabras >= WORDS_MIN - 10 && nPalabras <= WORDS_MAX + 15;
+      const aprobado = cifrasOk && sim <= SIM_MAX && !ortoMal && adornosRes.adornos.length === 0
+        && nPalabras >= WORDS_MIN - 10 && nPalabras <= WORDS_MAX + 15;
       similitudes.push(sim);
 
       const status = aprobado ? 'ok' : 'rechazado';
@@ -338,6 +454,8 @@ async function main() {
 
       if (aprobado) {
         generadas++;
+        registrarEsqueleto(esqueletosLote, sk);
+        registrarEsqueleto(contadorBreeder, sk);
         // reservoir sampling: mantiene 10 elementos elegidos uniformemente al azar de todo lo generado
         if (muestra.length < 10) muestra.push({ v, texto });
         else if (Math.random() < 10 / generadas) muestra[Math.floor(Math.random() * 10)] = { v, texto };
@@ -354,8 +472,10 @@ async function main() {
   console.log(`\n▸ Lote ${batchId} terminado`);
   console.log(`  generadas (ok): ${generadas}`);
   console.log(`  rechazadas: ${rechazadas}`);
+  console.log(`  regeneradas (similitud/ortografía/adornos/esqueleto): ${regeneradas}`);
   console.log(`  saltadas por tope diario (${MAX_NUEVAS_INDEXABLES_DIA} indexables nuevas/día): ${saltadasPorTope}`);
   console.log(`  similitud media (Jaccard shingles-3): ${simMedia.toFixed(3)}`);
+  if (parseFallosAdornos) console.log(`  ⚠ verificarAdornos no parseable ${parseFallosAdornos} veces (se trató como "sin adornos" — revisar si se repite)`);
   console.log(`\n  Muestra aleatoria (${muestra.length}):`);
   for (const { v, texto } of muestra) {
     console.log(`  · https://www.cannabicultor.com/variedades/${v.slug || v.id}/`);
@@ -366,5 +486,12 @@ async function main() {
 
 if (ES_ENTRYPOINT) main().catch((e) => { console.error(e); process.exit(1); });
 
-// Exportado para worker/scripts/test-gen-seo-text.mjs (funciones puras, sin red).
-export { numerosDeTexto, numerosDeFicha, cifrasVerificadas, buildPrompt };
+// Exportado para worker/scripts/test-gen-seo-text.mjs (funciones puras, sin red,
+// salvo verificarAdornos que sí llama a DeepSeek — los tests le stubean fetch).
+export {
+  buildFicha, buildPrompt, ABERTURAS,
+  numerosDeTexto, numerosDeFicha, cifrasVerificadas,
+  decimalesConComa, tieneErroresOrtografia, verificarAdornos,
+  esqueleto, nuevoContadorEsqueletos, frecuenciaEsqueleto, registrarEsqueleto,
+  normWords, maxSimilitud,
+};
