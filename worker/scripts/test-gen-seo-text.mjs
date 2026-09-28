@@ -3,7 +3,7 @@
 // Uso: node worker/scripts/test-gen-seo-text.mjs
 import {
   buildFicha, cifrasVerificadas, decimalesConComa, tieneErroresOrtografia,
-  verificarAdornos, esqueletoFrase, esqueletosFrases, crearContadoresFrases,
+  citaFuenteExterna, verificarAdornos, esqueletoFrase, esqueletosFrases, crearContadoresFrases,
   algunaFraseSobrerrepetida, registrarEsqueletosFrases, frecuenciaEsqueleto,
   numerosDeTexto, numerosDeFicha, datosCannabinoidesDudosos,
 } from './gen-seo-text.mjs';
@@ -39,6 +39,11 @@ check('00 Skunk CON tildes: no dispara falso positivo', !tieneErroresOrtografia(
 check('detecta "produccion"/"terpenico"/"herbaceo"/"seleccion" sin tilde', tieneErroresOrtografia('Su perfil terpenico es herbaceo, fruto de una seleccion cuidada de la produccion.'));
 check('decimalesConComa: "18.5" -> "18,5"', decimalesConComa('THC de 18.5% y CBD de 0.5%') === 'THC de 18,5% y CBD de 0,5%');
 check('decimalesConComa: no toca puntos finales de frase', decimalesConComa('Tiene 63 días de floración. Es una variedad rápida.') === 'Tiene 63 días de floración. Es una variedad rápida.');
+
+// ── Cita de fuentes externas (blindaje SeedFinder) ──────────────────────────
+check('detecta "SeedFinder" citado como fuente', citaFuenteExterna('...por lo que los usuarios de SeedFinder recopilan información sobre sus cualidades terapéuticas y fenotipos.'));
+check('detecta SeedFinder en minúsculas y otras fuentes de terceros (Leafly, AllBud, Wikileaf)', citaFuenteExterna('según seedfinder') && citaFuenteExterna('datos de Leafly') && citaFuenteExterna('visto en AllBud') && citaFuenteExterna('fuente: Wikileaf'));
+check('texto normal sin mencionar fuentes externas: no dispara falso positivo', !citaFuenteExterna('00 Cheese es una variedad feminizada de 00 Seeds Bank con una floración de 56 días.'));
 
 // ── Adornos (lote 2): "queso curado" — verificarAdornos con fetch stubeado ──
 const originalFetch = global.fetch;

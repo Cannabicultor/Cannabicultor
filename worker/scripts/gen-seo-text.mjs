@@ -225,7 +225,7 @@ const ESTRUCTURAS_TERPENOS = [
 ];
 
 function buildPrompt(ficha, aberturaIdx) {
-  const system = `Eres un redactor técnico de cannabis para Cannabicultor, un medio español especializado en cultivo. Escribes en español de España, con tono experto y directo, sin superlativos vacíos ni emojis. Usas EXCLUSIVAMENTE los datos que te dan en el JSON de la ficha: si un dato no aparece, no lo mencionas, no lo inventas y no lo estimas. Prohibido inventar cifras (THC, CBD, floración, año, premios) o genética que no esté en la ficha. Escribe con ortografía española correcta, incluidas todas las tildes (genética, floración, producción, días, selección, terpénico, herbáceo…), aunque los datos del JSON vengan sin ellas. Los decimales se escriben con coma (19,5%), nunca con punto. No añadas calificativos, sabores, aromas ni efectos que no estén literalmente en la ficha: si dice "Queso", no escribas "queso curado"; no digas "compacta", "vigorosa", "tropical" ni cualidades parecidas salvo que consten tal cual en el JSON. Nunca uses literalmente la construcción "Su perfil terpénico combina X, Y y Z, con sabor a ... y efecto ...": se ha repetido demasiado en fichas anteriores.`;
+  const system = `Eres un redactor técnico de cannabis para Cannabicultor, un medio español especializado en cultivo. Escribes en español de España, con tono experto y directo, sin superlativos vacíos ni emojis. Usas EXCLUSIVAMENTE los datos que te dan en el JSON de la ficha: si un dato no aparece, no lo mencionas, no lo inventas y no lo estimas. Prohibido inventar cifras (THC, CBD, floración, año, premios) o genética que no esté en la ficha. Escribe con ortografía española correcta, incluidas todas las tildes (genética, floración, producción, días, selección, terpénico, herbáceo…), aunque los datos del JSON vengan sin ellas. Los decimales se escriben con coma (19,5%), nunca con punto. No añadas calificativos, sabores, aromas ni efectos que no estén literalmente en la ficha: si dice "Queso", no escribas "queso curado"; no digas "compacta", "vigorosa", "tropical" ni cualidades parecidas salvo que consten tal cual en el JSON. Nunca uses literalmente la construcción "Su perfil terpénico combina X, Y y Z, con sabor a ... y efecto ...": se ha repetido demasiado en fichas anteriores. Nunca nombres SeedFinder, Leafly, AllBud, Wikileaf ni ninguna otra base de datos, catálogo o web de terceros como fuente de estos datos: los datos son de la ficha de Cannabicultor, no los atribuyas a ninguna fuente externa.`;
   const user = `Ficha de la variedad (JSON):
 ${JSON.stringify(ficha, null, 2)}
 
@@ -294,6 +294,18 @@ function cifrasVerificadas(texto, ficha) {
 const PALABRAS_SIN_TILDE = /\b(genetica|floracion|produccion|dias|seleccion|terpenico|herbaceo)\b/i;
 function tieneErroresOrtografia(texto) {
   return PALABRAS_SIN_TILDE.test(texto);
+}
+
+// ── Verificación: no debe citar bases de datos de terceros ─────────────────
+// buildFicha() nunca incluye "SeedFinder" ni ningún otro nombre de fuente en
+// el JSON que ve el modelo, pero DeepSeek puede "recordarlo" de su
+// entrenamiento y colarlo como si fuera un dato más (p. ej. "los usuarios de
+// SeedFinder recopilan..."). Se trata igual que la ortografía: dispara como
+// mucho una regeneración y si persiste, rechaza. Añadir aquí cualquier otra
+// base de datos de terceros que aparezca.
+const FUENTES_EXTERNAS_PROHIBIDAS = /\b(seedfinder|leafly|allbud|wikileaf)\b/i;
+function citaFuenteExterna(texto) {
+  return FUENTES_EXTERNAS_PROHIBIDAS.test(texto);
 }
 
 // ── Verificación: adornos/afirmaciones no respaldadas por la ficha ─────────
@@ -490,7 +502,7 @@ async function main() {
   }
 
   let yaIndexablesHoy = await nuevasIndexablesHoy();
-  let generadas = 0, rechazadas = 0, saltadasPorTope = 0, regeneradas = 0, parseFallosAdornos = 0, datosDudososMarcados = 0;
+  let generadas = 0, rechazadas = 0, saltadasPorTope = 0, regeneradas = 0, parseFallosAdornos = 0, datosDudososMarcados = 0, fuentesExternasBloqueadas = 0;
   const similitudes = [];
   const muestra = [];
   const esqueletosLote = crearContadoresFrases();
@@ -524,6 +536,7 @@ async function main() {
       let cifrasOk = cifrasVerificadas(texto, ficha);
       let sim = cifrasOk ? maxSimilitud(texto, comparar) : 0;
       let ortoMal = cifrasOk && tieneErroresOrtografia(texto);
+      let fuenteExterna = cifrasOk && citaFuenteExterna(texto);
       let sks = esqueletosFrases(texto, ficha);
       let skRepetido = cifrasOk && (algunaFraseSobrerrepetida(esqueletosLote, sks, ESQUELETO_MAX) || algunaFraseSobrerrepetida(contadoresBreeder, sks, ESQUELETO_MAX));
       let adornosRes = { adornos: [], parseFallo: false };
@@ -532,7 +545,7 @@ async function main() {
         if (adornosRes.parseFallo) parseFallosAdornos++;
       }
 
-      if (cifrasOk && (sim > SIM_MAX || ortoMal || adornosRes.adornos.length > 0 || skRepetido)) {
+      if (cifrasOk && (sim > SIM_MAX || ortoMal || fuenteExterna || adornosRes.adornos.length > 0 || skRepetido)) {
         // como mucho una regeneración, con otra apertura y otra estructura de terpenos/sabor/efecto
         regeneradas++;
         ({ system, user } = buildPrompt(ficha, v.id + 1));
@@ -540,6 +553,7 @@ async function main() {
         cifrasOk = cifrasVerificadas(texto, ficha);
         sim = cifrasOk ? maxSimilitud(texto, comparar) : 0;
         ortoMal = cifrasOk && tieneErroresOrtografia(texto);
+        fuenteExterna = cifrasOk && citaFuenteExterna(texto);
         sks = esqueletosFrases(texto, ficha);
         adornosRes = { adornos: [], parseFallo: false };
         if (cifrasOk) {
@@ -549,8 +563,9 @@ async function main() {
       }
 
       const nPalabras = normWords(texto).length;
-      const aprobado = cifrasOk && sim <= SIM_MAX && !ortoMal && adornosRes.adornos.length === 0
+      const aprobado = cifrasOk && sim <= SIM_MAX && !ortoMal && !fuenteExterna && adornosRes.adornos.length === 0
         && nPalabras >= WORDS_MIN - 10 && nPalabras <= WORDS_MAX + 15;
+      if (fuenteExterna) fuentesExternasBloqueadas++;
       similitudes.push(sim);
 
       const status = aprobado ? 'ok' : 'rechazado';
@@ -593,9 +608,10 @@ async function main() {
   console.log(`\n▸ Lote ${batchId} terminado`);
   console.log(`  generadas (ok): ${generadas}`);
   console.log(`  rechazadas: ${rechazadas}`);
-  console.log(`  regeneradas (similitud/ortografía/adornos/estructura): ${regeneradas}`);
+  console.log(`  regeneradas (similitud/ortografía/fuente externa/adornos/estructura): ${regeneradas}`);
   console.log(`  saltadas por tope diario (${MAX_NUEVAS_INDEXABLES_DIA} indexables nuevas/día): ${saltadasPorTope}`);
   console.log(`  cifras THC/CBD dudosas marcadas en seo_revisar_datos: ${datosDudososMarcados}`);
+  if (fuentesExternasBloqueadas) console.log(`  ⚠ citaba una base de datos de terceros (SeedFinder/Leafly/...) ${fuentesExternasBloqueadas} veces tras regenerar — rechazadas`);
   console.log(`  similitud media (Jaccard shingles-3): ${simMedia.toFixed(3)}`);
   if (parseFallosAdornos) console.log(`  ⚠ verificarAdornos no parseable ${parseFallosAdornos} veces (se trató como "sin adornos" — revisar si se repite)`);
   console.log(`\n  Muestra aleatoria (${muestra.length}):`);
@@ -614,7 +630,7 @@ export {
   buildFicha, buildPrompt, ABERTURAS, ESTRUCTURAS_TERPENOS,
   datosCannabinoidesDudosos,
   numerosDeTexto, numerosDeFicha, cifrasVerificadas,
-  decimalesConComa, tieneErroresOrtografia, verificarAdornos,
+  decimalesConComa, tieneErroresOrtografia, citaFuenteExterna, verificarAdornos,
   esqueletoFrase, esqueletosFrases, sustituirValoresFicha,
   crearContadoresFrases, algunaFraseSobrerrepetida, registrarEsqueletosFrases,
   nuevoContadorEsqueletos, frecuenciaEsqueleto, registrarEsqueleto,
