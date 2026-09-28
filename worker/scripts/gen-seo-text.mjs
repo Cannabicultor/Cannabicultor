@@ -23,6 +23,10 @@
 // (sumando lo que ya haya escrito seo_indexable_backup hoy con este script)
 // superen MAX_NUEVAS_INDEXABLES_DIA, para no disparar un cambio masivo de
 // golpe en Search Console. Si el lote lo superaría, se recorta.
+//
+// Si `descripcion` de la ficha es idéntica a la de otra(s) ficha(s) (plantilla/
+// boilerplate scrapeado), NO se pasa como notas_existentes al prompt: solo se
+// usa cuando es un texto único de esa variedad.
 
 import { randomUUID } from 'node:crypto';
 import { countSenales } from './seo-signals.mjs';
@@ -81,6 +85,26 @@ async function breederName(breederId) {
   return b?.breeder_name || null;
 }
 
+// `descripcion` repetida en más de una ficha (mismo texto): son plantillas/boilerplate
+// scrapeado, no un dato fiable de ESTA variedad, así que no se pasa como notas_existentes
+// al prompt (evita que DeepSeek "aprenda" el mismo texto genérico en muchas fichas).
+async function cargarDescripcionesDuplicadas() {
+  const counts = new Map();
+  const pageSize = 1000;
+  for (let from = 0; ; from += pageSize) {
+    const page = await sb(`variedades?select=descripcion&descripcion=not.is.null&order=id.asc&limit=${pageSize}&offset=${from}`);
+    for (const { descripcion } of page) {
+      const d = descripcion.trim();
+      if (!d) continue;
+      counts.set(d, (counts.get(d) || 0) + 1);
+    }
+    if (page.length < pageSize) break;
+  }
+  const dup = new Set();
+  for (const [d, n] of counts) if (n > 1) dup.add(d);
+  return dup;
+}
+
 // ── Prompt DeepSeek ─────────────────────────────────────────────────────────
 // Varía la instrucción de apertura entre llamadas para no producir textos que
 // empiecen todos igual (ayuda también a bajar la similitud Jaccard entre fichas).
@@ -92,7 +116,8 @@ const ABERTURAS = [
   'Empieza la primera frase mencionando el criador (breeder) si se conoce, y qué representa esta genética en su catálogo.',
 ];
 
-function buildPrompt(v, breeder, aberturaIdx) {
+function buildPrompt(v, breeder, aberturaIdx, descripcionesDuplicadas) {
+  const descUnica = v.descripcion && !descripcionesDuplicadas.has(v.descripcion.trim());
   const ficha = {
     nombre: v.nombre,
     breeder: breeder || undefined,
@@ -110,7 +135,9 @@ function buildPrompt(v, breeder, aberturaIdx) {
     sabor: v.sabor || (v.sabores?.length ? v.sabores : undefined),
     efecto: v.efecto || (v.efectos?.length ? v.efectos : undefined),
     anio_lanzamiento: v.anio_lanzamiento || undefined,
-    notas_existentes: v.descripcion ? v.descripcion.slice(0, 500) : undefined,
+    // Solo si es de ESTA variedad: si el mismo texto aparece en otras fichas es
+    // boilerplate/plantilla, no un dato fiable de "notas_existentes".
+    notas_existentes: descUnica ? v.descripcion.slice(0, 500) : undefined,
   };
   Object.keys(ficha).forEach((k) => ficha[k] === undefined && delete ficha[k]);
 
@@ -221,10 +248,13 @@ async function main() {
   const lote = candidatas.slice(0, tope);
   console.log(`  procesando este lote: ${lote.length}`);
 
+  const descripcionesDuplicadas = await cargarDescripcionesDuplicadas();
+  console.log(`  descripciones repetidas en >1 ficha (no se pasan como notas_existentes): ${descripcionesDuplicadas.size}`);
+
   if (DRY_RUN) {
     for (const { v, senales } of lote.slice(0, 3)) {
       const bn = await breederName(v.breeder_id);
-      const { system, user } = buildPrompt(v, bn, v.id);
+      const { system, user } = buildPrompt(v, bn, v.id, descripcionesDuplicadas);
       console.log(`\n--- #${v.id} ${v.nombre} (${senales} señales) ---\n${system}\n\n${user}`);
     }
     console.log(`\nDRY RUN: no se ha llamado a DeepSeek ni escrito nada. (${lote.length} candidatas en el lote)`);
@@ -245,14 +275,14 @@ async function main() {
       const bn = await breederName(v.breeder_id);
       const comparar = await textosParaComparar(v.breeder_id);
 
-      let { system, user } = buildPrompt(v, bn, v.id);
+      let { system, user } = buildPrompt(v, bn, v.id, descripcionesDuplicadas);
       let texto = await callDeepSeek(system, user);
       let sim = maxSimilitud(texto, comparar);
       let cifrasOk = cifrasVerificadas(texto, v);
 
       if (cifrasOk && sim > SIM_MAX) {
         // una regeneración con abertura distinta antes de rechazar por similitud
-        ({ system, user } = buildPrompt(v, bn, v.id + 1));
+        ({ system, user } = buildPrompt(v, bn, v.id + 1, descripcionesDuplicadas));
         texto = await callDeepSeek(system, user);
         sim = maxSimilitud(texto, comparar);
         cifrasOk = cifrasVerificadas(texto, v);
