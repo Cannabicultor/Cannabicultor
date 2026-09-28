@@ -202,6 +202,35 @@ function countDataPoints(v) {
   return n;
 }
 
+// ── "Variedades parecidas" (mismo breeder + genética/terpenos similares) ────
+function geneticaTokens(v) {
+  const cross = parseCross(v.genetica);
+  return cross ? new Set(cross.map((p) => p.toLowerCase())) : new Set();
+}
+function aromaTokens(v) {
+  const set = new Set();
+  if (Array.isArray(v.aromas)) for (const a of v.aromas) set.add(String(a).toLowerCase());
+  if (v.terpenos) for (const t of String(v.terpenos).toLowerCase().split(/[,;/]+/)) { const s = t.trim(); if (s) set.add(s); }
+  return set;
+}
+function overlapCount(a, b) {
+  if (!a.size || !b.size) return 0;
+  let n = 0;
+  for (const x of a) if (b.has(x)) n++;
+  return n;
+}
+// Hasta 4 variedades del mismo breeder, priorizando cruce/aromas compartidos
+// (varía por ficha: cada una puntúa contra sus propias hermanas de catálogo).
+function relatedVarieties(v, sameBreeder) {
+  const gv = geneticaTokens(v), av = aromaTokens(v);
+  return sameBreeder
+    .filter((o) => o.id !== v.id)
+    .map((o) => ({ o, score: overlapCount(gv, geneticaTokens(o)) * 2 + overlapCount(av, aromaTokens(o)) + (o.tipo && o.tipo === v.tipo ? 0.5 : 0) }))
+    .sort((a, b) => b.score - a.score || a.o.id - b.o.id)
+    .slice(0, 4)
+    .map((x) => ({ slug: x.o._slug, nombre: x.o.nombre }));
+}
+
 function describe(v, breeder) {
   const nombre = v.nombre;
   const bn = breeder?.breeder_name && !/unknown|legendary/i.test(breeder.breeder_name)
@@ -303,6 +332,7 @@ nav.crumbs{font-size:13px;color:var(--text3);margin:20px 0 8px}
 nav.crumbs a{color:var(--text3)}
 h1{font-size:clamp(28px,5vw,40px);font-weight:600;letter-spacing:-0.03em;line-height:1.1;margin:6px 0 4px}
 h1 .by{display:block;font-size:16px;font-weight:400;color:var(--text3);margin-top:8px;letter-spacing:0}
+.seo-lede{font-size:17px;line-height:1.6;color:var(--text2);margin:14px 0 6px}
 .hero{display:flex;gap:28px;flex-wrap:wrap;align-items:flex-start;margin:24px 0 8px}
 .hero img{width:220px;height:220px;object-fit:cover;border-radius:16px;border:1px solid var(--border);background:var(--white)}
 .facts{width:100%;border-collapse:collapse;margin:24px 0;background:var(--white);border:1px solid var(--border);border-radius:12px;overflow:hidden}
@@ -361,7 +391,7 @@ ${diarioHref ? `<a class="cc-diario" href="${esc(diarioHref)}" data-track="cta_d
 </form></div>`;
 }
 
-function shell({ title, desc, canonical, image, jsonld, bodyHtml, dock }) {
+function shell({ title, desc, canonical, image, jsonld, bodyHtml, dock, robots = 'index,follow,max-image-preview:large' }) {
   return `<!DOCTYPE html>
 <html lang="es">
 <head>
@@ -370,7 +400,7 @@ ${GA_SNIPPET}
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>${esc(title)}</title>
 <meta name="description" content="${esc(desc)}">
-<meta name="robots" content="index,follow,max-image-preview:large">
+<meta name="robots" content="${robots}">
 <link rel="canonical" href="${canonical}">
 <link rel="alternate" hreflang="es" href="${canonical}">
 <link rel="alternate" hreflang="x-default" href="${canonical}">
@@ -467,9 +497,13 @@ function genealogyLink(v, cross) {
   return `<p class="body"><a href="${href}" data-track="ficha_genealogia">Ver el árbol genealógico de ${esc(base)} →</a> Padres, abuelos y landraces de origen.</p>`;
 }
 
-function varietyPage(v, breeder, breederSlug) {
+function varietyPage(v, breeder, breederSlug, { canonicalUrl = null, relacionadas = [] } = {}) {
   const bn = breeder?.breeder_name && !/unknown|legendary/i.test(breeder.breeder_name) ? breeder.breeder_name : null;
-  const canonical = `${SITE}/variedades/${v._slug}/`;
+  const ownUrl = `${SITE}/variedades/${v._slug}/`;
+  // SEO: fichas indexable=false que son alias de otra con la misma genética (mismo
+  // taxón) declaran canonical hacia la ficha elegida y se sirven noindex,follow.
+  const canonical = canonicalUrl || ownUrl;
+  const robots = v.indexable === false ? 'noindex,follow' : 'index,follow,max-image-preview:large';
   const img = v.image_url || v.img_url || null;
   const cross = parseCross(v.genetica);
   const thc = numOr(v.thc_max) ?? numOr(v.thc_pct);
@@ -522,9 +556,20 @@ function varietyPage(v, breeder, breederSlug) {
     ],
   };
 
+  // Texto SEO sintetizado (gen-seo-text.mjs): solo el verificado, impreso como HTML
+  // estático bajo el H1 — no por JS — para que llegue al crawler en el primer byte.
+  const seoLede = (v.seo_text_status === 'ok' && v.seo_description_text)
+    ? `<p class="seo-lede">${esc(v.seo_description_text)}</p>` : '';
+
+  const relacionadasHtml = relacionadas.length
+    ? `<h2>Variedades parecidas</h2>
+<ul class="varlist">${relacionadas.map((r) => `<li><a href="/variedades/${r.slug}/">${esc(r.nombre)}</a></li>`).join('')}</ul>`
+    : '';
+
   const body = `
 <nav class="crumbs"><a href="/">Inicio</a> › <a href="/buscador-cannabicultor.html">Variedades</a> › ${esc(v.nombre)}</nav>
 <h1>${esc(v.nombre)}${bn ? `<span class="by">de <a href="/breeders/${breederSlug}/">${esc(bn)}</a></span>` : ''}</h1>
+${seoLede}
 ${chips.length ? `<div class="chips">${chips.map((c) => `<span class="chip">${c}</span>`).join('')}</div>` : ''}
 <div class="hero">
 ${img ? `<img src="${esc(img)}" alt="Foto de la variedad ${esc(v.nombre)}" loading="lazy" width="220" height="220">` : ''}
@@ -534,6 +579,7 @@ ${img ? `<img src="${esc(img)}" alt="Foto de la variedad ${esc(v.nombre)}" loadi
 ${genealogyLink(v, cross)}
 <aside class="vpd-cta"><strong>¿Quieres cosechar el máximo potencial de la genética ${esc(v.nombre)}?</strong>Registra tu <a href="/empezar.html?v=${v._slug || ''}&n=${encodeURIComponent(v.nombre)}">diario de cultivo en Cannabicultor</a>. Nuestro <a href="/disenador_sala_cultivo.html">Diseñador de Sala</a> y la <a href="/calculadora-vpd/">Calculadora de VPD</a>, integrada con nuestra <a href="/cultivo-con-ia/">IA Cannábica</a>, te guiarán paso a paso durante toda su floración.</aside>
 ${bn ? `<a class="cta" href="/breeders/${breederSlug}/">Ver más variedades de ${esc(bn)}</a>` : `<a class="cta" href="/buscador-cannabicultor.html">Explorar el buscador de variedades</a>`}
+${relacionadasHtml}
 <div data-resenas data-tipo="variedad" data-id="${v.id}"></div>
 `;
   const dock = chatDock({
@@ -543,7 +589,7 @@ ${bn ? `<a class="cta" href="/breeders/${breederSlug}/">Ver más variedades de $
     diarioHref: `/empezar.html?v=${v._slug || ''}&n=${encodeURIComponent(v.nombre)}`,
     diarioTxt: 'Empezar diario con esta variedad',
   });
-  return shell({ title, desc, canonical, image: img, jsonld, bodyHtml: body, dock });
+  return shell({ title, desc, canonical, image: img, jsonld, bodyHtml: body, dock, robots });
 }
 
 // ── Página de breeder ────────────────────────────────────────────────────────
@@ -918,7 +964,7 @@ async function main() {
   if (DO_ALL_VARS) {
     // SEO: solo fichas con foto y datos suficientes (evita thin content).
     const allVars = await fetchAll('variedades', {
-      select: 'id,breeder_id,nombre,tipo,thc_pct,thc_max,cbd_pct,cbd_max,floracion_dias,genetica,altura,produccion,descripcion,image_url,img_url,es_landrace,origen_geografico,anio_lanzamiento,updated_at',
+      select: 'id,breeder_id,nombre,tipo,thc_pct,thc_max,cbd_pct,cbd_max,floracion_dias,genetica,altura,produccion,descripcion,image_url,img_url,es_landrace,origen_geografico,anio_lanzamiento,updated_at,terpenos,aromas,seo_description_text,seo_text_status,indexable,canonical_variedad_id,taxon_id',
       filter: '&image_url=not.is.null',
     });
     const withPhoto = allVars.filter((v) => v.nombre && v.image_url);
@@ -928,7 +974,7 @@ async function main() {
     console.log(`  variedades a publicar: ${pilotVars.length} (con foto; ${withPhoto.length - pilotVars.length} descartadas por datos insuficientes)`);
   } else if (PILOT) {
     const cands = await fetchAll('variedades', {
-      select: 'id,breeder_id,nombre,tipo,thc_pct,thc_max,cbd_pct,cbd_max,floracion_dias,genetica,altura,produccion,descripcion,image_url,img_url,es_landrace,origen_geografico,anio_lanzamiento,updated_at',
+      select: 'id,breeder_id,nombre,tipo,thc_pct,thc_max,cbd_pct,cbd_max,floracion_dias,genetica,altura,produccion,descripcion,image_url,img_url,es_landrace,origen_geografico,anio_lanzamiento,updated_at,terpenos,aromas,seo_description_text,seo_text_status,indexable,canonical_variedad_id,taxon_id',
       filter: '&image_url=not.is.null',
     });
     const scored = cands
@@ -966,9 +1012,13 @@ async function main() {
   }
   if (pilotVars.length) {
     await cleanDir('variedades');
+    const varietyById = new Map(pilotVars.map((v) => [v.id, v]));
     for (const v of pilotVars) {
       const b = breederById.get(v.breeder_id);
-      await write(join(OUT, 'variedades', v._slug, 'index.html'), varietyPage(v, b, b?._slug));
+      const canonicalTarget = (v.indexable === false && v.canonical_variedad_id) ? varietyById.get(v.canonical_variedad_id) : null;
+      const canonicalUrl = canonicalTarget ? `${SITE}/variedades/${canonicalTarget._slug}/` : null;
+      const relacionadas = relatedVarieties(v, varsByBreeder.get(v.breeder_id) || []);
+      await write(join(OUT, 'variedades', v._slug, 'index.html'), varietyPage(v, b, b?._slug, { canonicalUrl, relacionadas }));
       nV++;
     }
     console.log(`  ✓ variedades escritas: ${nV}`);
@@ -1017,9 +1067,13 @@ async function main() {
       names.push('sitemap-breeders.xml');
     }
     if (pilotVars.length) {
+      // SEO: solo las fichas indexable=true (>=6 señales y seo_text_status='ok', y
+      // sin ser un alias noindex,follow de otra con la misma genética) van al sitemap.
+      const indexables = pilotVars.filter((v) => v.indexable === true);
       await write(join(OUT, 'sitemap-strains.xml'),
-        sitemapUrls(pilotVars.map((v) => ({ loc: `${SITE}/variedades/${v._slug}/`, priority: '0.6', changefreq: 'monthly', lastmod: (v.updated_at || TODAY).slice(0, 10) }))));
+        sitemapUrls(indexables.map((v) => ({ loc: `${SITE}/variedades/${v._slug}/`, priority: '0.6', changefreq: 'monthly', lastmod: (v.updated_at || TODAY).slice(0, 10) }))));
       names.push('sitemap-strains.xml');
+      console.log(`  sitemap-strains.xml: ${indexables.length} indexables de ${pilotVars.length} fichas escritas`);
     }
     if (DO_CBD && cbdSitemap.length) {
       await write(join(OUT, 'sitemap-cbd.xml'),
