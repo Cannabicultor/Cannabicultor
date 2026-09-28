@@ -2,8 +2,8 @@
 // propios (evita contenido duplicado/thin). Un párrafo de 50-70 palabras con
 // DeepSeek, SOLO a partir de los datos de la ficha — nunca inventa cifras,
 // premios ni genética. Publica en lotes de 500 con verificación automática
-// (cifras + similitud + ortografía + adornos no soportados) y todo es
-// reversible por lote.
+// (cifras + similitud + ortografía + adornos no soportados + estructura) y
+// todo es reversible por lote.
 //
 // Ejecutar desde el Mac (ver worker/scripts/ingest-legal-aprobado.mjs para el
 // mismo patrón: el entorno cloud no tiene salida a DeepSeek/Supabase):
@@ -29,20 +29,29 @@
 // boilerplate scrapeado), NO se pasa como notas_existentes al prompt: solo se
 // usa cuando es un texto único de esa variedad.
 //
+// Cifras dudosas de THC/CBD (posible intercambio en el origen de datos):
+// (thc>=10 y cbd>=10) o (cbd>thc y el nombre no sugiere variedad de CBD). En
+// esos casos NO se pasan thc ni cbd al prompt (tampoco entran en las cifras
+// permitidas) y la ficha se anota en seo_revisar_datos para revisión manual.
+// El texto se genera igual, solo con el resto de los datos.
+//
 // Verificaciones sobre el texto generado (aparte de las cifras):
 //   - Ortografía: tildes obligatorias en un puñado de palabras que DeepSeek
 //     tiende a escribir sin ellas. Los decimales se normalizan a coma en
 //     post-proceso (no depende del modelo).
 //   - Adornos: una segunda llamada a DeepSeek (temperature 0, barata) lista
 //     afirmaciones del texto que no están literalmente en la ficha.
-//   - Esqueleto repetido: si las primeras 6 palabras (con los números
-//     enmascarados) ya son la apertura de >15% de los textos de este lote o
-//     de este breeder, se regenera con otra apertura (no se rechaza por
-//     esto).
-// Cualquiera de similitud / ortografía / adornos / esqueleto dispara COMO
-// MUCHO una regeneración (con otra apertura); si persiste algo que no sea el
-// esqueleto, se rechaza. Las cifras inventadas rechazan directamente, sin
-// regenerar (ese fallo no lo arregla probar otra apertura).
+//   - Estructura repetida: se enmascaran números, los valores propios de la
+//     ficha (nombre, breeder, genética, terpenos, aromas, sabor, efecto) y
+//     las listas que forman, y se compara el "esqueleto" (6 primeras
+//     palabras) de las 3 primeras frases del texto. Si el esqueleto de
+//     alguna de ellas ya es >15% de los textos de este lote o de este
+//     breeder, se regenera con otra apertura Y otra estructura para la parte
+//     de terpenos/sabor/efecto (no se rechaza solo por esto).
+// Cualquiera de similitud / ortografía / adornos / estructura dispara COMO
+// MUCHO una regeneración; si persiste algo que no sea la estructura, se
+// rechaza. Las cifras inventadas rechazan directamente, sin regenerar (ese
+// fallo no lo arregla probar otra apertura).
 
 import { randomUUID } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
@@ -127,9 +136,32 @@ async function cargarDescripcionesDuplicadas() {
   return dup;
 }
 
+// ── Cifras de THC/CBD dudosas (posible intercambio en el origen de datos) ──
+const NOMBRES_CBD_OK = /\b(cbd|charlotte|harlequin|acdc|ac\/dc|cannatonic|remedy|ringo)\b/i;
+function datosCannabinoidesDudosos(v) {
+  const thc = v.thc_max ?? v.thc_pct;
+  const cbd = v.cbd_max ?? v.cbd_pct;
+  if (thc == null || cbd == null) return null;
+  const thcNum = Number(thc), cbdNum = Number(cbd);
+  if (Number.isNaN(thcNum) || Number.isNaN(cbdNum)) return null;
+  if (thcNum >= 10 && cbdNum >= 10) return `THC ${thcNum}% y CBD ${cbdNum}% (ambos >=10%, posible intercambio)`;
+  if (cbdNum > thcNum && !NOMBRES_CBD_OK.test(v.nombre || '')) return `CBD ${cbdNum}% > THC ${thcNum}% y el nombre no sugiere variedad de CBD`;
+  return null;
+}
+async function registrarRevisarDatos(v, motivo, batchId) {
+  await sb('seo_revisar_datos?on_conflict=variedad_id', {
+    method: 'POST', prefer: 'resolution=merge-duplicates,return=minimal',
+    body: [{
+      variedad_id: v.id, motivo, seo_text_batch: batchId,
+      thc_pct: v.thc_max ?? v.thc_pct ?? null, cbd_pct: v.cbd_max ?? v.cbd_pct ?? null,
+    }],
+  });
+}
+
 // ── Ficha que ve el modelo (misma fuente para el prompt y para las cifras permitidas) ──
 function buildFicha(v, breeder, descripcionesDuplicadas) {
   const descUnica = v.descripcion && !descripcionesDuplicadas.has(v.descripcion.trim());
+  const cannabinoidesDudosos = Boolean(datosCannabinoidesDudosos(v));
   const ficha = {
     nombre: v.nombre,
     breeder: breeder || undefined,
@@ -137,8 +169,11 @@ function buildFicha(v, breeder, descripcionesDuplicadas) {
     genetica: v.genetica || undefined,
     es_landrace: v.es_landrace || undefined,
     origen_geografico: v.origen_geografico || undefined,
-    thc_pct: v.thc_max ?? v.thc_pct ?? undefined,
-    cbd_pct: v.cbd_max ?? v.cbd_pct ?? undefined,
+    // Si son dudosos (posible intercambio en el origen de datos) no se pasan al
+    // modelo, así tampoco entran en el conjunto de cifras permitidas (numerosDeFicha
+    // deriva ese conjunto de este mismo objeto).
+    thc_pct: cannabinoidesDudosos ? undefined : (v.thc_max ?? v.thc_pct ?? undefined),
+    cbd_pct: cannabinoidesDudosos ? undefined : (v.cbd_max ?? v.cbd_pct ?? undefined),
     floracion_dias: v.floracion_dias || undefined,
     altura: v.altura || undefined,
     produccion: v.produccion || undefined,
@@ -156,9 +191,10 @@ function buildFicha(v, breeder, descripcionesDuplicadas) {
 }
 
 // ── Prompt DeepSeek ─────────────────────────────────────────────────────────
-// Varía la instrucción de apertura entre llamadas para no producir textos que
-// empiecen todos igual (ayuda también a bajar la similitud Jaccard y a que no
-// se repita el mismo "esqueleto" de primeras palabras dentro del lote).
+// Dos rotaciones independientes con el mismo índice (v.id, v.id+1 al
+// regenerar): al tener listas de distinto tamaño, la combinación de apertura
+// + estructura de terpenos/sabor/efecto varía mucho más que cada una por
+// separado.
 const ABERTURAS = [
   'Empieza la primera frase nombrando el tipo de planta o su origen genético, NO el nombre de la variedad.',
   'Empieza la primera frase con un dato de cultivo (floración, producción o altura) si lo hay, NO el nombre de la variedad, pero evita la construcción "Con [floración] días de floración y una producción de..."; busca otra forma gramatical de presentarlo.',
@@ -174,13 +210,26 @@ const ABERTURAS = [
   'Empieza la primera frase con la altura o el porte de la planta si consta en la ficha.',
   'Empieza la primera frase con el año de lanzamiento o el origen geográfico si constan en la ficha.',
 ];
+// Cómo presentar terpenos/sabor/efecto (si constan): evita que salga siempre
+// como "Su perfil terpénico combina X, Y y Z, con sabor a ... y efecto ...".
+const ESTRUCTURAS_TERPENOS = [
+  'Para los terpenos, el sabor y el efecto (si constan): empieza esa parte por el efecto, no por los terpenos.',
+  'Para los terpenos, el sabor y el efecto (si constan): empieza esa parte por el sabor, no por los terpenos.',
+  'Para los terpenos, el sabor y el efecto (si constan): intégralos en una frase subordinada dentro de otra idea, no como frase propia aparte.',
+  'Para los terpenos, el sabor y el efecto (si constan): dedica una frase entera solo a la genética o el linaje, y menciónalos en otra frase distinta, no seguidas.',
+  'Para los terpenos, el sabor y el efecto (si constan): junta el efecto y el sabor en una frase, y los terpenos en otra frase distinta.',
+  'Para los terpenos, el sabor y el efecto (si constan): enlázalos con una relación de causa-efecto ("gracias a…", "lo que se traduce en…"), no como enumeración.',
+  'Para los terpenos, el sabor y el efecto (si constan): preséntalos como la experiencia del cultivador al fumarla u olerla, sin fórmula fija.',
+  'Para los terpenos, el sabor y el efecto (si constan): combínalos en una sola cláusula breve, sin usar la palabra "perfil".',
+  'Para los terpenos, el sabor y el efecto (si constan): déjalos para el cierre del párrafo, no en medio.',
+];
 
 function buildPrompt(ficha, aberturaIdx) {
-  const system = `Eres un redactor técnico de cannabis para Cannabicultor, un medio español especializado en cultivo. Escribes en español de España, con tono experto y directo, sin superlativos vacíos ni emojis. Usas EXCLUSIVAMENTE los datos que te dan en el JSON de la ficha: si un dato no aparece, no lo mencionas, no lo inventas y no lo estimas. Prohibido inventar cifras (THC, CBD, floración, año, premios) o genética que no esté en la ficha. Escribe con ortografía española correcta, incluidas todas las tildes (genética, floración, producción, días, selección, terpénico, herbáceo…), aunque los datos del JSON vengan sin ellas. Los decimales se escriben con coma (19,5%), nunca con punto. No añadas calificativos, sabores, aromas ni efectos que no estén literalmente en la ficha: si dice "Queso", no escribas "queso curado"; no digas "compacta", "vigorosa", "tropical" ni cualidades parecidas salvo que consten tal cual en el JSON.`;
+  const system = `Eres un redactor técnico de cannabis para Cannabicultor, un medio español especializado en cultivo. Escribes en español de España, con tono experto y directo, sin superlativos vacíos ni emojis. Usas EXCLUSIVAMENTE los datos que te dan en el JSON de la ficha: si un dato no aparece, no lo mencionas, no lo inventas y no lo estimas. Prohibido inventar cifras (THC, CBD, floración, año, premios) o genética que no esté en la ficha. Escribe con ortografía española correcta, incluidas todas las tildes (genética, floración, producción, días, selección, terpénico, herbáceo…), aunque los datos del JSON vengan sin ellas. Los decimales se escriben con coma (19,5%), nunca con punto. No añadas calificativos, sabores, aromas ni efectos que no estén literalmente en la ficha: si dice "Queso", no escribas "queso curado"; no digas "compacta", "vigorosa", "tropical" ni cualidades parecidas salvo que consten tal cual en el JSON. Nunca uses literalmente la construcción "Su perfil terpénico combina X, Y y Z, con sabor a ... y efecto ...": se ha repetido demasiado en fichas anteriores.`;
   const user = `Ficha de la variedad (JSON):
 ${JSON.stringify(ficha, null, 2)}
 
-Escribe UN SOLO párrafo de ${WORDS_MIN} a ${WORDS_MAX} palabras para la página de esta variedad, en español de España, tono experto. ${ABERTURAS[aberturaIdx % ABERTURAS.length]} Usa solo los datos del JSON de arriba; no menciones ningún dato que no esté ahí. No uses comillas ni markdown. Devuelve solo el párrafo, sin explicaciones ni prefijos.`;
+Escribe UN SOLO párrafo de ${WORDS_MIN} a ${WORDS_MAX} palabras para la página de esta variedad, en español de España, tono experto. ${ABERTURAS[aberturaIdx % ABERTURAS.length]} ${ESTRUCTURAS_TERPENOS[aberturaIdx % ESTRUCTURAS_TERPENOS.length]} Usa solo los datos del JSON de arriba; no menciones ningún dato que no esté ahí. No uses comillas ni markdown. Devuelve solo el párrafo, sin explicaciones ni prefijos.`;
   return { system, user };
 }
 
@@ -224,7 +273,9 @@ function numerosDeTexto(texto) {
 // aparecen como cifra literal en la ficha). Antes solo miraba thc/cbd/
 // floracion/año a mano: cualquier cifra en produccion ("400-500 g/m²"),
 // nombre ("00 Cheese"), breeder ("00 Seeds Bank") o genetica ("Skunk #1") se
-// confundía con una cifra inventada y rechazaba el texto casi siempre.
+// confundía con una cifra inventada y rechazaba el texto casi siempre. Si
+// thc/cbd son dudosos, buildFicha() ya los quitó de `ficha`, así que tampoco
+// están aquí.
 function numerosDeFicha(ficha) {
   const ns = new Set(numerosDeTexto(JSON.stringify(ficha)));
   for (const n of [...ns]) {
@@ -301,15 +352,68 @@ function maxSimilitud(texto, comparar) {
   return max;
 }
 
-// ── Esqueleto: primeras 6 palabras normalizadas, números enmascarados ──────
-// Detecta aperturas repetidas tipo "Con 63 días de floración y una..." /
-// "Con 56 días de floración y una..." aunque cambien las cifras.
-function esqueleto(texto) {
-  return normWords(texto)
-    .map((w) => (/^\d+$/.test(w) ? '#' : w))
-    .slice(0, 6)
-    .join(' ');
+// ── Estructura repetida: esqueleto de las 3 primeras frases ─────────────────
+// Enmascara números, los valores propios de ESTA ficha (nombre, breeder,
+// genética y sus componentes, terpenos, aromas, sabor, efecto) y las listas
+// que formen ("mirceno, limoneno y cariofileno" -> un solo token "lista"),
+// para comparar solo el ARMAZÓN gramatical de la frase, no su contenido.
+// Sin `ficha` (textos históricos de otras fichas, de los que no tenemos los
+// datos a mano) solo enmascara números: aproximado, pero barato.
+function dividirFrases(texto) {
+  return texto.split(/(?<=[.!?])\s+/).map((s) => s.trim()).filter(Boolean);
 }
+function valoresDeFicha(ficha) {
+  const valores = [];
+  const add = (val) => {
+    if (typeof val === 'string' && val.trim().length > 1) valores.push(val.trim());
+    else if (Array.isArray(val)) val.forEach(add);
+  };
+  add(ficha?.nombre); add(ficha?.breeder); add(ficha?.genetica);
+  add(ficha?.terpenos); add(ficha?.aromas); add(ficha?.sabor); add(ficha?.efecto);
+  if (typeof ficha?.genetica === 'string') ficha.genetica.split(/\s+x\s+/i).forEach(add);
+  return valores.sort((a, b) => b.length - a.length); // más largo primero: sustituye frases antes que sub-palabras
+}
+function sustituirValoresFicha(texto, ficha) {
+  if (!ficha) return texto;
+  let t = texto;
+  for (const val of valoresDeFicha(ficha)) {
+    const esc = val.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    t = t.replace(new RegExp(`\\b${esc}\\b`, 'gi'), ' X ');
+  }
+  return t;
+}
+// Colapsa una racha de tokens "x" (con "y" de enlace) en un único token "lista":
+// "x, x y x" -> "lista"; un "x" suelto también cuenta como "lista" (un solo valor sustituido).
+function colapsarListas(tokens) {
+  const out = [];
+  let i = 0;
+  while (i < tokens.length) {
+    if (tokens[i] === 'x') {
+      let j = i + 1;
+      for (;;) {
+        if (tokens[j] === 'x') { j++; continue; }
+        if (tokens[j] === 'y' && tokens[j + 1] === 'x') { j += 2; continue; }
+        break;
+      }
+      out.push('lista');
+      i = j;
+    } else {
+      out.push(tokens[i]);
+      i++;
+    }
+  }
+  return out;
+}
+function esqueletoFrase(frase, ficha) {
+  const enmascarada = sustituirValoresFicha(frase, ficha);
+  const tokens = normWords(enmascarada).map((w) => (/^\d+$/.test(w) ? '#' : w));
+  return colapsarListas(tokens).slice(0, 6).join(' ');
+}
+// Esqueletos de las 3 primeras frases del párrafo (una por posición; puede haber menos de 3).
+function esqueletosFrases(texto, ficha) {
+  return dividirFrases(texto).slice(0, 3).map((f) => esqueletoFrase(f, ficha));
+}
+
 function nuevoContadorEsqueletos() {
   return { mapa: new Map(), total: 0 };
 }
@@ -320,6 +424,16 @@ function frecuenciaEsqueleto(contador, sk) {
 function registrarEsqueleto(contador, sk) {
   contador.mapa.set(sk, (contador.mapa.get(sk) || 0) + 1);
   contador.total++;
+}
+// contadores: array de N contadores (uno por posición de frase, 1/2/3).
+function crearContadoresFrases(n = 3) {
+  return Array.from({ length: n }, () => nuevoContadorEsqueletos());
+}
+function algunaFraseSobrerrepetida(contadores, esqueletosTexto, umbral) {
+  return esqueletosTexto.some((sk, i) => contadores[i] && frecuenciaEsqueleto(contadores[i], sk) > umbral);
+}
+function registrarEsqueletosFrases(contadores, esqueletosTexto) {
+  esqueletosTexto.forEach((sk, i) => { if (contadores[i]) registrarEsqueleto(contadores[i], sk); });
 }
 
 async function textosParaComparar(breederId) {
@@ -368,18 +482,19 @@ async function main() {
       const bn = await breederName(v.breeder_id);
       const ficha = buildFicha(v, bn, descripcionesDuplicadas);
       const { system, user } = buildPrompt(ficha, v.id);
-      console.log(`\n--- #${v.id} ${v.nombre} (${senales} señales) ---\n${system}\n\n${user}`);
+      const motivoDudoso = datosCannabinoidesDudosos(v);
+      console.log(`\n--- #${v.id} ${v.nombre} (${senales} señales)${motivoDudoso ? ` [cifras dudosas: ${motivoDudoso}]` : ''} ---\n${system}\n\n${user}`);
     }
     console.log(`\nDRY RUN: no se ha llamado a DeepSeek ni escrito nada. (${lote.length} candidatas en el lote)`);
     return;
   }
 
   let yaIndexablesHoy = await nuevasIndexablesHoy();
-  let generadas = 0, rechazadas = 0, saltadasPorTope = 0, regeneradas = 0, parseFallosAdornos = 0;
+  let generadas = 0, rechazadas = 0, saltadasPorTope = 0, regeneradas = 0, parseFallosAdornos = 0, datosDudososMarcados = 0;
   const similitudes = [];
   const muestra = [];
-  const esqueletosLote = nuevoContadorEsqueletos();
-  const esqueletosPorBreeder = new Map(); // breeder_id -> contador, sembrado desde sus textos ya publicados
+  const esqueletosLote = crearContadoresFrases();
+  const esqueletosPorBreeder = new Map(); // breeder_id -> contadores[3], sembrados desde sus textos ya publicados
 
   for (const { v, senales } of lote) {
     try {
@@ -387,15 +502,21 @@ async function main() {
         saltadasPorTope++;
         continue; // deja seo_text_status=null: se recoge en la siguiente corrida/día
       }
+      const motivoDudoso = datosCannabinoidesDudosos(v);
+      if (motivoDudoso) {
+        await registrarRevisarDatos(v, motivoDudoso, batchId);
+        datosDudososMarcados++;
+      }
+
       const bn = await breederName(v.breeder_id);
       const ficha = buildFicha(v, bn, descripcionesDuplicadas);
       const { comparar, delBreederTextos } = await textosParaComparar(v.breeder_id);
 
-      let contadorBreeder = esqueletosPorBreeder.get(v.breeder_id);
-      if (!contadorBreeder) {
-        contadorBreeder = nuevoContadorEsqueletos();
-        for (const t of delBreederTextos) registrarEsqueleto(contadorBreeder, esqueleto(t));
-        esqueletosPorBreeder.set(v.breeder_id, contadorBreeder);
+      let contadoresBreeder = esqueletosPorBreeder.get(v.breeder_id);
+      if (!contadoresBreeder) {
+        contadoresBreeder = crearContadoresFrases();
+        for (const t of delBreederTextos) registrarEsqueletosFrases(contadoresBreeder, esqueletosFrases(t, null));
+        esqueletosPorBreeder.set(v.breeder_id, contadoresBreeder);
       }
 
       let { system, user } = buildPrompt(ficha, v.id);
@@ -403,8 +524,8 @@ async function main() {
       let cifrasOk = cifrasVerificadas(texto, ficha);
       let sim = cifrasOk ? maxSimilitud(texto, comparar) : 0;
       let ortoMal = cifrasOk && tieneErroresOrtografia(texto);
-      let sk = esqueleto(texto);
-      let skRepetido = cifrasOk && (frecuenciaEsqueleto(esqueletosLote, sk) > ESQUELETO_MAX || frecuenciaEsqueleto(contadorBreeder, sk) > ESQUELETO_MAX);
+      let sks = esqueletosFrases(texto, ficha);
+      let skRepetido = cifrasOk && (algunaFraseSobrerrepetida(esqueletosLote, sks, ESQUELETO_MAX) || algunaFraseSobrerrepetida(contadoresBreeder, sks, ESQUELETO_MAX));
       let adornosRes = { adornos: [], parseFallo: false };
       if (cifrasOk) {
         adornosRes = await verificarAdornos(ficha, texto);
@@ -412,14 +533,14 @@ async function main() {
       }
 
       if (cifrasOk && (sim > SIM_MAX || ortoMal || adornosRes.adornos.length > 0 || skRepetido)) {
-        // como mucho una regeneración, con otra apertura
+        // como mucho una regeneración, con otra apertura y otra estructura de terpenos/sabor/efecto
         regeneradas++;
         ({ system, user } = buildPrompt(ficha, v.id + 1));
         texto = decimalesConComa(await generarTexto(system, user));
         cifrasOk = cifrasVerificadas(texto, ficha);
         sim = cifrasOk ? maxSimilitud(texto, comparar) : 0;
         ortoMal = cifrasOk && tieneErroresOrtografia(texto);
-        sk = esqueleto(texto);
+        sks = esqueletosFrases(texto, ficha);
         adornosRes = { adornos: [], parseFallo: false };
         if (cifrasOk) {
           adornosRes = await verificarAdornos(ficha, texto);
@@ -454,8 +575,8 @@ async function main() {
 
       if (aprobado) {
         generadas++;
-        registrarEsqueleto(esqueletosLote, sk);
-        registrarEsqueleto(contadorBreeder, sk);
+        registrarEsqueletosFrases(esqueletosLote, sks);
+        registrarEsqueletosFrases(contadoresBreeder, sks);
         // reservoir sampling: mantiene 10 elementos elegidos uniformemente al azar de todo lo generado
         if (muestra.length < 10) muestra.push({ v, texto });
         else if (Math.random() < 10 / generadas) muestra[Math.floor(Math.random() * 10)] = { v, texto };
@@ -472,8 +593,9 @@ async function main() {
   console.log(`\n▸ Lote ${batchId} terminado`);
   console.log(`  generadas (ok): ${generadas}`);
   console.log(`  rechazadas: ${rechazadas}`);
-  console.log(`  regeneradas (similitud/ortografía/adornos/esqueleto): ${regeneradas}`);
+  console.log(`  regeneradas (similitud/ortografía/adornos/estructura): ${regeneradas}`);
   console.log(`  saltadas por tope diario (${MAX_NUEVAS_INDEXABLES_DIA} indexables nuevas/día): ${saltadasPorTope}`);
+  console.log(`  cifras THC/CBD dudosas marcadas en seo_revisar_datos: ${datosDudososMarcados}`);
   console.log(`  similitud media (Jaccard shingles-3): ${simMedia.toFixed(3)}`);
   if (parseFallosAdornos) console.log(`  ⚠ verificarAdornos no parseable ${parseFallosAdornos} veces (se trató como "sin adornos" — revisar si se repite)`);
   console.log(`\n  Muestra aleatoria (${muestra.length}):`);
@@ -489,9 +611,12 @@ if (ES_ENTRYPOINT) main().catch((e) => { console.error(e); process.exit(1); });
 // Exportado para worker/scripts/test-gen-seo-text.mjs (funciones puras, sin red,
 // salvo verificarAdornos que sí llama a DeepSeek — los tests le stubean fetch).
 export {
-  buildFicha, buildPrompt, ABERTURAS,
+  buildFicha, buildPrompt, ABERTURAS, ESTRUCTURAS_TERPENOS,
+  datosCannabinoidesDudosos,
   numerosDeTexto, numerosDeFicha, cifrasVerificadas,
   decimalesConComa, tieneErroresOrtografia, verificarAdornos,
-  esqueleto, nuevoContadorEsqueletos, frecuenciaEsqueleto, registrarEsqueleto,
+  esqueletoFrase, esqueletosFrases, sustituirValoresFicha,
+  crearContadoresFrases, algunaFraseSobrerrepetida, registrarEsqueletosFrases,
+  nuevoContadorEsqueletos, frecuenciaEsqueleto, registrarEsqueleto,
   normWords, maxSimilitud,
 };
