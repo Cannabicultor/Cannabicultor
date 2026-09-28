@@ -29,7 +29,12 @@
 // usa cuando es un texto único de esa variedad.
 
 import { randomUUID } from 'node:crypto';
+import { fileURLToPath } from 'node:url';
 import { countSenales } from './seo-signals.mjs';
+
+// Se ejecuta como script (node gen-seo-text.mjs ...) vs se importa (tests): las
+// comprobaciones de secrets y el arranque de main() solo aplican al primer caso.
+const ES_ENTRYPOINT = process.argv[1] === fileURLToPath(import.meta.url);
 
 const SUPABASE_URL = process.env.SUPABASE_URL || 'https://gfyrsrdnvgnhtsuexjkb.supabase.co';
 const { SUPABASE_SERVICE_KEY: SB_KEY, DEEPSEEK_API_KEY } = process.env;
@@ -45,8 +50,8 @@ const MAX_NUEVAS_INDEXABLES_DIA = 1000;
 const SIM_MAX = 0.5;
 const WORDS_MIN = 50, WORDS_MAX = 70;
 
-if (!SB_KEY) { console.error('Falta SUPABASE_SERVICE_KEY'); process.exit(1); }
-if (!DRY_RUN && !DEEPSEEK_API_KEY) { console.error('Falta DEEPSEEK_API_KEY (o usa --dry-run)'); process.exit(1); }
+if (ES_ENTRYPOINT && !SB_KEY) { console.error('Falta SUPABASE_SERVICE_KEY'); process.exit(1); }
+if (ES_ENTRYPOINT && !DRY_RUN && !DEEPSEEK_API_KEY) { console.error('Falta DEEPSEEK_API_KEY (o usa --dry-run)'); process.exit(1); }
 
 async function sb(path, { method = 'GET', body, prefer } = {}) {
   const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
@@ -168,7 +173,18 @@ async function callDeepSeek(system, user) {
 }
 
 // ── Verificación: cifras del texto deben existir en la ficha ───────────────
-function numerosDeFicha(v) {
+function numerosDeTexto(texto) {
+  return [...texto.matchAll(/\d+(?:[.,]\d+)?/g)].map((m) => m[0].replace(',', '.'));
+}
+// Cifras permitidas: los campos numéricos de siempre (con su redondeo) MÁS
+// cualquier número que aparezca en cualquier campo de TEXTO que se pasa al
+// prompt (nombre, breeder, genetica, produccion, altura, terpenos, sabor,
+// efecto, tipo_semilla, notas_existentes). Sin esto, "400-500 g/m²" en
+// produccion, "00 Seeds Bank" en breeder o "Skunk #1" en genetica se
+// confundían con cifras inventadas y rechazaban el texto casi siempre.
+// notas_existentes solo cuenta si de verdad se pasó al prompt (descripcion
+// única, no repetida en otras fichas — mismo criterio que buildPrompt()).
+function numerosDeFicha(v, breeder, descripcionesDuplicadas) {
   const ns = new Set();
   for (const val of [v.thc_pct, v.thc_max, v.cbd_pct, v.cbd_max, v.floracion_dias, v.anio_lanzamiento]) {
     if (val != null && val !== '') {
@@ -177,13 +193,21 @@ function numerosDeFicha(v) {
     }
   }
   if (v.floracion_dias) ns.add(String(Math.round(v.floracion_dias / 7))); // semanas, derivado de un dato real
+
+  const descUnica = v.descripcion && descripcionesDuplicadas && !descripcionesDuplicadas.has(v.descripcion.trim());
+  const camposTexto = [
+    v.nombre, breeder, v.genetica, v.produccion, v.altura, v.terpenos,
+    v.sabor || (v.sabores?.length ? v.sabores.join(' ') : null),
+    v.efecto || (v.efectos?.length ? v.efectos.join(' ') : null),
+    v.tipo || v.tipo_semilla,
+    descUnica ? v.descripcion.slice(0, 500) : null,
+  ].filter(Boolean).join(' ');
+  for (const n of numerosDeTexto(camposTexto)) ns.add(n);
+
   return ns;
 }
-function numerosDeTexto(texto) {
-  return [...texto.matchAll(/\d+(?:[.,]\d+)?/g)].map((m) => m[0].replace(',', '.'));
-}
-function cifrasVerificadas(texto, v) {
-  const enFicha = numerosDeFicha(v);
+function cifrasVerificadas(texto, v, breeder, descripcionesDuplicadas) {
+  const enFicha = numerosDeFicha(v, breeder, descripcionesDuplicadas);
   const enTexto = numerosDeTexto(texto);
   return enTexto.every((n) => enFicha.has(n) || enFicha.has(String(Math.round(Number(n)))));
 }
@@ -278,14 +302,14 @@ async function main() {
       let { system, user } = buildPrompt(v, bn, v.id, descripcionesDuplicadas);
       let texto = await callDeepSeek(system, user);
       let sim = maxSimilitud(texto, comparar);
-      let cifrasOk = cifrasVerificadas(texto, v);
+      let cifrasOk = cifrasVerificadas(texto, v, bn, descripcionesDuplicadas);
 
       if (cifrasOk && sim > SIM_MAX) {
         // una regeneración con abertura distinta antes de rechazar por similitud
         ({ system, user } = buildPrompt(v, bn, v.id + 1, descripcionesDuplicadas));
         texto = await callDeepSeek(system, user);
         sim = maxSimilitud(texto, comparar);
-        cifrasOk = cifrasVerificadas(texto, v);
+        cifrasOk = cifrasVerificadas(texto, v, bn, descripcionesDuplicadas);
       }
 
       const nPalabras = normWords(texto).length;
@@ -340,4 +364,7 @@ async function main() {
   console.log(`\n  Para deshacer este lote: node scripts/rollback-seo-batch.mjs ${batchId}`);
 }
 
-main().catch((e) => { console.error(e); process.exit(1); });
+if (ES_ENTRYPOINT) main().catch((e) => { console.error(e); process.exit(1); });
+
+// Exportado para worker/scripts/test-gen-seo-text.mjs (funciones puras, sin red).
+export { numerosDeTexto, numerosDeFicha, cifrasVerificadas, buildPrompt };
