@@ -1,7 +1,8 @@
-// Deshace un lote de gen-seo-text.mjs (o apply-canonical.mjs): restaura el
-// `indexable` anterior desde seo_indexable_backup y limpia seo_text_status/
-// seo_description_text de las fichas de ese lote para que se regeneren en la
-// siguiente corrida.
+// Deshace un lote de gen-seo-text.mjs, apply-canonical.mjs o
+// downgrade-thin-indexable.mjs: restaura el `indexable` anterior desde
+// seo_indexable_backup. Para lotes de texto (prefijo "seo-") también limpia
+// seo_text_status/seo_text_batch para que gen-seo-text.mjs las recoja de
+// nuevo; los demás lotes no tocan el texto en absoluto.
 //
 // Uso (desde el Mac, mismo patrón que gen-seo-text.mjs):
 //   cd worker
@@ -35,10 +36,12 @@ async function main() {
     console.log(`No hay filas de seo_indexable_backup para el lote "${batchId}". ¿Id correcto?`);
     return;
   }
-  // "seo-…" = lote de gen-seo-text.mjs (texto + indexable); "canon-…" = lote de
-  // apply-canonical.mjs (solo indexable + canonical_variedad_id, el texto no se toca).
+  // "seo-…" = lote de gen-seo-text.mjs (texto + indexable). Cualquier otro prefijo
+  // ("canon-…" de apply-canonical.mjs, "thin-…" de downgrade-thin-indexable.mjs, …)
+  // solo tocó indexable (y canonical_variedad_id en el caso de canon-), nunca el texto.
   const esLoteDeTexto = batchId.startsWith('seo-');
-  console.log(`▸ Lote ${batchId} (${esLoteDeTexto ? 'generación de texto' : 'canonicalización'}): ${backups.length} fichas a restaurar${DRY_RUN ? ' (DRY RUN)' : ''}`);
+  const tipoLote = esLoteDeTexto ? 'generación de texto' : batchId.startsWith('canon-') ? 'canonicalización' : batchId.startsWith('thin-') ? 'thin content' : 'indexable';
+  console.log(`▸ Lote ${batchId} (${tipoLote}): ${backups.length} fichas a restaurar${DRY_RUN ? ' (DRY RUN)' : ''}`);
 
   if (DRY_RUN) {
     for (const b of backups.slice(0, 10)) console.log(`  variedad #${b.variedad_id}: indexable volvería a ${b.indexable_anterior}`);
