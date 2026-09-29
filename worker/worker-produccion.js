@@ -58,11 +58,15 @@ function resolvePais(request) {
   return paisSubdominio(request) || PAIS_DEFAULT;
 }
 
-/** País del subdominio del Origin (ar.cannabicultor.com → AR) o null si no hay subdominio de país. */
+/**
+ * País explícito del cliente o null: 1) subdominio del Origin (ar.cannabicultor.com → AR);
+ * 2) cabecera X-CC-Pais que envía assets/config.js. Los subdominios de país redirigen (301) a www, donde
+ * el Origin ya no dice el país; la cabecera lo conserva. Un país inválido se ignora.
+ */
 function paisSubdominio(request) {
   const origin = request ? (request.headers.get('Origin') || '') : '';
   const m = origin.match(/^https:\/\/([a-z]{2})\.cannabicultor\.com$/);
-  return (m && normalizePais(m[1])) || null;
+  return (m && normalizePais(m[1])) || (request ? normalizePais(request.headers.get('X-CC-Pais')) : null) || null;
 }
 
 const SUPABASE_URL = 'https://gfyrsrdnvgnhtsuexjkb.supabase.co';
@@ -80,7 +84,7 @@ function corsHeaders(request) {
   return {
     'Access-Control-Allow-Origin': allowed,
     'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-CC-Pais',
 
     'Vary': 'Origin',
   };

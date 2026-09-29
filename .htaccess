@@ -4,6 +4,18 @@
 <IfModule mod_rewrite.c>
   RewriteEngine On
 
+  # Subdominios de pais (ar., cl., co., mx.) -> www: 301 conservando ruta y query (la URL no se toca).
+  # UNA sola regla para todos los hosts. El flag CO deja una cookie cc_pais=ar|cl|co|mx (dominio
+  # .cannabicultor.com, 60 min) para que el chat conserve el pais tras el redireccionamiento:
+  # assets/config.js la lee, la pasa a sessionStorage y la borra.
+  # Va antes de "Forzar HTTPS" para llegar a https://www en un solo salto. /robots.txt y los sitemaps
+  # tambien redirigen (los subdominios no sirven ni robots.txt ni sitemaps propios).
+  # /.well-known/ se excluye para no romper la validacion HTTP del certificado (AutoSSL) de cada subdominio.
+  # Aun no hay rutas /ar/...: todo va a la misma ruta en www.
+  RewriteCond %{HTTP_HOST} ^(ar|cl|co|mx)\.cannabicultor\.com(:[0-9]+)?$ [NC]
+  RewriteCond %{REQUEST_URI} !^/\.well-known/ [NC]
+  RewriteRule ^(.*)$ https://www.cannabicultor.com/$1 [L,R=301,CO=cc_pais:%1:.cannabicultor.com:60:/]
+
   # Forzar HTTPS (por si acaso)
   RewriteCond %{HTTPS} off
   RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]

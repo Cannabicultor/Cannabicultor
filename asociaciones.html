@@ -484,7 +484,8 @@ function slugFallback(v) {
     .replace(/^-+|-+$/g, "");
 }
 function fichaUrl(g) {
-  if (!g.slug) return "";
+  // Solo España: las fichas de otros países no tienen página propia (dan 404) hasta que existan sus rutas.
+  if (!ES || (g.pais && g.pais !== "ES") || !g.slug) return "";
   const ciudadSlug = g.slug_ciudad || slugFallback(g.ciudad) || "espana";
   const href = "/asociaciones/" + ciudadSlug + "/" + g.slug + "/";
   return '<a class="link-btn ghost" href="' + esc(href) + '">Ver ficha completa →</a>';

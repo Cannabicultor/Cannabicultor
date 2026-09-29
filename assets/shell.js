@@ -1,7 +1,10 @@
-/* Menú según país: en subdominios de país (ar./cl./mx./co.) carga assets/menu-pais.js.
-   En cannabicultor.com (España) no carga nada. */
+/* Menú según país: si el país no es ES (CC_CONFIG.PAIS, o subdominio ar./cl./mx./co.) carga assets/menu-pais.js.
+   En España no carga nada. */
 (function () {
-  if (!/^[a-z]{2}\.cannabicultor\.com$/.test(location.hostname) || window.__ccMenuPais) return;
+  // País: CC_CONFIG.PAIS (host, ruta, ?pais= o sesión: tras el 301 de ar./cl./... ya no hay subdominio); sin config, el host.
+  var pais = window.CC_CONFIG && window.CC_CONFIG.PAIS;
+  var esPais = pais ? pais !== 'ES' : /^[a-z]{2}\.cannabicultor\.com$/.test(location.hostname);
+  if (!esPais || window.__ccMenuPais) return;
   if (document.querySelector('script[src*="menu-pais.js"]')) return;
   var s = document.createElement('script');
   s.src = '/assets/menu-pais.js';
