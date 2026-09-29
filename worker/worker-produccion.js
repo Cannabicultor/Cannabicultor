@@ -961,6 +961,15 @@ async function handleCatalogIngest(body, env, request) {
 // =========================================================================
 // BREVO
 // =========================================================================
+// Remitente único (override con env.FROM_EMAIL / env.FROM_NAME)
+const FROM_EMAIL_DEFAULT = 'hola@cannabicultor.com';
+const FROM_NAME_DEFAULT = 'Equipo Cannabicultor';
+function fromAddr(env) {
+  const email = (env && env.FROM_EMAIL) || FROM_EMAIL_DEFAULT;
+  const name = (env && env.FROM_NAME) || FROM_NAME_DEFAULT;
+  return { sender: { email, name }, replyTo: { email, name } };
+}
+
 async function brevoFetch(env, path, body, method = 'POST') {
   const res = await fetch(`https://api.brevo.com/v3${path}`, {
     method,
@@ -995,7 +1004,7 @@ async function brevoSendResetEmail(env, email, token) {
     return brevoSendTemplate(env, email, env.BREVO_RESET_TEMPLATE_ID, { reset_link: link, link });
   }
   return brevoFetch(env, '/smtp/email', {
-    sender: { email: 'noreply@cannabicultor.com', name: 'Cannabicultor IA' },
+    ...fromAddr(env),
     to: [{ email }],
     subject: 'Recuperar contraseña — Cannabicultor IA',
     htmlContent: `<p>Hola,</p><p>Recupera tu contraseña aquí (válido 1 hora):</p><p><a href="${link}">${link}</a></p>`,
@@ -2354,8 +2363,7 @@ async function handleAdminCampanaCreditos(body, env, request) {
   if (!claims || claims.email !== 'enriquedorta@gmail.com') return { status: 401, data: { error: 'No autorizado' } };
   const html = emailCampanaCreditos();
   const enviar = async (to) => brevoFetch(env, '/smtp/email', {
-    sender: { email: 'noreply@cannabicultor.com', name: 'Cannabicultor IA' },
-    replyTo: { email: 'hola@cannabicultor.com', name: 'Cannabicultor IA' },
+    ...fromAddr(env),
     to: [{ email: to }],
     subject: 'Tienes 100 créditos de regalo en Cannabicultor IA',
     htmlContent: html,
