@@ -681,8 +681,10 @@ function composeBreederDesc(b) {
 
 // ── Directorio de tiendas CBD (SEO/AEO local) ────────────────────────────────
 // Jerarquía: /tiendas-cbd/  ›  /tiendas-cbd/espana/{ciudad}/  ›  …/{tienda}/
-// Regla SEO: solo se indexan (y entran al sitemap) las fichas curadas
-// (editorial_status distinto de 'borrador'); el resto se genera con noindex.
+// Regla SEO: solo se indexan (y entran al sitemap) las fichas con indexable=true Y curadas
+// (editorial_status distinto de 'borrador'); el resto se genera con noindex,follow.
+// El directorio CBD que se genera aqui es el de España (pais=ES): las fichas de otros
+// paises no se generan (cuelgan de /tiendas-cbd/espana/ y saldrian como paginas de España).
 const CBD_CSS = `
 .map{height:280px;border-radius:14px;border:1px solid var(--border);margin:18px 0;z-index:0}
 .badge-open{display:inline-block;font-size:13px;font-weight:600;padding:4px 12px;border-radius:20px;margin:8px 0}
@@ -723,7 +725,7 @@ function cbdShopPage(s) {
   const citySlug = s._citySlug;
   const canonical = `${SITE}/tiendas-cbd/espana/${citySlug}/${s._slug}/`;
   const ciudad = s.ciudad || s.provincia || 'España';
-  const indexable = s.editorial_status && s.editorial_status !== 'borrador';
+  const indexable = s.indexable === true && !!s.editorial_status && s.editorial_status !== 'borrador';
   const addr = [s.direccion, s.cp, ciudad, s.provincia].filter(Boolean).join(', ');
   const title = `${s.nombre} · Tienda de CBD en ${ciudad} | Cannabicultor`;
   const desc = trimText(s.descripcion_tldr || s.descripcion ||
@@ -788,7 +790,7 @@ ${s.lat && s.lon ? `<div id="map" class="map"></div>${leafletScript(s.lat, s.lon
 <div data-resenas data-tipo="cbd_shop" data-id="${s.id}"></div>
 <p class="body"><a href="/tiendas-cbd/espana/${citySlug}/">← Más tiendas de CBD en ${esc(ciudad)}</a></p>`;
 
-  return { html: shell({ title, desc, canonical, image: img, jsonld, bodyHtml: body }), canonical, indexable };
+  return { html: shell({ title, desc, canonical, image: img, jsonld, bodyHtml: body, robots: indexable ? undefined : 'noindex,follow' }), canonical, indexable };
 }
 
 function cbdFaq(ciudad) {
@@ -1028,8 +1030,9 @@ async function main() {
   let cbdSitemap = [];
   if (DO_CBD) {
     const shops = await fetchAll('cbd_shops', {
-      select: 'id,slug,nombre,direccion,cp,ciudad,provincia,ccaa,lat,lon,telefono,web,instagram,horario,descripcion,descripcion_tldr,logo_url,media_resenas,num_resenas,editorial_status,updated_at',
-      filter: '&activo=is.true',
+      select: 'id,slug,nombre,direccion,cp,ciudad,provincia,ccaa,lat,lon,telefono,web,instagram,horario,descripcion,descripcion_tldr,logo_url,media_resenas,num_resenas,editorial_status,indexable,pais,updated_at',
+      // Solo España: las fichas de AR/CL/... no deben salir como /tiendas-cbd/espana/... (Fase 0 SEO multipais).
+      filter: '&activo=is.true&pais=eq.ES',
       order: 'ciudad.asc',
     });
     assignCbdSlugs(shops);
@@ -1050,7 +1053,7 @@ async function main() {
         const page = cbdShopPage(s);
         await write(join(OUT, 'tiendas-cbd', 'espana', g.slug, s._slug, 'index.html'), page.html);
         nFichas++;
-        // Solo las fichas curadas (no borrador) entran al sitemap para indexación.
+        // Solo las fichas indexables y curadas entran al sitemap; el resto va noindex,follow.
         if (page.indexable) cbdSitemap.push({ loc: page.canonical, priority: '0.6', changefreq: 'monthly', lastmod: (s.updated_at || TODAY).slice(0, 10) });
       }
     }
