@@ -58,7 +58,7 @@
 <IfModule mod_headers.c>
   # Subdominios de país (migración en curso): noindex + canonical a www
   Header set X-Robots-Tag "noindex, follow" env=CC_PAIS
-  Header set Link "<https://www.cannabicultor.com%{CC_CANON}e>; rel=\"canonical\"" env=CC_CANON
+  Header set Link "<https://www.cannabicultor.com%{CC_CANON}e>; rel=canonical" env=CC_CANON
   Header set X-Content-Type-Options "nosniff"
   Header set X-Frame-Options "SAMEORIGIN"
   Header set Referrer-Policy "strict-origin-when-cross-origin"
