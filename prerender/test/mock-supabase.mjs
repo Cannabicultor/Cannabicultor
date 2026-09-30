@@ -41,7 +41,26 @@ export const CBD_SHOPS = [
   ...AR_CITIES.map(([c, p], i) => row(1000 + i, 'AR', `Tienda AR ${i + 1}`, c, p, i === 3 ? { indexable: true, editorial_status: 'publicado' } : {})),
 ];
 
-const TABLES = { cbd_shops: CBD_SHOPS };
+// Directorio por pais (paises.mjs): growshops y asociaciones de AR para probar la regla de calidad.
+const DESC_OK = 'Growshop familiar con más de diez años de trayectoria en la ciudad, especializado en cultivo indoor, sustratos, iluminación LED y asesoramiento personalizado para quienes empiezan.';
+const gs = (id, nombre, extra = {}) => ({
+  id, slug: `ar-gs-${id}`, nombre, direccion: 'Av. Siempreviva 742', cp: null, ciudad: 'Rosario', provincia: 'Santa Fe', lat: -32.95, lon: -60.64,
+  telefono: '+54 341 000 0000', web: 'https://ejemplo.test', instagram: null, horario: null, descripcion: null, descripcion_tldr: null, logo_url: null,
+  media_resenas: null, num_resenas: 0, verificado: false, geo_aproximado: false, indexable: true, pais: 'AR', activo: true, updated_at: '2026-09-29T00:00:00Z', ...extra,
+});
+export const GROWSHOPS = [
+  gs(1, 'Cumple todo', { descripcion: DESC_OK, verificado: true }), // unica>120 + verificada + geo exacta -> index
+  gs(2, 'Sin verificar', { descripcion: DESC_OK + ' (b)' }),
+  gs(3, 'Geo aproximada', { descripcion: DESC_OK + ' (c)', verificado: true, geo_aproximado: true }),
+  gs(4, 'Descripcion corta', { descripcion: 'Tienda de cultivo.', verificado: true }),
+  gs(5, 'Duplicada A', { descripcion: DESC_OK + ' (d)', verificado: true }),
+  gs(6, 'Duplicada B', { descripcion: DESC_OK + ' (d)', verificado: true }),
+  gs(7, 'Sin provincia', { provincia: null, ciudad: null }),
+  gs(8, 'Otra de Santa Fe'),
+  gs(9, 'Flag indexable false', { descripcion: DESC_OK + ' (e)', verificado: true, indexable: false }),
+  { ...gs(10, 'De Espana'), pais: 'ES', provincia: 'Madrid' },
+];
+const TABLES = { cbd_shops: CBD_SHOPS, growshops: GROWSHOPS, asociaciones: [] };
 
 function respond(url, headers) {
   const u = new URL(url);

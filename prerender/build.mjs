@@ -38,6 +38,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import https from 'node:https';
 import { readFileSync } from 'node:fs';
+import { buildPaises, PAISES } from './paises.mjs';
 
 // GET via el modulo https nativo (NO undici/fetch) para evitar la reserva de
 // memoria WASM que peta en hostings CloudLinux con limite de memoria virtual.
@@ -77,6 +78,9 @@ const DO_BREEDERS = hasFlag('breeders');
 const PILOT = flagVal('pilot') ? parseInt(flagVal('pilot'), 10) : null;
 const DO_ALL_VARS = hasFlag('variedades');
 const DO_CBD = hasFlag('cbd');
+// Directorio por pais bajo /ar/ /cl/ /co/ /mx/ (sustituye a los subdominios). --paises = todos; --pais=ar = uno.
+const PAIS_SOLO = flagVal('pais');
+const DO_PAISES = hasFlag('paises') || !!PAIS_SOLO;
 
 // ── PostgREST helper (paginado) ─────────────────────────────────────────────
 async function fetchAll(table, { select = '*', filter = '', order = 'id.asc', pageSize = 1000 } = {}) {
@@ -391,9 +395,12 @@ ${diarioHref ? `<a class="cc-diario" href="${esc(diarioHref)}" data-track="cta_d
 </form></div>`;
 }
 
-function shell({ title, desc, canonical, image, jsonld, bodyHtml, dock, robots = 'index,follow,max-image-preview:large' }) {
+// lang/ogLocale/hreflangs/nav son opcionales: los usa el directorio por pais (/ar/...); el resto de paginas
+// conserva exactamente el comportamiento anterior (es, es_ES, hreflang es + x-default autorreferentes).
+function shell({ title, desc, canonical, image, jsonld, bodyHtml, dock, robots = 'index,follow,max-image-preview:large', lang = 'es', ogLocale = 'es_ES', hreflangs = null, nav = SHELL_NAV }) {
+  const alts = hreflangs || [{ lang: 'es', href: canonical }, { lang: 'x-default', href: canonical }];
   return `<!DOCTYPE html>
-<html lang="es">
+<html lang="${lang}">
 <head>
 ${GA_SNIPPET}
 <meta charset="UTF-8">
@@ -402,13 +409,12 @@ ${GA_SNIPPET}
 <meta name="description" content="${esc(desc)}">
 <meta name="robots" content="${robots}">
 <link rel="canonical" href="${canonical}">
-<link rel="alternate" hreflang="es" href="${canonical}">
-<link rel="alternate" hreflang="x-default" href="${canonical}">
+${alts.map((a) => `<link rel="alternate" hreflang="${a.lang}" href="${a.href}">`).join('\n')}
 <meta property="og:type" content="article">
 <meta property="og:title" content="${esc(title)}">
 <meta property="og:description" content="${esc(desc)}">
 <meta property="og:url" content="${canonical}">
-<meta property="og:locale" content="es_ES">
+<meta property="og:locale" content="${ogLocale}">
 <meta property="og:site_name" content="Cannabicultor">
 ${image ? `<meta property="og:image" content="${esc(image)}">
 <meta property="og:image:alt" content="${esc(title)}">` : ''}
@@ -424,7 +430,7 @@ ${image ? `<meta name="twitter:image" content="${esc(image)}">
 <script type="application/ld+json">${JSON.stringify(jsonld)}</script>
 </head>
 <body class="cc-shell">
-${SHELL_NAV}
+${nav}
 <main class="wrap">
 ${bodyHtml}
 </main>
@@ -1060,8 +1066,18 @@ async function main() {
     console.log(`  ✓ CBD: hub + ${cityGroups.size} ciudades + ${nFichas} fichas (${cbdSitemap.length - cityGroups.size} indexables en sitemap)`);
   }
 
+  // — Directorio por país (/ar/, /cl/, /co/, /mx/) —
+  let paisesOut = [];
+  if (DO_PAISES) {
+    const slugs = PAIS_SOLO ? [PAIS_SOLO.toLowerCase()] : Object.keys(PAISES);
+    paisesOut = await buildPaises({
+      shell, esc, slugify, trimText, fetchAll, write, cleanDir, SITE, OUT, TODAY,
+      CBD_CSS, LEAFLET, leafletScript, SHELL_NAV,
+    }, slugs);
+  }
+
   // — Sitemaps —
-  if (!DRY && (DO_BREEDERS || pilotVars.length || DO_CBD)) {
+  if (!DRY && (DO_BREEDERS || pilotVars.length || DO_CBD || DO_PAISES)) {
     await write(join(OUT, 'sitemap-static.xml'), sitemapUrls(STATIC_URLS));
     const names = ['sitemap-static.xml'];
     if (DO_BREEDERS) {
@@ -1082,6 +1098,16 @@ async function main() {
       await write(join(OUT, 'sitemap-cbd.xml'),
         sitemapUrls([{ loc: `${SITE}/tiendas-cbd/`, priority: '0.8', changefreq: 'weekly', lastmod: TODAY }, ...cbdSitemap]));
       names.push('sitemap-cbd.xml');
+    }
+    for (const p of paisesOut) {
+      if (!p.entries.length) continue;
+      await write(join(OUT, `sitemap-${p.slug}.xml`), sitemapUrls(p.entries));
+      names.push(`sitemap-${p.slug}.xml`);
+    }
+    // El indice conserva los sitemaps que esta ejecucion no ha regenerado (p. ej. --paises solo).
+    const conocidos = ['sitemap-breeders.xml', 'sitemap-strains.xml', 'sitemap-cbd.xml', ...Object.keys(PAISES).map((k) => `sitemap-${k}.xml`)];
+    for (const n of conocidos) {
+      if (!names.includes(n) && (existsSync(join(OUT, n)) || existsSync(join(ROOT, n)))) names.push(n);
     }
     await write(join(OUT, 'sitemap.xml'), sitemapIndex(names));
     console.log(`  ✓ sitemaps: ${names.join(', ')} + índice sitemap.xml`);
