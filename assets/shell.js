@@ -1,7 +1,10 @@
-/* Menú según país: en subdominios de país (ar./cl./mx./co.) carga assets/menu-pais.js.
+/* Menú según país: en rutas de país (/ar/ ...), ?pais= o subdominios legado carga assets/menu-pais.js.
    En cannabicultor.com (España) no carga nada. */
 (function () {
-  if (!/^[a-z]{2}\.cannabicultor\.com$/.test(location.hostname) || window.__ccMenuPais) return;
+  var esPais = /^[a-z]{2}\.cannabicultor\.com$/.test(location.hostname)
+    || /^\/(ar|cl|co|mx)(\/|$)/.test(location.pathname)
+    || /[?&]pais=(ar|cl|co|mx)(&|$)/i.test(location.search);
+  if (!esPais || window.__ccMenuPais) return;
   if (document.querySelector('script[src*="menu-pais.js"]')) return;
   var s = document.createElement('script');
   s.src = '/assets/menu-pais.js';

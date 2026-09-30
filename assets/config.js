@@ -2,7 +2,7 @@
  * Fuente única de la URL del worker. Cargar antes de cualquier script que la use:
  *   <script src="/assets/config.js"></script>
  * Preparado para multi-país: WORKERS_POR_PAIS permitirá un worker distinto por subdominio
- * (ar.cannabicultor.com → AR). Hoy todos apuntan al mismo worker.
+ * (/ar/ → AR). Hoy todos apuntan al mismo worker.
  */
 (function () {
   "use strict";
@@ -14,7 +14,10 @@
     MX: WORKER_DEFAULT,
     CO: WORKER_DEFAULT,
   };
-  var m = /^([a-z]{2})\.cannabicultor\.com$/.exec(location.hostname);
+  // País: subdominio (legado, en migración) > prefijo de ruta (/ar/...) > ?pais=AR (buscadores) > ES.
+  var m = /^([a-z]{2})\.cannabicultor\.com$/.exec(location.hostname)
+    || /^\/(ar|cl|co|mx)(?:\/|$)/.exec(location.pathname)
+    || /[?&]pais=([a-z]{2})(?:&|$)/i.exec(location.search);
   var pais = m && WORKERS_POR_PAIS[m[1].toUpperCase()] ? m[1].toUpperCase() : "ES";
   window.CC_CONFIG = Object.freeze({
     PAIS: pais,

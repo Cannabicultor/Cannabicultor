@@ -1,4 +1,4 @@
-/* Cannabicultor — menú lateral según el país del subdominio (ar./cl./mx./co.cannabicultor.com).
+/* Cannabicultor — menú lateral según el país (ruta /ar/ /cl/ /mx/ /co/, o subdominio legado ar./cl./mx./co.).
    España (cannabicultor.com): no toca nada.
    Otros países:
    - EMPRESAS (productos B2B solo España) se oculta entero.
@@ -14,7 +14,9 @@
   var PAISES = { ES: 1, AR: 1, CL: 1, MX: 1, CO: 1 };
   var pais = window.CC_CONFIG && window.CC_CONFIG.PAIS;
   if (!pais) {
-    var m = /^([a-z]{2})\.cannabicultor\.com$/.exec(location.hostname);
+    var m = /^([a-z]{2})\.cannabicultor\.com$/.exec(location.hostname)
+      || /^\/(ar|cl|co|mx)(?:\/|$)/.exec(location.pathname)
+      || /[?&]pais=([a-z]{2})(?:&|$)/i.exec(location.search);
     pais = m && PAISES[m[1].toUpperCase()] ? m[1].toUpperCase() : 'ES';
   }
   if (pais === 'ES') return;
@@ -40,7 +42,10 @@
   function rutaDe(el) {
     var h = el.getAttribute && el.getAttribute('href');
     if (!h) return '';
-    try { return new URL(h, location.href).pathname; } catch (_) { return h; }
+    var p;
+    try { p = new URL(h, location.href).pathname; } catch (_) { p = h; }
+    // /ar/growshops/ (directorio por país) equivale a /growshops.html en el mapa de tablas
+    return p.replace(/^\/(?:ar|cl|co|mx)\/(growshops|asociaciones|tiendas-cbd)\/?$/, '/$1.html');
   }
   function ajustarEncabezado(g) {
     var visibles = entradas(g).filter(function (el) { return !el.hidden; });
