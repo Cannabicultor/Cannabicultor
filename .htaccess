@@ -19,6 +19,19 @@
   RewriteCond %{REQUEST_URI} !^/(growshops|asociaciones|tiendas-cbd)\.html$
   RewriteRule ^(.+)$ - [E=CC_PAIS:1,E=CC_CANON:/$1]
 
+  # ── Migración subdominios de país (FASE 2): 301 ar./cl./co./mx. → www.cannabicultor.com/<pais>/ ──
+  # Antes de la regla HTTPS para resolver en un solo salto. Conserva ruta y query (R=301 añade la query).
+  RewriteCond %{HTTP_HOST} ^(ar|cl|co|mx)\.cannabicultor\.com$ [NC]
+  RewriteRule ^$ https://www.cannabicultor.com/%1/ [R=301,L]
+  RewriteCond %{HTTP_HOST} ^(ar|cl|co|mx)\.cannabicultor\.com$ [NC]
+  RewriteRule ^(growshops|asociaciones|tiendas-cbd)\.html$ https://www.cannabicultor.com/%1/$1/ [R=301,L]
+  # Rutas que ya empiezan por el país (/ar/...): no se duplica el prefijo
+  RewriteCond %{HTTP_HOST} ^(ar|cl|co|mx)\.cannabicultor\.com$ [NC]
+  RewriteRule ^((?:ar|cl|co|mx)/.*)$ https://www.cannabicultor.com/$1 [R=301,L]
+  # Resto (login, app, assets...): misma ruta en www (no existe /ar/app.html)
+  RewriteCond %{HTTP_HOST} ^(ar|cl|co|mx)\.cannabicultor\.com$ [NC]
+  RewriteRule ^(.+)$ https://www.cannabicultor.com/$1 [R=301,L]
+
   # Forzar HTTPS (por si acaso)
   RewriteCond %{HTTPS} off
   RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
