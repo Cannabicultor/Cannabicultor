@@ -75,9 +75,15 @@ done
 # $SEO_OUT (fuera del repo), esa version es la mas reciente; si no, se usa la del repo.
 SEO_OUT="${SEO_OUT:-$HOME/seo-build}"
 gen_src() { if [ -e "$SEO_OUT/$1" ]; then echo "$SEO_OUT/$1"; else echo "$1"; fi; }
+# Para ficheros sueltos (sitemaps): la copia de $SEO_OUT solo gana si es MAS NUEVA que la del repo.
+# Asi un ~/seo-build antiguo no pisa un sitemap.xml recien desplegado que ya lista sitemap-ar.xml.
+gen_src_file() {
+  if [ -e "$SEO_OUT/$1" ] && { [ ! -e "$1" ] || [ "$SEO_OUT/$1" -nt "$1" ]; }; then echo "$SEO_OUT/$1"; else echo "$1"; fi
+}
 
-for file in sitemap.xml sitemap-static.xml sitemap-breeders.xml sitemap-strains.xml sitemap-cbd.xml robots.txt; do
-  src="$(gen_src "$file")"
+for file in sitemap.xml sitemap-static.xml sitemap-breeders.xml sitemap-strains.xml sitemap-cbd.xml \
+            sitemap-ar.xml sitemap-cl.xml sitemap-co.xml sitemap-mx.xml robots.txt; do
+  src="$(gen_src_file "$file")"
   if [ -f "$src" ]; then
     /bin/cp -f "$src" "$DEPLOYPATH/"
   fi
@@ -86,7 +92,8 @@ done
 # Directorios EXCLUSIVOS del generador (prerender/build.mjs): REEMPLAZO LIMPIO.
 # Copia la version nueva a un temporal y hace swap, borrando asi las fichas
 # huerfanas de slugs que ya no existen. No depende de rsync (este host no lo tiene).
-for dir in breeders variedades tiendas-cbd; do
+# Directorios por pais (/ar/ /cl/ /co/ /mx/) bajo www: los genera build.mjs --paises.
+for dir in breeders variedades tiendas-cbd ar cl co mx; do
   src="$(gen_src "$dir")"
   if [ -d "$src" ]; then
     tmp="$DEPLOYPATH/.$dir.new"

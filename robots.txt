@@ -10,4 +10,6 @@ Disallow: /reset-password.html
 Disallow: /empezar.html
 Disallow: /cannabicultor-repo/
 
+# Indice: incluye sitemap-static/breeders/strains/cbd y los directorios por pais (/ar/ ...)
 Sitemap: https://www.cannabicultor.com/sitemap.xml
+Sitemap: https://www.cannabicultor.com/sitemap-ar.xml

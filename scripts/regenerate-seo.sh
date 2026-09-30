@@ -44,7 +44,7 @@ SUPABASE_URL="${SUPABASE_URL:-https://gfyrsrdnvgnhtsuexjkb.supabase.co}"
 SUPABASE_KEY="${SUPABASE_KEY:-sb_publishable_FdRmfirvOTAIfZFOcj2ZZg_Vic__TDw}"
 STATE_FILE="$HOME/.seo-last-sync"
 
-# Ultima fecha de actualizacion entre las 3 tablas publicables (max updated_at).
+# Ultima fecha de actualizacion entre las tablas publicables (max updated_at).
 latest() {
   local tabla="$1"
   curl -s "$SUPABASE_URL/rest/v1/$tabla?select=updated_at&order=updated_at.desc.nullslast&limit=1" \
@@ -52,7 +52,7 @@ latest() {
     | sed -n 's/.*"updated_at":"\([^"]*\)".*/\1/p'
 }
 
-CURRENT="$(printf '%s\n%s\n%s\n' "$(latest cbd_shops)" "$(latest breeders)" "$(latest variedades)" | sort | tail -1)"
+CURRENT="$(printf '%s\n%s\n%s\n%s\n%s\n' "$(latest cbd_shops)" "$(latest breeders)" "$(latest variedades)" "$(latest growshops)" "$(latest asociaciones)" | sort | tail -1)"
 PREVIOUS="$(cat "$STATE_FILE" 2>/dev/null || echo '')"
 
 if [ -n "$CURRENT" ] && [ "$CURRENT" = "$PREVIOUS" ]; then
@@ -65,7 +65,7 @@ echo "$(date -u +%FT%TZ) · cambios detectados (nuevo=$CURRENT, anterior=${PREVI
 export PRERENDER_OUT="${PRERENDER_OUT:-$HOME/seo-build}"
 export SEO_OUT="$PRERENDER_OUT"
 mkdir -p "$PRERENDER_OUT"
-"$NODE" prerender/build.mjs --breeders --variedades --cbd
+"$NODE" prerender/build.mjs --breeders --variedades --cbd --paises
 bash deploy.sh
 echo "$CURRENT" > "$STATE_FILE"
 echo "$(date -u +%FT%TZ) · publicado."
