@@ -1,0 +1,21 @@
+{
+  "name": "01-sync-sheet-supabase",
+  "active": false,
+  "settings": { "executionOrder": "v1", "saveManualExecutions": true, "timezone": "Europe/Madrid" },
+  "nodes": [
+    {
+      "parameters": { "rule": { "interval": [{ "field": "cronExpression", "expression": "0 0 3 * * *" }] } },
+      "id": "schedule-sync", "name": "Cada día a las 03:00", "type": "n8n-nodes-base.scheduleTrigger", "typeVersion": 1, "position": [260, 300]
+    },
+    {
+      "parameters": { "jsCode": "// Configuración segura: ejecutar primero sólo lectura.\n// Configura los cinco pares pestaña/tabla según n8n/README.md.\nreturn [{json:{mode:'READ_ONLY', spreadsheetId:$env.GOOGLE_SHEETS_SPREADSHEET_ID, mappings:['Variedades:variedades','Breeders:breeders','Growshops:growshops','Asociaciones_CSC:asociaciones','Tiendas_CBD:UNMAPPED']}}];" },
+      "id": "config-sync", "name": "Configuración (lectura)", "type": "n8n-nodes-base.code", "typeVersion": 2, "position": [500, 300]
+    },
+    {
+      "parameters": { "content": "IMPORTAR INACTIVO. Sigue n8n/README.md para añadir las llamadas REST y Google Sheets. Supabase es la fuente canónica: el flujo sólo propaga hacia la hoja; filas con publicado o pendiente_revision y campos bloqueados no se pisan. Tiendas_CBD queda sin escritura hasta decidir tabla canónica.", "height": 260, "width": 460 },
+      "id": "note-sync", "name": "Contrato de sincronización", "type": "n8n-nodes-base.stickyNote", "typeVersion": 1, "position": [460, 60]
+    }
+  ],
+  "connections": { "Cada día a las 03:00": { "main": [[{ "node": "Configuración (lectura)", "type": "main", "index": 0 }]] } },
+  "pinData": {}
+}

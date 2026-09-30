@@ -1,0 +1,21 @@
+{
+  "name": "03-alerts-telegram",
+  "active": false,
+  "settings": { "executionOrder": "v1", "saveManualExecutions": true },
+  "nodes": [
+    {
+      "parameters": { "rule": { "interval": [{ "field": "minutes", "minutesInterval": 30 }] } },
+      "id": "schedule-alerts", "name": "Cada 30 minutos", "type": "n8n-nodes-base.scheduleTrigger", "typeVersion": 1, "position": [260, 300]
+    },
+    {
+      "parameters": { "jsCode": "// Antes de activar, configura Telegram y el REST de Supabase según n8n/README.md.\n// Sólo alertas con sent_at IS NULL; tras éxito marcar sent_at. dedupe_key garantiza idempotencia.\nreturn [{json:{mode:'READ_ONLY', failedAttemptThreshold:3, parseMode:'HTML'}}];" },
+      "id": "config-alerts", "name": "Contrato alertas", "type": "n8n-nodes-base.code", "typeVersion": 2, "position": [500, 300]
+    },
+    {
+      "parameters": { "content": "IMPORTAR INACTIVO. Consulta agent_jobs con status=failed y attempts>=3, y las entidades editorial_status=pendiente_revision. Inserta/actualiza alertas por dedupe_key; Telegram sólo se invoca cuando sent_at es NULL.", "height": 230, "width": 470 },
+      "id": "note-alerts", "name": "Antiduplicados", "type": "n8n-nodes-base.stickyNote", "typeVersion": 1, "position": [460, 60]
+    }
+  ],
+  "connections": { "Cada 30 minutos": { "main": [[{ "node": "Contrato alertas", "type": "main", "index": 0 }]] } },
+  "pinData": {}
+}

@@ -1,0 +1,21 @@
+{
+  "name": "04-discover-growshops",
+  "active": false,
+  "settings": { "executionOrder": "v1", "saveManualExecutions": true, "timezone": "Europe/Madrid" },
+  "nodes": [
+    {
+      "parameters": { "rule": { "interval": [{ "field": "cronExpression", "expression": "0 30 3 * * 5" }] } },
+      "id": "schedule-discovery", "name": "Viernes a las 03:30", "type": "n8n-nodes-base.scheduleTrigger", "typeVersion": 1, "position": [260, 300]
+    },
+    {
+      "parameters": { "jsCode": "// Ejecutar en modo DRY_RUN hasta configurar un proveedor de búsqueda permitido.\n// Fuentes: web oficial, Instagram/Facebook oficiales, Google Maps y directorios sectoriales.\n// Cada candidato debe incluir evidencia URL por campo y pasa por la RPC de deduplicación antes de crear una propuesta.\nreturn [{json:{mode:'DRY_RUN', entityTable:'growshops', sources:['official_web','official_instagram','google_maps','official_facebook','sector_directory'], duplicatePolicy:'identity_fields_exact_normalized', reviewStatus:'pendiente_revision'}}];" },
+      "id": "discovery-contract", "name": "Contrato descubrimiento", "type": "n8n-nodes-base.code", "typeVersion": 2, "position": [520, 300]
+    },
+    {
+      "parameters": { "content": "IMPORTAR INACTIVO. Requiere proveedor de búsqueda autorizado. Nunca automatices scraping de Google Maps o redes sociales. El proveedor debe devolver URL y fragmento de evidencia. Antes de alta, llama a register_directory_candidate; un duplicado no se publica y crea alerta de Telegram.", "height": 230, "width": 500 },
+      "id": "note-discovery", "name": "Fuentes y deduplicación", "type": "n8n-nodes-base.stickyNote", "typeVersion": 1, "position": [450, 50]
+    }
+  ],
+  "connections": { "Viernes a las 03:30": { "main": [[{ "node": "Contrato descubrimiento", "type": "main", "index": 0 }]] } },
+  "pinData": {}
+}

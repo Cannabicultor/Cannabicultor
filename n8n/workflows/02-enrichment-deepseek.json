@@ -1,0 +1,21 @@
+{
+  "name": "02-enrichment-deepseek",
+  "active": false,
+  "settings": { "executionOrder": "v1", "saveManualExecutions": true, "timezone": "Europe/Madrid" },
+  "nodes": [
+    {
+      "parameters": { "rule": { "interval": [{ "field": "cronExpression", "expression": "0 30 3 * * 2" }] } },
+      "id": "schedule-enrich", "name": "Martes a las 03:30", "type": "n8n-nodes-base.scheduleTrigger", "typeVersion": 1, "position": [260, 300]
+    },
+    {
+      "parameters": { "jsCode": "// No llama al modelo por sí solo. Crea/configura el subflujo descrito en n8n/README.md.\n// Tamaño máximo recomendado: 5. El resultado debe ser JSON estricto {changes,evidence}.\nreturn [{json:{mode:'READ_ONLY', batchSize:5, model:$env.DEEPSEEK_MODEL, rpc:'apply_deepseek_enrichment'}}];" },
+      "id": "config-enrich", "name": "Contrato DeepSeek", "type": "n8n-nodes-base.code", "typeVersion": 2, "position": [500, 300]
+    },
+    {
+      "parameters": { "content": "IMPORTAR INACTIVO. No permitas UPDATE directo sobre tablas canónicas. La única escritura es RPC apply_deepseek_enrichment, que comprueba y actualiza atómicamente locks, valores y estado. DeepSeek recibe evidencia y nunca puede inventar datos.", "height": 250, "width": 470 },
+      "id": "note-enrich", "name": "Límite de seguridad", "type": "n8n-nodes-base.stickyNote", "typeVersion": 1, "position": [460, 60]
+    }
+  ],
+  "connections": { "Martes a las 03:30": { "main": [[{ "node": "Contrato DeepSeek", "type": "main", "index": 0 }]] } },
+  "pinData": {}
+}
