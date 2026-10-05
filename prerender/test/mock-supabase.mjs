@@ -60,7 +60,24 @@ export const GROWSHOPS = [
   gs(9, 'Flag indexable false', { descripcion: DESC_OK + ' (e)', verificado: true, indexable: false }),
   { ...gs(10, 'De Espana'), pais: 'ES', provincia: 'Madrid' },
 ];
-const TABLES = { cbd_shops: CBD_SHOPS, growshops: GROWSHOPS, asociaciones: [] };
+// Chile (solo con MOCK_CL=1, para no alterar las pruebas que usan CL como pais sin datos): regiones con tilde y apostrofo.
+const cl = (id, nombre, ciudad, provincia, extra = {}) => ({
+  ...gs(id, nombre, { slug: `cl-gs-${id}`, ciudad, provincia, lat: -33.43, lon: -70.61, telefono: '+56 2 2345 6789', pais: 'CL', ...extra }),
+});
+const GROWSHOPS_CL = [
+  cl(2001, 'Chile Cumple Todo', 'Providencia', 'Región Metropolitana', { descripcion: DESC_OK + ' (cl-a)', verificado: true }),
+  cl(2002, 'Chile Sin Verificar', 'Santiago', 'Región Metropolitana'),
+  cl(2003, 'Chile Otra RM', 'Ñuñoa', 'Región Metropolitana'),
+  cl(2004, 'Chile Valparaiso', 'Viña del Mar', 'Región de Valparaíso'),
+  cl(2005, "Chile O'Higgins", 'Rancagua', "Región de O'Higgins"),
+  cl(2006, 'Chile Sin Region', null, null),
+  cl(2007, 'Chile Geo Aprox', 'Temuco', 'Región de La Araucanía', { geo_aproximado: true, lat: -38.73, lon: -72.59 }),
+];
+const ASOC_CL = [cl(2101, 'Fundación Chile Demo', 'Concepción', 'Región del Biobío', { slug: 'cl-as-2101', telefono: null, web: null })];
+const TABLES_BASE = { cbd_shops: CBD_SHOPS, growshops: GROWSHOPS, asociaciones: [] };
+const TABLES = process.env.MOCK_CL
+  ? { cbd_shops: CBD_SHOPS, growshops: [...GROWSHOPS, ...GROWSHOPS_CL], asociaciones: ASOC_CL }
+  : TABLES_BASE;
 
 function respond(url, headers) {
   const u = new URL(url);

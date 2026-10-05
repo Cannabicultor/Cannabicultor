@@ -145,7 +145,7 @@ function organizar(ctx, pais, tk, rows) {
   const usados = new Set();
   for (const s of rows) {
     const prov = (s.provincia || '').trim();
-    const provSlug = prov ? slugify(prov) : `sin-${pais.region}`;
+    const provSlug = prov ? slugify(prov) : slugify(`sin ${pais.region}`); // sin tildes en la URL ('sin-region')
     if (!grupos.has(provSlug)) grupos.set(provSlug, { provSlug, prov, nombre: prov ? (pais.provDisplay[prov] || prov) : `Sin ${pais.region} indicada`, shops: [] });
     const g = grupos.get(provSlug);
     let base = slugify(s.nombre) || `${tk}-${s.id}`;
