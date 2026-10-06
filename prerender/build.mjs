@@ -440,7 +440,7 @@ ${bodyHtml}
 </footer>
 ${dock === '' ? '' : (dock || chatDock({ tipo: 'pagina', placeholder: 'Pregúntale a la IA del cannabis…' }))}
 <script src="/assets/resenas.js"></script>
-<script src="/assets/shell.js" defer></script>
+<script src="/assets/shell.js?v=20261006c" defer></script>
 <script src="/track.js?v=20260926-host" defer></script>
 </body>
 </html>`;

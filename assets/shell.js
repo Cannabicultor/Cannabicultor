@@ -15,7 +15,7 @@
 (function () {
   if (window.__ccSelectorPais || document.querySelector('script[src*="selector-pais.js"]')) return;
   var s = document.createElement('script');
-  s.src = '/assets/selector-pais.js?v=20261006b';
+  s.src = '/assets/selector-pais.js?v=20261006c';
   document.head.appendChild(s);
 })();
 

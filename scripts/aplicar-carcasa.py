@@ -60,7 +60,7 @@ for nombre, cfg in PAGINAS.items():
     for a, b in OCULTAR:
         s = s.replace(a, b, 1)
     s = re.sub(r'<script src="/?assets/ac-urgent-banner\.js" defer></script>\n?', '', s)
-    fin = (dock(*cfg) if cfg else '') + '<script src="/assets/shell.js" defer></script>\n</body>'
+    fin = (dock(*cfg) if cfg else '') + '<script src="/assets/shell.js?v=20261006c" defer></script>\n</body>'
     s = s[::-1].replace('</body>'[::-1], fin[::-1], 1)[::-1]
     p.write_text(s)
     print('ok', nombre)

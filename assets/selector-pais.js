@@ -73,7 +73,7 @@
       .catch(function () { clearTimeout(t); /* sin red o Worker sin /geo: se queda en España y se reintenta otra vez */ });
   }
 
-  var css = '.ccps{position:relative;font-family:inherit;flex:none}'
+  var css = '.ccps{position:relative;z-index:45;font-family:inherit;flex:none}'
     + '.ccps-fijo{position:fixed;top:10px;right:14px;z-index:45}'
     + '.ccps-btn{display:flex;align-items:center;gap:7px;height:32px;padding:0 9px;background:#fff;border:1px solid #d9dfd6;border-radius:8px;font:13px/1 inherit;font-family:inherit;color:#13201a;cursor:pointer;-webkit-appearance:none}'
     + '.ccps-btn:hover{border-color:#1a5c32;background:#eef2ec}'
@@ -126,8 +126,13 @@
       btn.setAttribute('aria-expanded', v ? 'true' : 'false');
     }
     // Elegir país a mano manda para siempre sobre la detección por IP.
+    // La navegación es explícita (no depende de que el toque llegue al enlace en móvil).
     menu.addEventListener('click', function (e) {
-      if (e.target.closest && e.target.closest('a.ccps-op')) guardar(CLAVE_ELEGIDO);
+      var a = e.target.closest && e.target.closest('a.ccps-op');
+      if (!a) return;
+      guardar(CLAVE_ELEGIDO);
+      e.preventDefault();
+      location.assign(a.getAttribute('href'));
     });
     btn.addEventListener('click', function (e) { e.stopPropagation(); abrir(!menu.classList.contains('on')); });
     document.addEventListener('click', function (e) { if (!wrap.contains(e.target)) abrir(false); });
