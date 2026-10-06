@@ -64,10 +64,9 @@ test('la ficha sin region va a /sin-region/ (URL sin tilde) y no rompe el build'
   assert.ok(!/sin-regi\u00f3n/.test(read('cl', 'growshops', 'index.html')));
 });
 
-test('por defecto (sin INDEXAR_PAISES) Chile se genera pero todo noindex y fuera del sitemap', () => {
+test('pais cerrado (INDEXAR_PAISES sin cl): Chile se genera pero todo noindex y fuera del sitemap', () => {
   const out2 = mkdtempSync(join(tmpdir(), 'seo-cl-cerrado-'));
-  const env = { ...process.env, PRERENDER_OUT: out2, MOCK_CL: '1' };
-  delete env.INDEXAR_PAISES;
+  const env = { ...process.env, PRERENDER_OUT: out2, MOCK_CL: '1', INDEXAR_PAISES: 'ar' };
   execFileSync('node', ['--import', join(HERE, 'mock-supabase.mjs'), BUILD, '--pais=cl'], { env, stdio: 'pipe' });
   const rb = (...p) => (readFileSync(join(out2, ...p), 'utf8').match(/<meta name="robots" content="([^"]*)"/) || [])[1];
   assert.equal(rb('cl', 'index.html'), 'noindex,follow');
@@ -75,4 +74,15 @@ test('por defecto (sin INDEXAR_PAISES) Chile se genera pero todo noindex y fuera
   assert.equal(rb('cl', 'growshops', 'region-metropolitana', 'index.html'), 'noindex,follow');
   assert.equal(rb('cl', 'growshops', 'region-metropolitana', 'chile-cumple-todo', 'index.html'), 'noindex,follow');
   assert.ok(!existsSync(join(out2, 'sitemap-cl.xml')));
+});
+
+test('por defecto Chile y Colombia estan abiertos y Mexico cerrado', () => {
+  const out3 = mkdtempSync(join(tmpdir(), 'seo-cl-def-'));
+  const env = { ...process.env, PRERENDER_OUT: out3, MOCK_CL: '1' };
+  delete env.INDEXAR_PAISES;
+  execFileSync('node', ['--import', join(HERE, 'mock-supabase.mjs'), BUILD, '--paises'], { env, stdio: 'pipe' });
+  const rb = (...p) => (readFileSync(join(out3, ...p), 'utf8').match(/<meta name="robots" content="([^"]*)"/) || [])[1];
+  assert.equal(rb('cl', 'growshops', 'region-metropolitana', 'chile-cumple-todo', 'index.html'), 'index,follow,max-image-preview:large');
+  assert.ok(existsSync(join(out3, 'sitemap-cl.xml')));
+  assert.equal(rb('mx', 'index.html'), 'noindex,follow');
 });
