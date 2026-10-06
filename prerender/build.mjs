@@ -1105,7 +1105,8 @@ async function main() {
       names.push(`sitemap-${p.slug}.xml`);
     }
     // El indice conserva los sitemaps que esta ejecucion no ha regenerado (p. ej. --paises solo).
-    const conocidos = ['sitemap-breeders.xml', 'sitemap-strains.xml', 'sitemap-cbd.xml', ...Object.keys(PAISES).map((k) => `sitemap-${k}.xml`)];
+    // sitemap-es.xml (growshops/asociaciones de España) lo genera scripts/gen-sitemap-es.mjs, no este build.
+    const conocidos = ['sitemap-breeders.xml', 'sitemap-strains.xml', 'sitemap-cbd.xml', 'sitemap-es.xml', ...Object.keys(PAISES).map((k) => `sitemap-${k}.xml`)];
     for (const n of conocidos) {
       if (!names.includes(n) && (existsSync(join(OUT, n)) || existsSync(join(ROOT, n)))) names.push(n);
     }

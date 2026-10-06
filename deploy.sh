@@ -82,7 +82,7 @@ gen_src_file() {
 }
 
 for file in sitemap.xml sitemap-static.xml sitemap-breeders.xml sitemap-strains.xml sitemap-cbd.xml \
-            sitemap-ar.xml sitemap-cl.xml sitemap-co.xml sitemap-mx.xml robots.txt; do
+            sitemap-es.xml sitemap-ar.xml sitemap-cl.xml sitemap-co.xml sitemap-mx.xml robots.txt; do
   src="$(gen_src_file "$file")"
   if [ -f "$src" ]; then
     /bin/cp -f "$src" "$DEPLOYPATH/"
