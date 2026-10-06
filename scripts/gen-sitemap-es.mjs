@@ -25,8 +25,8 @@ const DRY = process.argv.includes('--dry');
 const TODAY = new Date().toISOString().slice(0, 10);
 const TIPOS = ['growshops', 'asociaciones'];
 
-async function filas(tabla) {
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/${tabla}?select=slug,slug_ciudad,updated_at&pais=eq.ES&indexable=eq.true&activo=eq.true&limit=5000`, {
+async function filas(tabla, soloIndexables) {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/${tabla}?select=slug,slug_ciudad,updated_at&pais=eq.ES&activo=eq.true${soloIndexables ? '&indexable=eq.true' : ''}&limit=5000`, {
     headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` },
   });
   if (!res.ok) throw new Error(`${tabla}: ${res.status} ${await res.text()}`);
@@ -57,10 +57,17 @@ async function enParalelo(items, fn, n = 12) {
 const candidatas = []; // { loc, lastmod, tipo, ciudad? }
 const ciudades = new Map();
 for (const tipo of TIPOS) {
-  for (const r of await filas(tipo)) {
-    if (!r.slug || !r.slug_ciudad) continue;
-    candidatas.push({ tipo, loc: `${SITE}/${tipo}/${r.slug_ciudad}/${r.slug}/`, lastmod: (r.updated_at || TODAY).slice(0, 10), priority: '0.6' });
-    ciudades.set(`${tipo}/${r.slug_ciudad}`, { tipo, loc: `${SITE}/${tipo}/${r.slug_ciudad}/`, lastmod: TODAY, priority: '0.7' });
+  // Fichas: solo las indexables. Listados de ciudad: de TODAS las filas activas, porque el
+  // listado de una ciudad puede estar indexado aunque ninguna de sus fichas lo esté
+  // (la comprobación contra producción descarta los que no existan o sean noindex).
+  for (const r of await filas(tipo, true)) {
+    if (!r.slug) continue;
+    // Sin ciudad, la página cuelga de /<tipo>/espana/<slug>/
+    candidatas.push({ tipo, loc: `${SITE}/${tipo}/${r.slug_ciudad || 'espana'}/${r.slug}/`, lastmod: (r.updated_at || TODAY).slice(0, 10), priority: '0.6' });
+  }
+  for (const r of await filas(tipo, false)) {
+    const c = r.slug_ciudad || 'espana';
+    ciudades.set(`${tipo}/${c}`, { tipo, loc: `${SITE}/${tipo}/${c}/`, lastmod: TODAY, priority: '0.7' });
   }
 }
 const todas = [...ciudades.values(), ...candidatas];
