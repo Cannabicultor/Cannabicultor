@@ -68,6 +68,10 @@ export const TIPOS = {
   },
 };
 
+// Paises cuyo contenido puede indexarse (portada, listados y fichas que cumplan la regla de calidad). El resto se genera
+// y se ve en la web, pero TODO sale noindex,follow y fuera del sitemap hasta que se abra expresamente (revision legal
+// del pais, fichas verificadas). Se puede forzar con INDEXAR_PAISES="ar,cl".
+const INDEXAR = new Set((process.env.INDEXAR_PAISES || 'ar').split(',').map((x) => x.trim().toLowerCase()).filter(Boolean));
 const MIN_PROV_INDEX = 3; // un listado por provincia solo se indexa con >=3 fichas
 const CAP = (s) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : s);
 
@@ -98,8 +102,9 @@ export async function buildPaises(ctx, slugs) {
   const { fetchAll, write, cleanDir, SITE, OUT, slugify } = ctx;
   const out = [];
   for (const slug of slugs) {
-    const pais = PAISES[slug];
-    if (!pais) throw new Error(`País desconocido: ${slug}`);
+    const base = PAISES[slug];
+    if (!base) throw new Error(`País desconocido: ${slug}`);
+    const pais = { ...base, abierto: INDEXAR.has(slug) };
     const datos = {};
     for (const [tk, t] of Object.entries(TIPOS)) {
       const rows = await fetchAll(t.tabla, { select: t.select, filter: `&activo=is.true&pais=eq.${pais.code}`, order: 'id.asc' });
@@ -109,7 +114,7 @@ export async function buildPaises(ctx, slugs) {
     await cleanDir(slug);
     const entries = [];
     await write(join(OUT, slug, 'index.html'), hubPais(ctx, slug, pais, datos, total).html);
-    if (total > 0) entries.push({ loc: `${SITE}/${slug}/`, priority: '0.8', changefreq: 'weekly' });
+    if (total > 0 && pais.abierto) entries.push({ loc: `${SITE}/${slug}/`, priority: '0.8', changefreq: 'weekly' });
 
     let nFichas = 0, nIdx = 0;
     if (total > 0) {
@@ -117,9 +122,9 @@ export async function buildPaises(ctx, slugs) {
         const d = datos[tk];
         if (!d.rows.length) continue;
         await write(join(OUT, slug, tk, 'index.html'), tipoPage(ctx, slug, pais, tk, t, d).html);
-        entries.push({ loc: `${SITE}/${slug}/${tk}/`, priority: '0.7', changefreq: 'weekly' });
+        if (pais.abierto) entries.push({ loc: `${SITE}/${slug}/${tk}/`, priority: '0.7', changefreq: 'weekly' });
         for (const g of d.grupos.values()) {
-          const idxProv = !!g.prov && g.shops.length >= MIN_PROV_INDEX;
+          const idxProv = pais.abierto && !!g.prov && g.shops.length >= MIN_PROV_INDEX;
           await write(join(OUT, slug, tk, g.provSlug, 'index.html'), provPage(ctx, slug, pais, tk, t, d, g, idxProv).html);
           if (idxProv) entries.push({ loc: `${SITE}/${slug}/${tk}/${g.provSlug}/`, priority: '0.6', changefreq: 'weekly' });
           for (const s of g.shops) {
@@ -152,7 +157,7 @@ function organizar(ctx, pais, tk, rows) {
     if (usados.has(`${provSlug}/${base}`)) base = `${base}-${s.id}`;
     usados.add(`${provSlug}/${base}`);
     s._slug = base;
-    s._idx = fichaIndexable(s, conteoDesc);
+    s._idx = pais.abierto && fichaIndexable(s, conteoDesc);
     g.shops.push(s);
   }
   // orden estable: provincias con más fichas primero, luego alfabético
@@ -197,7 +202,7 @@ function hubPais(ctx, slug, pais, datos, total) {
   const { esc, SITE, CBD_CSS, trimText } = ctx;
   const canonical = `${SITE}/${slug}/`;
   const n = (k) => datos[k].rows.length;
-  const indexable = total > 0;
+  const indexable = total > 0 && pais.abierto;
   const title = `Directorio cannabis en ${pais.nombre}: clubes, growshops y CBD`;
   const desc = total > 0
     ? trimText(`${fmt(n('growshops'))} growshops, ${fmt(n('asociaciones'))} clubes y asociaciones y ${fmt(n('tiendas-cbd'))} tiendas de CBD en ${pais.nombre}, por ${pais.region}. Dirección y contacto cuando están disponibles.`, 160)
@@ -258,7 +263,7 @@ function tipoPage(ctx, slug, pais, tk, t, d) {
 <p class="body">Directorio de <strong>${fmt(total)} ${esc(total === 1 ? t.singular : t.plural)}</strong> en ${esc(pais.nombre)}, repartidos en ${provs.length} ${esc(provs.length === 1 ? pais.region : pais.regiones)}${provs[0] ? `; ${esc(provs[0].nombre)} es ${pais.region === 'provincia' ? 'la' : 'el/la'} ${esc(pais.region)} con más fichas (${provs[0].shops.length})` : ''}. Incluye dirección, teléfono, web y mapa cuando los conocemos.</p>
 <ul class="city-list">${lista}</ul>
 <p class="body"><a class="btn ghost" href="/${slug}/">← Directorio cannabis en ${esc(pais.nombre)}</a></p>`;
-  return { html: pageShell(ctx, slug, pais, { title, desc, canonical, jsonld, bodyHtml: body, indexable: true }) };
+  return { html: pageShell(ctx, slug, pais, { title, desc, canonical, jsonld, bodyHtml: body, indexable: pais.abierto }) };
 }
 
 // ── Listado por provincia ─────────────────────────────────────────────────────────

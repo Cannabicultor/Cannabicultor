@@ -23,10 +23,13 @@
   # Antes de la regla HTTPS para resolver en un solo salto. Conserva ruta y query (R=301 añade la query).
   RewriteCond %{HTTP_HOST} ^(ar|cl|co|mx)\.cannabicultor\.com$ [NC]
   RewriteRule ^$ https://www.cannabicultor.com/%1/ [R=301,L]
-  # Directorios por tipo: solo AR tiene datos; cl/co/mx van a su portada hasta que existan /<pais>/<tipo>/
-  RewriteCond %{HTTP_HOST} ^ar\.cannabicultor\.com$ [NC]
-  RewriteRule ^(growshops|asociaciones|tiendas-cbd)\.html$ https://www.cannabicultor.com/ar/$1/ [R=301,L]
-  RewriteCond %{HTTP_HOST} ^(cl|co|mx)\.cannabicultor\.com$ [NC]
+  # Directorios por tipo: AR y CO tienen los tres; CL solo growshops y tiendas-cbd (asociaciones va a su portada);
+  # mx va a su portada hasta que existan /mx/<tipo>/. Al generar un tipo nuevo, anadirlo aqui.
+  RewriteCond %{HTTP_HOST} ^(ar|co)\.cannabicultor\.com$ [NC]
+  RewriteRule ^(growshops|asociaciones|tiendas-cbd)\.html$ https://www.cannabicultor.com/%1/$1/ [R=301,L]
+  RewriteCond %{HTTP_HOST} ^cl\.cannabicultor\.com$ [NC]
+  RewriteRule ^(growshops|tiendas-cbd)\.html$ https://www.cannabicultor.com/cl/$1/ [R=301,L]
+  RewriteCond %{HTTP_HOST} ^(cl|mx)\.cannabicultor\.com$ [NC]
   RewriteRule ^(growshops|asociaciones|tiendas-cbd)\.html$ https://www.cannabicultor.com/%1/ [R=301,L]
   # Rutas que ya empiezan por el país (/ar/...): no se duplica el prefijo
   RewriteCond %{HTTP_HOST} ^(ar|cl|co|mx)\.cannabicultor\.com$ [NC]

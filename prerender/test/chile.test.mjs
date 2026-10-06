@@ -16,7 +16,7 @@ const robots = (...p) => (read(...p).match(/<meta name="robots" content="([^"]*)
 before(() => {
   OUT = mkdtempSync(join(tmpdir(), 'seo-cl-'));
   execFileSync('node', ['--import', join(HERE, 'mock-supabase.mjs'), BUILD, '--pais=cl'], {
-    env: { ...process.env, PRERENDER_OUT: OUT, MOCK_CL: '1' }, stdio: 'pipe',
+    env: { ...process.env, PRERENDER_OUT: OUT, MOCK_CL: '1', INDEXAR_PAISES: 'ar,cl' }, stdio: 'pipe',
   });
 });
 
@@ -62,4 +62,17 @@ test('la ficha sin region va a /sin-region/ (URL sin tilde) y no rompe el build'
   assert.ok(!existsSync(join(OUT, 'cl', 'growshops', 'sin-regi\u00f3n')));
   assert.match(read('cl', 'growshops', 'sin-region', 'index.html'), /Chile Sin Region/);
   assert.ok(!/sin-regi\u00f3n/.test(read('cl', 'growshops', 'index.html')));
+});
+
+test('por defecto (sin INDEXAR_PAISES) Chile se genera pero todo noindex y fuera del sitemap', () => {
+  const out2 = mkdtempSync(join(tmpdir(), 'seo-cl-cerrado-'));
+  const env = { ...process.env, PRERENDER_OUT: out2, MOCK_CL: '1' };
+  delete env.INDEXAR_PAISES;
+  execFileSync('node', ['--import', join(HERE, 'mock-supabase.mjs'), BUILD, '--pais=cl'], { env, stdio: 'pipe' });
+  const rb = (...p) => (readFileSync(join(out2, ...p), 'utf8').match(/<meta name="robots" content="([^"]*)"/) || [])[1];
+  assert.equal(rb('cl', 'index.html'), 'noindex,follow');
+  assert.equal(rb('cl', 'growshops', 'index.html'), 'noindex,follow');
+  assert.equal(rb('cl', 'growshops', 'region-metropolitana', 'index.html'), 'noindex,follow');
+  assert.equal(rb('cl', 'growshops', 'region-metropolitana', 'chile-cumple-todo', 'index.html'), 'noindex,follow');
+  assert.ok(!existsSync(join(out2, 'sitemap-cl.xml')));
 });
