@@ -52,7 +52,19 @@ latest() {
     | sed -n 's/.*"updated_at":"\([^"]*\)".*/\1/p'
 }
 
-CURRENT="$(printf '%s\n%s\n%s\n%s\n%s\n' "$(latest cbd_shops)" "$(latest breeders)" "$(latest variedades)" "$(latest growshops)" "$(latest asociaciones)" | sort | tail -1)"
+# Fichas activas de un directorio. Las altas/aprobaciones nuevas no siempre mueven updated_at
+# (p. ej. al activar CL/CO se quedaron sin regenerar), asi que tambien se compara el recuento.
+conteo() {
+  local tabla="$1"
+  curl -s -D - -o /dev/null "$SUPABASE_URL/rest/v1/$tabla?select=id&activo=is.true" \
+    -H "apikey: $SUPABASE_KEY" -H "Authorization: Bearer $SUPABASE_KEY" \
+    -H "Range-Unit: items" -H "Range: 0-0" -H "Prefer: count=exact" \
+    | tr -d '\r' | sed -n 's#^[Cc]ontent-[Rr]ange:.*/\([0-9]*\)$#\1#p' | head -1 || true
+}
+
+MAXTS="$(printf '%s\n%s\n%s\n%s\n%s\n' "$(latest cbd_shops)" "$(latest breeders)" "$(latest variedades)" "$(latest growshops)" "$(latest asociaciones)" | sort | tail -1)"
+CONTEOS="gs=$(conteo growshops),as=$(conteo asociaciones),cbd=$(conteo cbd_shops)"
+CURRENT="${MAXTS}|${CONTEOS}"
 PREVIOUS="$(cat "$STATE_FILE" 2>/dev/null || echo '')"
 
 if [ -n "$CURRENT" ] && [ "$CURRENT" = "$PREVIOUS" ]; then
