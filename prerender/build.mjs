@@ -438,7 +438,7 @@ ${bodyHtml}
 <p>Cannabicultor · Guía IA de cultivo de cannabis en español. Solo para mayores de 18 años. El cultivo de cannabis está regulado; consulta la legislación vigente en tu país. Fines educativos.</p>
 <p><a href="/">Inicio</a> · <a href="/buscador-cannabicultor.html">Buscador</a> · <a href="/atlas_landrace.html">Atlas landrace</a></p>
 </footer>
-${dock || chatDock({ tipo: 'pagina', placeholder: 'Pregúntale a la IA del cannabis…' })}
+${dock === '' ? '' : (dock || chatDock({ tipo: 'pagina', placeholder: 'Pregúntale a la IA del cannabis…' }))}
 <script src="/assets/resenas.js"></script>
 <script src="/assets/shell.js" defer></script>
 <script src="/track.js?v=20260926-host" defer></script>

@@ -4092,6 +4092,11 @@ export default {
     try {
       // GET routes (antes del body JSON)
       if (request.method === 'GET') {
+        // País de la IP del visitante (lo pone Cloudflare). Lo usa assets/selector-pais.js en la portada.
+        if (path === '/geo') {
+          const pais = String((request.cf && request.cf.country) || request.headers.get('CF-IPCountry') || '').toUpperCase();
+          return json({ pais: /^[A-Z]{2}$/.test(pais) ? pais : null }, 200, { ...cors, 'Cache-Control': 'private, no-store' });
+        }
         if (path === '/diario/entradas') {
           const r = await handleListDiario(url, env, request);
           return json(r.data, r.status, cors);

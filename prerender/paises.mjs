@@ -177,9 +177,9 @@ function navPais(ctx, slug) {
   return nav;
 }
 
-function pageShell(ctx, slug, pais, { title, desc, canonical, jsonld, bodyHtml, indexable, image, hreflangs }) {
+function pageShell(ctx, slug, pais, { title, desc, canonical, jsonld, bodyHtml, indexable, image, hreflangs, dock }) {
   return ctx.shell({
-    title, desc, canonical, image, jsonld, bodyHtml,
+    title, desc, canonical, image, jsonld, bodyHtml, dock,
     robots: indexable ? 'index,follow,max-image-preview:large' : 'noindex,follow',
     lang: pais.locale, ogLocale: pais.og, nav: navPais(ctx, slug),
     hreflangs: hreflangs || [{ lang: pais.locale, href: canonical }],
@@ -199,6 +199,36 @@ const faqLd = (faq) => ({ '@type': 'FAQPage', mainEntity: faq.map((f) => ({ '@ty
 const fmt = (n) => n.toLocaleString('es-ES');
 
 // ── Portada del país ───────────────────────────────────────────────────────────────
+// Estilos del hero (copia reducida de la home: .hola, .bench, .caja). Solo se usa en la portada del país.
+const HERO_CSS = `
+.hero-ia{min-height:calc(100dvh - 150px);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:10px 0 40px}
+.hero-ia h1{font-family:'Sora',sans-serif;font-weight:600;font-size:clamp(36px,5vw,52px);letter-spacing:-.04em;margin:0 0 8px;color:var(--cc-tinta,#13201a)}
+.hero-ia .h-lema{font-size:16px;color:var(--cc-gris,#5b6b61);margin:0 0 28px}
+.h-bench{display:flex;flex-direction:column;align-items:center;margin-bottom:18px;text-decoration:none!important;color:var(--cc-tinta,#13201a);max-width:760px}
+.h-bench .linea{display:inline-flex;align-items:center;gap:8px;padding:5px 7px 5px 5px;border-radius:999px;background:#fff;border:1px solid var(--cc-linea2,#d9dfd6);font-size:12px;line-height:1.3;box-shadow:0 1px 2px rgba(15,48,32,.06);max-width:100%}
+.h-bench:hover .linea{border-color:var(--cc-verde,#0F3020)}
+.h-bench .tag{background:#ff4d4d;color:#0b0b0b;font-weight:600;font-size:10px;letter-spacing:.06em;text-transform:uppercase;padding:3px 8px;border-radius:999px;flex-shrink:0}
+.h-bench b{color:var(--cc-verde,#0F3020)}
+.h-bench svg{width:14px;height:14px;stroke:var(--cc-gris,#5b6b61);fill:none;stroke-width:2;flex-shrink:0}
+.h-caja{width:100%;box-sizing:border-box;background:#fff;border:1px solid var(--cc-linea2,#d9dfd6);border-radius:22px;box-shadow:0 8px 30px rgba(15,48,32,.08);padding:14px 14px 10px;text-align:left}
+.h-caja textarea{width:100%;box-sizing:border-box;border:0;outline:0;resize:none;font:16px/1.45 'Inter',sans-serif;color:var(--cc-tinta,#13201a);background:transparent;padding:4px 6px 10px;max-height:160px}
+.h-bar{display:flex;justify-content:flex-end}
+.h-bar button{width:44px;height:44px;border-radius:50%;border:0;background:var(--cc-verde,#0F3020);display:flex;align-items:center;justify-content:center;cursor:pointer}
+.h-bar button svg{width:18px;height:18px;stroke:var(--cc-oro,#F0C040);fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.dir{border-top:1px solid var(--cc-linea,#e1e6df);padding-top:34px}
+.dir h2{font-family:'Sora',sans-serif;font-weight:600;font-size:21px;letter-spacing:-.03em;margin:0 0 14px}
+.dir h2 .by{display:block;font:400 14px 'Inter',sans-serif;letter-spacing:0;color:var(--cc-gris,#5b6b61);margin-top:4px}
+@media(max-width:860px){.hero-ia{min-height:calc(100dvh - 120px);padding-bottom:60px}}
+@media(max-width:520px){.h-bench .linea{font-size:11px;text-align:left}}
+`;
+// Enter envía; la pregunta se contesta en la home (/?q=), con el país como contexto (igual que el chat contextual).
+const HERO_JS = `(function(){var f=document.getElementById('heroForm');if(!f)return;var t=document.getElementById('heroQ');
+function go(){var q=(t.value||'').trim();if(!q){t.focus();return;}
+try{if(window.cc&&window.cc.track)window.cc.track('chat_contextual','pais_hub',{pagina:location.pathname},true);}catch(e){}
+location.href='/?q='+encodeURIComponent((f.getAttribute('data-contexto')+': '+q).slice(0,480));}
+f.addEventListener('submit',function(e){e.preventDefault();go();});
+t.addEventListener('keydown',function(e){if(e.key==='Enter'&&!e.shiftKey&&!e.isComposing){e.preventDefault();go();}});})();`;
+
 function hubPais(ctx, slug, pais, datos, total) {
   const { esc, SITE, CBD_CSS, trimText } = ctx;
   const canonical = `${SITE}/${slug}/`;
@@ -229,14 +259,27 @@ function hubPais(ctx, slug, pais, datos, total) {
     const top = [...datos[k].grupos.values()].filter((g) => g.prov).slice(0, 3).map((g) => g.nombre).join(', ');
     return `<a class="dir-card" href="/${slug}/${k}/"><b>${esc(t.h)}</b><span>${fmt(n(k))} ${esc(n(k) === 1 ? t.singular : t.plural)}${top ? ` · ${esc(top)}` : ''}</span></a>`;
   }).join('\n');
-  const body = `<style>${CBD_CSS}</style>
-<nav class="crumbs"><a href="/">Inicio</a> › ${esc(pais.nombre)}</nav>
-<h1>Directorio cannabis en ${esc(pais.nombre)}<span class="by">Clubes, growshops y tiendas de CBD por ${esc(pais.region)}</span></h1>
+  // Portada limpia como la home de España (hero con caja de chat); el directorio del país va debajo, al final.
+  const body = `<style>${CBD_CSS}${HERO_CSS}</style>
+<section class="hero-ia">
+<a class="h-bench" href="/benchmark-ia.html"><span class="linea"><span class="tag">Benchmark</span><span>Saca <b>8,8/10</b> frente a 4,6 de GPT-4o, Grok y DeepSeek en datos de cultivo reales</span><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></span></a>
+<h1>Cannabis IA</h1>
+<p class="h-lema">La inteligencia artificial del cannabis en ${esc(pais.nombre)}</p>
+<form class="h-caja" id="heroForm" data-contexto="Desde ${esc(pais.nombre)}" role="search">
+<label class="cc-sr" for="heroQ">Pregunta a Cannabicultor IA</label>
+<textarea id="heroQ" rows="2" maxlength="400" placeholder="Pregúntale a la IA del cannabis…"></textarea>
+<div class="h-bar"><button type="submit" aria-label="Preguntar"><svg viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button></div>
+</form>
+</section>
+<section class="dir" aria-labelledby="dirT">
+<h2 id="dirT">Directorio cannabis en ${esc(pais.nombre)}<span class="by">Clubes, growshops y tiendas de CBD por ${esc(pais.region)}</span></h2>
 ${total > 0 ? `<p class="body">Reunimos <strong>${fmt(total)} fichas</strong> de cannabis en ${esc(pais.nombre)}: ${fmt(n('growshops'))} growshops (${esc(TIPOS.growshops.que)}), ${fmt(n('asociaciones'))} clubes y asociaciones, y ${fmt(n('tiendas-cbd'))} tiendas de CBD. Elige un tipo para ver el listado por ${esc(pais.region)}.</p>
 <div class="dir-grid">${cards}</div>`
   : `<p class="body">Todavía no tenemos fichas de ${esc(pais.nombre)}. Estamos reuniendo los primeros datos. Si conoces un growshop, club o tienda de CBD, escríbenos a <a href="mailto:hola@cannabicultor.com">hola@cannabicultor.com</a>.</p>`}
-${faqBlock(ctx, faq)}`;
-  return { html: pageShell(ctx, slug, pais, { title, desc, canonical, jsonld, bodyHtml: body, indexable,
+${faqBlock(ctx, faq)}
+</section>
+<script>${HERO_JS}</script>`;
+  return { html: pageShell(ctx, slug, pais, { title, desc, canonical, jsonld, bodyHtml: body, indexable, dock: '',
     // Par recíproco con la home solo si la portada se indexa (un país vacío va noindex, sin hreflang cruzado).
     hreflangs: indexable ? [{ lang: pais.locale, href: canonical }, { lang: 'es', href: `${SITE}/` }, { lang: 'x-default', href: `${SITE}/` }] : undefined }) };
 }

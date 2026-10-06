@@ -11,6 +11,14 @@
   document.head.appendChild(s);
 })();
 
+/* Selector de país (bandera arriba a la derecha) en todas las páginas con carcasa. */
+(function () {
+  if (window.__ccSelectorPais || document.querySelector('script[src*="selector-pais.js"]')) return;
+  var s = document.createElement('script');
+  s.src = '/assets/selector-pais.js?v=20261006b';
+  document.head.appendChild(s);
+})();
+
 /* Cannabicultor IA — carcasa común: menú móvil + chat contextual.
    El chat de las fichas no responde aquí: envía la pregunta a la home (/?q=), que
    la contesta con el límite anónimo y el registro dentro del chat. */
