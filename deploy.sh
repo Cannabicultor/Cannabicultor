@@ -126,6 +126,7 @@ ASSET_FILES=(
   assets/analytics.js
   assets/config.js
   assets/menu-pais.js
+  assets/selector-pais.js
   assets/auth.js
   assets/chat-vision.js
   assets/resenas.js
