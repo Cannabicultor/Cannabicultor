@@ -32,16 +32,21 @@ async function sb(path, { method = 'GET', body, prefer } = {}) {
 
 async function main() {
   const backups = await sb(`seo_indexable_backup?select=id,variedad_id,indexable_anterior&seo_text_batch=eq.${encodeURIComponent(batchId)}&order=id.asc&limit=10000`);
-  if (!backups.length) {
-    console.log(`No hay filas de seo_indexable_backup para el lote "${batchId}". ¿Id correcto?`);
-    return;
-  }
   // "seo-…" = lote de gen-seo-text.mjs (texto + indexable). Cualquier otro prefijo
   // ("canon-…" de apply-canonical.mjs, "thin-…" de downgrade-thin-indexable.mjs, …)
   // solo tocó indexable (y canonical_variedad_id en el caso de canon-), nunca el texto.
   const esLoteDeTexto = batchId.startsWith('seo-');
+  // Un lote de texto también marca fichas que YA eran indexables: no cambia su
+  // `indexable`, así que no tienen fila de backup. Se localizan por seo_text_batch.
+  const conTexto = esLoteDeTexto
+    ? await sb(`variedades?select=id&seo_text_batch=eq.${encodeURIComponent(batchId)}&limit=10000`)
+    : [];
+  if (!backups.length && !conTexto.length) {
+    console.log(`No hay filas de seo_indexable_backup ni fichas con seo_text_batch para el lote "${batchId}". ¿Id correcto?`);
+    return;
+  }
   const tipoLote = esLoteDeTexto ? 'generación de texto' : batchId.startsWith('canon-') ? 'canonicalización' : batchId.startsWith('thin-') ? 'thin content' : 'indexable';
-  console.log(`▸ Lote ${batchId} (${tipoLote}): ${backups.length} fichas a restaurar${DRY_RUN ? ' (DRY RUN)' : ''}`);
+  console.log(`▸ Lote ${batchId} (${tipoLote}): ${backups.length} con indexable a restaurar${esLoteDeTexto ? `, ${conTexto.length} con texto a limpiar` : ''}${DRY_RUN ? ' (DRY RUN)' : ''}`);
 
   if (DRY_RUN) {
     for (const b of backups.slice(0, 10)) console.log(`  variedad #${b.variedad_id}: indexable volvería a ${b.indexable_anterior}`);
@@ -66,6 +71,17 @@ async function main() {
         };
     await sb(`variedades?id=eq.${b.variedad_id}`, { method: 'PATCH', prefer: 'return=minimal', body });
     restauradas++;
+  }
+  // Fichas del lote sin fila de backup (ya eran indexables): solo se limpia el estado del texto.
+  if (esLoteDeTexto) {
+    const enBackup = new Set(backups.map((b) => b.variedad_id));
+    let limpiadas = 0;
+    for (const f of conTexto) {
+      if (enBackup.has(f.id)) continue;
+      await sb(`variedades?id=eq.${f.id}`, { method: 'PATCH', prefer: 'return=minimal', body: { seo_text_status: null, seo_text_batch: null } });
+      limpiadas++;
+    }
+    if (limpiadas) console.log(`✓ ${limpiadas} fichas más (ya indexables) con el estado del texto limpiado.`);
   }
   await sb(`seo_indexable_backup?seo_text_batch=eq.${encodeURIComponent(batchId)}`, { method: 'DELETE' });
   console.log(`✓ ${restauradas} fichas restauradas.${esLoteDeTexto ? ' Se regenerarán en la próxima corrida de gen-seo-text.mjs.' : ''}`);

@@ -6,12 +6,26 @@ import {
   verificarAdornos, esqueletoFrase, esqueletosFrases, crearContadoresFrases,
   algunaFraseSobrerrepetida, registrarEsqueletosFrases, frecuenciaEsqueleto,
   numerosDeTexto, numerosDeFicha, datosCannabinoidesDudosos,
+  valorSaborEfectoValido, geneticaValida, terpenosEnEspanol, sinPorcentajes, saborEnEspanol, efectoEnEspanol, nivelEnEspanol,
 } from './gen-seo-text.mjs';
 
 let pass = 0, fail = 0;
 function check(name, cond) { if (cond) pass++; else { fail++; console.log('FAIL:', name); } }
 
 const sinDuplicadas = new Set();
+
+// ── Filtro de sabor/efecto: basura de scraping vs listas válidas ───────────
+for (const ok of ['Citrus, Pine, Lemon', 'Lime, Citrus, Tree fruit, Lemon, Orange', 'relaxed, happy', 'energetic', 'Queso', 'cítrico', 'limón', 'Chem Gas, Earthy, Skunk']) {
+  check(`sabor/efecto válido: "${ok}"`, valorSaborEfectoValido(ok));
+}
+for (const mal of ['and no wonder', 'times magazine', 'and flavor', 'Very intense', 'of Kush? Either way this cross has it all!', 'Buds / Leaves The ratio of buds to leaves is very good',
+  'Natural, oldschool mexican sativa, citrusy woodsyEffect: Happy, laughing', 'Chem Gas, Earthy, SkunkSexual Stability: Minimal', 'with heavy full-body effects that will impress any veteran consumer',
+  'Times Cannabis Cup 2010 Sativa 3rd Place', '', null, 42]) {
+  check(`sabor/efecto descartado: "${mal}"`, !valorSaborEfectoValido(mal));
+}
+const fichaFiltrada = buildFicha({ nombre: 'X', sabor: 'and no wonder', sabores: ['Citrus', 'times magazine', 'Pine'], efecto: 'times magazine' }, null, new Set());
+check('buildFicha: sabor basura cae a sabores[] filtrado', fichaFiltrada.sabor === 'cítrico, pino');
+check('buildFicha: efecto basura sin alternativa se omite', !('efecto' in fichaFiltrada));
 
 // ── Caso real reportado por Ernie (lote 1): 00 Cheese ──────────────────────
 // Antes del fix, numerosDeFicha() solo miraba thc/cbd/floracion/año, así que
@@ -100,7 +114,7 @@ global.fetch = originalFetch;
 // ════════════════════════════════════════════════════════════════════════
 {
   const fichaA = buildFicha({ nombre: 'Amnesia Haze', terpenos: 'mirceno, limoneno y cariofileno', sabor: 'cítrico', efecto: 'energético' }, 'Dutch Passion', sinDuplicadas);
-  const fichaB = buildFicha({ nombre: 'Lemon Skunk', terpenos: 'limoneno, pineno y humuleno', sabor: 'a limón', efecto: 'eufórico' }, 'Dutch Passion', sinDuplicadas);
+  const fichaB = buildFicha({ nombre: 'Lemon Skunk', terpenos: 'limoneno, pineno y humuleno', sabor: 'limón', efecto: 'eufórico' }, 'Dutch Passion', sinDuplicadas);
 
   const textoA = 'Amnesia Haze es una sativa muy conocida en Europa. Su perfil terpénico combina mirceno, limoneno y cariofileno, con sabor a cítrico y efecto energético. Es ideal para cultivo en exterior.';
   const textoB = 'Lemon Skunk destaca por su vigor en cultivo. Su perfil terpénico combina limoneno, pineno y humuleno, con sabor a limón y efecto eufórico. Se recomienda para cultivadores con experiencia.';
@@ -141,6 +155,55 @@ global.fetch = originalFetch;
   // pero la frase 1, al ser distinta cada vez, no se dispara por esto
   check('la frase 1 de ese mismo lote NO está sobrerrepetida (todas las aperturas son distintas)', frecuenciaEsqueleto(contadoresLote2[0], sksB[0]) === 0);
 }
+
+// ── Terpenos en español y calificativos prohibidos ─────────────────────────
+check('terpenos: traduce nombres y conserva porcentajes', terpenosEnEspanol('myrcene (49.0%), Pinene (36.7%), caryophyllene oxide (1%), linalool (7.9%)') === 'mirceno (49.0%), pineno (36.7%), óxido de cariofileno (1%), linalool (7.9%)');
+check('buildFicha: terpenos en español', buildFicha({ nombre: 'X', terpenos: 'limonene (10%), humulene (5%)' }, null, new Set()).terpenos === 'limoneno, humuleno');
+check('estilo: terpeno en inglés se detecta', tieneErroresOrtografia('Destaca por su limonene.', {}));
+check('estilo: "potente" inventado se detecta', tieneErroresOrtografia('¿Buscas una feminizada de cruce potente?', { nombre: 'Chocolope' }));
+check('estilo: "potente" literal en la ficha se tolera', !tieneErroresOrtografia('Cruce potente.', { descripcion: 'cruce potente' }));
+check('estilo: texto limpio pasa', !tieneErroresOrtografia('Variedad feminizada con 63 días de floración y mirceno.', {}));
+
+check('sinPorcentajes quita (xx.x%)', sinPorcentajes('mirceno (49.0%), pineno (0,07%), linalool') === 'mirceno, pineno, linalool');
+check('sabor EN→ES con descarte de desconocidos', saborEnEspanol('Earthy, Pine, seeds co, zzz') === 'terroso, pino');
+check('sabor ya en español pasa', saborEnEspanol('dulce, cítrico') === 'dulce, cítrico');
+check('sabor sin ningún token conocido → undefined', saborEnEspanol('seeds co, final yield') === undefined);
+check('efecto EN→ES', efectoEnEspanol('energetic, creative, giggly') === 'energético, creativo, risueño');
+check('efecto descarta basura y couch-lock', efectoEnEspanol('thc content, couch-lock') === undefined);
+check('altura tall → alta', nivelEnEspanol('Tall') === 'alta');
+check('producción high → alta; media se mantiene', nivelEnEspanol('high') === 'alta' && nivelEnEspanol('media') === 'media');
+check('rango con cifras se conserva', nivelEnEspanol('450-500 g/m²') === '450-500 g/m²');
+check('palabra suelta desconocida se descarta', nivelEnEspanol('enorme') === undefined);
+check('buildFicha: altura/producción/efecto en español', (() => { const f = buildFicha({ nombre: 'X', altura: 'Tall', produccion: 'High', efecto: 'energetic, creative' }, null, new Set()); return f.altura === 'alta' && f.produccion === 'alta' && f.efecto === 'energético, creativo'; })());
+
+for (const ok of ['Durban x RS11', 'Gelato #45 x Gelato #45', '24k Gold x LSP', '[G13 x Black Widow] x Firecracker', 'Old Time Moonshine x Cinderella 99', '818 SFV OG x Hashplant', 'AK47 x Unknown Ruderalis', 'Blueberry Cookies x Georgia Pie', 'Skunk #1 x Cheese', 'Chocolate Thai x Cannalope']) {
+  check(`genética válida: "${ok}"`, geneticaValida(ok));
+}
+for (const mal of ['ockout. The Citrus Knockout #5 was Juggernaut x Lemon Skunk', 'Basic infosACDC x ACDC 78  is an unknown fromGreen Bodhiand', 'Gelato 33 x Sorbet Flowering time', '600 gr x m2 Outdoor Production',
+  'Original Bubble Gum x Ruderalis Indoor yield 350 gr / m2 Outdoor pro', 'Ruderalis x AmnesiaDo you find mistakes or wrong informati', 'Las Vegas Lemon Skunk x Unknown Skunk Las Vegas Lemon Skunk Unknown Sk',
+  'e Seeds Bank DescriptionEs un cruce de Amnesia x Hash Plant Haze', 'Boss Banner - Bruce Banner x Sour Strawberry loving this Boss Banner taste', 'a very long phrase without any cross at all here', 'Sunset Sherbet x Thin Mint Cookies Sunset Sherbet', 'Outlaw Gorilla Grape x Cinderella 99Filial Generation', 'Dirty Bitch x Pineapple Madness #16Genotype', 'Amnesia XXL Auto x Auto CBD Complete life cycle', 'Tropical Smoothie x Bacio Gelato Indica Growth Height', 'Crescendo RBX1 x Fatso Made by crossing Ethos Crescendo RBX1', 'Afghan Mutant Pheno x Frost Berry Blast Indica / Sativa', '', null]) {
+  check(`genética descartada: "${mal}"`, !geneticaValida(mal));
+}
+check('buildFicha: notas boilerplate de SeedFinder no se pasan', !('notas_existentes' in buildFicha({ nombre: 'X', descripcion: 'Independent, standardized information about Foo cannabis-strain X! Find phenotypes' }, 'Foo', new Set())));
+check('buildFicha: notas propias sí se pasan', 'notas_existentes' in buildFicha({ nombre: 'X', descripcion: 'Una descripción propia y única de esta variedad.' }, 'Foo', new Set()));
+check('buildFicha: genética rota se omite', !('genetica' in buildFicha({ nombre: 'X', genetica: 'Gelato 33 x Sorbet Flowering time' }, null, new Set())));
+
+check('relleno: "orientada a cultivadores que buscan" se detecta', tieneErroresOrtografia('Es una incorporación al catálogo de la casa, orientada a cultivadores que buscan un ciclo definido.', {}));
+check('relleno: "El cultivador dispone así" se detecta', tieneErroresOrtografia('El cultivador dispone así de una genética con esos componentes.', {}));
+check('relleno: texto con solo datos pasa', !tieneErroresOrtografia('Florece en 63 días y alcanza un 18% de THC. Terpenos: mirceno y pineno.', {}));
+
+const fCho = { nombre: 'Chocolope', breeder: 'DNA Genetics Seeds', tipo_semilla: 'feminizada', genetica: 'Chocolate Thai x Cannalope', thc_pct: 23, floracion_dias: 63, terpenos: 'limoneno, mirceno' };
+check('frase vacía: "Esta combinación genética define una variedad…" se detecta', tieneErroresOrtografia('Chocolope florece en 63 días con 23% de THC. Esta combinación define una variedad con esos parámetros.', fCho));
+check('cifra repetida en dos frases se detecta', tieneErroresOrtografia('Chocolope florece en 63 días. El ciclo de floración se completa en 63 días.', fCho));
+check('frases con datos distintos pasan', !tieneErroresOrtografia('Chocolope, de DNA Genetics Seeds, florece en 63 días. Alcanza un 23% de THC y contiene limoneno y mirceno.', fCho));
+check('"Cierra con" se detecta', tieneErroresOrtografia('Cierra con mirceno y limoneno.', fCho));
+check('primera frase tipo pregunta no se penaliza', !tieneErroresOrtografia('¿Buscas algo distinto? Chocolope florece en 63 días.', fCho));
+
+check('buildFicha: aromas en español', buildFicha({ nombre: 'X', aromas: ['Blueberry', 'Earthy', 'zzz'] }, null, new Set()).aromas === 'arándano, terroso');
+
+check('relleno: causa-efecto terpenos→sabor se detecta', tieneErroresOrtografia('Gracias a terpenos como mirceno, su sabor se define por uva, lo que se traduce en un efecto relajado.', {}));
+check('relleno: "características organolépticas" se detecta', tieneErroresOrtografia('Los terpenos definen sus características organolépticas.', {}));
+check('relleno: "Los terpenos presentes son…" (dato literal) pasa', !tieneErroresOrtografia('Los terpenos presentes son mirceno, pineno y linalool.', {}));
 
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

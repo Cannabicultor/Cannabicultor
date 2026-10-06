@@ -158,15 +158,144 @@ async function registrarRevisarDatos(v, motivo, batchId) {
   });
 }
 
+// ── Filtro de sabor/efecto ──────────────────────────────────────────────────
+// Los campos sabor/efecto vienen del scraping de SeedFinder y a menudo traen
+// trozos de texto partidos a media frase ("and no wonder", "times magazine",
+// premios de otra variedad, "…SkunkSexual Stability: …"). Un valor válido es una
+// lista corta de palabras sueltas separadas por comas ("Citrus, Pine, Lemon" /
+// "relaxed, happy"). Todo lo demás se descarta: si no, el modelo lo redacta y
+// los verificadores lo darían por bueno porque "consta" en la ficha.
+const CONECTORES_INICIALES = new Set(['and', 'or', 'of', 'with', 'the', 'that', 'a', 'an', 'to', 'in', 'for', 'on', 'is', 'it', 'this', 'you', 'we', 'but', 'as', 'at', 'by', 'very', 'times', 'not', 'no']);
+const MAX_LARGO_SABOR_EFECTO = 80;
+const MAX_PALABRAS_POR_ITEM = 3;
+
+function valorSaborEfectoValido(valor) {
+  if (typeof valor !== 'string') return false;
+  const t = valor.trim();
+  if (!t || t.length > MAX_LARGO_SABOR_EFECTO) return false;
+  if (!/^[\p{L}][\p{L}\s,'-]*$/u.test(t)) return false;          // sin dígitos, ":", "?", "!", comillas…
+  if (/\p{Ll}\p{Lu}/u.test(t)) return false;                       // "woodsyEffect": texto pegado sin espacio
+  const items = t.split(',').map((x) => x.trim());
+  if (items.some((x) => !x || x.split(/\s+/).length > MAX_PALABRAS_POR_ITEM)) return false;
+  if (items.some((x) => CONECTORES_INICIALES.has(x.split(/\s+/)[0].toLowerCase()))) return false;
+  return true;
+}
+
+// Devuelve el valor (string) si es válido, o el array filtrado (undefined si no queda nada).
+function limpiarSaborEfecto(valor, alternativa) {
+  if (valorSaborEfectoValido(valor)) return valor.trim();
+  const arr = Array.isArray(alternativa) ? alternativa.filter(valorSaborEfectoValido).map((x) => x.trim()) : [];
+  return arr.length ? arr : undefined;
+}
+
+// ── Terpenos en español ─────────────────────────────────────────────────────
+// La fuente trae los nombres en inglés (myrcene, pinene…). Se traducen aquí, en
+// la ficha que ve el modelo, para que el texto salga en español y los
+// verificadores comparen contra los mismos nombres.
+const TERPENOS_ES = {
+  myrcene: 'mirceno', pinene: 'pineno', caryophyllene: 'cariofileno', limonene: 'limoneno',
+  humulene: 'humuleno', linalool: 'linalool', terpinolene: 'terpinoleno', ocimene: 'ocimeno',
+  bisabolol: 'bisabolol', nerolidol: 'nerolidol', farnesene: 'farneseno', camphene: 'canfeno',
+  guaiol: 'guaiol', eucalyptol: 'eucaliptol', borneol: 'borneol', geraniol: 'geraniol',
+  terpineol: 'terpineol', valencene: 'valenceno', phellandrene: 'felandreno', carene: 'careno',
+  sabinene: 'sabineno', fenchol: 'fenchol', cymene: 'cimeno', pulegone: 'pulegona',
+  'caryophyllene oxide': 'óxido de cariofileno',
+};
+const RE_TERPENOS_EN = new RegExp(`\\b(${Object.keys(TERPENOS_ES).sort((a, b) => b.length - a.length).join('|')})\\b`, 'gi');
+function terpenosEnEspanol(texto) {
+  return typeof texto === 'string' ? texto.replace(RE_TERPENOS_EN, (m) => TERPENOS_ES[m.toLowerCase()]) : texto;
+}
+
+// Los porcentajes de terpenos de la fuente son puntuaciones relativas (suman
+// >100%), no concentraciones: se quita el "(49.0%)" y queda solo la lista.
+function sinPorcentajes(terpenos) {
+  return typeof terpenos === 'string' ? terpenos.replace(/\s*\(\s*[\d.,]+\s*%\s*\)/g, '').trim() : terpenos;
+}
+
+// ── Vocabulario en español (sabor, efecto, altura, producción) ─────────────
+// Diccionarios cerrados sobre los valores reales de la BD. Un token que no esté
+// en el diccionario ni sea ya un valor español conocido se DESCARTA (nunca se
+// traduce a ojo ni se deja en inglés).
+const SABOR_ES = {
+  earthy: 'terroso', diesel: 'diésel', berry: 'frutos rojos', sweet: 'dulce', woody: 'amaderado', lemon: 'limón',
+  pungent: 'penetrante', flowery: 'floral', floral: 'floral', citrus: 'cítrico', blueberry: 'arándano', skunk: 'skunk',
+  cheese: 'queso', 'blue cheese': 'queso azul', pine: 'pino', grape: 'uva', tropical: 'tropical', chemical: 'químico',
+  pineapple: 'piña', pepper: 'pimienta', mint: 'menta', lavender: 'lavanda', apple: 'manzana', vanilla: 'vainilla',
+  coffee: 'café', mango: 'mango', tea: 'té', tobacco: 'tabaco', orange: 'naranja', honey: 'miel', ammonia: 'amoníaco',
+  apricot: 'albaricoque', kush: 'kush', butter: 'mantequilla', violet: 'violeta', 'tree fruit': 'fruta de árbol',
+  nutty: 'frutos secos', strawberry: 'fresa', grapefruit: 'pomelo', sage: 'salvia', lime: 'lima', tar: 'alquitrán',
+  plum: 'ciruela', menthol: 'mentol', chocolate: 'chocolate', chestnut: 'castaña', gas: 'gas', cherry: 'cereza',
+  peach: 'melocotón', rose: 'rosa', spicy: 'especiado', herbal: 'herbal', sour: 'ácido',
+};
+const SABOR_ES_YA = ['dulce', 'frutal', 'tierra', 'terroso', 'cítrico', 'vainilla', 'cremoso', 'galleta', 'menta', 'caramelo', 'naranja', 'manzana', 'limón', 'pino', 'café', 'chocolate', 'miel', 'queso', 'fresa', 'uva'];
+const EFECTO_ES = {
+  happy: 'feliz', uplifted: 'animado', euphoric: 'eufórico', creative: 'creativo', energetic: 'energético',
+  relaxed: 'relajado', focused: 'enfocado', talkative: 'hablador', sleepy: 'somnoliento', hungry: 'con apetito',
+  giggly: 'risueño', tingly: 'con hormigueo',
+};
+const EFECTO_ES_YA = ['relajante', 'eufórico', 'creativo', 'sedante', 'energético', 'cerebral', 'analgésico', 'estimulante del apetito', 'feliz', 'activo', 'social', 'físico', 'estimulante', 'medicinal', 'funcional', 'enfocado', 'hablador'];
+const NIVEL_ES = { tall: 'alta', high: 'alta', 'very high': 'muy alta', medium: 'media', short: 'baja', low: 'baja', alta: 'alta', media: 'media', baja: 'baja', 'muy alta': 'muy alta' };
+
+function traducirLista(valor, enEs, yaEs) {
+  const ya = new Set(yaEs);
+  const items = (Array.isArray(valor) ? valor : String(valor).split(',')).map((x) => String(x).trim().toLowerCase()).filter(Boolean);
+  const out = [];
+  for (const t of items) {
+    const es = enEs[t] || (ya.has(t) ? t : null);
+    if (es && !out.includes(es)) out.push(es);
+  }
+  return out.length ? out.join(', ') : undefined;
+}
+const saborEnEspanol = (v) => (v == null ? undefined : traducirLista(v, SABOR_ES, SABOR_ES_YA));
+const efectoEnEspanol = (v) => (v == null ? undefined : traducirLista(v, EFECTO_ES, EFECTO_ES_YA));
+// "tall"/"high"… se traducen; rangos con cifras ("450-500 g/m²") se dejan tal cual; el resto de palabras sueltas se descarta.
+function nivelEnEspanol(valor) {
+  if (valor == null || valor === '') return undefined;
+  const t = String(valor).trim();
+  if (/\d/.test(t)) return t;
+  return NIVEL_ES[t.toLowerCase()];
+}
+
+// ── Filtros de genética y notas ─────────────────────────────────────────────
+// `genetica` viene del scraping con restos: fragmentos cortados a media palabra,
+// frases enteras, "…Flowering Time", "…Indoor yield 350 gr / m2". Válida = un
+// cruce corto con aspecto de nombres de variedad. Ante la duda se descarta
+// (el texto simplemente no habla de la genética).
+const GENETICA_BASURA = /\b(is|was|are|from|which|its|this|amazing|beautiful|cross between|lineage|mix of|crossed|flowering|yield|outdoor|indoor|production|seeds?|description|infos?|information|mistakes|taste|loving|bred|male|female|version|level|thc|gr|m2|cruce|es un|entre|life|cycle|growth|height|aroma|indica|sativa|hybrid|híbrido|posiblemente|made|crossing|winning|appearance|harvest|variety|comprehensive|complete|cup|family|generation|genotype|cultivation|filial)\b/i;
+function geneticaValida(g) {
+  if (typeof g !== 'string') return false;
+  const t = g.trim();
+  if (t.length < 3 || t.length >= 68) return false;                  // ~70 = cortada por el scraper
+  if (!/^[\p{Lu}\p{N}\[(]/u.test(t)) return false;                  // empieza en minúscula: fragmento cortado
+  if (/\p{Ll}\p{Lu}/u.test(t.replace(/\b(Mc|Mac|De|Le|La)(?=\p{Lu})/gu, ''))) return false;  // texto pegado ("AmnesiaDo you…")
+  if (GENETICA_BASURA.test(t)) return false;
+  if (/[?:;]/.test(t)) return false;
+  if (t.split(/\s+x\s+/i).some((seg) => seg.trim().split(/\s+/).length > 6)) return false;  // un "padre" de >6 palabras es una frase pegada
+  if (/\p{N}\p{Lu}\p{Ll}{3,}/u.test(t)) return false;              // "99Filial", "#16Genotype": texto pegado a un número
+  const primero = t.split(/\s+x\s+/i)[0].trim().toLowerCase();
+  // el 1.er padre reaparece pegado a otro texto (un padre repetido ENTERO, "A x A", es válido)
+  const resto = t.split(/\s+x\s+/i).slice(1).map((x) => x.trim().toLowerCase());
+  if (primero.split(/\s+/).length >= 2 && resto.some((seg) => seg !== primero && seg.includes(primero))) return false;
+  const pal = t.split(/\s+/);
+  if (!/\sx\s/i.test(t) && pal.length > 4) return false;           // sin cruce y larga: frase, no genética
+  for (let i = 0; i + 3 <= pal.length; i++) {                        // secuencia de 3 palabras repetida
+    const tri = pal.slice(i, i + 3).join(' ').toLowerCase();
+    if (pal.join(' ').toLowerCase().split(tri).length > 2) return false;
+  }
+  return true;
+}
+// La descripción de SeedFinder es casi siempre un boilerplate en inglés que lleva el nombre de la ficha (no se detecta como duplicado).
+const NOTAS_BOILERPLATE = /^\s*Independent, standardized information/i;
+
 // ── Ficha que ve el modelo (misma fuente para el prompt y para las cifras permitidas) ──
 function buildFicha(v, breeder, descripcionesDuplicadas) {
-  const descUnica = v.descripcion && !descripcionesDuplicadas.has(v.descripcion.trim());
+  const descUnica = v.descripcion && !descripcionesDuplicadas.has(v.descripcion.trim()) && !NOTAS_BOILERPLATE.test(v.descripcion);
   const cannabinoidesDudosos = Boolean(datosCannabinoidesDudosos(v));
   const ficha = {
     nombre: v.nombre,
     breeder: breeder || undefined,
     tipo_semilla: v.tipo || v.tipo_semilla || undefined,
-    genetica: v.genetica || undefined,
+    genetica: geneticaValida(v.genetica) ? v.genetica.trim() : undefined,
     es_landrace: v.es_landrace || undefined,
     origen_geografico: v.origen_geografico || undefined,
     // Si son dudosos (posible intercambio en el origen de datos) no se pasan al
@@ -175,12 +304,12 @@ function buildFicha(v, breeder, descripcionesDuplicadas) {
     thc_pct: cannabinoidesDudosos ? undefined : (v.thc_max ?? v.thc_pct ?? undefined),
     cbd_pct: cannabinoidesDudosos ? undefined : (v.cbd_max ?? v.cbd_pct ?? undefined),
     floracion_dias: v.floracion_dias || undefined,
-    altura: v.altura || undefined,
-    produccion: v.produccion || undefined,
-    terpenos: v.terpenos || undefined,
-    aromas: v.aromas?.length ? v.aromas : undefined,
-    sabor: v.sabor || (v.sabores?.length ? v.sabores : undefined),
-    efecto: v.efecto || (v.efectos?.length ? v.efectos : undefined),
+    altura: nivelEnEspanol(v.altura),
+    produccion: nivelEnEspanol(v.produccion),
+    terpenos: sinPorcentajes(terpenosEnEspanol(v.terpenos)) || undefined,
+    aromas: saborEnEspanol(v.aromas?.length ? v.aromas : undefined),
+    sabor: saborEnEspanol(limpiarSaborEfecto(v.sabor, v.sabores)),
+    efecto: efectoEnEspanol(limpiarSaborEfecto(v.efecto, v.efectos)),
     anio_lanzamiento: v.anio_lanzamiento || undefined,
     // Solo si es de ESTA variedad: si el mismo texto aparece en otras fichas es
     // boilerplate/plantilla, no un dato fiable de "notas_existentes".
@@ -218,14 +347,14 @@ const ESTRUCTURAS_TERPENOS = [
   'Para los terpenos, el sabor y el efecto (si constan): intégralos en una frase subordinada dentro de otra idea, no como frase propia aparte.',
   'Para los terpenos, el sabor y el efecto (si constan): dedica una frase entera solo a la genética o el linaje, y menciónalos en otra frase distinta, no seguidas.',
   'Para los terpenos, el sabor y el efecto (si constan): junta el efecto y el sabor en una frase, y los terpenos en otra frase distinta.',
-  'Para los terpenos, el sabor y el efecto (si constan): enlázalos con una relación de causa-efecto ("gracias a…", "lo que se traduce en…"), no como enumeración.',
-  'Para los terpenos, el sabor y el efecto (si constan): preséntalos como la experiencia del cultivador al fumarla u olerla, sin fórmula fija.',
+  'Para los terpenos, el sabor y el efecto (si constan): preséntalos en frases separadas, sin atribuir uno a otro (los terpenos no "causan" el sabor ni el efecto en la ficha).',
+  'Para los terpenos, el sabor y el efecto (si constan): preséntalos desde el punto de vista del cultivador, sin fórmula fija y sin decir que se perciben los terpenos por su nombre.',
   'Para los terpenos, el sabor y el efecto (si constan): combínalos en una sola cláusula breve, sin usar la palabra "perfil".',
   'Para los terpenos, el sabor y el efecto (si constan): déjalos para el cierre del párrafo, no en medio.',
 ];
 
 function buildPrompt(ficha, aberturaIdx) {
-  const system = `Eres un redactor técnico de cannabis para Cannabicultor, un medio español especializado en cultivo. Escribes en español de España, con tono experto y directo, sin superlativos vacíos ni emojis. Usas EXCLUSIVAMENTE los datos que te dan en el JSON de la ficha: si un dato no aparece, no lo mencionas, no lo inventas y no lo estimas. Prohibido inventar cifras (THC, CBD, floración, año, premios) o genética que no esté en la ficha. Escribe con ortografía española correcta, incluidas todas las tildes (genética, floración, producción, días, selección, terpénico, herbáceo…), aunque los datos del JSON vengan sin ellas. Los decimales se escriben con coma (19,5%), nunca con punto. No añadas calificativos, sabores, aromas ni efectos que no estén literalmente en la ficha: si dice "Queso", no escribas "queso curado"; no digas "compacta", "vigorosa", "tropical" ni cualidades parecidas salvo que consten tal cual en el JSON. Nunca uses literalmente la construcción "Su perfil terpénico combina X, Y y Z, con sabor a ... y efecto ...": se ha repetido demasiado en fichas anteriores.`;
+  const system = `Eres un redactor técnico de cannabis para Cannabicultor, un medio español especializado en cultivo. Escribes en español de España, con tono experto y directo, sin superlativos vacíos ni emojis. Usas EXCLUSIVAMENTE los datos que te dan en el JSON de la ficha: si un dato no aparece, no lo mencionas, no lo inventas y no lo estimas. Prohibido inventar cifras (THC, CBD, floración, año, premios) o genética que no esté en la ficha. Escribe con ortografía española correcta, incluidas todas las tildes (genética, floración, producción, días, selección, terpénico, herbáceo…), aunque los datos del JSON vengan sin ellas. Los decimales se escriben con coma (19,5%), nunca con punto. No añadas calificativos, sabores, aromas ni efectos que no estén literalmente en la ficha: si dice "Queso", no escribas "queso curado"; no digas "compacta", "vigorosa", "tropical" ni cualidades parecidas salvo que consten tal cual en el JSON. Todos los valores del JSON ya están en español (altura, producción, sabor, efecto, terpenos): úsalos tal cual, sin cambiarlos ni añadir porcentajes de terpenos. Los nombres de terpenos van en español tal cual vienen en el JSON (mirceno, pineno…): no los traduzcas al inglés ni los dejes en inglés. Prohibido añadir calificativos de valoración (potente, intensa, excelente, ideal, popular, famosa, equilibrada, aromática…) salvo que la palabra conste literalmente en el JSON. Los terpenos son componentes de la planta: nunca escribas que alguien \"percibe\" o \"huele\" un terpeno por su nombre; el sabor y el efecto solo si constan. No cierres el párrafo con una frase genérica ni digas a quién va dirigida la variedad (nada de \"orientada a cultivadores que buscan…\", \"ideal para…\", \"el cultivador dispone…\", \"incorporación al catálogo\"): termina con un dato concreto de la ficha (floración, THC, terpenos, genética…) y no añadas ninguna conclusión ni valoración. Nunca uses literalmente la construcción "Su perfil terpénico combina X, Y y Z, con sabor a ... y efecto ...": se ha repetido demasiado en fichas anteriores.`;
   const user = `Ficha de la variedad (JSON):
 ${JSON.stringify(ficha, null, 2)}
 
@@ -292,8 +421,44 @@ function cifrasVerificadas(texto, ficha) {
 
 // ── Verificación: ortografía (tildes que DeepSeek tiende a comerse) ────────
 const PALABRAS_SIN_TILDE = /\b(genetica|floracion|produccion|dias|seleccion|terpenico|herbaceo)\b/i;
-function tieneErroresOrtografia(texto) {
-  return PALABRAS_SIN_TILDE.test(texto);
+// Calificativos que DeepSeek añade por su cuenta ("cruce potente"). Solo cuentan
+// si NO aparecen literalmente en la ficha.
+const CALIFICATIVOS_PROHIBIDOS = /\b(potente|potentes|intens[oa]s?|excelente|excelentes|ideal|ideales|perfect[oa]s?|espectacular(?:es)?|sobresaliente|famos[oa]s?|popular(?:es)?|legendari[oa]s?|inigualable|imbatible|único|única|robust[oa]s?|vigoros[oa]s?|compact[oa]s?|resinos[oa]s?|aromátic[oa]s?|delicios[oa]s?|exquisit[oa]s?|equilibrad[oa]s?)\b/i;
+// Frases de relleno/cierre genérico: afirman a quién va dirigida la variedad o
+// resumen vacío que no consta en la ficha.
+const RELLENO = /(orientad[oa]s? a|dirigid[oa]s? a|pensad[oa]s? para|cultivadores? que (?:buscan|quieren|desean|prefieren)|ideal para|perfect[oa]s? para|el cultivador dispone|incorporaci[oó]n al cat[aá]logo|cierra con|gracias a (?:los |sus |esos |esta |la )?(?:terpenos|combinaci[oó]n|composici[oó]n|carga)|lo que se traduce|se traduce en|organol[eé]pticas?|car[aá]cter arom[aá]tico|efectos propios|define (?:el|su|la) (?:perfil|sabor)|definen (?:el|su|la|esta) (?:perfil|variedad|genética)|configura el perfil|representa (?:una|un) (?:opci[oó]n|incorporaci[oó]n|propuesta)|ciclo de floraci[oó]n definido|composici[oó]n cannabinoide|una opci[oó]n (?:para|interesante|s[oó]lida))/i;
+// Nombres de terpeno que se han quedado en inglés (la ficha ya los pasa en español).
+const TERPENO_EN_INGLES = /\b(myrcene|pinene|caryophyllene|limonene|humulene|terpinolene|ocimene|farnesene|camphene|eucalyptol|valencene|phellandrene)\b/i;
+// Cada frase (salvo la primera) debe aportar un dato de la ficha (cifra, nombre,
+// breeder, genética, terpeno, sabor, efecto, tipo, altura/producción). Y una misma
+// cifra no puede aparecer en dos frases ("floración de 60 días… el ciclo se completa en 60 días").
+function fraseSinDato(texto, ficha) {
+  const frases = dividirFrases(texto);
+  const tokens = new Set();
+  const add = (x) => {
+    if (typeof x === 'string') x.split(',').forEach((t) => { const k = t.trim().toLowerCase(); if (k.length > 2) tokens.add(k); });
+    else if (Array.isArray(x)) x.forEach(add);
+  };
+  for (const k of ['nombre', 'breeder', 'tipo_semilla', 'altura', 'produccion', 'terpenos', 'aromas', 'sabor', 'efecto', 'origen_geografico']) add(ficha[k]);
+  if (typeof ficha.genetica === 'string') ficha.genetica.split(/\s+x\s+/i).forEach(add);
+  const vistas = new Set();
+  return frases.some((f, i) => {
+    const nums = numerosDeTexto(f);
+    if (nums.some((n) => vistas.has(n))) return true;
+    nums.forEach((n) => vistas.add(n));
+    if (i === 0 || nums.length) return false;
+    const fl = f.toLowerCase();
+    return ![...tokens].some((t) => fl.includes(t));
+  });
+}
+function tieneErroresOrtografia(texto, ficha) {
+  if (PALABRAS_SIN_TILDE.test(texto)) return true;
+  if (TERPENO_EN_INGLES.test(texto)) return true;
+  if (RELLENO.test(texto)) return true;
+  if (ficha && ficha.nombre && fraseSinDato(texto, ficha)) return true;
+  const m = texto.match(CALIFICATIVOS_PROHIBIDOS);
+  if (m && !(ficha && JSON.stringify(ficha).toLowerCase().includes(m[0].toLowerCase()))) return true;
+  return false;
 }
 
 // ── Verificación: adornos/afirmaciones no respaldadas por la ficha ─────────
@@ -523,7 +688,7 @@ async function main() {
       let texto = decimalesConComa(await generarTexto(system, user));
       let cifrasOk = cifrasVerificadas(texto, ficha);
       let sim = cifrasOk ? maxSimilitud(texto, comparar) : 0;
-      let ortoMal = cifrasOk && tieneErroresOrtografia(texto);
+      let ortoMal = cifrasOk && tieneErroresOrtografia(texto, ficha);
       let sks = esqueletosFrases(texto, ficha);
       let skRepetido = cifrasOk && (algunaFraseSobrerrepetida(esqueletosLote, sks, ESQUELETO_MAX) || algunaFraseSobrerrepetida(contadoresBreeder, sks, ESQUELETO_MAX));
       let adornosRes = { adornos: [], parseFallo: false };
@@ -539,7 +704,7 @@ async function main() {
         texto = decimalesConComa(await generarTexto(system, user));
         cifrasOk = cifrasVerificadas(texto, ficha);
         sim = cifrasOk ? maxSimilitud(texto, comparar) : 0;
-        ortoMal = cifrasOk && tieneErroresOrtografia(texto);
+        ortoMal = cifrasOk && tieneErroresOrtografia(texto, ficha);
         sks = esqueletosFrases(texto, ficha);
         adornosRes = { adornos: [], parseFallo: false };
         if (cifrasOk) {
@@ -554,7 +719,11 @@ async function main() {
       similitudes.push(sim);
 
       const status = aprobado ? 'ok' : 'rechazado';
-      const nuevoIndexable = aprobado && senales >= MIN_SENALES;
+      // Solo se PROMUEVE a indexable (texto aprobado + señales suficientes). Un texto
+      // rechazado NUNCA saca una ficha del índice: se queda como estaba. (Antes, un
+      // rechazo la pasaba a indexable=false: con ~36% de rechazos habría sacado
+      // ~1.500 páginas del índice por un fallo de calidad del TEXTO, no de la ficha.)
+      const nuevoIndexable = (aprobado && senales >= MIN_SENALES) ? true : (v.indexable ?? false);
 
       if (v.indexable !== nuevoIndexable) {
         await backupYActivarIndexable(v.id, v.indexable ?? false, batchId);
@@ -611,7 +780,7 @@ if (ES_ENTRYPOINT) main().catch((e) => { console.error(e); process.exit(1); });
 // Exportado para worker/scripts/test-gen-seo-text.mjs (funciones puras, sin red,
 // salvo verificarAdornos que sí llama a DeepSeek — los tests le stubean fetch).
 export {
-  buildFicha, buildPrompt, ABERTURAS, ESTRUCTURAS_TERPENOS,
+  buildFicha, buildPrompt, geneticaValida, terpenosEnEspanol, sinPorcentajes, saborEnEspanol, efectoEnEspanol, nivelEnEspanol, valorSaborEfectoValido, limpiarSaborEfecto, ABERTURAS, ESTRUCTURAS_TERPENOS,
   datosCannabinoidesDudosos,
   numerosDeTexto, numerosDeFicha, cifrasVerificadas,
   decimalesConComa, tieneErroresOrtografia, verificarAdornos,
