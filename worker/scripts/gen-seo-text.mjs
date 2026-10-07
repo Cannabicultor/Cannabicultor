@@ -426,7 +426,7 @@ const PALABRAS_SIN_TILDE = /\b(genetica|floracion|produccion|dias|seleccion|terp
 const CALIFICATIVOS_PROHIBIDOS = /\b(potente|potentes|intens[oa]s?|excelente|excelentes|ideal|ideales|perfect[oa]s?|espectacular(?:es)?|sobresaliente|famos[oa]s?|popular(?:es)?|legendari[oa]s?|inigualable|imbatible|único|única|robust[oa]s?|vigoros[oa]s?|compact[oa]s?|resinos[oa]s?|aromátic[oa]s?|delicios[oa]s?|exquisit[oa]s?|equilibrad[oa]s?)\b/i;
 // Frases de relleno/cierre genérico: afirman a quién va dirigida la variedad o
 // resumen vacío que no consta en la ficha.
-const RELLENO = /(orientad[oa]s? a|dirigid[oa]s? a|pensad[oa]s? para|cultivadores? que (?:buscan|quieren|desean|prefieren)|ideal para|perfect[oa]s? para|el cultivador dispone|incorporaci[oó]n al cat[aá]logo|cierra con|gracias a (?:los |sus |esos |esta |la )?(?:terpenos|combinaci[oó]n|composici[oó]n|carga)|lo que se traduce|se traduce en|organol[eé]pticas?|car[aá]cter arom[aá]tico|efectos propios|define (?:el|su|la) (?:perfil|sabor)|definen (?:el|su|la|esta) (?:perfil|variedad|genética)|configura el perfil|representa (?:una|un) (?:opci[oó]n|incorporaci[oó]n|propuesta)|ciclo de floraci[oó]n definido|composici[oó]n cannabinoide|una opci[oó]n (?:para|interesante|s[oó]lida))/i;
+const RELLENO = /(orientad[oa]s? a|dirigid[oa]s? a|pensad[oa]s? para|cultivadores? que (?:buscan|quieren|desean|prefieren)|ideal para|perfect[oa]s? para|el cultivador dispone|incorporaci[oó]n al cat[aá]logo|cierra con|lo que (?:implica|significa|supone|evita|permite)|esto (?:implica|significa|supone)|no requiere|requerir eliminaci[oó]n|simplifica|evita (?:el sexado|la eliminaci[oó]n)|elimina(?:r|ci[oó]n de) machos|fotoperiodo|recomendad[oa]s? para|gen[eé]tica (?:americana|norteamericana|californiana|holandesa|europea|canadiense)|linaje reconocible|gracias a (?:los |sus |esos |esta |la )?(?:terpenos|combinaci[oó]n|composici[oó]n|carga)|lo que se traduce|se traduce en|organol[eé]pticas?|car[aá]cter arom[aá]tico|efectos propios|define (?:el|su|la) (?:perfil|sabor)|definen (?:el|su|la|esta) (?:perfil|variedad|genética)|configura el perfil|representa (?:una|un) (?:opci[oó]n|incorporaci[oó]n|propuesta)|ciclo de floraci[oó]n definido|composici[oó]n cannabinoide|una opci[oó]n (?:para|interesante|s[oó]lida))/i;
 // Nombres de terpeno que se han quedado en inglés (la ficha ya los pasa en español).
 const TERPENO_EN_INGLES = /\b(myrcene|pinene|caryophyllene|limonene|humulene|terpinolene|ocimene|farnesene|camphene|eucalyptol|valencene|phellandrene)\b/i;
 // Cada frase (salvo la primera) debe aportar un dato de la ficha (cifra, nombre,
@@ -780,7 +780,7 @@ if (ES_ENTRYPOINT) main().catch((e) => { console.error(e); process.exit(1); });
 // Exportado para worker/scripts/test-gen-seo-text.mjs (funciones puras, sin red,
 // salvo verificarAdornos que sí llama a DeepSeek — los tests le stubean fetch).
 export {
-  buildFicha, buildPrompt, geneticaValida, terpenosEnEspanol, sinPorcentajes, saborEnEspanol, efectoEnEspanol, nivelEnEspanol, valorSaborEfectoValido, limpiarSaborEfecto, ABERTURAS, ESTRUCTURAS_TERPENOS,
+  buildFicha, buildPrompt, RELLENO, geneticaValida, terpenosEnEspanol, sinPorcentajes, saborEnEspanol, efectoEnEspanol, nivelEnEspanol, valorSaborEfectoValido, limpiarSaborEfecto, ABERTURAS, ESTRUCTURAS_TERPENOS,
   datosCannabinoidesDudosos,
   numerosDeTexto, numerosDeFicha, cifrasVerificadas,
   decimalesConComa, tieneErroresOrtografia, verificarAdornos,

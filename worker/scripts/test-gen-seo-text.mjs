@@ -205,5 +205,10 @@ check('relleno: causa-efecto terpenos→sabor se detecta', tieneErroresOrtografi
 check('relleno: "características organolépticas" se detecta', tieneErroresOrtografia('Los terpenos definen sus características organolépticas.', {}));
 check('relleno: "Los terpenos presentes son…" (dato literal) pasa', !tieneErroresOrtografia('Los terpenos presentes son mirceno, pineno y linalool.', {}));
 
+for (const mal of ['Es una semilla feminizada, lo que implica que todas serán hembras.', 'Feminizada, lo que simplifica el cultivo al no requerir eliminación de machos.', 'Autofloreciente, con un ciclo independiente del fotoperiodo.', 'Recomendada para climas húmedos.', '¿Buscas una regular con genética americana?']) {
+  check(`conocimiento externo se detecta: "${mal.slice(0, 40)}…"`, tieneErroresOrtografia(mal, {}));
+}
+check('dato literal sigue pasando: "Su floración se completa en 63 días."', !tieneErroresOrtografia('Su floración se completa en 63 días.', {}));
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

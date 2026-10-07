@@ -970,16 +970,19 @@ async function main() {
   // — Selección de variedades —
   let pilotVars = [];
   if (DO_ALL_VARS) {
-    // SEO: solo fichas con foto y datos suficientes (evita thin content).
+    // SEO: se publican las fichas con foto Y las que, sin foto, tienen texto SEO aprobado
+    // (seo_text_status='ok': >=6 datos propios, texto único verificado, sin relleno). El texto
+    // aprobado es la garantía contra thin content que antes daba solo la foto. Todo lo demás
+    // (sin foto y sin texto aprobado) sigue sin página. Datos suficientes (>=2) para todas.
     const allVars = await fetchAll('variedades', {
       select: 'id,breeder_id,nombre,tipo,thc_pct,thc_max,cbd_pct,cbd_max,floracion_dias,genetica,altura,produccion,descripcion,image_url,img_url,es_landrace,origen_geografico,anio_lanzamiento,updated_at,terpenos,aromas,seo_description_text,seo_text_status,indexable,canonical_variedad_id,taxon_id',
-      filter: '&image_url=not.is.null',
+      filter: '&or=(image_url.not.is.null,seo_text_status.eq.ok)',
     });
-    const withPhoto = allVars.filter((v) => v.nombre && v.image_url);
+    const withPhoto = allVars.filter((v) => v.nombre && (v.image_url || (v.seo_text_status === 'ok' && v.seo_description_text)));
     const scored = withPhoto.filter((v) => countDataPoints(v) >= 2);
     pilotVars = scored.length ? scored : withPhoto;
     assignVarietySlugs(pilotVars, breederById);
-    console.log(`  variedades a publicar: ${pilotVars.length} (con foto; ${withPhoto.length - pilotVars.length} descartadas por datos insuficientes)`);
+    console.log(`  variedades a publicar: ${pilotVars.length} (con foto o con texto SEO aprobado; ${withPhoto.length - pilotVars.length} descartadas por datos insuficientes)`);
   } else if (PILOT) {
     const cands = await fetchAll('variedades', {
       select: 'id,breeder_id,nombre,tipo,thc_pct,thc_max,cbd_pct,cbd_max,floracion_dias,genetica,altura,produccion,descripcion,image_url,img_url,es_landrace,origen_geografico,anio_lanzamiento,updated_at,terpenos,aromas,seo_description_text,seo_text_status,indexable,canonical_variedad_id,taxon_id',
