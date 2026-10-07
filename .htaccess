@@ -57,6 +57,10 @@
   # nueva existe como carpeta; sin puntos en los segmentos, para no tocar index.html ni ficheros.
   RewriteCond %{DOCUMENT_ROOT}/variedades/$2-$1 -d
   RewriteRule ^variedades/([^/.]+)/([^/.]+)/?$ /variedades/$2-$1/ [R=301,L]
+  # Con sufijo numérico de duplicado (/<criador>/<nombre>-2/): mismo criador y nombre → ficha base.
+  # Va DESPUÉS de la anterior: los nombres que acaban en cifra de verdad (og-18) se resuelven antes.
+  RewriteCond %{DOCUMENT_ROOT}/variedades/$2-$1 -d
+  RewriteRule ^variedades/([^/.]+)/([^/.]+)-[0-9]+/?$ /variedades/$2-$1/ [R=301,L]
 
   RewriteRule ^analytics\.html$ /trafico.html [R=301,L]
 
