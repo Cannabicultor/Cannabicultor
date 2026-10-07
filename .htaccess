@@ -52,6 +52,12 @@
   # Redirect de la página principal antigua (por si aún se usa)
   RewriteRule ^atlas_landrace\.html$ https://www.cannabicultor.com/atlas-landraces/ [L,R=301]
 
+  # Variedades: URL antigua /variedades/<criador>/<nombre>/ → ficha actual /variedades/<nombre>-<criador>/
+  # (sitemap-variedades-1.xml, retirado, las listaba y Google las tiene como 404). Solo redirige si la ficha
+  # nueva existe como carpeta; sin puntos en los segmentos, para no tocar index.html ni ficheros.
+  RewriteCond %{DOCUMENT_ROOT}/variedades/$2-$1 -d
+  RewriteRule ^variedades/([^/.]+)/([^/.]+)/?$ /variedades/$2-$1/ [R=301,L]
+
   RewriteRule ^analytics\.html$ /trafico.html [R=301,L]
 
   # Onboarding antiguo → registro directo en el chat de la home
