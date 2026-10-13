@@ -676,8 +676,8 @@ function breederPage(b, myVarieties) {
   const extra = (CAT_LIST.get(b.id) || []).filter((v) => !idsPublicados.has(v.id));
   const catHtml = extra.length
     ? `<h2>${listed.length ? 'Otras variedades' : 'Variedades'} registradas de ${esc(nombre)}</h2>
-<p class="body">Genéticas del catálogo de ${esc(nombre)} que tenemos registradas${extra.length > 80 ? ` (mostramos 80 de ${extra.length})` : ` (${extra.length})`}. Iremos publicando su ficha completa.</p>
-<ul class="varlist">${extra.slice(0, 80).map((v) => `<li>${esc(v.nombre)}</li>`).join('')}</ul>`
+<p class="body">Todas las genéticas del catálogo de ${esc(nombre)} que tenemos registradas (${extra.length}${listed.length ? ` además de las ${listed.length} con ficha` : ''}). Iremos publicando la ficha completa de cada una.</p>
+<ul class="varlist">${extra.map((v) => `<li>${esc(v.nombre)}</li>`).join('')}</ul>`
     : '';
   const body = `
 <nav class="crumbs"><a href="/">Inicio</a> › <a href="/breeders/">Breeders</a> › ${esc(nombre)}</nav>

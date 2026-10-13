@@ -15,6 +15,7 @@
 //   --limit=N          tope de fichas a procesar en esta corrida (por defecto 500, el tamaño de un lote)
 //   --dry-run          no llama a DeepSeek ni escribe nada; muestra qué candidatas elegiría y el prompt de la primera
 //   --min-senales=N    señales mínimas para ser candidata (por defecto 6)
+//   --max-senales=N    señales máximas (solo para pruebas aisladas: --min-senales=5 --max-senales=5)
 //
 // Idempotente: solo procesa filas con seo_text_status IS NULL (no reintenta
 // 'ok' ni 'rechazado' — para eso está rollback-seo-batch.mjs, que las
@@ -70,6 +71,7 @@ const flagVal = (n) => { const a = args.find((x) => x.startsWith(`--${n}=`)); re
 const DRY_RUN = hasFlag('dry-run');
 const LIMIT = flagVal('limit') ? parseInt(flagVal('limit'), 10) : 500;
 const MIN_SENALES = flagVal('min-senales') ? parseInt(flagVal('min-senales'), 10) : 6;
+const MAX_SENALES = flagVal('max-senales') ? parseInt(flagVal('max-senales'), 10) : Infinity; // p. ej. --min-senales=5 --max-senales=5: solo las de exactamente 5 (prueba aislada)
 const BATCH_SIZE = 500;
 const MAX_NUEVAS_INDEXABLES_DIA = 1000;
 const SIM_MAX = 0.5;
@@ -105,7 +107,7 @@ async function fetchCandidatas() {
     rows.push(...page);
     if (page.length < pageSize) break;
   }
-  const conSenales = rows.map((v) => ({ v, senales: countSenales(v) })).filter((x) => x.senales >= MIN_SENALES);
+  const conSenales = rows.map((v) => ({ v, senales: countSenales(v) })).filter((x) => x.senales >= MIN_SENALES && x.senales <= MAX_SENALES);
   conSenales.sort((a, b) => b.senales - a.senales);
   return conSenales;
 }
