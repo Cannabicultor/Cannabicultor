@@ -339,6 +339,10 @@ h1 .by{display:block;font-size:16px;font-weight:400;color:var(--text3);margin-to
 .seo-lede{font-size:17px;line-height:1.6;color:var(--text2);margin:14px 0 6px}
 .hero{display:flex;gap:28px;flex-wrap:wrap;align-items:flex-start;margin:24px 0 8px}
 .hero img{width:220px;height:220px;object-fit:cover;border-radius:16px;border:1px solid var(--border);background:var(--white)}
+.foto{margin:0;width:220px}.foto img{display:block}
+.credito{font-size:12px;opacity:.7;margin-top:6px;line-height:1.35}
+.foto.sin{height:220px;border:2px dashed var(--border);border-radius:16px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;text-align:center;padding:14px;font-size:14px}
+.foto.sin a{font-weight:600}
 .facts{width:100%;border-collapse:collapse;margin:24px 0;background:var(--white);border:1px solid var(--border);border-radius:12px;overflow:hidden}
 .facts th,.facts td{text-align:left;padding:11px 16px;border-bottom:1px solid var(--border);font-size:14px}
 .facts th{width:38%;color:var(--text3);font-weight:500}
@@ -369,7 +373,7 @@ footer.ft a{color:var(--text3)}
 .rev-form textarea{width:100%;border:1px solid var(--border);border-radius:10px;padding:10px;font:inherit}
 .rev-send{background:var(--forest);color:#fff;border:0;border-radius:10px;padding:12px;font-weight:600;cursor:pointer}
 .rev-msg{color:#b94b42;font-size:13px}
-@media(max-width:560px){.varlist{columns:1}.hero img{width:100%;height:auto;aspect-ratio:1}}`;
+@media(max-width:560px){.varlist{columns:1}.foto{width:100%}.hero img{width:100%;height:auto;aspect-ratio:1}}`;
 
 const GA_SNIPPET = `<!-- Google tag (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-XS18E0J277"></script>
@@ -578,7 +582,9 @@ function varietyPage(v, breeder, breederSlug, { canonicalUrl = null, relacionada
 ${seoLede}
 ${chips.length ? `<div class="chips">${chips.map((c) => `<span class="chip">${c}</span>`).join('')}</div>` : ''}
 <div class="hero">
-${img ? `<img src="${esc(img)}" alt="Foto de la variedad ${esc(v.nombre)}" loading="lazy" width="220" height="220">` : ''}
+${img
+  ? `<figure class="foto"><img src="${esc(img)}" alt="Foto de la variedad ${esc(v.nombre)}" loading="lazy" width="220" height="220">${v.foto_credito ? `<figcaption class="credito">${esc(v.foto_credito)}</figcaption>` : ''}</figure>`
+  : `<div class="foto sin"><span>Esta variedad aún no tiene foto</span><a href="/subir-foto.html?v=${v.id}" rel="nofollow">Subir una foto</a></div>`}
 <table class="facts">${rows.map(([k, val]) => `<tr><th>${k}</th><td>${val}</td></tr>`).join('')}</table>
 </div>
 <div class="body"><p>${describe(v, breeder)}</p></div>
@@ -975,7 +981,7 @@ async function main() {
     // aprobado es la garantía contra thin content que antes daba solo la foto. Todo lo demás
     // (sin foto y sin texto aprobado) sigue sin página. Datos suficientes (>=2) para todas.
     const allVars = await fetchAll('variedades', {
-      select: 'id,breeder_id,nombre,tipo,thc_pct,thc_max,cbd_pct,cbd_max,floracion_dias,genetica,altura,produccion,descripcion,image_url,img_url,es_landrace,origen_geografico,anio_lanzamiento,updated_at,terpenos,aromas,seo_description_text,seo_text_status,indexable,canonical_variedad_id,taxon_id',
+      select: 'id,breeder_id,nombre,tipo,thc_pct,thc_max,cbd_pct,cbd_max,floracion_dias,genetica,altura,produccion,descripcion,image_url,img_url,foto_credito,es_landrace,origen_geografico,anio_lanzamiento,updated_at,terpenos,aromas,seo_description_text,seo_text_status,indexable,canonical_variedad_id,taxon_id',
       filter: '&or=(image_url.not.is.null,seo_text_status.eq.ok)',
     });
     const withPhoto = allVars.filter((v) => v.nombre && (v.image_url || (v.seo_text_status === 'ok' && v.seo_description_text)));
@@ -985,7 +991,7 @@ async function main() {
     console.log(`  variedades a publicar: ${pilotVars.length} (con foto o con texto SEO aprobado; ${withPhoto.length - pilotVars.length} descartadas por datos insuficientes)`);
   } else if (PILOT) {
     const cands = await fetchAll('variedades', {
-      select: 'id,breeder_id,nombre,tipo,thc_pct,thc_max,cbd_pct,cbd_max,floracion_dias,genetica,altura,produccion,descripcion,image_url,img_url,es_landrace,origen_geografico,anio_lanzamiento,updated_at,terpenos,aromas,seo_description_text,seo_text_status,indexable,canonical_variedad_id,taxon_id',
+      select: 'id,breeder_id,nombre,tipo,thc_pct,thc_max,cbd_pct,cbd_max,floracion_dias,genetica,altura,produccion,descripcion,image_url,img_url,foto_credito,es_landrace,origen_geografico,anio_lanzamiento,updated_at,terpenos,aromas,seo_description_text,seo_text_status,indexable,canonical_variedad_id,taxon_id',
       filter: '&image_url=not.is.null',
     });
     const scored = cands

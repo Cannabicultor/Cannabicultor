@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="robots" content="noindex, nofollow">
+<title>Subir una foto de variedad · Cannabicultor</title>
+<link rel="icon" href="/favicon.ico">
+<style>
+:root{--v:#0F3020;--b:#e1e6df;--t:#5b6b61}
+*{box-sizing:border-box}
+body{margin:0;background:#f6f7f4;font-family:Inter,system-ui,sans-serif;color:#13201a}
+.w{max-width:560px;margin:0 auto;padding:28px 18px 60px}
+.logo{display:flex;align-items:center;gap:8px;font-weight:700;color:var(--v);text-decoration:none;margin-bottom:22px}
+.logo img{width:28px;height:28px}
+h1{font-size:23px;margin:0 0 6px}
+p{color:var(--t);line-height:1.55;margin:0 0 14px}
+.card{background:#fff;border:1px solid var(--b);border-radius:16px;padding:20px}
+.drop{border:2px dashed #b8c4b8;border-radius:14px;padding:24px;text-align:center;cursor:pointer;color:var(--t);background:#fafbf9}
+.drop:hover{border-color:var(--v)}
+#prev{max-width:100%;max-height:300px;border-radius:12px;display:none;margin:14px auto 0}
+.chk{display:flex;gap:10px;align-items:flex-start;margin:16px 0;font-size:14px;line-height:1.45}
+.chk input{margin-top:3px;width:18px;height:18px;flex:none}
+button{width:100%;padding:13px;border-radius:12px;border:0;background:var(--v);color:#fff;font:700 15px system-ui;cursor:pointer}
+button:disabled{opacity:.45;cursor:default}
+#estado{margin-top:14px;font-size:14px;line-height:1.5}
+.ok{color:#14602c}.ko{color:#9b1c1c}
+.reglas{font-size:13px;color:var(--t);margin-top:16px;line-height:1.5}
+.reglas li{margin-bottom:4px}
+</style></head><body><div class="w">
+<a class="logo" href="/"><img src="/assets/icono_cannabicultor_small.webp" alt="">Cannabicultor</a>
+<h1>Sube una foto de <span id="nombre">esta variedad</span></h1>
+<p>Esta ficha todavía no tiene foto. Si tienes una buena, súbela: <b>la revisamos antes de publicarla</b>.</p>
+
+<div class="card" id="form" style="display:none">
+  <label class="drop" for="f"><div id="dropt">Toca para elegir una foto<br><small>JPG, PNG o WebP</small></div>
+    <input type="file" id="f" accept="image/jpeg,image/png,image/webp" style="display:none"></label>
+  <img id="prev" alt="Vista previa">
+  <label class="chk"><input type="checkbox" id="d"><span>Confirmo que la foto es mía (o tengo permiso de su autor) y que muestra esta variedad. Autorizo a Cannabicultor a publicarla en esta ficha, con crédito.</span></label>
+  <button id="go" disabled>Enviar para revisión</button>
+  <div id="estado"></div>
+  <ul class="reglas">
+    <li>Una planta o cogollo claros, bien iluminados y enfocados.</li>
+    <li>Sin personas, matrículas, marcas de agua ni texto superpuesto.</li>
+    <li>Revisamos cada foto; puede tardar unos días en aparecer.</li>
+  </ul>
+</div>
+<div class="card" id="nolog" style="display:none"><p>Para subir una foto necesitas iniciar sesión.</p><button id="login">Iniciar sesión</button></div>
+<div class="card" id="nofic" style="display:none"><p id="nofic-t"></p></div>
+</div>
+<script src="/assets/auth.js"></script>
+<script src="/assets/config.js"></script>
+<script>
+var W=window.CC_CONFIG.WORKER_URL, SB='https://gfyrsrdnvgnhtsuexjkb.supabase.co', ANON='sb_publishable_FdRmfirvOTAIfZFOcj2ZZg_Vic__TDw';
+var vid=parseInt((location.search.match(/[?&]v=(\d+)/)||[])[1],10);
+var jwt=window.GAAuth&&GAAuth.readSession?GAAuth.readSession():null;
+var dataUrl=null;
+function $(i){return document.getElementById(i);}
+function aviso(t,ok){var e=$('estado');e.textContent=t;e.className=ok?'ok':'ko';}
+function sinFicha(t){$('form').style.display='none';$('nolog').style.display='none';$('nofic').style.display='block';$('nofic-t').textContent=t;}
+if(!vid){sinFicha('Falta indicar la variedad. Vuelve a la ficha y pulsa de nuevo el botón de subir foto.');}
+else if(!jwt){$('nolog').style.display='block';$('login').onclick=function(){location.href='/login.html?next='+encodeURIComponent(location.pathname+location.search);};}
+else{
+  fetch(SB+'/rest/v1/variedades?id=eq.'+vid+'&select=nombre,image_url',{headers:{apikey:ANON,Authorization:'Bearer '+ANON}}).then(function(r){return r.json();}).then(function(j){
+    if(!j||!j.length){sinFicha('No encontramos esa variedad.');return;}
+    if(j[0].image_url){sinFicha('Esta variedad ya tiene foto. ¡Gracias!');return;}
+    $('nombre').textContent=j[0].nombre;$('form').style.display='block';
+  }).catch(function(){$('form').style.display='block';});
+}
+function revisar(){$('go').disabled=!(dataUrl&&$('d').checked);}
+$('d').onchange=revisar;
+// Se reduce en el navegador (máx. 1600 px, JPEG 85%): sube rápido y pesa poco.
+$('f').onchange=function(){
+  var file=this.files[0];if(!file)return;
+  if(!/^image\/(jpeg|png|webp)$/.test(file.type)){aviso('Formato no admitido. Usa JPG, PNG o WebP.',false);return;}
+  var img=new Image(),url=URL.createObjectURL(file);
+  img.onload=function(){
+    var m=1600,s=Math.min(1,m/Math.max(img.width,img.height)),c=document.createElement('canvas');
+    c.width=Math.round(img.width*s);c.height=Math.round(img.height*s);
+    var x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,c.width,c.height);x.drawImage(img,0,0,c.width,c.height);
+    dataUrl=c.toDataURL('image/jpeg',0.85);URL.revokeObjectURL(url);
+    $('prev').src=dataUrl;$('prev').style.display='block';$('dropt').textContent='Cambiar foto';aviso('',true);revisar();
+  };
+  img.onerror=function(){aviso('No se pudo leer la imagen.',false);};
+  img.src=url;
+};
+$('go').onclick=function(){
+  $('go').disabled=true;aviso('Enviando…',true);
+  fetch(W+'/fotos/subir',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+jwt},body:JSON.stringify({variedad_id:vid,imagen:dataUrl,derechos:true})})
+   .then(function(r){return r.json().then(function(j){if(!r.ok)throw new Error(j.error||('Error '+r.status));return j;});})
+   .then(function(j){aviso(j.mensaje||'Enviada. Gracias.',true);$('go').style.display='none';})
+   .catch(function(e){aviso(e.message,false);revisar();});
+};
+</script></body></html>
