@@ -31,7 +31,10 @@ const H = { apikey: K, Authorization: `Bearer ${K}`, 'Content-Type': 'applicatio
 const NOTA = 'Autorización general de criadores declarada por Cannabicultor; pendiente de constancia escrita';
 
 const norm = (s) => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/&amp;|&#038;/g, 'and').replace(/[^a-z0-9]+/g, ' ').trim();
-const RUIDO_PRODUCTO = /\b(feminized|feminised|femenizada|femenizadas|regular|regulars|autoflowering|autoflower|autofloreciente|auto|seeds|seed|semillas|semilla|fem|reg|pack|packs|photoperiod|clone|clones|cut|merch|hoodie|shirt|t shirt|tee|poster|sticker|grinder|lighter|hat|cap)\b/g;
+// Palabras que se QUITAN del nombre del producto para compararlo con la variedad ("X Feminized Seeds" → "X").
+const RUIDO_PRODUCTO = /\b(feminized|feminised|femenizada|femenizadas|regular|regulars|autoflowering|autoflower|autofloreciente|auto|seeds|seed|semillas|semilla|fem|reg|pack|packs|photoperiod)\b/g;
+// Productos que NO son una variedad: se DESCARTAN enteros (antes se quitaban del nombre y "Falcon 9 T-Shirt" casaba con "Falcon 9").
+const NO_ES_VARIEDAD = /(t-?shirt|tshirt|\btee\b|shirt|hoodie|sweatshirt|sweater|jersey|jacket|beanie|\bcap\b|\bhat\b|poster|sticker|patch|\bpin\b|mug|towel|grinder|lighter|rolling[- ]?tray|\btray\b|merch|gift[- ]?card|bundle|accessor|vape|cartridge|battery|\bpipe\b|bong|clone|\bcut\b|camiseta|sudadera|gorra|pegatina|mechero|bolsa|\bbag\b|banner|calendar|keychain|sticker)/i;
 const nombreBase = (s) => norm(String(s).replace(/\([^)]*\)/g, ' ').split(/ [-–|] /)[0]).replace(RUIDO_PRODUCTO, ' ').replace(/\s+/g, ' ').trim();
 
 const espera = (ms) => new Promise((ok) => setTimeout(ok, ms));
@@ -90,6 +93,7 @@ function casar(variedad, catalogo) {
   let mejor = null;
   for (const p of catalogo) {
     if (!p.imagen) continue;
+    if (NO_ES_VARIEDAD.test(`${p.nombre} ${p.url}`)) continue;   // merchandising, accesorios, esquejes…
     const base = nombreBase(p.nombre);
     let score = 0;
     if (base === objetivo) score = 0.95;
