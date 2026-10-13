@@ -356,6 +356,9 @@ h1 .by{display:block;font-size:16px;font-weight:400;color:var(--text3);margin-to
 .vpd-cta a{font-weight:600}
 h2{font-size:22px;font-weight:600;letter-spacing:-0.02em;margin:36px 0 14px}
 .varlist{list-style:none;columns:2;gap:24px}
+.letras{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 22px}.letras a{padding:6px 13px;border:1px solid var(--border);border-radius:99px;text-decoration:none;font-size:14px}.letras a small{opacity:.6;margin-left:4px}
+.pager{display:flex;justify-content:space-between;gap:12px;margin:22px 0;font-size:14px}
+.varlist small{opacity:.65}
 .varlist li{margin:0 0 7px;break-inside:avoid;font-size:14px}
 .cta{display:inline-block;background:var(--forest);color:#fff;padding:12px 22px;border-radius:10px;font-weight:500;margin-top:12px}
 .cta:hover{background:var(--forest-light);text-decoration:none}
@@ -440,7 +443,7 @@ ${bodyHtml}
 </main>
 <footer class="ft">
 <p>Cannabicultor · Guía IA de cultivo de cannabis en español. Solo para mayores de 18 años. El cultivo de cannabis está regulado; consulta la legislación vigente en tu país. Fines educativos.</p>
-<p><a href="/">Inicio</a> · <a href="/buscador-cannabicultor.html">Buscador</a> · <a href="/atlas_landrace.html">Atlas landrace</a></p>
+<p><a href="/">Inicio</a> · <a href="/buscador-cannabicultor.html">Buscador</a> · <a href="/variedades/">Variedades A-Z</a> · <a href="/breeders/">Criadores</a> · <a href="/atlas_landrace.html">Atlas landrace</a></p>
 </footer>
 ${dock === '' ? '' : (dock || chatDock({ tipo: 'pagina', placeholder: 'Pregúntale a la IA del cannabis…' }))}
 <script src="/assets/resenas.js"></script>
@@ -550,7 +553,7 @@ function varietyPage(v, breeder, breederSlug, { canonicalUrl = null, relacionada
         '@type': 'BreadcrumbList',
         itemListElement: [
           { '@type': 'ListItem', position: 1, name: 'Inicio', item: `${SITE}/` },
-          { '@type': 'ListItem', position: 2, name: 'Variedades', item: `${SITE}/buscador-cannabicultor.html` },
+          { '@type': 'ListItem', position: 2, name: 'Variedades', item: `${SITE}/variedades/` },
           { '@type': 'ListItem', position: 3, name: v.nombre, item: canonical },
         ],
       },
@@ -577,7 +580,7 @@ function varietyPage(v, breeder, breederSlug, { canonicalUrl = null, relacionada
     : '';
 
   const body = `
-<nav class="crumbs"><a href="/">Inicio</a> › <a href="/buscador-cannabicultor.html">Variedades</a> › ${esc(v.nombre)}</nav>
+<nav class="crumbs"><a href="/">Inicio</a> › <a href="/variedades/">Variedades</a> › ${esc(v.nombre)}</nav>
 <h1>${esc(v.nombre)}${bn ? `<span class="by">de <a href="/breeders/${breederSlug}/">${esc(bn)}</a></span>` : ''}</h1>
 ${seoLede}
 ${chips.length ? `<div class="chips">${chips.map((c) => `<span class="chip">${c}</span>`).join('')}</div>` : ''}
@@ -633,7 +636,7 @@ function breederPage(b, myVarieties) {
         '@type': 'BreadcrumbList',
         itemListElement: [
           { '@type': 'ListItem', position: 1, name: 'Inicio', item: `${SITE}/` },
-          { '@type': 'ListItem', position: 2, name: 'Breeders', item: `${SITE}/buscador-cannabicultor.html` },
+          { '@type': 'ListItem', position: 2, name: 'Breeders', item: `${SITE}/breeders/` },
           { '@type': 'ListItem', position: 3, name: nombre, item: canonical },
         ],
       },
@@ -655,7 +658,7 @@ function breederPage(b, myVarieties) {
     : `<h2>Variedades</h2><p class="body">Estamos publicando las fichas de las variedades de ${esc(nombre)}. Mientras tanto, puedes explorarlas en el <a href="/buscador-cannabicultor.html">buscador genético</a>.</p>`;
 
   const body = `
-<nav class="crumbs"><a href="/">Inicio</a> › <a href="/buscador-cannabicultor.html">Breeders</a> › ${esc(nombre)}</nav>
+<nav class="crumbs"><a href="/">Inicio</a> › <a href="/breeders/">Breeders</a> › ${esc(nombre)}</nav>
 <h1>${esc(nombre)}</h1>
 <div class="hero">
 ${img ? `<img src="${esc(img)}" alt="Logo de ${esc(nombre)}" loading="lazy" width="220" height="220">` : ''}
@@ -882,6 +885,112 @@ function cbdHubPage(cityGroups) {
 }
 
 // ── Sitemaps ─────────────────────────────────────────────────────────────────
+// ── Índices rastreables (A-Z) de variedades y criadores ──────────────────────
+// Antes ninguna página enlazaba a las fichas: solo los sitemaps. Estos índices (enlazados desde la portada, el
+// pie de todas las páginas y las migas de pan) dan a Google un camino de enlaces hasta cada ficha publicada.
+const HUB_POR_PAGINA = 400;
+let HUB_ENTRIES = [];
+const letraDe = (txt) => { const c = slugify(txt).charAt(0); return /[a-z]/.test(c) ? c : '0-9'; };
+const etiquetaLetra = (l) => (l === '0-9' ? '0-9' : l.toUpperCase());
+const porNombre = (a, b) => String(a).localeCompare(String(b), 'es', { sensitivity: 'base' });
+
+function paginasPorLetra(items, nombreDe) {
+  const grupos = new Map();
+  for (const it of [...items].sort((x, y) => porNombre(nombreDe(x), nombreDe(y)))) {
+    const l = letraDe(nombreDe(it));
+    if (!grupos.has(l)) grupos.set(l, []);
+    grupos.get(l).push(it);
+  }
+  const letras = [...grupos.keys()].sort((a, b) => (a === '0-9' ? -1 : b === '0-9' ? 1 : a.localeCompare(b)));
+  const paginas = [];
+  for (const l of letras) {
+    const todos = grupos.get(l);
+    const n = Math.ceil(todos.length / HUB_POR_PAGINA);
+    for (let k = 1; k <= n; k++) paginas.push({ letra: l, k, n, total: todos.length, items: todos.slice((k - 1) * HUB_POR_PAGINA, k * HUB_POR_PAGINA), slug: k === 1 ? `letra-${l}` : `letra-${l}-${k}` });
+  }
+  return { letras, grupos, paginas };
+}
+
+function hubHtml({ base, titulo, h1, intro, letras, grupos, extraHtml, ruta, crumbs, descBase }) {
+  const canonical = `${SITE}${ruta}`;
+  const chips = `<div class="letras">${letras.map((l) => `<a href="${base}letra-${l}/">${etiquetaLetra(l)}<small>${grupos.get(l).length}</small></a>`).join('')}</div>`;
+  const jsonld = { '@context': 'https://schema.org', '@type': 'CollectionPage', name: h1, url: canonical, description: descBase,
+    breadcrumb: { '@type': 'BreadcrumbList', itemListElement: [{ '@type': 'ListItem', position: 1, name: 'Inicio', item: `${SITE}/` }, { '@type': 'ListItem', position: 2, name: crumbs, item: canonical }] } };
+  const body = `<nav class="crumbs"><a href="/">Inicio</a> › ${esc(crumbs)}</nav>
+<h1>${esc(h1)}</h1>
+<div class="body"><p>${intro}</p></div>
+${chips}
+${extraHtml || ''}
+<a class="cta" href="/buscador-cannabicultor.html">Abrir el buscador interactivo</a>`;
+  return shell({ title: titulo, desc: descBase.slice(0, 160), canonical, jsonld, bodyHtml: body, dock: '' });
+}
+
+function buildHubs({ breeders, vars, varsByBreeder, hacerVariedades, hacerBreeders }) {
+  const files = []; HUB_ENTRIES = [];
+  const usados = new Set([...breeders.map((b) => b._slug), ...vars.map((v) => v._slug)].filter(Boolean));
+  const cuidaSlug = (slug) => { if (usados.has(slug)) throw new Error(`El slug de índice ${slug} choca con una ficha existente`); return slug; };
+
+  if (hacerVariedades) {
+    const pub = vars.filter((v) => v._slug && v.indexable !== false);
+    const breederNombre = new Map(breeders.map((b) => [b.id, b.breeder_name]));
+    const { letras, grupos, paginas } = paginasPorLetra(pub, (v) => v.nombre);
+    // criadores con más fichas publicadas (para repartir enlaces al otro índice)
+    const top = breeders.filter((b) => b._slug && !/unknown|legendary/i.test(b.breeder_name)).map((b) => ({ b, n: (varsByBreeder.get(b.id) || []).length })).filter((x) => x.n > 0).sort((a, b) => b.n - a.n).slice(0, 40);
+    files.push({ path: join('variedades', 'index.html'), html: hubHtml({
+      base: '/variedades/', titulo: 'Variedades de cannabis A-Z: genética, floración y datos de cultivo | Cannabicultor',
+      h1: 'Variedades de cannabis, de la A a la Z', crumbs: 'Variedades', ruta: '/variedades/',
+      intro: `Listado de ${pub.length.toLocaleString('es-ES')} variedades de cannabis con su criador, genética, floración y datos de cultivo. Elige una letra para ver las fichas.`,
+      descBase: `Listado A-Z de ${pub.length} variedades de cannabis con su criador, genética, floración y datos de cultivo en Cannabicultor.`,
+      letras, grupos,
+      extraHtml: `<h2>Criadores con más variedades</h2><ul class="varlist">${top.map((x) => `<li><a href="/breeders/${x.b._slug}/">${esc(x.b.breeder_name)}</a> <small>${x.n}</small></li>`).join('')}</ul><p class="body"><a href="/breeders/">Ver todos los criadores →</a></p>` }) });
+    HUB_ENTRIES.push({ loc: `${SITE}/variedades/`, priority: '0.8', changefreq: 'weekly', lastmod: TODAY });
+    paginas.forEach((pg, i) => {
+      cuidaSlug(pg.slug);
+      const ant = paginas[i - 1], sig = paginas[i + 1];
+      const ruta = `/variedades/${pg.slug}/`;
+      const nombreL = etiquetaLetra(pg.letra);
+      const body = `<nav class="crumbs"><a href="/">Inicio</a> › <a href="/variedades/">Variedades</a> › ${nombreL}${pg.n > 1 ? ` (${pg.k}/${pg.n})` : ''}</nav>
+<h1>Variedades de cannabis que empiezan por ${nombreL}${pg.n > 1 ? ` · página ${pg.k}` : ''}</h1>
+<div class="body"><p>${pg.total.toLocaleString('es-ES')} variedades. Cada ficha incluye criador, genética y datos de cultivo.</p></div>
+<ul class="varlist">${pg.items.map((v) => `<li><a href="/variedades/${v._slug}/">${esc(v.nombre)}</a>${breederNombre.get(v.breeder_id) ? ` <small>${esc(breederNombre.get(v.breeder_id))}</small>` : ''}</li>`).join('')}</ul>
+<div class="pager">${ant ? `<a href="/variedades/${ant.slug}/">← ${etiquetaLetra(ant.letra)}${ant.n > 1 ? ` (${ant.k})` : ''}</a>` : '<span></span>'}<a href="/variedades/">Índice</a>${sig ? `<a href="/variedades/${sig.slug}/">${etiquetaLetra(sig.letra)}${sig.n > 1 ? ` (${sig.k})` : ''} →</a>` : '<span></span>'}</div>`;
+      const canonical = `${SITE}${ruta}`;
+      const desc = `Variedades de cannabis cuyo nombre empieza por ${nombreL}: ${pg.total} fichas con criador, genética y datos de cultivo.`;
+      const jsonld = { '@context': 'https://schema.org', '@type': 'CollectionPage', name: `Variedades que empiezan por ${nombreL}`, url: canonical, breadcrumb: { '@type': 'BreadcrumbList', itemListElement: [{ '@type': 'ListItem', position: 1, name: 'Inicio', item: `${SITE}/` }, { '@type': 'ListItem', position: 2, name: 'Variedades', item: `${SITE}/variedades/` }, { '@type': 'ListItem', position: 3, name: nombreL, item: canonical }] } };
+      files.push({ path: join('variedades', pg.slug, 'index.html'), html: shell({ title: `Variedades de cannabis que empiezan por ${nombreL}${pg.n > 1 ? ` (${pg.k}/${pg.n})` : ''} | Cannabicultor`, desc, canonical, jsonld, bodyHtml: body, dock: '' }) });
+      HUB_ENTRIES.push({ loc: canonical, priority: '0.6', changefreq: 'weekly', lastmod: TODAY });
+    });
+  }
+
+  if (hacerBreeders) {
+    const lista = breeders.filter((b) => b._slug);
+    const { letras, grupos, paginas } = paginasPorLetra(lista, (b) => b.breeder_name);
+    files.push({ path: join('breeders', 'index.html'), html: hubHtml({
+      base: '/breeders/', titulo: 'Criadores de semillas de cannabis A-Z: bancos y breeders | Cannabicultor',
+      h1: 'Criadores y bancos de semillas de cannabis', crumbs: 'Breeders', ruta: '/breeders/',
+      intro: `Directorio de ${lista.length.toLocaleString('es-ES')} criadores y bancos de semillas de cannabis, con su historia, país y catálogo de variedades. Elige una letra.`,
+      descBase: `Directorio A-Z de ${lista.length} criadores y bancos de semillas de cannabis con su catálogo de variedades en Cannabicultor.`,
+      letras, grupos,
+      extraHtml: `<p class="body"><a href="/variedades/">Ver también todas las variedades de la A a la Z →</a></p>` }) });
+    HUB_ENTRIES.push({ loc: `${SITE}/breeders/`, priority: '0.8', changefreq: 'weekly', lastmod: TODAY });
+    paginas.forEach((pg, i) => {
+      cuidaSlug(pg.slug);
+      const ant = paginas[i - 1], sig = paginas[i + 1];
+      const ruta = `/breeders/${pg.slug}/`; const nombreL = etiquetaLetra(pg.letra);
+      const body = `<nav class="crumbs"><a href="/">Inicio</a> › <a href="/breeders/">Breeders</a> › ${nombreL}${pg.n > 1 ? ` (${pg.k}/${pg.n})` : ''}</nav>
+<h1>Criadores de cannabis que empiezan por ${nombreL}${pg.n > 1 ? ` · página ${pg.k}` : ''}</h1>
+<div class="body"><p>${pg.total.toLocaleString('es-ES')} criadores y bancos de semillas.</p></div>
+<ul class="varlist">${pg.items.map((b) => { const n = (varsByBreeder.get(b.id) || []).length; return `<li><a href="/breeders/${b._slug}/">${esc(b.breeder_name)}</a>${n ? ` <small>${n} variedades</small>` : ''}</li>`; }).join('')}</ul>
+<div class="pager">${ant ? `<a href="/breeders/${ant.slug}/">← ${etiquetaLetra(ant.letra)}${ant.n > 1 ? ` (${ant.k})` : ''}</a>` : '<span></span>'}<a href="/breeders/">Índice</a>${sig ? `<a href="/breeders/${sig.slug}/">${etiquetaLetra(sig.letra)}${sig.n > 1 ? ` (${sig.k})` : ''} →</a>` : '<span></span>'}</div>`;
+      const canonical = `${SITE}${ruta}`;
+      const jsonld = { '@context': 'https://schema.org', '@type': 'CollectionPage', name: `Criadores que empiezan por ${nombreL}`, url: canonical, breadcrumb: { '@type': 'BreadcrumbList', itemListElement: [{ '@type': 'ListItem', position: 1, name: 'Inicio', item: `${SITE}/` }, { '@type': 'ListItem', position: 2, name: 'Breeders', item: `${SITE}/breeders/` }, { '@type': 'ListItem', position: 3, name: nombreL, item: canonical }] } };
+      files.push({ path: join('breeders', pg.slug, 'index.html'), html: shell({ title: `Criadores de cannabis que empiezan por ${nombreL}${pg.n > 1 ? ` (${pg.k}/${pg.n})` : ''} | Cannabicultor`, desc: `Criadores y bancos de semillas de cannabis cuyo nombre empieza por ${nombreL}: ${pg.total} con su catálogo de variedades.`, canonical, jsonld, bodyHtml: body, dock: '' }) });
+      HUB_ENTRIES.push({ loc: canonical, priority: '0.6', changefreq: 'weekly', lastmod: TODAY });
+    });
+  }
+  return files;
+}
+
 function sitemapUrls(entries) {
   return `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
@@ -1041,6 +1150,13 @@ async function main() {
     console.log(`  ✓ variedades escritas: ${nV}`);
   }
 
+  // Índices A-Z rastreables (después de limpiar y escribir breeders/ y variedades/, que se vacían al empezar)
+  if (DO_BREEDERS || pilotVars.length) {
+    const hubFiles = buildHubs({ breeders, vars: pilotVars, varsByBreeder, hacerVariedades: pilotVars.length > 0, hacerBreeders: DO_BREEDERS });
+    for (const f of hubFiles) await write(join(OUT, f.path), f.html);
+    console.log(`  ✓ índices A-Z: ${hubFiles.length} páginas (${HUB_ENTRIES.length} URLs al sitemap)`);
+  }
+
   // — Tiendas de CBD (directorio local SEO/AEO) —
   let cbdSitemap = [];
   if (DO_CBD) {
@@ -1087,7 +1203,7 @@ async function main() {
 
   // — Sitemaps —
   if (!DRY && (DO_BREEDERS || pilotVars.length || DO_CBD || DO_PAISES)) {
-    await write(join(OUT, 'sitemap-static.xml'), sitemapUrls(STATIC_URLS));
+    await write(join(OUT, 'sitemap-static.xml'), sitemapUrls([...STATIC_URLS, ...HUB_ENTRIES]));
     const names = ['sitemap-static.xml'];
     if (DO_BREEDERS) {
       await write(join(OUT, 'sitemap-breeders.xml'),

@@ -58,12 +58,13 @@ test('portada /ar/: canonical autorreferencial, hreflang y JSON-LD en el HTML cr
   assert.ok(!/corrimos|correr/i.test(h));
 });
 
-test('pais sin datos: portada noindex y fuera del sitemap e indice', () => {
-  assert.equal(robots('cl', 'index.html'), 'noindex,follow');
-  assert.ok(!existsSync(join(OUT, 'sitemap-cl.xml')));
+test('pais sin datos (mx, cerrado): portada noindex y fuera del sitemap e indice', () => {
+  // CL y CO se abrieron a la indexacion el 2026-10-06 (INDEXAR_PAISES por defecto = ar,cl,co); mx sigue cerrado.
+  assert.equal(robots('mx', 'index.html'), 'noindex,follow');
+  assert.ok(!existsSync(join(OUT, 'sitemap-mx.xml')));
   const idx = read('sitemap.xml');
   assert.match(idx, /sitemap-ar\.xml/);
-  assert.ok(!/sitemap-cl\.xml/.test(idx));
+  assert.ok(!/sitemap-mx\.xml/.test(idx));
 });
 
 test('listado por provincia: indexable solo con >=3 fichas', () => {
