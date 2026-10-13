@@ -210,5 +210,12 @@ for (const mal of ['Es una semilla feminizada, lo que implica que todas serán h
 }
 check('dato literal sigue pasando: "Su floración se completa en 63 días."', !tieneErroresOrtografia('Su floración se completa en 63 días.', {}));
 
+for (const mal of ['Mirceno, Cariofileno y Pineno aportan sabor a arándano, dulce y herbal.', 'El sabor y el aroma de esta variedad proceden de limoneno, pineno y mirceno.', 'Los terpenos limoneno y pineno definen un perfil cítrico.', 'El sabor queda definido por los terpenos mirceno y pineno.', 'Esta genética representa una variedad de la casa.']) {
+  check(`causa terpenos→sabor se detecta: "${mal.slice(0, 40)}…"`, tieneErroresOrtografia(mal, {}));
+}
+for (const bien of ['Los terpenos presentes son mirceno, pineno y limoneno.', 'Su sabor es terroso, cítrico y dulce, con un efecto relajado.', 'Alcanza un 22% de THC y florece en 63 días.', 'Cruza Blueberry con Haze y completa su floración en 60 días.']) {
+  check(`texto de solo datos pasa: "${bien.slice(0, 40)}…"`, !tieneErroresOrtografia(bien, {}));
+}
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
