@@ -300,7 +300,7 @@ function describe(v, breeder) {
   else if (v.tipo === 'regular') S.push('Se ofrece en formato de semilla regular.');
 
   // — CTA / enlace interno —
-  S.push(`Empieza el <a href="/empezar.html?v=${v._slug || ''}&n=${encodeURIComponent(nombre)}">diario de cultivo con IA para tu ${esc(nombre)}</a> o compara con otras genéticas en el <a href="/buscador-cannabicultor.html">buscador de variedades</a>.`);
+  S.push(`Empieza el <a rel="nofollow" href="/empezar.html?v=${v._slug || ''}&n=${encodeURIComponent(nombre)}">diario de cultivo con IA para tu ${esc(nombre)}</a> o compara con otras genéticas en el <a href="/buscador-cannabicultor.html">buscador de variedades</a>.`);
 
   return S.join(' ');
 }
@@ -397,7 +397,7 @@ function chatDock({ tipo, contexto, placeholder, diarioHref, diarioTxt }) {
 <img src="/assets/icono_cannabicultor_small.webp" alt="" width="28" height="28">
 <label class="cc-sr" for="ccDockQ">Pregunta a Cannabicultor IA</label>
 <input id="ccDockQ" type="text" maxlength="400" autocomplete="off" placeholder="${esc(placeholder)}">
-${diarioHref ? `<a class="cc-diario" href="${esc(diarioHref)}" data-track="cta_diario_${esc(tipo)}">${esc(diarioTxt || 'Empezar mi diario')}</a>` : ''}
+${diarioHref ? `<a class="cc-diario" rel="nofollow" href="${esc(diarioHref)}" data-track="cta_diario_${esc(tipo)}">${esc(diarioTxt || 'Empezar mi diario')}</a>` : ''}
 <button type="submit" aria-label="Preguntar"><svg viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
 </form></div>`;
 }
@@ -592,7 +592,7 @@ ${img
 </div>
 <div class="body"><p>${describe(v, breeder)}</p></div>
 ${genealogyLink(v, cross)}
-<aside class="vpd-cta"><strong>¿Quieres cosechar el máximo potencial de la genética ${esc(v.nombre)}?</strong>Registra tu <a href="/empezar.html?v=${v._slug || ''}&n=${encodeURIComponent(v.nombre)}">diario de cultivo en Cannabicultor</a>. Nuestro <a href="/disenador_sala_cultivo.html">Diseñador de Sala</a> y la <a href="/calculadora-vpd/">Calculadora de VPD</a>, integrada con nuestra <a href="/cultivo-con-ia/">IA Cannábica</a>, te guiarán paso a paso durante toda su floración.</aside>
+<aside class="vpd-cta"><strong>¿Quieres cosechar el máximo potencial de la genética ${esc(v.nombre)}?</strong>Registra tu <a rel="nofollow" href="/empezar.html?v=${v._slug || ''}&n=${encodeURIComponent(v.nombre)}">diario de cultivo en Cannabicultor</a>. Nuestro <a href="/disenador_sala_cultivo.html">Diseñador de Sala</a> y la <a href="/calculadora-vpd/">Calculadora de VPD</a>, integrada con nuestra <a href="/cultivo-con-ia/">IA Cannábica</a>, te guiarán paso a paso durante toda su floración.</aside>
 ${bn ? `<a class="cta" href="/breeders/${breederSlug}/">Ver más variedades de ${esc(bn)}</a>` : `<a class="cta" href="/buscador-cannabicultor.html">Explorar el buscador de variedades</a>`}
 ${relacionadasHtml}
 <div data-resenas data-tipo="variedad" data-id="${v.id}"></div>
@@ -608,6 +608,20 @@ ${relacionadasHtml}
 }
 
 // ── Página de breeder ────────────────────────────────────────────────────────
+// Un criador solo se indexa si su página tiene contenido propio: descripción propia en español, >=3 fichas publicadas,
+// >=3 variedades en su catálogo (la página las lista), o tráfico ya demostrado en Search Console
+// (prerender/breeders-con-trafico.json: son páginas que rankean por el nombre del criador y no se tocan).
+// Sin nada de eso la página es casi idéntica a las de los demás criadores y Google la agrupa como duplicada:
+// pasa a noindex,follow y sale del sitemap y de los índices; se reactiva sola al ganar contenido.
+let TRAFICO_BREEDERS = new Set();
+try { TRAFICO_BREEDERS = new Set(JSON.parse(readFileSync(join(ROOT, 'prerender', 'breeders-con-trafico.json'), 'utf8'))); } catch { /* sin lista: solo cuenta el contenido */ }
+let CAT_LIST = new Map(); // breeder_id -> [{id, nombre}] con TODAS las variedades registradas del criador (no solo las publicadas)
+function breederIndexable(b, myVarieties) {
+  const propia = !!(b.descripcion && b.descripcion.length > 60 && isSpanish(b.descripcion));
+  const n = (myVarieties || []).filter((v) => v._slug && v.indexable !== false).length;
+  return propia || n >= 3 || (CAT_LIST.get(b.id) || []).length >= 3 || TRAFICO_BREEDERS.has(b._slug);
+}
+
 function breederPage(b, myVarieties) {
   const canonical = `${SITE}/breeders/${b._slug}/`;
   const nombre = b.breeder_name;
@@ -657,6 +671,14 @@ function breederPage(b, myVarieties) {
 <ul class="varlist">${listed.map((v) => `<li><a href="/variedades/${v._slug}/">${esc(v.nombre)}</a></li>`).join('')}</ul>`
     : `<h2>Variedades</h2><p class="body">Estamos publicando las fichas de las variedades de ${esc(nombre)}. Mientras tanto, puedes explorarlas en el <a href="/buscador-cannabicultor.html">buscador genético</a>.</p>`;
 
+  // Catálogo registrado: variedades del criador sin ficha publicada (texto plano). Da a cada página contenido propio y distinto.
+  const idsPublicados = new Set(listed.map((v) => v.id));
+  const extra = (CAT_LIST.get(b.id) || []).filter((v) => !idsPublicados.has(v.id));
+  const catHtml = extra.length
+    ? `<h2>${listed.length ? 'Otras variedades' : 'Variedades'} registradas de ${esc(nombre)}</h2>
+<p class="body">Genéticas del catálogo de ${esc(nombre)} que tenemos registradas${extra.length > 80 ? ` (mostramos 80 de ${extra.length})` : ` (${extra.length})`}. Iremos publicando su ficha completa.</p>
+<ul class="varlist">${extra.slice(0, 80).map((v) => `<li>${esc(v.nombre)}</li>`).join('')}</ul>`
+    : '';
   const body = `
 <nav class="crumbs"><a href="/">Inicio</a> › <a href="/breeders/">Breeders</a> › ${esc(nombre)}</nav>
 <h1>${esc(nombre)}</h1>
@@ -667,6 +689,7 @@ ${rows.length ? `<table class="facts">${rows.map(([k, val]) => `<tr><th>${k}</th
 <div class="body"><p>${esc(descText)}</p></div>
 ${b.website ? `<p class="body"><a href="${esc(b.website)}" rel="nofollow noopener" target="_blank">Sitio web oficial ↗</a></p>` : ''}
 ${varsHtml}
+${catHtml}
 <a class="cta" href="/buscador-cannabicultor.html">Explorar todas las variedades</a>
 <div data-resenas data-tipo="breeder" data-id="${b.id}"></div>
 `;
@@ -677,7 +700,7 @@ ${varsHtml}
     diarioHref: `/empezar.html?b=${b._slug || ''}&n=${encodeURIComponent(nombre)}`,
     diarioTxt: 'Empezar mi diario',
   });
-  return shell({ title, desc, canonical, image: img, jsonld, bodyHtml: body, dock });
+  return shell({ title, desc, canonical, image: img, jsonld, bodyHtml: body, dock, robots: breederIndexable(b, myVarieties) ? undefined : 'noindex,follow' });
 }
 
 function composeBreederDesc(b) {
@@ -935,7 +958,7 @@ function buildHubs({ breeders, vars, varsByBreeder, hacerVariedades, hacerBreede
     const breederNombre = new Map(breeders.map((b) => [b.id, b.breeder_name]));
     const { letras, grupos, paginas } = paginasPorLetra(pub, (v) => v.nombre);
     // criadores con más fichas publicadas (para repartir enlaces al otro índice)
-    const top = breeders.filter((b) => b._slug && !/unknown|legendary/i.test(b.breeder_name)).map((b) => ({ b, n: (varsByBreeder.get(b.id) || []).length })).filter((x) => x.n > 0).sort((a, b) => b.n - a.n).slice(0, 40);
+    const top = breeders.filter((b) => b._slug && !/unknown|legendary/i.test(b.breeder_name) && breederIndexable(b, varsByBreeder.get(b.id))).map((b) => ({ b, n: (varsByBreeder.get(b.id) || []).length })).filter((x) => x.n > 0).sort((a, b) => b.n - a.n).slice(0, 40);
     files.push({ path: join('variedades', 'index.html'), html: hubHtml({
       base: '/variedades/', titulo: 'Variedades de cannabis A-Z: genética, floración y datos de cultivo | Cannabicultor',
       h1: 'Variedades de cannabis, de la A a la Z', crumbs: 'Variedades', ruta: '/variedades/',
@@ -963,7 +986,7 @@ function buildHubs({ breeders, vars, varsByBreeder, hacerVariedades, hacerBreede
   }
 
   if (hacerBreeders) {
-    const lista = breeders.filter((b) => b._slug);
+    const lista = breeders.filter((b) => b._slug && breederIndexable(b, varsByBreeder.get(b.id)));
     const { letras, grupos, paginas } = paginasPorLetra(lista, (b) => b.breeder_name);
     files.push({ path: join('breeders', 'index.html'), html: hubHtml({
       base: '/breeders/', titulo: 'Criadores de semillas de cannabis A-Z: bancos y breeders | Cannabicultor',
@@ -1129,12 +1152,19 @@ async function main() {
 
   let nB = 0, nV = 0;
   if (DO_BREEDERS) {
+    // Catálogo completo (id, criador, nombre) de todas las variedades: alimenta la lista de cada criador y el criterio de indexación.
+    const cat = await fetchAll('variedades', { select: 'id,breeder_id,nombre', filter: '&nombre=not.is.null' });
+    CAT_LIST = new Map();
+    for (const v of cat) { if (!CAT_LIST.has(v.breeder_id)) CAT_LIST.set(v.breeder_id, []); CAT_LIST.get(v.breeder_id).push({ id: v.id, nombre: v.nombre }); }
+    for (const l of CAT_LIST.values()) l.sort((x, y) => String(x.nombre).localeCompare(String(y.nombre), 'es', { sensitivity: 'base' }));
+    console.log(`  catálogo cargado: ${cat.length} variedades de ${CAT_LIST.size} criadores`);
     await cleanDir('breeders');
     for (const b of breeders) {
       await write(join(OUT, 'breeders', b._slug, 'index.html'), breederPage(b, varsByBreeder.get(b.id) || []));
       nB++;
     }
     console.log(`  ✓ breeders escritos: ${nB}`);
+    console.log(`  criadores indexables: ${breeders.filter((b) => breederIndexable(b, varsByBreeder.get(b.id))).length} de ${breeders.length} (el resto: noindex,follow, sin sitemap)`);
   }
   if (pilotVars.length) {
     await cleanDir('variedades');
@@ -1207,7 +1237,7 @@ async function main() {
     const names = ['sitemap-static.xml'];
     if (DO_BREEDERS) {
       await write(join(OUT, 'sitemap-breeders.xml'),
-        sitemapUrls(breeders.map((b) => ({ loc: `${SITE}/breeders/${b._slug}/`, priority: '0.7', changefreq: 'monthly', lastmod: (b.updated_at || TODAY).slice(0, 10) }))));
+        sitemapUrls(breeders.filter((b) => breederIndexable(b, varsByBreeder.get(b.id))).map((b) => ({ loc: `${SITE}/breeders/${b._slug}/`, priority: '0.7', changefreq: 'monthly', lastmod: (b.updated_at || TODAY).slice(0, 10) }))));
       names.push('sitemap-breeders.xml');
     }
     if (pilotVars.length) {
