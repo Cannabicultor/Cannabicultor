@@ -1,6 +1,6 @@
 // Tests offline de worker/fotos-variedades.js con un Supabase y un storage simulados (sin red).
 // Uso: node worker/scripts/test-fotos-variedades.mjs
-import { detectarMime, decodificarDataUrl, handleFotoSubir, handleAdminFotos } from '../fotos-variedades.js';
+import { detectarMime, decodificarDataUrl, handleFotoSubir } from '../fotos-variedades.js';
 
 let pass = 0, fail = 0;
 const check = (n, c) => { if (c) pass++; else { fail++; console.log('FAIL:', n); } };
@@ -74,45 +74,6 @@ r = await handleFotoSubir({ variedad_id: 1, imagen: pngUrl, derechos: true }, en
 check('sin sesión → 401', r.status === 401);
 r = await handleFotoSubir({ email: 'b@b.com', variedad_id: 999, imagen: pngUrl, derechos: true }, env, {}, deps(false));
 check('variedad inexistente → 404', r.status === 404);
-
-// — Admin —
-r = await handleAdminFotos({ accion: 'listar' }, env, {}, deps(false));
-check('listar sin ser admin → 401', r.status === 401);
-r = await handleAdminFotos({ accion: 'listar' }, env, {}, deps(true));
-check('listar: 1 pendiente con nombre de variedad, criador y vista firmada', r.status === 200 && r.data.items.length === 1 && r.data.items[0].variedad_nombre === 'Blue Dream' && r.data.items[0].breeder_nombre === 'Exotic Genetix' && /sign/.test(r.data.items[0].vista));
-const idUsuario = db.variedad_fotos[0].id;
-r = await handleAdminFotos({ accion: 'aprobar', id: idUsuario }, env, {}, deps(true));
-check('aprobar subida de usuario → 200', r.status === 200 && r.data.ok);
-check('aprobada: fila con public_path y estado aprobada', db.variedad_fotos[0].estado === 'aprobada' && db.variedad_fotos[0].public_path === 'exotic-genetix/blue-dream-1.png');
-check('aprobada: imagen copiada al bucket PÚBLICO con la convención criador/variedad-id', storage.has('variedades/exotic-genetix/blue-dream-1.png'));
-check('aprobada: la ficha recibe image_url y foto_credito', db.variedades[0].image_url?.endsWith('/variedades/exotic-genetix/blue-dream-1.png') && /usuario/.test(db.variedades[0].foto_credito));
-check('aprobada: se borra el original del bucket privado', ![...storage.keys()].some((k) => k.startsWith('variedades-pendientes/')));
-r = await handleAdminFotos({ accion: 'aprobar', id: idUsuario }, env, {}, deps(true));
-check('aprobar dos veces → 409', r.status === 409);
-
-// candidata de criador: se descarga, se valida y se publica con crédito al criador
-db.variedades.push({ id: 3, nombre: 'Air Tight', breeder_id: 7, image_url: null });
-db.variedad_fotos.push({ id: ++seq, variedad_id: 3, origen: 'candidata', estado: 'pendiente', source_url: 'https://exoticgenetix.com/wp-content/uploads/air-tight.png', landing_url: 'https://exoticgenetix.com/product/air-tight/', licencia: 'permiso-criador', autor: 'Exotic Genetix', score: 0.95 });
-const idCand = db.variedad_fotos.at(-1).id;
-r = await handleAdminFotos({ accion: 'aprobar', id: idCand }, env, {}, deps(true));
-check('aprobar candidata → 200', r.status === 200);
-check('candidata: crédito al criador con permiso', /Exotic Genetix.*permiso del criador/.test(db.variedades[2].foto_credito));
-check('candidata: aprobada con sha256 y public_path', !!db.variedad_fotos.at(-1).sha256 && db.variedad_fotos.at(-1).public_path === 'exotic-genetix/air-tight-3.png');
-
-// no pisa una foto existente, y exige licencia
-db.variedades.push({ id: 4, nombre: 'Otra', breeder_id: 7, image_url: 'https://ya/tiene.jpg' });
-db.variedad_fotos.push({ id: ++seq, variedad_id: 4, origen: 'candidata', estado: 'pendiente', source_url: 'https://exoticgenetix.com/x.png', licencia: 'permiso-criador', autor: 'EG' });
-r = await handleAdminFotos({ accion: 'aprobar', id: db.variedad_fotos.at(-1).id }, env, {}, deps(true));
-check('aprobar sobre ficha que ya tiene foto: NO la pisa', r.status === 200 && db.variedades[3].image_url === 'https://ya/tiene.jpg' && r.data.ficha_actualizada === false);
-db.variedades.push({ id: 5, nombre: 'SinLic', breeder_id: 7, image_url: null });
-db.variedad_fotos.push({ id: ++seq, variedad_id: 5, origen: 'candidata', estado: 'pendiente', source_url: 'https://exoticgenetix.com/y.png', licencia: 'desconocida' });
-r = await handleAdminFotos({ accion: 'aprobar', id: db.variedad_fotos.at(-1).id }, env, {}, deps(true));
-check('licencia desconocida → 400, no se publica', r.status === 400 && db.variedades[4].image_url === null);
-db.variedad_fotos.push({ id: ++seq, variedad_id: 5, origen: 'candidata', estado: 'pendiente', source_url: 'http://127.0.0.1/secreto.png', licencia: 'permiso-criador' });
-r = await handleAdminFotos({ accion: 'aprobar', id: db.variedad_fotos.at(-1).id }, env, {}, deps(true));
-check('SSRF: URL http/IP interna rechazada', r.status === 502 && db.variedades[4].image_url === null);
-r = await handleAdminFotos({ accion: 'rechazar', id: db.variedad_fotos.at(-1).id, motivo: 'no es de esa variedad' }, env, {}, deps(true));
-check('rechazar → rechazada con motivo', r.status === 200 && db.variedad_fotos.at(-1).estado === 'rechazada' && db.variedad_fotos.at(-1).motivo_rechazo === 'no es de esa variedad');
 
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

@@ -19,7 +19,6 @@ HTML_FILES=(
   instalar-asesor.html
   prueba-asesor.html
   admin-growshops.html
-  admin-fotos.html
   subir-foto.html
   admin-campana.html
   dashboard.html

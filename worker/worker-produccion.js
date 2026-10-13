@@ -7,7 +7,7 @@ import {
 } from './sales-agent.js';
 import { handleInstagramWebhook } from './ig-channel.js';
 import { runCatalogIngest } from './catalog-curation.js';
-import { handleFotoSubir, handleAdminFotos } from './fotos-variedades.js';
+import { handleFotoSubir } from './fotos-variedades.js';
 
 /**
  * growers-alliance-ai — fuente de verdad del Worker de chat (Cannabicultor)
@@ -4264,7 +4264,6 @@ export default {
       if (path === '/diario/entrada') { const r = await handleDiarioEntrada(body, env, request); return json(r.data, r.status, cors); }
       if (path === '/admin/growshops') { const r = await handleAdminGrowshops(body, env, request); return json(r.data, r.status, cors); }
       if (path === '/fotos/subir') { const r = await handleFotoSubir(body, env, request, { sbRequest, authEmailFromRequest }); return json(r.data, r.status, cors); }
-      if (path === '/admin/fotos') { const r = await handleAdminFotos(body, env, request, { sbRequest, esAdminReq }); return json(r.data, r.status, cors); }
       if (path === '/admin/campana-creditos') { const r = await handleAdminCampanaCreditos(body, env, request); return json(r.data, r.status, cors); }
       if (path === '/creditos/checkout') { const r = await handleCreditosCheckout(body, env, request); return json(r.data, r.status, cors); }
       if (path === '/resenas') { const r = await handleCreateResena(body, env, request); return json(r.data, r.status, cors); }

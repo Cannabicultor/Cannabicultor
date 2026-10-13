@@ -40,11 +40,11 @@ create table if not exists public.variedad_fotos (
   revisado_at timestamptz,
   created_at timestamptz not null default now(),
 
-  constraint variedad_fotos_origen_check check (
+  constraint variedad_fotos_origen_datos_check check (
     (origen = 'usuario' and usuario_email is not null and storage_path is not null)
     or (origen = 'candidata' and source_url is not null)
   ),
-  constraint variedad_fotos_aprobada_check check (
+  constraint variedad_fotos_aprobada_datos_check check (
     estado <> 'aprobada' or (public_path is not null and licencia is not null and licencia <> 'desconocida')
   )
 );
