@@ -6,7 +6,7 @@ import {
   verificarAdornos, esqueletoFrase, esqueletosFrases, crearContadoresFrases,
   algunaFraseSobrerrepetida, registrarEsqueletosFrases, frecuenciaEsqueleto,
   numerosDeTexto, numerosDeFicha, datosCannabinoidesDudosos,
-  valorSaborEfectoValido, geneticaValida, terpenosEnEspanol, sinPorcentajes, saborEnEspanol, efectoEnEspanol, nivelEnEspanol,
+  valorSaborEfectoValido, geneticaValida, terpenosEnEspanol, sinPorcentajes, soloTerpenosConocidos, saborEnEspanol, efectoEnEspanol, nivelEnEspanol,
 } from './gen-seo-text.mjs';
 
 let pass = 0, fail = 0;
@@ -223,6 +223,14 @@ for (const mal of ['En su genética intervienen mirceno, pineno y cariofileno.',
 for (const bien of ['Su genética Skunk 1 x Afghani sostiene un 17% de THC, con mirceno, pineno y cariofileno.', 'Cruza Blueberry con Haze; los terpenos presentes son mirceno y pineno.', 'Su genética procede de Northern Lights #5 y Haze.']) {
   check(`genética real con terpenos aparte pasa: "${bien.slice(0, 40)}…"`, !tieneErroresOrtografia(bien, {}));
 }
+
+check('terpenos: se descarta basura ("s", "check")', soloTerpenosConocidos('s, check, mirceno, pineno') === 'mirceno, pineno');
+check('terpenos: solo basura queda vacío', soloTerpenosConocidos('w') === '');
+check('terpenos: buildFicha limpia basura', buildFicha({ nombre: 'X', terpenos: 'myrcene (30%), s, check' }, null, new Set()).terpenos === 'mirceno');
+for (const mal of ['Su genética queda definida por los terpenos mirceno y pineno.', 'La ficha registra terpenos, sin que consten datos de sabor.', 'No constan datos de efecto.', 'Componentes que el cultivador encontrará en la planta.', 'La genética regular permite seleccionar ejemplares.', 'Se mantiene durante el ciclo.']) {
+  check(`relleno ampliado se detecta: "${mal.slice(0, 40)}…"`, tieneErroresOrtografia(mal, {}));
+}
+check('"Su genética Skunk 1 x Afghani" sigue pasando', !tieneErroresOrtografia('Su genética Skunk 1 x Afghani sostiene un 17% de THC.', {}));
 
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

@@ -201,7 +201,7 @@ const TERPENOS_ES = {
   guaiol: 'guaiol', eucalyptol: 'eucaliptol', borneol: 'borneol', geraniol: 'geraniol',
   terpineol: 'terpineol', valencene: 'valenceno', phellandrene: 'felandreno', carene: 'careno',
   sabinene: 'sabineno', fenchol: 'fenchol', cymene: 'cimeno', pulegone: 'pulegona',
-  'caryophyllene oxide': 'óxido de cariofileno',
+  'caryophyllene oxide': 'óxido de cariofileno', terpinene: 'terpineno', phytol: 'fitol',
 };
 const RE_TERPENOS_EN = new RegExp(`\\b(${Object.keys(TERPENOS_ES).sort((a, b) => b.length - a.length).join('|')})\\b`, 'gi');
 function terpenosEnEspanol(texto) {
@@ -212,6 +212,16 @@ function terpenosEnEspanol(texto) {
 // >100%), no concentraciones: se quita el "(49.0%)" y queda solo la lista.
 function sinPorcentajes(terpenos) {
   return typeof terpenos === 'string' ? terpenos.replace(/\s*\(\s*[\d.,]+\s*%\s*\)/g, '').trim() : terpenos;
+}
+
+// Algunas fichas traen basura en el campo de terpenos ("s", "check", "w", frases de aroma):
+// solo se conservan los nombres de terpenos conocidos (en español, ya traducidos).
+const TERPENOS_VALIDOS = new Set([...Object.values(TERPENOS_ES), 'citral', 'eugenol', 'cedreno']);
+function soloTerpenosConocidos(terpenos) {
+  if (typeof terpenos !== 'string') return terpenos;
+  const toks = terpenos.split(/\s*[,;]\s*|\s+y\s+/).map((t) => t.trim()).filter(Boolean);
+  const buenos = toks.filter((t) => TERPENOS_VALIDOS.has(t.toLowerCase()));
+  return buenos.length === toks.length ? terpenos : buenos.join(', ');
 }
 
 // ── Vocabulario en español (sabor, efecto, altura, producción) ─────────────
@@ -308,7 +318,7 @@ function buildFicha(v, breeder, descripcionesDuplicadas) {
     floracion_dias: v.floracion_dias || undefined,
     altura: nivelEnEspanol(v.altura),
     produccion: nivelEnEspanol(v.produccion),
-    terpenos: sinPorcentajes(terpenosEnEspanol(v.terpenos)) || undefined,
+    terpenos: soloTerpenosConocidos(sinPorcentajes(terpenosEnEspanol(v.terpenos))) || undefined,
     aromas: saborEnEspanol(v.aromas?.length ? v.aromas : undefined),
     sabor: saborEnEspanol(limpiarSaborEfecto(v.sabor, v.sabores)),
     efecto: efectoEnEspanol(limpiarSaborEfecto(v.efecto, v.efectos)),
@@ -428,7 +438,7 @@ const PALABRAS_SIN_TILDE = /\b(genetica|floracion|produccion|dias|seleccion|terp
 const CALIFICATIVOS_PROHIBIDOS = /\b(potente|potentes|intens[oa]s?|excelente|excelentes|ideal|ideales|perfect[oa]s?|espectacular(?:es)?|sobresaliente|famos[oa]s?|popular(?:es)?|legendari[oa]s?|inigualable|imbatible|único|única|robust[oa]s?|vigoros[oa]s?|compact[oa]s?|resinos[oa]s?|aromátic[oa]s?|delicios[oa]s?|exquisit[oa]s?|equilibrad[oa]s?)\b/i;
 // Frases de relleno/cierre genérico: afirman a quién va dirigida la variedad o
 // resumen vacío que no consta en la ficha.
-const RELLENO = /(orientad[oa]s? a|dirigid[oa]s? a|pensad[oa]s? para|cultivadores? que (?:buscan|quieren|desean|prefieren)|ideal para|perfect[oa]s? para|el cultivador dispone|incorporaci[oó]n al cat[aá]logo|cierra con|lo que (?:implica|significa|supone|evita|permite)|esto (?:implica|significa|supone)|no requiere|requerir eliminaci[oó]n|simplifica|evita (?:el sexado|la eliminaci[oó]n)|elimina(?:r|ci[oó]n de) machos|fotoperiodo|recomendad[oa]s? para|gen[eé]tica (?:americana|norteamericana|californiana|holandesa|europea|canadiense)|linaje reconocible|(?:aporta|aportan|confiere|confieren|otorga|otorgan|dota|dotan)\b[^.]{0,50}\b(?:sabor|aroma|efecto|perfil)|(?:procede|proceden|deriva|derivan|proviene|provienen)\b[^.]{0,40}\b(?:terpen|mirceno|pineno|limoneno|cariofileno|linalool|humuleno|ocimeno|terpinoleno)|(?:sabor|aroma|efecto)\b[^.]{0,60}\b(?:queda definid|definid[oa]s? por|gracias a)|(?:definen?|representa|caracteriza|caracterizan)\b[^.]{0,30}\b(?:genética|variedad|perfil)\b|gracias a (?:los |sus |esos |esta |la )?(?:terpenos|combinaci[oó]n|composici[oó]n|carga)|lo que se traduce|se traduce en|organol[eé]pticas?|car[aá]cter arom[aá]tico|efectos propios|define (?:el|su|la) (?:perfil|sabor)|definen (?:el|su|la|esta) (?:perfil|variedad|genética)|configura el perfil|representa (?:una|un) (?:opci[oó]n|incorporaci[oó]n|propuesta)|ciclo de floraci[oó]n definido|composici[oó]n cannabinoide|una opci[oó]n (?:para|interesante|s[oó]lida)|(?:intervienen?|participan?)\b[^.]{0,30}\b(?:mirceno|pineno|limoneno|cariofileno|linalool|humuleno|ocimeno|terpinoleno)|gen[eé]tica\b[^.]{0,40}\b(?:incluye|incluyen|presenta|presentan|re[uú]ne|contiene|est[aá] formada por|compuesta por)\b[^.]{0,30}\b(?:mirceno|pineno|limoneno|cariofileno|linalool|humuleno|ocimeno|terpinoleno)|(?:describe|consta en|figura en|seg[uú]n) la ficha|notas existentes|no consta)/i;
+const RELLENO = /(orientad[oa]s? a|dirigid[oa]s? a|pensad[oa]s? para|cultivadores? que (?:buscan|quieren|desean|prefieren)|ideal para|perfect[oa]s? para|el cultivador dispone|incorporaci[oó]n al cat[aá]logo|cierra con|lo que (?:implica|significa|supone|evita|permite)|esto (?:implica|significa|supone)|no requiere|requerir eliminaci[oó]n|simplifica|evita (?:el sexado|la eliminaci[oó]n)|elimina(?:r|ci[oó]n de) machos|fotoperiodo|recomendad[oa]s? para|gen[eé]tica (?:americana|norteamericana|californiana|holandesa|europea|canadiense)|linaje reconocible|(?:aporta|aportan|confiere|confieren|otorga|otorgan|dota|dotan)\b[^.]{0,50}\b(?:sabor|aroma|efecto|perfil)|(?:procede|proceden|deriva|derivan|proviene|provienen)\b[^.]{0,40}\b(?:terpen|mirceno|pineno|limoneno|cariofileno|linalool|humuleno|ocimeno|terpinoleno)|(?:sabor|aroma|efecto)\b[^.]{0,60}\b(?:queda definid|definid[oa]s? por|gracias a)|(?:definen?|representa|caracteriza|caracterizan)\b[^.]{0,30}\b(?:genética|variedad|perfil)\b|gracias a (?:los |sus |esos |esta |la )?(?:terpenos|combinaci[oó]n|composici[oó]n|carga)|lo que se traduce|se traduce en|organol[eé]pticas?|car[aá]cter arom[aá]tico|efectos propios|define (?:el|su|la) (?:perfil|sabor)|definen (?:el|su|la|esta) (?:perfil|variedad|genética)|configura el perfil|representa (?:una|un) (?:opci[oó]n|incorporaci[oó]n|propuesta)|ciclo de floraci[oó]n definido|composici[oó]n cannabinoide|una opci[oó]n (?:para|interesante|s[oó]lida)|(?:intervienen?|participan?)\b[^.]{0,30}\b(?:mirceno|pineno|limoneno|cariofileno|linalool|humuleno|ocimeno|terpinoleno)|gen[eé]tica\b[^.]{0,40}\b(?:incluye|incluyen|presenta|presentan|re[uú]ne|contiene|est[aá] formada por|compuesta por)\b[^.]{0,30}\b(?:mirceno|pineno|limoneno|cariofileno|linalool|humuleno|ocimeno|terpinoleno)|(?:describe|consta en|figura en|seg[uú]n) la ficha|notas existentes|no consta|sin que (?:consten?|conste)|consten? datos|no constan|gen[eé]tica\b[^.]{0,20}\b(?:queda|est[aá]) definid[oa]\b[^.]{0,30}\b(?:terpen|mirceno|pineno|limoneno|cariofileno|linalool|humuleno|ocimeno|terpinoleno)|(?:el )?cultivador (?:encontrar[aá]|podr[aá]|dispondr[aá])|permite seleccionar|durante el ciclo)/i;
 // Nombres de terpeno que se han quedado en inglés (la ficha ya los pasa en español).
 const TERPENO_EN_INGLES = /\b(myrcene|pinene|caryophyllene|limonene|humulene|terpinolene|ocimene|farnesene|camphene|eucalyptol|valencene|phellandrene)\b/i;
 // Cada frase (salvo la primera) debe aportar un dato de la ficha (cifra, nombre,
@@ -782,7 +792,7 @@ if (ES_ENTRYPOINT) main().catch((e) => { console.error(e); process.exit(1); });
 // Exportado para worker/scripts/test-gen-seo-text.mjs (funciones puras, sin red,
 // salvo verificarAdornos que sí llama a DeepSeek — los tests le stubean fetch).
 export {
-  buildFicha, buildPrompt, RELLENO, geneticaValida, terpenosEnEspanol, sinPorcentajes, saborEnEspanol, efectoEnEspanol, nivelEnEspanol, valorSaborEfectoValido, limpiarSaborEfecto, ABERTURAS, ESTRUCTURAS_TERPENOS,
+  buildFicha, buildPrompt, RELLENO, geneticaValida, terpenosEnEspanol, sinPorcentajes, soloTerpenosConocidos, saborEnEspanol, efectoEnEspanol, nivelEnEspanol, valorSaborEfectoValido, limpiarSaborEfecto, ABERTURAS, ESTRUCTURAS_TERPENOS,
   datosCannabinoidesDudosos,
   numerosDeTexto, numerosDeFicha, cifrasVerificadas,
   decimalesConComa, tieneErroresOrtografia, verificarAdornos,
