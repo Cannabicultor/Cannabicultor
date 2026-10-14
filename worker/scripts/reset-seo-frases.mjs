@@ -7,8 +7,9 @@
 // Uso (desde el Mac):  cd worker && set -a && . ../.env && set +a
 //   node scripts/reset-seo-frases.mjs            # SIMULACIÓN: lista y cuenta, no escribe
 //   node scripts/reset-seo-frases.mjs --apply    # escribe
+//   --excluir=ids.json   # array de ids que NO se tocan (p. ej. los textos causales que se dejaron a propósito)
 // Guarda los ids afectados en reset-seo-frases-<fecha>.json (para poder revisarlos).
-import { writeFileSync } from 'node:fs';
+import { writeFileSync, readFileSync } from 'node:fs';
 import { RELLENO } from './gen-seo-text.mjs';
 
 const SUPABASE_URL = process.env.SUPABASE_URL || 'https://gfyrsrdnvgnhtsuexjkb.supabase.co';
@@ -25,7 +26,9 @@ for (let o = 0; ; o += 1000) {
   rows.push(...j);
   if (j.length < 1000) break;
 }
-const afectadas = rows.filter((r) => RELLENO.test(r.seo_description_text || ''));
+const exArg = process.argv.find((a) => a.startsWith('--excluir='));
+const excluidos = new Set(exArg ? JSON.parse(readFileSync(exArg.slice(10), 'utf8')) : []);
+const afectadas = rows.filter((r) => !excluidos.has(r.id) && RELLENO.test(r.seo_description_text || ''));
 console.log(`Textos 'ok': ${rows.length} · con frases externas: ${afectadas.length}${APPLY ? '' : ' (SIMULACIÓN)'}`);
 for (const r of afectadas.slice(0, 5)) {
   const m = r.seo_description_text.match(RELLENO); const i = r.seo_description_text.indexOf(m[0]);
