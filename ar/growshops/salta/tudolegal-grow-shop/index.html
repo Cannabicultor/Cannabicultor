@@ -79,7 +79,7 @@ footer.ft a{color:var(--text3)}
 .rev-msg{color:#b94b42;font-size:13px}
 @media(max-width:560px){.varlist{columns:1}.hero img{width:100%;height:auto;aspect-ratio:1}}</style>
 <link rel="stylesheet" href="/assets/shell.css">
-<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Inicio","item":"https://www.cannabicultor.com/"},{"@type":"ListItem","position":2,"name":"Argentina","item":"https://www.cannabicultor.com/ar/"},{"@type":"ListItem","position":3,"name":"Growshops","item":"https://www.cannabicultor.com/ar/growshops/"},{"@type":"ListItem","position":4,"name":"Salta","item":"https://www.cannabicultor.com/ar/growshops/salta/"},{"@type":"ListItem","position":5,"name":"TudoLegal Grow Shop","item":"https://www.cannabicultor.com/ar/growshops/salta/tudolegal-grow-shop/"}]},{"@type":"Store","name":"TudoLegal Grow Shop","@id":"https://www.cannabicultor.com/ar/growshops/salta/tudolegal-grow-shop/","url":"https://www.cannabicultor.com/ar/growshops/salta/tudolegal-grow-shop/","address":{"@type":"PostalAddress","streetAddress":"25 de Mayo 536","addressLocality":"Salta","addressRegion":"Salta","addressCountry":"AR"}}]}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Inicio","item":"https://www.cannabicultor.com/"},{"@type":"ListItem","position":2,"name":"Argentina","item":"https://www.cannabicultor.com/ar/"},{"@type":"ListItem","position":3,"name":"Growshops","item":"https://www.cannabicultor.com/ar/growshops/"},{"@type":"ListItem","position":4,"name":"Salta","item":"https://www.cannabicultor.com/ar/growshops/salta/"},{"@type":"ListItem","position":5,"name":"TudoLegal Grow Shop","item":"https://www.cannabicultor.com/ar/growshops/salta/tudolegal-grow-shop/"}]},{"@type":"Store","name":"TudoLegal Grow Shop","@id":"https://www.cannabicultor.com/ar/growshops/salta/tudolegal-grow-shop/","url":"https://www.cannabicultor.com/ar/growshops/salta/tudolegal-grow-shop/","address":{"@type":"PostalAddress","streetAddress":"25 de Mayo 536","addressLocality":"Salta","addressRegion":"Salta","addressCountry":"AR"},"geo":{"@type":"GeoCoordinates","latitude":-24.7831457,"longitude":-65.4146435}}]}</script>
 </head>
 <body class="cc-shell">
 <div class="cc-topbar"><button type="button" id="ccBurger" aria-label="Abrir menú"><svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button><a href="/">Cannabicultor IA</a></div>
@@ -125,7 +125,7 @@ footer.ft a{color:var(--text3)}
 .faq{margin:30px 0}.faq h3{font-size:17px;margin:16px 0 6px}.faq p{color:var(--text2);margin:0 0 4px}
 .claim{margin:26px 0;padding:16px 18px;background:var(--forest-pale);border:1px solid var(--border);border-radius:14px;font-size:14px;color:var(--text2)}
 .city-list{columns:2;gap:20px;margin:16px 0}.city-list li{list-style:none;margin:0 0 8px}
-@media(max-width:560px){.city-list{columns:1}}</style>
+@media(max-width:560px){.city-list{columns:1}}</style><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css">
 <nav class="crumbs"><a href="/">Inicio</a> › <a href="/ar/">Argentina</a> › <a href="/ar/growshops/">Growshops</a> › <a href="/ar/growshops/salta/">Salta</a> › TudoLegal Grow Shop</nav>
 <h1>TudoLegal Grow Shop<span class="by">Growshop en Salta, Argentina</span></h1>
 <table class="facts"><tr><th>Dirección</th><td>25 de Mayo 536, Salta, Salta</td></tr><tr><th>Instagram</th><td><a href="https://www.instagram.com/tudolegal.oficial/" rel="nofollow noopener" target="_blank">https://www.instagram.com/tudolegal.oficial/</a></td></tr></table>
@@ -133,10 +133,11 @@ footer.ft a{color:var(--text3)}
 <p class="body" style="font-size:14px;color:var(--text3)">Ficha sin verificar: los datos proceden de fuentes públicas y pueden haber cambiado. Si eres el titular, reclama la ficha para verificarla.</p>
 <div class="actions">
 
-<a class="btn ghost" href="https://www.google.com/maps/dir/?api=1&destination=25%20de%20Mayo%20536%2C%20Salta%2C%20Salta%2C%20Argentina" target="_blank" rel="noopener">🧭 Cómo llegar</a>
+<a class="btn ghost" href="https://www.google.com/maps/dir/?api=1&destination=-24.7831457,-65.4146435" target="_blank" rel="noopener">🧭 Cómo llegar</a>
 
 </div>
-
+<div id="map" class="map"></div><script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+<script>document.addEventListener('DOMContentLoaded',function(){try{var m=L.map('map',{scrollWheelZoom:false}).setView([-24.7831457,-65.4146435],15);L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap',maxZoom:19}).addTo(m);L.marker([-24.7831457,-65.4146435]).addTo(m).bindPopup("TudoLegal Grow Shop");}catch(e){}});</script>
 <div class="claim"><strong>¿Eres el titular de esta ficha?</strong> Verifica tus datos, actualízalos y responde reseñas. <a href="/login.html?next=/ar/growshops/salta/tudolegal-grow-shop/&reclamar=growshop:715">Reclamar propiedad →</a></div>
 <div data-resenas data-tipo="growshop" data-id="715"></div>
 <p class="body"><a href="/ar/growshops/salta/">← Más growshops en Salta</a></p>

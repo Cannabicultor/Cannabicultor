@@ -79,7 +79,7 @@ footer.ft a{color:var(--text3)}
 .rev-msg{color:#b94b42;font-size:13px}
 @media(max-width:560px){.varlist{columns:1}.hero img{width:100%;height:auto;aspect-ratio:1}}</style>
 <link rel="stylesheet" href="/assets/shell.css">
-<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Inicio","item":"https://www.cannabicultor.com/"},{"@type":"ListItem","position":2,"name":"Argentina","item":"https://www.cannabicultor.com/ar/"},{"@type":"ListItem","position":3,"name":"Clubes y asociaciones","item":"https://www.cannabicultor.com/ar/asociaciones/"},{"@type":"ListItem","position":4,"name":"Buenos Aires","item":"https://www.cannabicultor.com/ar/asociaciones/buenos-aires/"},{"@type":"ListItem","position":5,"name":"Cultivo Verde Escobar","item":"https://www.cannabicultor.com/ar/asociaciones/buenos-aires/cultivo-verde-escobar/"}]},{"@type":"Organization","name":"Cultivo Verde Escobar","@id":"https://www.cannabicultor.com/ar/asociaciones/buenos-aires/cultivo-verde-escobar/","url":"https://www.cannabicultor.com/ar/asociaciones/buenos-aires/cultivo-verde-escobar/","address":{"@type":"PostalAddress","addressLocality":"Escobar","addressRegion":"Buenos Aires","addressCountry":"AR"}}]}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Inicio","item":"https://www.cannabicultor.com/"},{"@type":"ListItem","position":2,"name":"Argentina","item":"https://www.cannabicultor.com/ar/"},{"@type":"ListItem","position":3,"name":"Clubes y asociaciones","item":"https://www.cannabicultor.com/ar/asociaciones/"},{"@type":"ListItem","position":4,"name":"Buenos Aires","item":"https://www.cannabicultor.com/ar/asociaciones/buenos-aires/"},{"@type":"ListItem","position":5,"name":"Cultivo Verde Escobar","item":"https://www.cannabicultor.com/ar/asociaciones/buenos-aires/cultivo-verde-escobar/"}]},{"@type":"Organization","name":"Cultivo Verde Escobar","@id":"https://www.cannabicultor.com/ar/asociaciones/buenos-aires/cultivo-verde-escobar/","url":"https://www.cannabicultor.com/ar/asociaciones/buenos-aires/cultivo-verde-escobar/","address":{"@type":"PostalAddress","streetAddress":"M6P4+M2, Belén de Escobar, Provincia de Buenos Aires","addressLocality":"Escobar","addressRegion":"Buenos Aires","addressCountry":"AR"},"geo":{"@type":"GeoCoordinates","latitude":-34.3133442,"longitude":-58.7948973}}]}</script>
 </head>
 <body class="cc-shell">
 <div class="cc-topbar"><button type="button" id="ccBurger" aria-label="Abrir menú"><svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button><a href="/">Cannabicultor IA</a></div>
@@ -125,18 +125,19 @@ footer.ft a{color:var(--text3)}
 .faq{margin:30px 0}.faq h3{font-size:17px;margin:16px 0 6px}.faq p{color:var(--text2);margin:0 0 4px}
 .claim{margin:26px 0;padding:16px 18px;background:var(--forest-pale);border:1px solid var(--border);border-radius:14px;font-size:14px;color:var(--text2)}
 .city-list{columns:2;gap:20px;margin:16px 0}.city-list li{list-style:none;margin:0 0 8px}
-@media(max-width:560px){.city-list{columns:1}}</style>
+@media(max-width:560px){.city-list{columns:1}}</style><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css">
 <nav class="crumbs"><a href="/">Inicio</a> › <a href="/ar/">Argentina</a> › <a href="/ar/asociaciones/">Clubes y asociaciones</a> › <a href="/ar/asociaciones/buenos-aires/">Buenos Aires</a> › Cultivo Verde Escobar</nav>
 <h1>Cultivo Verde Escobar<span class="by">Club o asociación en Escobar, Argentina</span></h1>
-<table class="facts"><tr><th>Dirección</th><td>Escobar, Buenos Aires</td></tr></table>
+<table class="facts"><tr><th>Dirección</th><td>M6P4+M2, Belén de Escobar, Provincia de Buenos Aires, Escobar, Buenos Aires</td></tr></table>
 <div class="body"><p>Asociación civil (leyes 27.350 y 27.669)</p></div>
 <p class="body" style="font-size:14px;color:var(--text3)">Ficha sin verificar: los datos proceden de fuentes públicas y pueden haber cambiado. Si eres el titular, reclama la ficha para verificarla.</p>
 <div class="actions">
 
-<a class="btn ghost" href="https://www.google.com/maps/dir/?api=1&destination=Escobar%2C%20Buenos%20Aires%2C%20Argentina" target="_blank" rel="noopener">🧭 Cómo llegar</a>
+<a class="btn ghost" href="https://www.google.com/maps/dir/?api=1&destination=-34.3133442,-58.7948973" target="_blank" rel="noopener">🧭 Cómo llegar</a>
 
 </div>
-
+<div id="map" class="map"></div><script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+<script>document.addEventListener('DOMContentLoaded',function(){try{var m=L.map('map',{scrollWheelZoom:false}).setView([-34.3133442,-58.7948973],15);L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap',maxZoom:19}).addTo(m);L.marker([-34.3133442,-58.7948973]).addTo(m).bindPopup("Cultivo Verde Escobar");}catch(e){}});</script>
 <div class="claim"><strong>¿Eres el titular de esta ficha?</strong> Verifica tus datos, actualízalos y responde reseñas. <a href="/login.html?next=/ar/asociaciones/buenos-aires/cultivo-verde-escobar/&reclamar=asociacion:534">Reclamar propiedad →</a></div>
 <div data-resenas data-tipo="asociacion" data-id="534"></div>
 <p class="body"><a href="/ar/asociaciones/buenos-aires/">← Más clubes y asociaciones en Buenos Aires</a></p>

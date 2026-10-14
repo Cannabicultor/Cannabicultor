@@ -79,7 +79,7 @@ footer.ft a{color:var(--text3)}
 .rev-msg{color:#b94b42;font-size:13px}
 @media(max-width:560px){.varlist{columns:1}.hero img{width:100%;height:auto;aspect-ratio:1}}</style>
 <link rel="stylesheet" href="/assets/shell.css">
-<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Inicio","item":"https://www.cannabicultor.com/"},{"@type":"ListItem","position":2,"name":"Argentina","item":"https://www.cannabicultor.com/ar/"},{"@type":"ListItem","position":3,"name":"Growshops","item":"https://www.cannabicultor.com/ar/growshops/"},{"@type":"ListItem","position":4,"name":"Ciudad Autónoma de Buenos Aires (CABA)","item":"https://www.cannabicultor.com/ar/growshops/caba/"},{"@type":"ListItem","position":5,"name":"Osterman Shop","item":"https://www.cannabicultor.com/ar/growshops/caba/osterman-shop/"}]},{"@type":"Store","name":"Osterman Shop","@id":"https://www.cannabicultor.com/ar/growshops/caba/osterman-shop/","url":"https://www.cannabicultor.com/ar/growshops/caba/osterman-shop/","address":{"@type":"PostalAddress","addressLocality":"Ciudad de Buenos Aires","addressRegion":"CABA","addressCountry":"AR"}}]}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Inicio","item":"https://www.cannabicultor.com/"},{"@type":"ListItem","position":2,"name":"Argentina","item":"https://www.cannabicultor.com/ar/"},{"@type":"ListItem","position":3,"name":"Growshops","item":"https://www.cannabicultor.com/ar/growshops/"},{"@type":"ListItem","position":4,"name":"Ciudad Autónoma de Buenos Aires (CABA)","item":"https://www.cannabicultor.com/ar/growshops/caba/"},{"@type":"ListItem","position":5,"name":"Osterman Shop","item":"https://www.cannabicultor.com/ar/growshops/caba/osterman-shop/"}]},{"@type":"Store","name":"Osterman Shop","@id":"https://www.cannabicultor.com/ar/growshops/caba/osterman-shop/","url":"https://www.cannabicultor.com/ar/growshops/caba/osterman-shop/","telephone":"+54 9 298 428-8541","address":{"@type":"PostalAddress","streetAddress":"Av. Gaona 3000, C1416DSR Cdad. Autónoma de Buenos Aires","addressLocality":"Ciudad de Buenos Aires","addressRegion":"CABA","addressCountry":"AR"},"geo":{"@type":"GeoCoordinates","latitude":-34.6173461,"longitude":-58.4678066}}]}</script>
 </head>
 <body class="cc-shell">
 <div class="cc-topbar"><button type="button" id="ccBurger" aria-label="Abrir menú"><svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button><a href="/">Cannabicultor IA</a></div>
@@ -125,18 +125,19 @@ footer.ft a{color:var(--text3)}
 .faq{margin:30px 0}.faq h3{font-size:17px;margin:16px 0 6px}.faq p{color:var(--text2);margin:0 0 4px}
 .claim{margin:26px 0;padding:16px 18px;background:var(--forest-pale);border:1px solid var(--border);border-radius:14px;font-size:14px;color:var(--text2)}
 .city-list{columns:2;gap:20px;margin:16px 0}.city-list li{list-style:none;margin:0 0 8px}
-@media(max-width:560px){.city-list{columns:1}}</style>
+@media(max-width:560px){.city-list{columns:1}}</style><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css">
 <nav class="crumbs"><a href="/">Inicio</a> › <a href="/ar/">Argentina</a> › <a href="/ar/growshops/">Growshops</a> › <a href="/ar/growshops/caba/">Ciudad Autónoma de Buenos Aires (CABA)</a> › Osterman Shop</nav>
 <h1>Osterman Shop<span class="by">Growshop en Ciudad de Buenos Aires, Argentina</span></h1>
-<table class="facts"><tr><th>Dirección</th><td>Ciudad de Buenos Aires, CABA</td></tr></table>
+<table class="facts"><tr><th>Dirección</th><td>Av. Gaona 3000, C1416DSR Cdad. Autónoma de Buenos Aires, Ciudad de Buenos Aires, CABA</td></tr><tr><th>Teléfono</th><td><a href="tel:+54 9 298 428-8541">+54 9 298 428-8541</a></td></tr><tr><th>Horario</th><td>L 9:00–18:00, M 9:00–18:00, X 9:00–18:00, J 9:00–18:00, V 9:00–18:00, S 10:00–16:00, D Cerrado</td></tr></table>
 <div class="body"><p>Instalaciones eléctricas para cultivos y venta de insumos mayorista</p></div>
 <p class="body" style="font-size:14px;color:var(--text3)">Ficha sin verificar: los datos proceden de fuentes públicas y pueden haber cambiado. Si eres el titular, reclama la ficha para verificarla.</p>
 <div class="actions">
 
-<a class="btn ghost" href="https://www.google.com/maps/dir/?api=1&destination=Ciudad%20de%20Buenos%20Aires%2C%20CABA%2C%20Argentina" target="_blank" rel="noopener">🧭 Cómo llegar</a>
-
+<a class="btn ghost" href="https://www.google.com/maps/dir/?api=1&destination=-34.6173461,-58.4678066" target="_blank" rel="noopener">🧭 Cómo llegar</a>
+<a class="btn ghost" href="tel:+54 9 298 428-8541">📞 Llamar</a>
 </div>
-
+<div id="map" class="map"></div><script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+<script>document.addEventListener('DOMContentLoaded',function(){try{var m=L.map('map',{scrollWheelZoom:false}).setView([-34.6173461,-58.4678066],15);L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap',maxZoom:19}).addTo(m);L.marker([-34.6173461,-58.4678066]).addTo(m).bindPopup("Osterman Shop");}catch(e){}});</script>
 <div class="claim"><strong>¿Eres el titular de esta ficha?</strong> Verifica tus datos, actualízalos y responde reseñas. <a href="/login.html?next=/ar/growshops/caba/osterman-shop/&reclamar=growshop:644">Reclamar propiedad →</a></div>
 <div data-resenas data-tipo="growshop" data-id="644"></div>
 <p class="body"><a href="/ar/growshops/caba/">← Más growshops en Ciudad Autónoma de Buenos Aires (CABA)</a></p>
