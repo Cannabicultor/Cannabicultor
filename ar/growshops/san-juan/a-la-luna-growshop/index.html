@@ -47,6 +47,10 @@ h1 .by{display:block;font-size:16px;font-weight:400;color:var(--text3);margin-to
 .seo-lede{font-size:17px;line-height:1.6;color:var(--text2);margin:14px 0 6px}
 .hero{display:flex;gap:28px;flex-wrap:wrap;align-items:flex-start;margin:24px 0 8px}
 .hero img{width:220px;height:220px;object-fit:cover;border-radius:16px;border:1px solid var(--border);background:var(--white)}
+.foto{margin:0;width:220px}.foto img{display:block}
+.credito{font-size:12px;opacity:.7;margin-top:6px;line-height:1.35}
+.foto.sin{height:220px;border:2px dashed var(--border);border-radius:16px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;text-align:center;padding:14px;font-size:14px}
+.foto.sin a{font-weight:600}
 .facts{width:100%;border-collapse:collapse;margin:24px 0;background:var(--white);border:1px solid var(--border);border-radius:12px;overflow:hidden}
 .facts th,.facts td{text-align:left;padding:11px 16px;border-bottom:1px solid var(--border);font-size:14px}
 .facts th{width:38%;color:var(--text3);font-weight:500}
@@ -60,6 +64,9 @@ h1 .by{display:block;font-size:16px;font-weight:400;color:var(--text3);margin-to
 .vpd-cta a{font-weight:600}
 h2{font-size:22px;font-weight:600;letter-spacing:-0.02em;margin:36px 0 14px}
 .varlist{list-style:none;columns:2;gap:24px}
+.letras{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 22px}.letras a{padding:6px 13px;border:1px solid var(--border);border-radius:99px;text-decoration:none;font-size:14px}.letras a small{opacity:.6;margin-left:4px}
+.pager{display:flex;justify-content:space-between;gap:12px;margin:22px 0;font-size:14px}
+.varlist small{opacity:.65}
 .varlist li{margin:0 0 7px;break-inside:avoid;font-size:14px}
 .cta{display:inline-block;background:var(--forest);color:#fff;padding:12px 22px;border-radius:10px;font-weight:500;margin-top:12px}
 .cta:hover{background:var(--forest-light);text-decoration:none}
@@ -77,7 +84,7 @@ footer.ft a{color:var(--text3)}
 .rev-form textarea{width:100%;border:1px solid var(--border);border-radius:10px;padding:10px;font:inherit}
 .rev-send{background:var(--forest);color:#fff;border:0;border-radius:10px;padding:12px;font-weight:600;cursor:pointer}
 .rev-msg{color:#b94b42;font-size:13px}
-@media(max-width:560px){.varlist{columns:1}.hero img{width:100%;height:auto;aspect-ratio:1}}</style>
+@media(max-width:560px){.varlist{columns:1}.foto{width:100%}.hero img{width:100%;height:auto;aspect-ratio:1}}</style>
 <link rel="stylesheet" href="/assets/shell.css">
 <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Inicio","item":"https://www.cannabicultor.com/"},{"@type":"ListItem","position":2,"name":"Argentina","item":"https://www.cannabicultor.com/ar/"},{"@type":"ListItem","position":3,"name":"Growshops","item":"https://www.cannabicultor.com/ar/growshops/"},{"@type":"ListItem","position":4,"name":"San Juan","item":"https://www.cannabicultor.com/ar/growshops/san-juan/"},{"@type":"ListItem","position":5,"name":"A la Luna Growshop","item":"https://www.cannabicultor.com/ar/growshops/san-juan/a-la-luna-growshop/"}]},{"@type":"Store","name":"A la Luna Growshop","@id":"https://www.cannabicultor.com/ar/growshops/san-juan/a-la-luna-growshop/","url":"https://www.cannabicultor.com/ar/growshops/san-juan/a-la-luna-growshop/","address":{"@type":"PostalAddress","addressLocality":"San Juan","addressRegion":"San Juan","addressCountry":"AR"}}]}</script>
 </head>
@@ -143,7 +150,7 @@ footer.ft a{color:var(--text3)}
 </main>
 <footer class="ft">
 <p>Cannabicultor · Guía IA de cultivo de cannabis en español. Solo para mayores de 18 años. El cultivo de cannabis está regulado; consulta la legislación vigente en tu país. Fines educativos.</p>
-<p><a href="/">Inicio</a> · <a href="/buscador-cannabicultor.html">Buscador</a> · <a href="/atlas_landrace.html">Atlas landrace</a></p>
+<p><a href="/">Inicio</a> · <a href="/buscador-cannabicultor.html">Buscador</a> · <a href="/variedades/">Variedades A-Z</a> · <a href="/breeders/">Criadores</a> · <a href="/atlas_landrace.html">Atlas landrace</a></p>
 </footer>
 <div class="cc-dock"><form id="ccDock" data-tipo="pagina" data-contexto="" role="search">
 <img src="/assets/icono_cannabicultor_small.webp" alt="" width="28" height="28">
@@ -153,7 +160,7 @@ footer.ft a{color:var(--text3)}
 <button type="submit" aria-label="Preguntar"><svg viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
 </form></div>
 <script src="/assets/resenas.js"></script>
-<script src="/assets/shell.js" defer></script>
+<script src="/assets/shell.js?v=20261006c" defer></script>
 <script src="/track.js?v=20260926-host" defer></script>
 </body>
 </html>

@@ -47,6 +47,10 @@ h1 .by{display:block;font-size:16px;font-weight:400;color:var(--text3);margin-to
 .seo-lede{font-size:17px;line-height:1.6;color:var(--text2);margin:14px 0 6px}
 .hero{display:flex;gap:28px;flex-wrap:wrap;align-items:flex-start;margin:24px 0 8px}
 .hero img{width:220px;height:220px;object-fit:cover;border-radius:16px;border:1px solid var(--border);background:var(--white)}
+.foto{margin:0;width:220px}.foto img{display:block}
+.credito{font-size:12px;opacity:.7;margin-top:6px;line-height:1.35}
+.foto.sin{height:220px;border:2px dashed var(--border);border-radius:16px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;text-align:center;padding:14px;font-size:14px}
+.foto.sin a{font-weight:600}
 .facts{width:100%;border-collapse:collapse;margin:24px 0;background:var(--white);border:1px solid var(--border);border-radius:12px;overflow:hidden}
 .facts th,.facts td{text-align:left;padding:11px 16px;border-bottom:1px solid var(--border);font-size:14px}
 .facts th{width:38%;color:var(--text3);font-weight:500}
@@ -60,6 +64,9 @@ h1 .by{display:block;font-size:16px;font-weight:400;color:var(--text3);margin-to
 .vpd-cta a{font-weight:600}
 h2{font-size:22px;font-weight:600;letter-spacing:-0.02em;margin:36px 0 14px}
 .varlist{list-style:none;columns:2;gap:24px}
+.letras{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 22px}.letras a{padding:6px 13px;border:1px solid var(--border);border-radius:99px;text-decoration:none;font-size:14px}.letras a small{opacity:.6;margin-left:4px}
+.pager{display:flex;justify-content:space-between;gap:12px;margin:22px 0;font-size:14px}
+.varlist small{opacity:.65}
 .varlist li{margin:0 0 7px;break-inside:avoid;font-size:14px}
 .cta{display:inline-block;background:var(--forest);color:#fff;padding:12px 22px;border-radius:10px;font-weight:500;margin-top:12px}
 .cta:hover{background:var(--forest-light);text-decoration:none}
@@ -77,9 +84,9 @@ footer.ft a{color:var(--text3)}
 .rev-form textarea{width:100%;border:1px solid var(--border);border-radius:10px;padding:10px;font:inherit}
 .rev-send{background:var(--forest);color:#fff;border:0;border-radius:10px;padding:12px;font-weight:600;cursor:pointer}
 .rev-msg{color:#b94b42;font-size:13px}
-@media(max-width:560px){.varlist{columns:1}.hero img{width:100%;height:auto;aspect-ratio:1}}</style>
+@media(max-width:560px){.varlist{columns:1}.foto{width:100%}.hero img{width:100%;height:auto;aspect-ratio:1}}</style>
 <link rel="stylesheet" href="/assets/shell.css">
-<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Inicio","item":"https://www.cannabicultor.com/"},{"@type":"ListItem","position":2,"name":"Argentina","item":"https://www.cannabicultor.com/ar/"},{"@type":"ListItem","position":3,"name":"Clubes y asociaciones","item":"https://www.cannabicultor.com/ar/asociaciones/"},{"@type":"ListItem","position":4,"name":"Chaco","item":"https://www.cannabicultor.com/ar/asociaciones/chaco/"},{"@type":"ListItem","position":5,"name":"Cogolloya Cannabis Club","item":"https://www.cannabicultor.com/ar/asociaciones/chaco/cogolloya-cannabis-club/"}]},{"@type":"Organization","name":"Cogolloya Cannabis Club","@id":"https://www.cannabicultor.com/ar/asociaciones/chaco/cogolloya-cannabis-club/","url":"https://www.cannabicultor.com/ar/asociaciones/chaco/cogolloya-cannabis-club/","address":{"@type":"PostalAddress","addressLocality":"Chaco","addressRegion":"Chaco","addressCountry":"AR"}}]}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Inicio","item":"https://www.cannabicultor.com/"},{"@type":"ListItem","position":2,"name":"Argentina","item":"https://www.cannabicultor.com/ar/"},{"@type":"ListItem","position":3,"name":"Clubes y asociaciones","item":"https://www.cannabicultor.com/ar/asociaciones/"},{"@type":"ListItem","position":4,"name":"Chaco","item":"https://www.cannabicultor.com/ar/asociaciones/chaco/"},{"@type":"ListItem","position":5,"name":"Cogolloya Cannabis Club","item":"https://www.cannabicultor.com/ar/asociaciones/chaco/cogolloya-cannabis-club/"}]},{"@type":"Organization","name":"Cogolloya Cannabis Club","@id":"https://www.cannabicultor.com/ar/asociaciones/chaco/cogolloya-cannabis-club/","url":"https://www.cannabicultor.com/ar/asociaciones/chaco/cogolloya-cannabis-club/","address":{"@type":"PostalAddress","streetAddress":"Av. Chaco 122, H3500 Resistencia, Chaco","addressLocality":"Chaco","addressRegion":"Chaco","addressCountry":"AR"},"geo":{"@type":"GeoCoordinates","latitude":-27.4647172,"longitude":-58.97342}}]}</script>
 </head>
 <body class="cc-shell">
 <div class="cc-topbar"><button type="button" id="ccBurger" aria-label="Abrir menú"><svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button><a href="/">Cannabicultor IA</a></div>
@@ -125,25 +132,26 @@ footer.ft a{color:var(--text3)}
 .faq{margin:30px 0}.faq h3{font-size:17px;margin:16px 0 6px}.faq p{color:var(--text2);margin:0 0 4px}
 .claim{margin:26px 0;padding:16px 18px;background:var(--forest-pale);border:1px solid var(--border);border-radius:14px;font-size:14px;color:var(--text2)}
 .city-list{columns:2;gap:20px;margin:16px 0}.city-list li{list-style:none;margin:0 0 8px}
-@media(max-width:560px){.city-list{columns:1}}</style>
+@media(max-width:560px){.city-list{columns:1}}</style><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css">
 <nav class="crumbs"><a href="/">Inicio</a> › <a href="/ar/">Argentina</a> › <a href="/ar/asociaciones/">Clubes y asociaciones</a> › <a href="/ar/asociaciones/chaco/">Chaco</a> › Cogolloya Cannabis Club</nav>
 <h1>Cogolloya Cannabis Club<span class="by">Club o asociación en Chaco, Argentina</span></h1>
-<table class="facts"><tr><th>Dirección</th><td>Chaco</td></tr></table>
+<table class="facts"><tr><th>Dirección</th><td>Av. Chaco 122, H3500 Resistencia, Chaco, Chaco</td></tr></table>
 
 <p class="body" style="font-size:14px;color:var(--text3)">Ficha sin verificar: los datos proceden de fuentes públicas y pueden haber cambiado. Si eres el titular, reclama la ficha para verificarla.</p>
 <div class="actions">
 
-<a class="btn ghost" href="https://www.google.com/maps/dir/?api=1&destination=Chaco%2C%20Argentina" target="_blank" rel="noopener">🧭 Cómo llegar</a>
+<a class="btn ghost" href="https://www.google.com/maps/dir/?api=1&destination=-27.4647172,-58.97342" target="_blank" rel="noopener">🧭 Cómo llegar</a>
 
 </div>
-
+<div id="map" class="map"></div><script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+<script>document.addEventListener('DOMContentLoaded',function(){try{var m=L.map('map',{scrollWheelZoom:false}).setView([-27.4647172,-58.97342],15);L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap',maxZoom:19}).addTo(m);L.marker([-27.4647172,-58.97342]).addTo(m).bindPopup("Cogolloya Cannabis Club");}catch(e){}});</script>
 <div class="claim"><strong>¿Eres el titular de esta ficha?</strong> Verifica tus datos, actualízalos y responde reseñas. <a href="/login.html?next=/ar/asociaciones/chaco/cogolloya-cannabis-club/&reclamar=asociacion:548">Reclamar propiedad →</a></div>
 <div data-resenas data-tipo="asociacion" data-id="548"></div>
 <p class="body"><a href="/ar/asociaciones/chaco/">← Más clubes y asociaciones en Chaco</a></p>
 </main>
 <footer class="ft">
 <p>Cannabicultor · Guía IA de cultivo de cannabis en español. Solo para mayores de 18 años. El cultivo de cannabis está regulado; consulta la legislación vigente en tu país. Fines educativos.</p>
-<p><a href="/">Inicio</a> · <a href="/buscador-cannabicultor.html">Buscador</a> · <a href="/atlas_landrace.html">Atlas landrace</a></p>
+<p><a href="/">Inicio</a> · <a href="/buscador-cannabicultor.html">Buscador</a> · <a href="/variedades/">Variedades A-Z</a> · <a href="/breeders/">Criadores</a> · <a href="/atlas_landrace.html">Atlas landrace</a></p>
 </footer>
 <div class="cc-dock"><form id="ccDock" data-tipo="pagina" data-contexto="" role="search">
 <img src="/assets/icono_cannabicultor_small.webp" alt="" width="28" height="28">
@@ -153,7 +161,7 @@ footer.ft a{color:var(--text3)}
 <button type="submit" aria-label="Preguntar"><svg viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
 </form></div>
 <script src="/assets/resenas.js"></script>
-<script src="/assets/shell.js" defer></script>
+<script src="/assets/shell.js?v=20261006c" defer></script>
 <script src="/track.js?v=20260926-host" defer></script>
 </body>
 </html>
