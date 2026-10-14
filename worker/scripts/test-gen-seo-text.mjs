@@ -217,5 +217,12 @@ for (const bien of ['Los terpenos presentes son mirceno, pineno y limoneno.', 'S
   check(`texto de solo datos pasa: "${bien.slice(0, 40)}…"`, !tieneErroresOrtografia(bien, {}));
 }
 
+for (const mal of ['En su genética intervienen mirceno, pineno y cariofileno.', 'Intervienen limoneno, pineno y cariofileno en su perfil.', 'Su genética incluye mirceno, limoneno y linalool.', 'El efecto que describe la ficha es relajado y feliz.', 'El tipo de semilla no consta en ficha.', 'Las notas existentes describen un cruce.']) {
+  check(`terpenos como genética / relleno de ficha se detecta: "${mal.slice(0, 40)}…"`, tieneErroresOrtografia(mal, {}));
+}
+for (const bien of ['Su genética Skunk 1 x Afghani sostiene un 17% de THC, con mirceno, pineno y cariofileno.', 'Cruza Blueberry con Haze; los terpenos presentes son mirceno y pineno.', 'Su genética procede de Northern Lights #5 y Haze.']) {
+  check(`genética real con terpenos aparte pasa: "${bien.slice(0, 40)}…"`, !tieneErroresOrtografia(bien, {}));
+}
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
