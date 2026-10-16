@@ -4117,11 +4117,47 @@ export default {
       const dRes = await sbRequest(env, 'rpc/admin_dashboard', { method: 'POST', body: '{}' });
       if (!dRes.ok) return new Response(JSON.stringify({ error: 'No se pudo leer el dashboard' }), { status: 502, headers: { ...cors, 'Content-Type': 'application/json' } });
       const dOut = dRes.data || {};
-      const dAp = await sbRequest(env, 'ventas_aprobaciones?estado=eq.pendiente&select=tipo,titulo,resumen,payload,created_at&order=created_at.desc&limit=40', { method: 'GET' });
+      const dAp = await sbRequest(env, 'ventas_aprobaciones?estado=eq.pendiente&select=id,tipo,titulo,resumen,payload,created_at&order=created_at.desc&limit=40', { method: 'GET' });
       if (dAp.ok && Array.isArray(dAp.data)) {
-        dOut.venta = { ...(dOut.venta || {}), por_aprobar_lista: dAp.data.map((a) => ({ tipo: a.tipo, titulo: a.titulo, resumen: a.resumen, created_at: a.created_at, payload: { para: a.payload?.para, asunto: a.payload?.asunto, cuerpo: a.payload?.cuerpo } })) };
+        dOut.venta = { ...(dOut.venta || {}), por_aprobar_lista: dAp.data.map((a) => ({ id: a.id, tipo: a.tipo, titulo: a.titulo, resumen: a.resumen, created_at: a.created_at, payload: { para: a.payload?.para, asunto: a.payload?.asunto, cuerpo: a.payload?.cuerpo } })) };
       }
       return new Response(JSON.stringify(dOut), { headers: { ...cors, 'Content-Type': 'application/json', 'Cache-Control': 'no-store' } });
+    }
+
+    if (path === '/admin/ventas/enviar' && request.method === 'POST') {
+      const jh = { ...cors, 'Content-Type': 'application/json' };
+      const eTok = (request.headers.get('Authorization') || '').replace(/^Bearer /, '');
+      const eClaims = eTok ? await verifyJwt(eTok, env.JWT_SECRET) : null;
+      if (eClaims?.email !== 'enriquedorta@gmail.com') return new Response(JSON.stringify({ error: 'No autorizado' }), { status: 401, headers: jh });
+      let eb = {}; try { eb = await request.json(); } catch {}
+      const eId = String(eb.id || '');
+      if (!/^[0-9a-f-]{36}$/i.test(eId)) return new Response(JSON.stringify({ error: 'id inválido' }), { status: 400, headers: jh });
+      const eRow = await sbRequest(env, `ventas_aprobaciones?id=eq.${eId}&select=*&limit=1`, { method: 'GET' });
+      const a = Array.isArray(eRow.data) ? eRow.data[0] : null;
+      if (!a) return new Response(JSON.stringify({ error: 'No encontrado' }), { status: 404, headers: jh });
+      if (!['pendiente', 'aprobado'].includes(a.estado)) return new Response(JSON.stringify({ error: 'Ya cerrado: ' + a.estado }), { status: 409, headers: jh });
+      const pl = a.payload || {};
+      const para = String(pl.para || '').trim().toLowerCase();
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(para) || /^(ejemplo|example|test)@|@(ejemplo|example)\./.test(para)) return new Response(JSON.stringify({ error: 'Destinatario no válido: ' + (para || 'vacío') }), { status: 400, headers: jh });
+      if (!pl.asunto || !pl.cuerpo) return new Response(JSON.stringify({ error: 'Falta asunto o cuerpo' }), { status: 400, headers: jh });
+      const br = await brevoFetch(env, '/smtp/email', {
+        sender: { email: 'hola@cannabicultor.com', name: 'Cannabicultor' },
+        replyTo: { email: 'alianzacannabicultores@gmail.com', name: 'Cannabicultor' },
+        to: [{ email: para }],
+        subject: String(pl.asunto).slice(0, 200),
+        textContent: String(pl.cuerpo),
+      });
+      if (!br.ok) return new Response(JSON.stringify({ error: 'Brevo: ' + (br.data?.message || br.status) }), { status: 502, headers: jh });
+      const now = new Date().toISOString();
+      await sbRequest(env, `ventas_aprobaciones?id=eq.${eId}`, { method: 'PATCH', headers: { Prefer: 'return=minimal' }, body: JSON.stringify({ estado: 'enviado', reviewed_at: now, sent_at: now }) });
+      const nx = { email_1: ['email1_enviado', 4], email_2: ['demo_enviado', 3], seguimiento: [null, 5], respuesta: [null, 3] }[a.tipo];
+      if (a.lead_id && nx) {
+        const lp = { ultimo_contacto_at: now, proxima_accion_at: new Date(Date.now() + nx[1] * 864e5).toISOString() };
+        if (nx[0]) lp.estado = nx[0];
+        await sbRequest(env, `ventas_leads?id=eq.${a.lead_id}`, { method: 'PATCH', headers: { Prefer: 'return=minimal' }, body: JSON.stringify(lp) });
+        await sbRequest(env, `ventas_leads?id=eq.${a.lead_id}&email=is.null`, { method: 'PATCH', headers: { Prefer: 'return=minimal' }, body: JSON.stringify({ email: para }) });
+      }
+      return new Response(JSON.stringify({ ok: true, para }), { headers: jh });
     }
 
     if (path === '/x-agent' || path.startsWith('/x-agent/api/')) {

@@ -34,7 +34,7 @@ textarea,input{width:100%;font:15px system-ui;padding:10px;border:1px solid var(
 #ov .hd{display:flex;align-items:center;gap:10px;margin-bottom:8px}#ov .hd b{font-size:17px}#ov .x{margin-left:auto;border:0;background:var(--track);color:var(--fg);border-radius:8px;padding:6px 12px;font:600 14px system-ui;cursor:pointer}
 #ov .st{display:flex;gap:18px;flex-wrap:wrap;font-size:13px;color:var(--muted);margin:2px 0 4px}#ov .st b{color:var(--fg);font-size:15px}
 #ov .pn{border-top:1px solid var(--line);padding-top:8px;margin-top:8px}#ov .pn h3{margin:0 0 2px;font-size:14px;display:flex;align-items:center;gap:6px}#ov .pn h3 i{width:10px;height:10px;border-radius:50%;display:inline-block}
-.em{padding:2px 0 6px 14px}.em .to{font-size:12px;color:var(--muted)}.em .as{font-weight:600;margin:2px 0}.em .bd{white-space:pre-wrap;font-size:13.5px;line-height:1.45;margin:4px 0}
+.btn{font:inherit;font-size:12.5px;padding:6px 12px;border-radius:8px;border:0;background:#2e7d32;color:#fff;cursor:pointer}.btn:disabled{opacity:.5}.em{padding:2px 0 6px 14px}.em .to{font-size:12px;color:var(--muted)}.em .as{font-weight:600;margin:2px 0}.em .bd{white-space:pre-wrap;font-size:13.5px;line-height:1.45;margin:4px 0}
 details>summary{cursor:pointer;color:var(--v);font-weight:600;font-size:13px;padding:6px 0;list-style:none}details>summary::-webkit-details-marker{display:none}details>summary:before{content:'▸ '}details[open]>summary:before{content:'▾ '}
 details.it{border-top:1px solid var(--line)}details.it>summary{color:var(--fg);font-weight:500}
 </style></head><body>
@@ -124,7 +124,7 @@ function render(d){CH={};
     kpi(V.conversaciones_activas,'conversaciones activas (7 d)')+'</div>';
 
   /* emails: por aprobar + nuevos sin leer */
-  var L=V.por_aprobar_lista||[],emCont=function(x){var p=x.payload||{};return '<div class="to">'+esc(x.tipo)+' · para: '+esc(p.para||'—')+' · '+new Date(x.created_at).toLocaleDateString('es-ES')+'</div><div class="bd">'+esc(p.cuerpo||x.resumen||'')+'</div>'};
+  var L=V.por_aprobar_lista||[],emCont=function(x){var p=x.payload||{};return '<div class="to">'+esc(x.tipo)+' · para: '+esc(p.para||'—')+' · '+new Date(x.created_at).toLocaleDateString('es-ES')+'</div><div class="bd">'+esc(p.cuerpo||x.resumen||'')+'</div>'+(x.id?'<div style="margin-top:8px"><button class="btn" data-send="'+x.id+'" data-to="'+esc(p.para||'')+'">Enviar desde hola@cannabicultor.com</button> <span class="meta" id="sm-'+x.id+'"></span></div>':'')};
   var emIt=function(x){var p=x.payload||{};return '<details class="it"><summary><b>'+esc(p.asunto||x.titulo)+'</b> <span class="meta">· '+esc(x.titulo)+'</span></summary><div class="em">'+emCont(x)+'</div></details>'};
   var hApr='<div class="card"><div class="t">Por aprobar ('+fmt(V.por_aprobar)+')'+(dlink('/ventas')?' · <a class="cta" href="'+dlink('/ventas')+'" target="_blank">Aprobar en Ventas →</a>':'')+'</div>'+
     (L.length?emIt(L[0])+(L.length>1?'<details><summary>Ver '+(L.length-1)+' más'+(V.por_aprobar>L.length?' (últimos '+L.length+')':'')+'</summary>'+L.slice(1).map(emIt).join('')+'</details>':''):'<div class="meta">Nada pendiente.</div>')+'</div>';
@@ -172,5 +172,8 @@ function xl(){api('/x-agent/api/drafts').then(function(r){var el=$('xl');if(!el)
   el.querySelectorAll('[data-a]').forEach(function(b){b.onclick=function(){api('/x-agent/api/approve',{method:'POST',body:JSON.stringify({id:b.dataset.a})}).then(xl).catch(function(e){$('err').textContent=e.message})}});
   el.querySelectorAll('[data-p]').forEach(function(b){b.onclick=function(){if(confirm('¿Publicar en @CannabicultorX?'))api('/x-agent/api/publish',{method:'POST',body:JSON.stringify({id:b.dataset.p})}).then(function(){xl();}).catch(function(e){$('err').textContent=e.message})}});
 }).catch(function(e){if($('err'))$('err').textContent=e.message});}
+document.addEventListener('click',function(ev){var b=ev.target.closest('button[data-send]');if(!b)return;var id=b.dataset.send,to=b.dataset.to;
+  if(!confirm('¿Enviar este email a '+to+'?'))return;b.disabled=true;var m=document.getElementById('sm-'+id);m.textContent='Enviando…';
+  api('/admin/ventas/enviar',{method:'POST',body:JSON.stringify({id:id})}).then(function(){m.textContent='✓ Enviado a '+to;b.remove();}).catch(function(e){m.textContent='Error: '+e.message;b.disabled=false;});});
 api('/admin/dashboard').then(render).catch(function(e){app.innerHTML='<div class="card" style="margin-top:14px">No se pudo cargar: '+esc(e.message)+'</div>'});
 </script></body></html>
