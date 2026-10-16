@@ -76,7 +76,17 @@ function big(data,s){var w=1000,h=250,pl=44,pr=14,pt=24,pb=26,n=data.length,v=da
     if(i%every==0||i==n-1)o+='<text x="'+X(i)+'" y="'+(Y(y)-9)+'" text-anchor="middle" font-size="11" fill="var(--fg)">'+fmt(y)+'</text><text x="'+X(i)+'" y="'+(h-8)+'" text-anchor="middle" font-size="10.5" fill="var(--muted)">'+fd(data[i].dia)+'</text>';});
   var tot=v.reduce(function(a,b){return a+b},0),mxi=v.indexOf(Math.max.apply(0,v));
   return '<div class="pn"><h3><i style="background:'+s.color+'"></i>'+s.name+'</h3><div class="st">'+(s.acum?'<span>Al inicio <b>'+fmt(v[0])+'</b></span><span>Crecimiento <b>+'+fmt(v[n-1]-v[0])+'</b></span>':'<span>Total <b>'+fmt(tot)+'</b></span><span>Media/día <b>'+fmt(Math.round(tot/n*10)/10)+'</b></span>')+'<span>Máximo <b>'+fmt(Math.max.apply(0,v))+'</b> ('+fd(data[mxi].dia)+')</span><span>Último <b>'+fmt(v[n-1])+'</b></span></div><svg viewBox="0 0 '+w+' '+h+'">'+o+'</svg></div>';}
-function openCh(id){var c=CH[id];if(!c)return;var ov=$('ov');ov.innerHTML='<div class="box"><div class="hd"><b>'+c.title+'</b><button class="x" id="xc">Cerrar ✕</button></div>'+c.series.map(function(s){return big(c.data,s)}).join('')+'</div>';ov.style.display='block';document.body.style.overflow='hidden';$('xc').onclick=closeCh;}
+function dstat(x){var f=['sin_web','sin_tel','sin_desc','sin_thc'].filter(function(k){return x[k]!=null}),p=0;
+  if(x.total&&f.length)p=Math.round(100*f.reduce(function(a,k){return a+(1-x[k]/x.total)},0)/f.length);
+  var g=[];if(x.sin_web!=null)g.push('<b>'+fmt(x.sin_web)+'</b> sin web');if(x.sin_tel!=null)g.push('<b>'+fmt(x.sin_tel)+'</b> sin tel');if(x.sin_desc!=null)g.push('<b>'+fmt(x.sin_desc)+'</b> sin descripción');if(x.sin_thc!=null)g.push('<b>'+fmt(x.sin_thc)+'</b> sin THC');
+  return{label:x.label,short:x.label.replace('Asociaciones/Clubs','Asoc.').replace('Tiendas ',''),total:x.total,idx:x.indexables,pct:p,gaps:g};}
+function dirChart(ds){var id='c'+Object.keys(CH).length,D=ds.map(dstat);CH[id]={type:'dir',title:'Países · directorios (completitud de fichas)',D:D};
+  var w=600,h=150,pt=24,pb=26,n=D.length,bw=(w-20)/n,o='';
+  D.forEach(function(d,i){var bh=(h-pt-pb)*d.pct/100,x=10+i*bw+bw*.2,ww=bw*.6;
+    o+='<rect x="'+x+'" y="'+(h-pb-bh)+'" width="'+ww+'" height="'+bh+'" rx="3" fill="#0F3020"/><text x="'+(x+ww/2)+'" y="'+(h-pb-bh-4)+'" text-anchor="middle" font-size="17" font-weight="600" fill="var(--fg)">'+d.pct+'%</text><text x="'+(x+ww/2)+'" y="'+(h-7)+'" text-anchor="middle" font-size="15" fill="var(--muted)">'+esc(d.short)+'</text>';});
+  return '<div class="card ch" data-ch="'+id+'"><div class="t">Países · directorios (% completo)</div><svg viewBox="0 0 '+w+' '+h+'" role="img">'+o+'</svg></div>';}
+function dirBig(D){return D.map(function(d){return '<div class="pn"><h3>'+esc(d.label)+'</h3><div class="st"><span>Fichas <b>'+fmt(d.total)+'</b></span><span>Indexables <b>'+fmt(d.idx)+'</b> ('+(d.total?Math.round(100*d.idx/d.total):0)+'%)</span><span>Completitud <b>'+d.pct+'%</b></span></div>'+bar(d.pct)+'<div class="gaps">'+d.gaps.join(' · ')+'</div></div>'}).join('');}
+function openCh(id){var c=CH[id];if(!c)return;var ov=$('ov');ov.innerHTML='<div class="box"><div class="hd"><b>'+c.title+'</b><button class="x" id="xc">Cerrar ✕</button></div>'+(c.type==='dir'?dirBig(c.D):c.series.map(function(s){return big(c.data,s)}).join(''))+'</div>';ov.style.display='block';document.body.style.overflow='hidden';$('xc').onclick=closeCh;}
 function closeCh(){$('ov').style.display='none';document.body.style.overflow='';}
 document.addEventListener('keydown',function(e){if(e.key==='Escape')closeCh()});
 function off(title,why){return '<div class="card off"><div class="t">'+title+'</div><div style="padding:18px 6px;text-align:center;color:var(--muted);font-size:13px">Pendiente de conectar<br><small>'+why+'</small></div></div>'}
@@ -94,7 +104,7 @@ function render(d){CH={};
     chart('Consultas IA por día · Usuarios totales',ia,[{key:'c',color:G,name:'Consultas IA por día'},{key:'u',color:Y,dash:1,name:'Usuarios totales',acum:1}],'<span><i style="background:'+G+'"></i>Consultas IA</span><span><i style="background:'+Y+'"></i>Usuarios totales</span>')+
     chart('Tráfico real (vistas/día, sin bots ni internas)',d.trafico_dia,[{key:'vistas',color:G,name:'Páginas vistas'},{key:'sesiones',color:Y,dash:1,name:'Sesiones'}],'<span><i style="background:'+G+'"></i>Vistas</span><span><i style="background:'+Y+'"></i>Sesiones</span>')+
     chart('X · posts publicados por día',d.x_dia,[{key:'n',color:G,name:'Posts publicados en X'}])+
-    off('YouTube','Falta conectar la API de YouTube')+off('Search Console','Falta conectar Search Console')+off('Instagram','Falta conectar la API de Instagram')+'</div>';
+    off('YouTube','Falta conectar la API de YouTube')+off('Search Console','Falta conectar Search Console')+off('Instagram','Falta conectar la API de Instagram')+dirChart(d.directorios)+'</div>';
 
   /* lo que toca hoy */
   var H=d.hoy,lr=dtok()?dlink('/review'):'';
