@@ -28,9 +28,18 @@ textarea,input{width:100%;font:15px system-ui;padding:10px;border:1px solid var(
 .act2.sec{background:transparent;color:var(--v);border:1px solid var(--v)}
 .draft{white-space:pre-wrap;line-height:1.5;margin:6px 0}.pill{font-size:11px;padding:2px 8px;border-radius:99px;background:var(--track);color:var(--muted)}
 #err{color:#b42318;font-size:13px;margin-top:6px}
+.card.ch{cursor:zoom-in}.card.ch:hover{border-color:var(--v)}.card.ch .t:after{content:' 🔍';font-size:11px;opacity:.6}
+#ov{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:50;display:none;overflow:auto;padding:24px 14px}
+#ov .box{max-width:1100px;margin:0 auto;background:var(--card);border-radius:16px;padding:16px 18px;cursor:default}
+#ov .hd{display:flex;align-items:center;gap:10px;margin-bottom:8px}#ov .hd b{font-size:17px}#ov .x{margin-left:auto;border:0;background:var(--track);color:var(--fg);border-radius:8px;padding:6px 12px;font:600 14px system-ui;cursor:pointer}
+#ov .st{display:flex;gap:18px;flex-wrap:wrap;font-size:13px;color:var(--muted);margin:2px 0 4px}#ov .st b{color:var(--fg);font-size:15px}
+#ov .pn{border-top:1px solid var(--line);padding-top:8px;margin-top:8px}#ov .pn h3{margin:0 0 2px;font-size:14px;display:flex;align-items:center;gap:6px}#ov .pn h3 i{width:10px;height:10px;border-radius:50%;display:inline-block}
+.em{border-top:1px solid var(--line);padding:8px 0}.em:first-of-type{border-top:0}.em .to{font-size:12px;color:var(--muted)}.em .as{font-weight:600;margin:2px 0}.em .bd{white-space:pre-wrap;font-size:13.5px;line-height:1.45;margin:4px 0}
+details>summary{cursor:pointer;color:var(--v);font-weight:600;font-size:13px;padding:6px 0;list-style:none}details>summary::-webkit-details-marker{display:none}details>summary:before{content:'▸ '}details[open]>summary:before{content:'▾ '}
+details.it{border-top:1px solid var(--line)}details.it>summary{color:var(--fg);font-weight:500}
 </style></head><body>
 <header><img src="/apple-touch-icon.png" alt=""><h1>Cannabicultor</h1><div class="sub" id="sub">Cargando…</div></header>
-<main id="app"></main>
+<main id="app"></main><div id="ov" onclick="if(event.target===this)closeCh()"></div>
 <script src="/assets/auth.js"></script><script src="/assets/config.js"></script>
 <script>
 var W=window.CC_CONFIG.WORKER_URL,DIR='https://cannabicultor-directory-agent.nohumanclicks.workers.dev';
@@ -55,12 +64,26 @@ function line(data,series){ // series:[{key,color,dash}] escala propia por serie
     var l=pts[pts.length-1];out+='<circle cx="'+l[0]+'" cy="'+l[1]+'" r="3.5" fill="'+s.color+'"/><text x="'+(l[0]-4)+'" y="'+(l[1]-8)+'" text-anchor="end" font-size="11" fill="'+s.color+'">'+fmt(v[v.length-1])+'</text>';});
   [0,Math.floor(n/2),n-1].forEach(function(i){if(data[i])out+='<text x="'+(px+i*st)+'" y="'+(h-6)+'" text-anchor="'+(i==0?'start':i==n-1?'end':'middle')+'" font-size="10" fill="var(--muted)">'+fd(data[i].dia)+'</text>'});
   return '<svg viewBox="0 0 '+w+' '+h+'" role="img">'+out+'</svg>';}
-function chart(title,data,series,legend){return '<div class="card"><div class="t">'+title+'</div>'+line(data,series)+(legend?'<div class="leg">'+legend+'</div>':'')+'</div>'}
+var CH={};
+function chart(title,data,series,legend){var id='c'+Object.keys(CH).length;CH[id]={title:title,data:data,series:series};return '<div class="card ch" data-ch="'+id+'"><div class="t">'+title+'</div>'+line(data,series)+(legend?'<div class="leg">'+legend+'</div>':'')+'</div>'}
+function big(data,s){var w=1000,h=250,pl=44,pr=14,pt=24,pb=26,n=data.length,v=data.map(function(d){return +d[s.key]||0}),mx=Math.max.apply(0,v),mn=0;if(mx==0)mx=1;
+  var st=n>1?(w-pl-pr)/(n-1):0,X=function(i){return pl+i*st},Y=function(y){return h-pb-((y-mn)/(mx-mn))*(h-pt-pb)},o='';
+  for(var k=0;k<=4;k++){var yy=mn+(mx-mn)*k/4;o+='<line x1="'+pl+'" x2="'+(w-pr)+'" y1="'+Y(yy)+'" y2="'+Y(yy)+'" stroke="var(--line)"/><text x="'+(pl-6)+'" y="'+(Y(yy)+4)+'" text-anchor="end" font-size="11" fill="var(--muted)">'+fmt(Math.round(yy*10)/10)+'</text>';}
+  var p=v.map(function(y,i){return(i?'L':'M')+X(i).toFixed(1)+','+Y(y).toFixed(1)}).join(' ');
+  o+='<path d="'+p+' L'+X(n-1)+','+Y(0)+' L'+X(0)+','+Y(0)+' Z" fill="'+s.color+'" opacity=".10"/><path d="'+p+'" fill="none" stroke="'+s.color+'" stroke-width="2.6"/>';
+  var every=Math.ceil(n/12);
+  v.forEach(function(y,i){o+='<circle cx="'+X(i)+'" cy="'+Y(y)+'" r="4" fill="'+s.color+'"><title>'+fd(data[i].dia)+': '+fmt(y)+'</title></circle>';
+    if(i%every==0||i==n-1)o+='<text x="'+X(i)+'" y="'+(Y(y)-9)+'" text-anchor="middle" font-size="11" fill="var(--fg)">'+fmt(y)+'</text><text x="'+X(i)+'" y="'+(h-8)+'" text-anchor="middle" font-size="10.5" fill="var(--muted)">'+fd(data[i].dia)+'</text>';});
+  var tot=v.reduce(function(a,b){return a+b},0),mxi=v.indexOf(Math.max.apply(0,v));
+  return '<div class="pn"><h3><i style="background:'+s.color+'"></i>'+s.name+'</h3><div class="st">'+(s.acum?'<span>Al inicio <b>'+fmt(v[0])+'</b></span><span>Crecimiento <b>+'+fmt(v[n-1]-v[0])+'</b></span>':'<span>Total <b>'+fmt(tot)+'</b></span><span>Media/día <b>'+fmt(Math.round(tot/n*10)/10)+'</b></span>')+'<span>Máximo <b>'+fmt(Math.max.apply(0,v))+'</b> ('+fd(data[mxi].dia)+')</span><span>Último <b>'+fmt(v[n-1])+'</b></span></div><svg viewBox="0 0 '+w+' '+h+'">'+o+'</svg></div>';}
+function openCh(id){var c=CH[id];if(!c)return;var ov=$('ov');ov.innerHTML='<div class="box"><div class="hd"><b>'+c.title+'</b><button class="x" id="xc">Cerrar ✕</button></div>'+c.series.map(function(s){return big(c.data,s)}).join('')+'</div>';ov.style.display='block';document.body.style.overflow='hidden';$('xc').onclick=closeCh;}
+function closeCh(){$('ov').style.display='none';document.body.style.overflow='';}
+document.addEventListener('keydown',function(e){if(e.key==='Escape')closeCh()});
 function off(title,why){return '<div class="card off"><div class="t">'+title+'</div><div style="padding:18px 6px;text-align:center;color:var(--muted);font-size:13px">Pendiente de conectar<br><small>'+why+'</small></div></div>'}
 function kpi(n,l,extra,act){return '<div class="card kpi'+(act?' act':'')+'"><div class="n">'+fmt(n)+'</div><div class="l">'+l+'</div>'+(extra||'')+'</div>'}
 function bar(p){return '<div class="bar"><i style="width:'+p+'%"></i><span>'+p+'% completo</span></div>'}
 
-function render(d){
+function render(d){CH={};
   $('sub').textContent='Actualizado '+new Date(d.generado).toLocaleString('es-ES');
   var G='#0F3020',Y='#F0C040',tok=dtok(),h='';
   /* usuarios acumulados por día */
@@ -68,9 +91,9 @@ function render(d){
   for(var i=d.registros_dia.length-1;i>=0;i--){us[i]={dia:d.registros_dia[i].dia,u:acc};acc-=d.registros_dia[i].n}
   var ia=d.ia_dia.map(function(x,i){return{dia:x.dia,c:x.n,u:us[i].u}});
   h+='<div class="grid charts" style="margin-top:12px">'+
-    chart('Consultas IA por día · Usuarios totales',ia,[{key:'c',color:G},{key:'u',color:Y,dash:1}],'<span><i style="background:'+G+'"></i>Consultas IA</span><span><i style="background:'+Y+'"></i>Usuarios totales</span>')+
-    chart('Tráfico real (vistas/día, sin bots ni internas)',d.trafico_dia,[{key:'vistas',color:G},{key:'sesiones',color:Y,dash:1}],'<span><i style="background:'+G+'"></i>Vistas</span><span><i style="background:'+Y+'"></i>Sesiones</span>')+
-    chart('X · posts publicados por día',d.x_dia,[{key:'n',color:G}])+
+    chart('Consultas IA por día · Usuarios totales',ia,[{key:'c',color:G,name:'Consultas IA por día'},{key:'u',color:Y,dash:1,name:'Usuarios totales',acum:1}],'<span><i style="background:'+G+'"></i>Consultas IA</span><span><i style="background:'+Y+'"></i>Usuarios totales</span>')+
+    chart('Tráfico real (vistas/día, sin bots ni internas)',d.trafico_dia,[{key:'vistas',color:G,name:'Páginas vistas'},{key:'sesiones',color:Y,dash:1,name:'Sesiones'}],'<span><i style="background:'+G+'"></i>Vistas</span><span><i style="background:'+Y+'"></i>Sesiones</span>')+
+    chart('X · posts publicados por día',d.x_dia,[{key:'n',color:G,name:'Posts publicados en X'}])+
     off('YouTube','Falta conectar la API de YouTube')+off('Search Console','Falta conectar Search Console')+off('Instagram','Falta conectar la API de Instagram')+'</div>';
 
   /* lo que toca hoy */
@@ -89,7 +112,10 @@ function render(d){
     kpi(V.por_aprobar,'por aprobar en ventas','',V.por_aprobar>0)+kpi(V.leads,'leads','<div class="meta">'+fmt(le.nuevo)+' nuevos</div>')+
     kpi(V.contactos,'contactos intentados','<div class="meta">'+fmt((le.email1_enviado||0)+(le.demo_enviado||0))+' esperando respuesta</div>')+
     kpi(V.conversaciones_activas,'conversaciones activas (7 d)')+'</div>';
-  if(V.por_aprobar_lista&&V.por_aprobar_lista.length)h+='<div class="card" style="margin-top:12px"><div class="t">Pendientes de aprobar (más recientes)</div><ul class="q">'+V.por_aprobar_lista.map(function(x){return '<li>'+esc(x.titulo)+'<div class="meta">'+esc(x.tipo)+' · '+new Date(x.created_at).toLocaleDateString('es-ES')+'</div></li>'}).join('')+'</ul></div>';
+  var L=V.por_aprobar_lista||[];
+  if(L.length){var em=function(x){var p=x.payload||{};return '<div class="em"><div class="to">'+esc(x.tipo)+' · para: '+esc(p.para||'—')+' · '+new Date(x.created_at).toLocaleDateString('es-ES')+'</div><div class="as">'+esc(p.asunto||x.titulo)+'</div><div class="bd">'+esc(p.cuerpo||x.resumen||'')+'</div></div>'};
+    h+='<div class="card" style="margin-top:8px"><div class="t">Emails por aprobar ('+fmt(V.por_aprobar)+')'+(dlink('/ventas')?' · <a class="cta" href="'+dlink('/ventas')+'" target="_blank">Aprobar en Ventas →</a>':'')+'</div>'+em(L[0])+
+      (L.length>1?'<details><summary>Ver '+(V.por_aprobar>L.length?L.length-1:L.length-1)+' más'+(V.por_aprobar>L.length?' (mostrando los últimos '+L.length+')':'')+'</summary>'+L.slice(1).map(function(x){return '<details class="it"><summary>'+esc(x.titulo)+' <span class="meta">· '+esc(x.resumen||'')+'</span></summary>'+em(x)+'</details>'}).join('')+'</details>':'')+'</div>';}
 
   /* negocio web */
   var N=d.negocio,pl=Object.keys(N.por_plan||{}).map(function(k){return '<span class="chip">'+esc(k)+' <b>'+fmt(N.por_plan[k])+'</b></span>'}).join('');
@@ -118,6 +144,7 @@ function render(d){
   h+='<h2>Acceso al dashboard del directorio</h2><div class="card"><div class="meta" style="margin-bottom:6px">Pega aquí el token una vez (se guarda solo en este navegador) para activar los enlaces de Revisar, Ventas y Países.</div><input id="dt" type="password" placeholder="token del directorio" value="'+esc(tok)+'"><button class="act2 sec" id="dts">Guardar token</button></div>';
 
   app.innerHTML=h;
+  document.querySelectorAll('.card.ch').forEach(function(c){c.onclick=function(){openCh(c.dataset.ch)}});
   $('gen').onclick=function(){api('/x-agent/api/drafts',{method:'POST',body:JSON.stringify({brief:$('brief').value})}).then(function(){$('brief').value='';xl();}).catch(function(e){$('err').textContent=e.message});};
   $('dts').onclick=function(){try{localStorage.setItem('dirToken',$('dt').value.trim())}catch(e){}render(d);};
   xl();

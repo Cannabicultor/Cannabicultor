@@ -4116,7 +4116,12 @@ export default {
       if (dClaims?.email !== 'enriquedorta@gmail.com') return new Response(JSON.stringify({ error: 'No autorizado' }), { status: 401, headers: { ...cors, 'Content-Type': 'application/json' } });
       const dRes = await sbRequest(env, 'rpc/admin_dashboard', { method: 'POST', body: '{}' });
       if (!dRes.ok) return new Response(JSON.stringify({ error: 'No se pudo leer el dashboard' }), { status: 502, headers: { ...cors, 'Content-Type': 'application/json' } });
-      return new Response(JSON.stringify(dRes.data), { headers: { ...cors, 'Content-Type': 'application/json', 'Cache-Control': 'no-store' } });
+      const dOut = dRes.data || {};
+      const dAp = await sbRequest(env, 'ventas_aprobaciones?estado=eq.pendiente&select=tipo,titulo,resumen,payload,created_at&order=created_at.desc&limit=40', { method: 'GET' });
+      if (dAp.ok && Array.isArray(dAp.data)) {
+        dOut.venta = { ...(dOut.venta || {}), por_aprobar_lista: dAp.data.map((a) => ({ tipo: a.tipo, titulo: a.titulo, resumen: a.resumen, created_at: a.created_at, payload: { para: a.payload?.para, asunto: a.payload?.asunto, cuerpo: a.payload?.cuerpo } })) };
+      }
+      return new Response(JSON.stringify(dOut), { headers: { ...cors, 'Content-Type': 'application/json', 'Cache-Control': 'no-store' } });
     }
 
     if (path === '/x-agent' || path.startsWith('/x-agent/api/')) {
