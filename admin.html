@@ -126,7 +126,7 @@ function render(d){CH={};
   /* emails: por aprobar + nuevos sin leer */
   var L=V.por_aprobar_lista||[],emCont=function(x){var p=x.payload||{};return '<div class="to">'+esc(x.tipo)+' · para: '+esc(p.para||'—')+' · '+new Date(x.created_at).toLocaleDateString('es-ES')+'</div><div class="bd">'+esc(p.cuerpo||x.resumen||'')+'</div>'+(x.id?'<div style="margin-top:8px"><button class="btn" data-send="'+x.id+'" data-to="'+esc(p.para||'')+'">Enviar desde hola@cannabicultor.com</button> <span class="meta" id="sm-'+x.id+'"></span></div>':'')};
   var emIt=function(x){var p=x.payload||{};return '<details class="it"><summary><b>'+esc(p.asunto||x.titulo)+'</b> <span class="meta">· '+esc(x.titulo)+'</span></summary><div class="em">'+emCont(x)+'</div></details>'};
-  var hApr='<div class="card"><div class="t">Por aprobar ('+fmt(V.por_aprobar)+')'+(dlink('/ventas')?' · <a class="cta" href="'+dlink('/ventas')+'" target="_blank">Aprobar en Ventas →</a>':'')+'</div>'+
+  var hApr='<div class="card"><div class="t">Por aprobar ('+fmt(V.por_aprobar)+')'+(dlink('/ventas')?' · <a class="cta" href="'+dlink('/ventas')+'" target="_blank">Aprobar en Ventas →</a>':'')+'</div>'+(L.length?'<div style="margin:4px 0 8px"><button class="btn" id="sendAll">Aprobar y enviar todos ('+L.length+')</button> <span class="meta" id="saM"></span></div>':'')+
     (L.length?emIt(L[0])+(L.length>1?'<details><summary>Ver '+(L.length-1)+' más'+(V.por_aprobar>L.length?' (últimos '+L.length+')':'')+'</summary>'+L.slice(1).map(emIt).join('')+'</details>':''):'<div class="meta">Nada pendiente.</div>')+'</div>';
   var hSin='<div class="card off"><div class="t">Nuevos sin leer</div><div style="padding:14px 6px;text-align:center;color:var(--muted);font-size:13px">Pendiente de conectar<br><small>Falta enlazar el buzón (Gmail o iCloud)</small></div></div>';
   var hE='<h2>Emails</h2><div class="grid two">'+hApr+hSin+'</div>';
@@ -175,5 +175,12 @@ function xl(){api('/x-agent/api/drafts').then(function(r){var el=$('xl');if(!el)
 document.addEventListener('click',function(ev){var b=ev.target.closest('button[data-send]');if(!b)return;var id=b.dataset.send,to=b.dataset.to;
   if(!confirm('¿Enviar este email a '+to+'?'))return;b.disabled=true;var m=document.getElementById('sm-'+id);m.textContent='Enviando…';
   api('/admin/ventas/enviar',{method:'POST',body:JSON.stringify({id:id})}).then(function(){m.textContent='✓ Enviado a '+to;b.remove();}).catch(function(e){m.textContent='Error: '+e.message;b.disabled=false;});});
+document.addEventListener('click',function(ev){var b=ev.target.closest('#sendAll');if(!b)return;
+  var bs=[].slice.call(document.querySelectorAll('button[data-send]'));
+  if(!bs.length||!confirm('¿Enviar '+bs.length+' emails ahora, desde hola@cannabicultor.com?'))return;
+  b.disabled=true;var m=document.getElementById('saM'),ok=0,ko=0,i=0;
+  (function next(){if(i>=bs.length){m.textContent='Listo: '+ok+' enviados'+(ko?', '+ko+' con error (revisa los que quedan)':'');return;}
+    var x=bs[i++],id=x.dataset.send,sm=document.getElementById('sm-'+id);m.textContent='Enviando '+i+'/'+bs.length+'…';
+    api('/admin/ventas/enviar',{method:'POST',body:JSON.stringify({id:id})}).then(function(){ok++;if(sm)sm.textContent='✓ Enviado';x.remove();}).catch(function(e){ko++;if(sm)sm.textContent='Error: '+e.message;}).then(function(){setTimeout(next,1200);});})();});
 api('/admin/dashboard').then(render).catch(function(e){app.innerHTML='<div class="card" style="margin-top:14px">No se pudo cargar: '+esc(e.message)+'</div>'});
 </script></body></html>
