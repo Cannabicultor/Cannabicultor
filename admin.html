@@ -9,18 +9,18 @@
 header{max-width:1100px;margin:0 auto;padding:18px 20px 4px;display:flex;align-items:center;gap:12px}
 header img{width:38px;height:38px;border-radius:50%}header h1{font-size:22px;margin:0}header .sub{color:var(--muted);font-size:13px;margin-left:auto}
 main{max-width:1100px;margin:0 auto;padding:6px 20px 50px}
-h2{font-size:13px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin:26px 0 10px;display:flex;align-items:center;gap:10px}
+h2{font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin:18px 0 8px;display:flex;align-items:center;gap:10px}
 h2 a{font-size:12px;text-transform:none;letter-spacing:0;color:var(--v);font-weight:600;text-decoration:none}
-.grid{display:grid;gap:12px}.kpis{grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}.charts{grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}.two{grid-template-columns:1fr 1fr}
+.grid{display:grid;gap:12px}.kpis{grid-template-columns:repeat(auto-fit,minmax(112px,1fr));gap:8px}.charts{grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:8px}.two{grid-template-columns:1fr 1fr}
 @media(max-width:760px){.two{grid-template-columns:1fr}}
-.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px}
-.card.off{border-style:dashed;opacity:.75}.kpi .n{font-size:26px;font-weight:700;line-height:1.1}.kpi .l{color:var(--muted);font-size:13px;margin-top:2px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.card.off{border-style:dashed;opacity:.75}.kpi{padding:8px 11px}.kpi .n{font-size:20px;font-weight:700;line-height:1.1}.kpi .l{color:var(--muted);font-size:12px;line-height:1.25;margin-top:1px}.kpi .meta{font-size:11px}.kpi .cta{font-size:12px;margin-top:2px}
 .kpi.act{border-color:var(--v);box-shadow:0 0 0 1px var(--v) inset}.t{color:var(--muted);font-size:13px;margin-bottom:6px}
 .cta{display:inline-block;margin-top:6px;font-size:13px;color:var(--v);text-decoration:none;font-weight:600}
 svg{display:block;width:100%;height:auto}.leg{display:flex;gap:14px;font-size:12px;color:var(--muted);margin-top:4px}.leg i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px}
-.chip{display:inline-block;background:var(--track);border-radius:999px;padding:2px 10px;margin:3px 4px 0 0;font-size:13px}.chip b{color:var(--v)}
+.chip{display:inline-block;background:var(--track);border-radius:999px;padding:1px 8px;margin:2px 3px 0 0;font-size:12px}.chip b{color:var(--v)}
 .bar{background:var(--track);border-radius:8px;height:20px;position:relative;overflow:hidden}.bar i{position:absolute;inset:0 auto 0 0;background:var(--v);border-radius:8px}.bar span{position:relative;font-size:12px;padding:0 8px;line-height:20px;color:#fff;mix-blend-mode:difference}
-.dr{display:grid;grid-template-columns:150px 1fr;gap:14px;align-items:center;padding:9px 0;border-bottom:1px solid var(--line)}.dr:last-child{border:0}.dr small{display:block;color:var(--muted)}.gaps{font-size:12px;color:var(--muted);margin-top:3px}.gaps b{color:var(--warn)}
+.dr{display:grid;grid-template-columns:140px 1fr;gap:12px;align-items:center;padding:6px 0;border-bottom:1px solid var(--line)}.dr:last-child{border:0}.dr small{display:block;color:var(--muted)}.gaps{font-size:12px;color:var(--muted);margin-top:3px}.gaps b{color:var(--warn)}
 @media(max-width:620px){.dr{grid-template-columns:1fr}}
 ul.q{list-style:none;margin:0;padding:0}ul.q li{padding:7px 0;border-bottom:1px solid var(--line);font-size:14px}ul.q li:last-child{border:0}.meta{color:var(--muted);font-size:12px}
 textarea,input{width:100%;font:15px system-ui;padding:10px;border:1px solid var(--line);border-radius:10px;background:var(--card);color:var(--fg)}textarea{min-height:80px}
@@ -47,7 +47,7 @@ function api(path,opt){opt=opt||{};opt.headers={'Content-Type':'application/json
 /* ---- gráficos SVG ---- */
 function fd(iso){return new Date(iso+'T00:00:00Z').toLocaleDateString('es-ES',{day:'2-digit',month:'2-digit',timeZone:'UTC'})}
 function line(data,series){ // series:[{key,color,dash}] escala propia por serie
-  var w=600,h=170,pt=14,pb=24,px=10,n=data.length,st=n>1?(w-2*px)/(n-1):0,out='';
+  var w=600,h=130,pt=14,pb=24,px=10,n=data.length,st=n>1?(w-2*px)/(n-1):0,out='';
   series.forEach(function(s){var v=data.map(function(d){return +d[s.key]||0}),mn=Math.min.apply(0,v),mx=Math.max.apply(0,v),r=(mx-mn)||1;
     var pts=v.map(function(y,i){return[px+i*st,h-pb-((y-mn)/r)*(h-pt-pb)]});
     var p=pts.map(function(q,i){return(i?'L':'M')+q[0].toFixed(1)+','+q[1].toFixed(1)}).join(' ');
@@ -56,7 +56,7 @@ function line(data,series){ // series:[{key,color,dash}] escala propia por serie
   [0,Math.floor(n/2),n-1].forEach(function(i){if(data[i])out+='<text x="'+(px+i*st)+'" y="'+(h-6)+'" text-anchor="'+(i==0?'start':i==n-1?'end':'middle')+'" font-size="10" fill="var(--muted)">'+fd(data[i].dia)+'</text>'});
   return '<svg viewBox="0 0 '+w+' '+h+'" role="img">'+out+'</svg>';}
 function chart(title,data,series,legend){return '<div class="card"><div class="t">'+title+'</div>'+line(data,series)+(legend?'<div class="leg">'+legend+'</div>':'')+'</div>'}
-function off(title,why){return '<div class="card off"><div class="t">'+title+'</div><div style="padding:34px 6px;text-align:center;color:var(--muted);font-size:13px">Pendiente de conectar<br><small>'+why+'</small></div></div>'}
+function off(title,why){return '<div class="card off"><div class="t">'+title+'</div><div style="padding:18px 6px;text-align:center;color:var(--muted);font-size:13px">Pendiente de conectar<br><small>'+why+'</small></div></div>'}
 function kpi(n,l,extra,act){return '<div class="card kpi'+(act?' act':'')+'"><div class="n">'+fmt(n)+'</div><div class="l">'+l+'</div>'+(extra||'')+'</div>'}
 function bar(p){return '<div class="bar"><i style="width:'+p+'%"></i><span>'+p+'% completo</span></div>'}
 
@@ -107,7 +107,7 @@ function render(d){
 
   /* pulso IA + últimas consultas */
   var P=d.pulso_ia,fb=(P.feedback_pos||0)+(P.feedback_neg||0);
-  h+='<h2>Pulso de la IA</h2><div class="grid two"><div class="card"><div class="grid kpis" style="grid-template-columns:1fr 1fr">'+kpi(P.hoy,'consultas hoy')+kpi(P.semana,'consultas 7 días')+kpi(P.huecos_abiertos,'huecos de conocimiento')+kpi(P.rag_score_medio_7d,'relevancia media RAG')+'</div>'+
+  h+='<h2>Pulso de la IA</h2><div class="grid two"><div class="card"><div class="grid kpis" style="grid-template-columns:1fr 1fr 1fr 1fr">'+kpi(P.hoy,'consultas hoy')+kpi(P.semana,'consultas 7 días')+kpi(P.huecos_abiertos,'huecos de conocimiento')+kpi(P.rag_score_medio_7d,'relevancia media RAG')+'</div>'+
     '<div class="meta" style="margin-top:8px">Valoraciones (30 d): 👍 '+fmt(P.feedback_pos)+' · 👎 '+fmt(P.feedback_neg)+'</div><div>'+(P.top_categorias||[]).map(function(c){return '<span class="chip">'+esc(c.categoria)+' <b>'+fmt(c.n)+'</b></span>'}).join('')+'</div></div>'+
     '<div class="card"><div class="t">Últimas consultas</div><ul class="q">'+d.ultimas_consultas.map(function(q){return '<li>'+esc(q.pregunta)+'<div class="meta">'+new Date(q.created_at).toLocaleString('es-ES')+' · '+esc(q.canal||'')+'</div></li>'}).join('')+'</ul></div></div>';
 
