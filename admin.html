@@ -1,53 +1,132 @@
 <!DOCTYPE html>
 <html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="robots" content="noindex, nofollow">
 <title>Admin · Cannabicultor</title>
+<link rel="icon" href="/favicon.ico">
 <style>
-:root{--v:#0F3020;--b:#e1e6df;--t:#5b6b61}
-*{box-sizing:border-box}body{margin:0;background:#f6f7f4;font-family:Inter,system-ui,sans-serif;color:#13201a}
-.w{max-width:900px;margin:28px auto;padding:0 18px}h1{font-size:24px;margin:0 0 14px}
-nav{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
-nav button{padding:9px 14px;border-radius:10px;border:1px solid var(--v);background:#fff;color:var(--v);font:600 14px system-ui;cursor:pointer}
-nav button.on{background:var(--v);color:#fff}
-.card{background:#fff;border:1px solid var(--b);border-radius:14px;padding:16px;margin-bottom:12px}
-.muted{color:var(--t);font-size:13px}.draft{white-space:pre-wrap;line-height:1.5;margin:8px 0}
-textarea{width:100%;min-height:90px;font:15px system-ui;padding:10px;border:1px solid #cfd6cc;border-radius:10px}
-.act{padding:9px 14px;border:0;border-radius:10px;background:var(--v);color:#fff;font:600 14px system-ui;cursor:pointer;margin-top:8px}
-a.act{display:inline-block;text-decoration:none}
-.sec{display:none}.sec.on{display:block}
-#err{color:#b42318;margin-top:8px}
-</style></head><body><div class="w">
-<h1>Admin · Cannabicultor</h1>
-<nav><button data-t="x" class="on">Agente X</button><button data-t="dir">Directorio</button><button data-t="gs">Growshops</button><button data-t="cmp">Créditos</button></nav>
-
-<section id="x" class="sec on">
-  <div class="card"><b>Nuevo post</b>
-    <p><textarea id="brief" placeholder="Tema del post, ej.: cuándo pasar a floración"></textarea></p>
-    <button class="act" id="gen">Generar borrador</button>
-    <p class="muted">La IA prepara; tú apruebas. Nada se publica al generar.</p></div>
-  <div id="list"></div><div id="err"></div>
-</section>
-<section id="dir" class="sec"><div class="card"><p>Dashboard del buscador de tiendas y RAG (usa su propio token).</p>
-  <a class="act" href="https://cannabicultor-directory-agent.nohumanclicks.workers.dev/dashboard" target="_blank" rel="noopener">Abrir dashboard del directorio</a></div></section>
-<section id="gs" class="sec"><div class="card"><a class="act" href="/admin-growshops.html">Abrir Tiendas con asesor</a></div></section>
-<section id="cmp" class="sec"><div class="card"><a class="act" href="/admin-campana.html">Abrir Campaña créditos</a></div></section>
-</div>
+:root{--bg:#f6f7f4;--card:#fff;--fg:#13201a;--muted:#5b6b61;--line:#e1e6df;--v:#0F3020;--gold:#F0C040;--warn:#b45309;--track:#eef2ec}
+@media(prefers-color-scheme:dark){:root{--bg:#0f1311;--card:#171d19;--fg:#e8eee9;--muted:#9aa89f;--line:#26302a;--v:#3fae78;--track:#212a24}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.5 Inter,system-ui,-apple-system,sans-serif}
+header{max-width:1100px;margin:0 auto;padding:18px 20px 4px;display:flex;align-items:center;gap:12px}
+header img{width:38px;height:38px;border-radius:50%}header h1{font-size:22px;margin:0}header .sub{color:var(--muted);font-size:13px;margin-left:auto}
+main{max-width:1100px;margin:0 auto;padding:6px 20px 50px}
+h2{font-size:13px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin:26px 0 10px;display:flex;align-items:center;gap:10px}
+h2 a{font-size:12px;text-transform:none;letter-spacing:0;color:var(--v);font-weight:600;text-decoration:none}
+.grid{display:grid;gap:12px}.kpis{grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}.charts{grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}.two{grid-template-columns:1fr 1fr}
+@media(max-width:760px){.two{grid-template-columns:1fr}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px}
+.card.off{border-style:dashed;opacity:.75}.kpi .n{font-size:26px;font-weight:700;line-height:1.1}.kpi .l{color:var(--muted);font-size:13px;margin-top:2px}
+.kpi.act{border-color:var(--v);box-shadow:0 0 0 1px var(--v) inset}.t{color:var(--muted);font-size:13px;margin-bottom:6px}
+.cta{display:inline-block;margin-top:6px;font-size:13px;color:var(--v);text-decoration:none;font-weight:600}
+svg{display:block;width:100%;height:auto}.leg{display:flex;gap:14px;font-size:12px;color:var(--muted);margin-top:4px}.leg i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px}
+.chip{display:inline-block;background:var(--track);border-radius:999px;padding:2px 10px;margin:3px 4px 0 0;font-size:13px}.chip b{color:var(--v)}
+.bar{background:var(--track);border-radius:8px;height:20px;position:relative;overflow:hidden}.bar i{position:absolute;inset:0 auto 0 0;background:var(--v);border-radius:8px}.bar span{position:relative;font-size:12px;padding:0 8px;line-height:20px;color:#fff;mix-blend-mode:difference}
+.dr{display:grid;grid-template-columns:150px 1fr;gap:14px;align-items:center;padding:9px 0;border-bottom:1px solid var(--line)}.dr:last-child{border:0}.dr small{display:block;color:var(--muted)}.gaps{font-size:12px;color:var(--muted);margin-top:3px}.gaps b{color:var(--warn)}
+@media(max-width:620px){.dr{grid-template-columns:1fr}}
+ul.q{list-style:none;margin:0;padding:0}ul.q li{padding:7px 0;border-bottom:1px solid var(--line);font-size:14px}ul.q li:last-child{border:0}.meta{color:var(--muted);font-size:12px}
+textarea,input{width:100%;font:15px system-ui;padding:10px;border:1px solid var(--line);border-radius:10px;background:var(--card);color:var(--fg)}textarea{min-height:80px}
+.act2{padding:9px 14px;border:0;border-radius:10px;background:var(--v);color:#fff;font:600 14px system-ui;cursor:pointer;margin-top:8px;text-decoration:none;display:inline-block}
+.act2.sec{background:transparent;color:var(--v);border:1px solid var(--v)}
+.draft{white-space:pre-wrap;line-height:1.5;margin:6px 0}.pill{font-size:11px;padding:2px 8px;border-radius:99px;background:var(--track);color:var(--muted)}
+#err{color:#b42318;font-size:13px;margin-top:6px}
+</style></head><body>
+<header><img src="/apple-touch-icon.png" alt=""><h1>Cannabicultor</h1><div class="sub" id="sub">Cargando…</div></header>
+<main id="app"></main>
 <script src="/assets/auth.js"></script><script src="/assets/config.js"></script>
 <script>
-var W=window.CC_CONFIG.WORKER_URL,$=function(i){return document.getElementById(i)};
+var W=window.CC_CONFIG.WORKER_URL,DIR='https://cannabicultor-directory-agent.nohumanclicks.workers.dev';
 var jwt=window.GAAuth&&GAAuth.readSession?GAAuth.readSession():null;
 if(!jwt){location.href='/login.html?next='+encodeURIComponent('/admin.html');}
-function esc(v){return String(v).replace(/[&<>]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;'}[c]});}
+var $=function(i){return document.getElementById(i)},app=$('app');
+function fmt(n){return (n==null?0:Number(n)).toLocaleString('es-ES')}
+function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+function dtok(){try{return localStorage.getItem('dirToken')||''}catch(e){return ''}}
+function dlink(path){var t=dtok();return t?DIR+path+(path.indexOf('?')>-1?'&':'?')+'token='+encodeURIComponent(t):''}
 function api(path,opt){opt=opt||{};opt.headers={'Content-Type':'application/json','Authorization':'Bearer '+jwt};
   return fetch(W+path,opt).then(function(r){return r.json().catch(function(){return{}}).then(function(j){if(!r.ok)throw new Error(j.error||('Error '+r.status));return j;});});}
-function load(){api('/x-agent/api/drafts').then(function(d){
-  $('list').innerHTML=d.drafts.map(function(x){
-    var a=x.status==='draft'?'<button class="act" data-a="'+x.id+'">Aprobar</button>':x.status==='approved'?'<button class="act" data-p="'+x.id+'">Publicar en X</button>':'';
-    return '<div class="card"><div class="muted">'+esc(x.status)+' · '+new Date(x.created_at).toLocaleString()+'</div><p class="draft">'+esc(x.text)+'</p>'+a+'</div>';}).join('')||'<p class="muted">No hay borradores.</p>';
-  document.querySelectorAll('[data-a]').forEach(function(b){b.onclick=function(){api('/x-agent/api/approve',{method:'POST',body:JSON.stringify({id:b.dataset.a})}).then(load).catch(show);};});
-  document.querySelectorAll('[data-p]').forEach(function(b){b.onclick=function(){if(confirm('¿Publicar en @CannabicultorX?'))api('/x-agent/api/publish',{method:'POST',body:JSON.stringify({id:b.dataset.p})}).then(load).catch(show);};});
-  $('err').textContent='';}).catch(show);}
-function show(e){$('err').textContent=e.message;}
-$('gen').onclick=function(){api('/x-agent/api/drafts',{method:'POST',body:JSON.stringify({brief:$('brief').value})}).then(function(){$('brief').value='';load();}).catch(show);};
-document.querySelectorAll('nav button').forEach(function(b){b.onclick=function(){document.querySelectorAll('nav button,.sec').forEach(function(e){e.classList.remove('on')});b.classList.add('on');$(b.dataset.t).classList.add('on');};});
-load();
+
+/* ---- gráficos SVG ---- */
+function fd(iso){return new Date(iso+'T00:00:00Z').toLocaleDateString('es-ES',{day:'2-digit',month:'2-digit',timeZone:'UTC'})}
+function line(data,series){ // series:[{key,color,dash}] escala propia por serie
+  var w=600,h=170,pt=14,pb=24,px=10,n=data.length,st=n>1?(w-2*px)/(n-1):0,out='';
+  series.forEach(function(s){var v=data.map(function(d){return +d[s.key]||0}),mn=Math.min.apply(0,v),mx=Math.max.apply(0,v),r=(mx-mn)||1;
+    var pts=v.map(function(y,i){return[px+i*st,h-pb-((y-mn)/r)*(h-pt-pb)]});
+    var p=pts.map(function(q,i){return(i?'L':'M')+q[0].toFixed(1)+','+q[1].toFixed(1)}).join(' ');
+    out+='<path d="'+p+'" fill="none" stroke="'+s.color+'" stroke-width="2.4"'+(s.dash?' stroke-dasharray="5 3"':'')+'/>';
+    var l=pts[pts.length-1];out+='<circle cx="'+l[0]+'" cy="'+l[1]+'" r="3.5" fill="'+s.color+'"/><text x="'+(l[0]-4)+'" y="'+(l[1]-8)+'" text-anchor="end" font-size="11" fill="'+s.color+'">'+fmt(v[v.length-1])+'</text>';});
+  [0,Math.floor(n/2),n-1].forEach(function(i){if(data[i])out+='<text x="'+(px+i*st)+'" y="'+(h-6)+'" text-anchor="'+(i==0?'start':i==n-1?'end':'middle')+'" font-size="10" fill="var(--muted)">'+fd(data[i].dia)+'</text>'});
+  return '<svg viewBox="0 0 '+w+' '+h+'" role="img">'+out+'</svg>';}
+function chart(title,data,series,legend){return '<div class="card"><div class="t">'+title+'</div>'+line(data,series)+(legend?'<div class="leg">'+legend+'</div>':'')+'</div>'}
+function off(title,why){return '<div class="card off"><div class="t">'+title+'</div><div style="padding:34px 6px;text-align:center;color:var(--muted);font-size:13px">Pendiente de conectar<br><small>'+why+'</small></div></div>'}
+function kpi(n,l,extra,act){return '<div class="card kpi'+(act?' act':'')+'"><div class="n">'+fmt(n)+'</div><div class="l">'+l+'</div>'+(extra||'')+'</div>'}
+function bar(p){return '<div class="bar"><i style="width:'+p+'%"></i><span>'+p+'% completo</span></div>'}
+
+function render(d){
+  $('sub').textContent='Actualizado '+new Date(d.generado).toLocaleString('es-ES');
+  var G='#0F3020',Y='#F0C040',tok=dtok(),h='';
+  /* usuarios acumulados por día */
+  var tot=d.negocio.usuarios_total,acc=tot,us=[];
+  for(var i=d.registros_dia.length-1;i>=0;i--){us[i]={dia:d.registros_dia[i].dia,u:acc};acc-=d.registros_dia[i].n}
+  var ia=d.ia_dia.map(function(x,i){return{dia:x.dia,c:x.n,u:us[i].u}});
+  h+='<div class="grid charts" style="margin-top:12px">'+
+    chart('Consultas IA por día · Usuarios totales',ia,[{key:'c',color:G},{key:'u',color:Y,dash:1}],'<span><i style="background:'+G+'"></i>Consultas IA</span><span><i style="background:'+Y+'"></i>Usuarios totales</span>')+
+    chart('Tráfico real (vistas/día, sin bots ni internas)',d.trafico_dia,[{key:'vistas',color:G},{key:'sesiones',color:Y,dash:1}],'<span><i style="background:'+G+'"></i>Vistas</span><span><i style="background:'+Y+'"></i>Sesiones</span>')+
+    chart('X · posts publicados por día',d.x_dia,[{key:'n',color:G}])+
+    off('YouTube','Falta conectar la API de YouTube')+off('Search Console','Falta conectar Search Console')+off('Instagram','Falta conectar la API de Instagram')+'</div>';
+
+  /* lo que toca hoy */
+  var H=d.hoy,lr=dtok()?dlink('/review'):'';
+  h+='<h2>Lo que toca hoy</h2><div class="grid kpis">'+
+    kpi(H.datos_por_aprobar,'datos por aprobar',lr&&H.datos_por_aprobar?'<a class="cta" href="'+lr+'" target="_blank">Revisar →</a>':'',H.datos_por_aprobar>0)+
+    kpi(H.negocios_nuevos,'negocios nuevos por revisar',lr&&H.negocios_nuevos?'<a class="cta" href="'+lr+'" target="_blank">Revisar →</a>':'',H.negocios_nuevos>0)+
+    kpi(H.fotos_variedades,'fotos de variedades por aprobar',dlink('/review?tab=fotos')?'<a class="cta" href="'+dlink('/review?tab=fotos')+'" target="_blank">Revisar →</a>':'',H.fotos_variedades>0)+
+    kpi(H.publicadas_7d,'publicados (7 días)')+kpi(H.descubiertas_7d,'descubiertos (7 días)')+
+    kpi(H.x_borradores+H.x_aprobados,'posts X por revisar','<a class="cta" href="#x">Abrir Agente X ↓</a>',H.x_borradores+H.x_aprobados>0)+
+    kpi(H.emails_7d,'emails enviados (7 días)','<div class="meta">'+fmt(H.emails_total)+' en total'+(H.emails_ultima?' · última campaña: '+esc(H.emails_ultima.campana):'')+'</div>')+'</div>';
+
+  /* venta */
+  var V=d.venta,le=V.leads_por_estado||{};
+  h+='<h2>Venta'+(dlink('/ventas')?'<a href="'+dlink('/ventas')+'" target="_blank">Abrir ventas →</a>':'')+'</h2><div class="grid kpis">'+
+    kpi(V.por_aprobar,'por aprobar en ventas','',V.por_aprobar>0)+kpi(V.leads,'leads','<div class="meta">'+fmt(le.nuevo)+' nuevos</div>')+
+    kpi(V.contactos,'contactos intentados','<div class="meta">'+fmt((le.email1_enviado||0)+(le.demo_enviado||0))+' esperando respuesta</div>')+
+    kpi(V.conversaciones_activas,'conversaciones activas (7 d)')+'</div>';
+  if(V.por_aprobar_lista&&V.por_aprobar_lista.length)h+='<div class="card" style="margin-top:12px"><div class="t">Pendientes de aprobar (más recientes)</div><ul class="q">'+V.por_aprobar_lista.map(function(x){return '<li>'+esc(x.titulo)+'<div class="meta">'+esc(x.tipo)+' · '+new Date(x.created_at).toLocaleDateString('es-ES')+'</div></li>'}).join('')+'</ul></div>';
+
+  /* negocio web */
+  var N=d.negocio,pl=Object.keys(N.por_plan||{}).map(function(k){return '<span class="chip">'+esc(k)+' <b>'+fmt(N.por_plan[k])+'</b></span>'}).join('');
+  h+='<h2>Negocio web</h2><div class="grid kpis">'+kpi(N.usuarios_total,'usuarios registrados','<div class="meta">+'+fmt(N.usuarios_7d)+' en 7 días</div>')+
+    kpi(N.registro_chat_mostrado_7d,'registro mostrado en chat (7 d)')+kpi(N.registro_chat_ok_7d,'registros desde el chat (7 d)')+kpi(N.compras_creditos_30d,'compras de créditos (30 d)')+
+    '<div class="card"><div class="t">Usuarios por plan</div>'+pl+'</div></div>';
+
+  /* directorios */
+  var tt=d.directorios.reduce(function(a,x){return a+x.total},0);
+  h+='<h2>Países · directorios ('+fmt(tt)+' fichas)'+(dlink('/dashboard')?'<a href="'+dlink('/dashboard')+'" target="_blank">Buscador y enriquecedor por país →</a>':'')+'</h2><div class="card">'+d.directorios.map(function(x){
+    var f=['sin_web','sin_tel','sin_desc','sin_thc'].filter(function(k){return x[k]!=null}),p=0;
+    if(x.total&&f.length)p=Math.round(100*f.reduce(function(a,k){return a+(1-x[k]/x.total)},0)/f.length);
+    var g=[];if(x.sin_web!=null)g.push('<b>'+fmt(x.sin_web)+'</b> sin web');if(x.sin_tel!=null)g.push('<b>'+fmt(x.sin_tel)+'</b> sin tel');if(x.sin_desc!=null)g.push('<b>'+fmt(x.sin_desc)+'</b> sin descripción');if(x.sin_thc!=null)g.push('<b>'+fmt(x.sin_thc)+'</b> sin THC');
+    return '<div class="dr"><div><b>'+esc(x.label)+'</b><small>'+fmt(x.total)+' · '+fmt(x.indexables)+' indexables</small></div><div>'+bar(p)+'<div class="gaps">'+g.join(' · ')+'</div></div></div>'}).join('')+'</div>';
+
+  /* pulso IA + últimas consultas */
+  var P=d.pulso_ia,fb=(P.feedback_pos||0)+(P.feedback_neg||0);
+  h+='<h2>Pulso de la IA</h2><div class="grid two"><div class="card"><div class="grid kpis" style="grid-template-columns:1fr 1fr">'+kpi(P.hoy,'consultas hoy')+kpi(P.semana,'consultas 7 días')+kpi(P.huecos_abiertos,'huecos de conocimiento')+kpi(P.rag_score_medio_7d,'relevancia media RAG')+'</div>'+
+    '<div class="meta" style="margin-top:8px">Valoraciones (30 d): 👍 '+fmt(P.feedback_pos)+' · 👎 '+fmt(P.feedback_neg)+'</div><div>'+(P.top_categorias||[]).map(function(c){return '<span class="chip">'+esc(c.categoria)+' <b>'+fmt(c.n)+'</b></span>'}).join('')+'</div></div>'+
+    '<div class="card"><div class="t">Últimas consultas</div><ul class="q">'+d.ultimas_consultas.map(function(q){return '<li>'+esc(q.pregunta)+'<div class="meta">'+new Date(q.created_at).toLocaleString('es-ES')+' · '+esc(q.canal||'')+'</div></li>'}).join('')+'</ul></div></div>';
+
+  /* agente X */
+  h+='<h2 id="x">Agente X · @CannabicultorX</h2><div class="card"><div class="t">Nuevo post (la IA prepara, tú apruebas; nada se publica al generar)</div><textarea id="brief" placeholder="Tema del post, ej.: cuándo pasar a floración"></textarea><button class="act2" id="gen">Generar borrador</button><div id="err"></div></div><div id="xl"></div>';
+
+  /* token directorio */
+  h+='<h2>Acceso al dashboard del directorio</h2><div class="card"><div class="meta" style="margin-bottom:6px">Pega aquí el token una vez (se guarda solo en este navegador) para activar los enlaces de Revisar, Ventas y Países.</div><input id="dt" type="password" placeholder="token del directorio" value="'+esc(tok)+'"><button class="act2 sec" id="dts">Guardar token</button></div>';
+
+  app.innerHTML=h;
+  $('gen').onclick=function(){api('/x-agent/api/drafts',{method:'POST',body:JSON.stringify({brief:$('brief').value})}).then(function(){$('brief').value='';xl();}).catch(function(e){$('err').textContent=e.message});};
+  $('dts').onclick=function(){try{localStorage.setItem('dirToken',$('dt').value.trim())}catch(e){}render(d);};
+  xl();
+}
+function xl(){api('/x-agent/api/drafts').then(function(r){var el=$('xl');if(!el)return;
+  el.innerHTML=r.drafts.map(function(x){var a=x.status==='draft'?'<button class="act2" data-a="'+x.id+'">Aprobar</button>':x.status==='approved'?'<button class="act2" data-p="'+x.id+'">Publicar en X</button>':'';
+    return '<div class="card" style="margin-top:10px"><span class="pill">'+esc(x.status)+'</span> <span class="meta">'+new Date(x.created_at).toLocaleString('es-ES')+'</span><p class="draft">'+esc(x.text)+'</p>'+a+'</div>'}).join('')||'<div class="meta">No hay borradores.</div>';
+  el.querySelectorAll('[data-a]').forEach(function(b){b.onclick=function(){api('/x-agent/api/approve',{method:'POST',body:JSON.stringify({id:b.dataset.a})}).then(xl).catch(function(e){$('err').textContent=e.message})}});
+  el.querySelectorAll('[data-p]').forEach(function(b){b.onclick=function(){if(confirm('¿Publicar en @CannabicultorX?'))api('/x-agent/api/publish',{method:'POST',body:JSON.stringify({id:b.dataset.p})}).then(function(){xl();}).catch(function(e){$('err').textContent=e.message})}});
+}).catch(function(e){if($('err'))$('err').textContent=e.message});}
+api('/admin/dashboard').then(render).catch(function(e){app.innerHTML='<div class="card" style="margin-top:14px">No se pudo cargar: '+esc(e.message)+'</div>'});
 </script></body></html>

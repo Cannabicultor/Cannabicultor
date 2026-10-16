@@ -31,7 +31,7 @@ export async function xAgent(request, env, supabaseRequest, generateWithRag, isA
   const url = new URL(request.url);
   if (request.method === 'GET' && url.pathname === '/x-agent') return page();
   if (!isAdmin && !authed(request, env)) return new Response(JSON.stringify({ error:'Acceso denegado' }), { status:401 });
-  if (request.method === 'GET') { const result = await supabaseRequest(env,'x_agent_drafts?select=id,text,status,created_at&order=created_at.desc&limit=30',{method:'GET'}); return Response.json({drafts:result.data || []}); }
+  if (request.method === 'GET') { const result = await supabaseRequest(env,'x_agent_drafts?select=id,text,status,created_at&status=neq.rejected&order=created_at.desc&limit=30',{method:'GET'}); return Response.json({drafts:result.data || []}); }
   const body = await request.json().catch(() => ({}));
   if (url.pathname.endsWith('/drafts')) {
     const brief = String(body.brief || '').slice(0, 1200);

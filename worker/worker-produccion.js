@@ -4110,6 +4110,15 @@ export default {
     const cors = corsHeaders(request);
     if (request.method === 'OPTIONS') return new Response(null, { headers: cors });
 
+    if (path === '/admin/dashboard' && request.method === 'GET') {
+      const dTok = (request.headers.get('Authorization') || '').replace(/^Bearer /, '');
+      const dClaims = dTok ? await verifyJwt(dTok, env.JWT_SECRET) : null;
+      if (dClaims?.email !== 'enriquedorta@gmail.com') return new Response(JSON.stringify({ error: 'No autorizado' }), { status: 401, headers: { ...cors, 'Content-Type': 'application/json' } });
+      const dRes = await sbRequest(env, 'rpc/admin_dashboard', { method: 'POST', body: '{}' });
+      if (!dRes.ok) return new Response(JSON.stringify({ error: 'No se pudo leer el dashboard' }), { status: 502, headers: { ...cors, 'Content-Type': 'application/json' } });
+      return new Response(JSON.stringify(dRes.data), { headers: { ...cors, 'Content-Type': 'application/json', 'Cache-Control': 'no-store' } });
+    }
+
     if (path === '/x-agent' || path.startsWith('/x-agent/api/')) {
       const xTok = (request.headers.get('Authorization') || '').replace(/^Bearer /, '');
       const xClaims = xTok ? await verifyJwt(xTok, env.JWT_SECRET) : null;
