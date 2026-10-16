@@ -6,6 +6,8 @@ import {
   detectPitchIntent,
 } from './sales-agent.js';
 import { handleInstagramWebhook } from './ig-channel.js';
+import { finishXAuthorization, manualXConnectionStatus, startXAuthorization, xConnectPage } from './x-channel.js';
+import { xAgent } from './x-agent-dashboard.js';
 import { runCatalogIngest } from './catalog-curation.js';
 import { handleFotoSubir } from './fotos-variedades.js';
 
@@ -2091,6 +2093,24 @@ async function handleChat(body, env, request = null) {
   }
 }
 
+/** Generador editorial para X: reutiliza la recuperación RAG, pero sin las reglas de conversación del chat. */
+async function generateXDraftWithRag(topic, env) {
+  try {
+    const embedding = await generarEmbeddingConsulta(topic, env);
+    let chunks = await buscarChunksRelevantes(embedding, env);
+    const reranked = await rerankChunks(topic, chunks, env);
+    if (reranked?.chunks) chunks = reranked.chunks;
+    else chunks = chunks.slice(0, 4);
+    const context = chunks.map((chunk, index) => `[${index + 1}] ${chunk.doc_titulo || 'Base Cannabicultor'}\n${String(chunk.content || '').slice(0, 1800)}`).join('\n\n');
+    const system = `Eres el editor de X de Cannabicultor IA. Escribes posts breves, útiles y concretos para personas interesadas en cultivo responsable de cannabis y la plataforma Cannabicultor.\n\nUsa el CONTEXTO RAG únicamente si sirve al tema. Si no hay contexto pertinente, explica Cannabicultor con honestidad, sin inventar datos.\n\nDevuelve solamente un post final en español: máximo 260 caracteres, una sola idea, sin título, sin fuentes, sin emojis salvo que aporten algo, y como máximo un hashtag. No hagas promesas médicas ni recomiendes infringir normas aplicables.\n\nCONTEXTO RAG:\n${context || 'No se recuperaron documentos específicos.'}`;
+    const reply = await callDeepSeek(system, [{ role: 'user', content: `Tema del post: ${topic}` }], env);
+    return { status: 200, data: { reply: reply.slice(0, 280) } };
+  } catch (error) {
+    console.log(JSON.stringify({ event: 'x_agent_rag_generation_failed', detail: String(error?.message || error).slice(0, 180) }));
+    return { status: 502, data: { error: 'No se pudo generar el borrador con la base de conocimiento.' } };
+  }
+}
+
 async function hasBenchmarkAccess(request, env) {
   const provided = (request.headers.get('Authorization') || '').replace(/^Bearer\s+/i, '');
   if (!env.BENCHMARK_API_KEY) return false;
@@ -4090,9 +4110,28 @@ export default {
     const cors = corsHeaders(request);
     if (request.method === 'OPTIONS') return new Response(null, { headers: cors });
 
+    if (path === '/x-agent' || path.startsWith('/x-agent/api/')) {
+      const xTok = (request.headers.get('Authorization') || '').replace(/^Bearer /, '');
+      const xClaims = xTok ? await verifyJwt(xTok, env.JWT_SECRET) : null;
+      const xRes = await xAgent(request, env, sbRequest, (topic) => generateXDraftWithRag(topic, env), xClaims?.email === 'enriquedorta@gmail.com');
+      const xHeaders = new Headers(xRes.headers);
+      for (const [k, v] of Object.entries(cors)) xHeaders.set(k, v);
+      return new Response(xRes.body, { status: xRes.status, headers: xHeaders });
+    }
+
     try {
       // GET routes (antes del body JSON)
       if (request.method === 'GET') {
+        if (path === '/x/connect') {
+          return xConnectPage();
+        }
+        if (path === '/connection-check') {
+          const r = await manualXConnectionStatus(env);
+          return json(r.data, r.status, { ...cors, 'Cache-Control': 'no-store' });
+        }
+        if (path === '/x/oauth/callback') {
+          return await finishXAuthorization(url, env, { sbRequest });
+        }
         // País de la IP del visitante (lo pone Cloudflare). Lo usa assets/selector-pais.js en la portada.
         if (path === '/geo') {
           const pais = String((request.cf && request.cf.country) || request.headers.get('CF-IPCountry') || '').toUpperCase();
@@ -4175,6 +4214,11 @@ export default {
       }
 
       const body = await request.json().catch(() => ({}));
+
+      if (path === '/x/oauth/start') {
+        const r = await startXAuthorization(request, env, { sbRequest, verifyJwt });
+        return json(r.data, r.status, cors);
+      }
 
       if (path === '/onboarding/start') {
         const sid = crypto.randomUUID();

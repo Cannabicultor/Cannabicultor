@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="robots" content="noindex, nofollow">
+<title>Admin · Cannabicultor</title>
+<style>
+:root{--v:#0F3020;--b:#e1e6df;--t:#5b6b61}
+*{box-sizing:border-box}body{margin:0;background:#f6f7f4;font-family:Inter,system-ui,sans-serif;color:#13201a}
+.w{max-width:900px;margin:28px auto;padding:0 18px}h1{font-size:24px;margin:0 0 14px}
+nav{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
+nav button{padding:9px 14px;border-radius:10px;border:1px solid var(--v);background:#fff;color:var(--v);font:600 14px system-ui;cursor:pointer}
+nav button.on{background:var(--v);color:#fff}
+.card{background:#fff;border:1px solid var(--b);border-radius:14px;padding:16px;margin-bottom:12px}
+.muted{color:var(--t);font-size:13px}.draft{white-space:pre-wrap;line-height:1.5;margin:8px 0}
+textarea{width:100%;min-height:90px;font:15px system-ui;padding:10px;border:1px solid #cfd6cc;border-radius:10px}
+.act{padding:9px 14px;border:0;border-radius:10px;background:var(--v);color:#fff;font:600 14px system-ui;cursor:pointer;margin-top:8px}
+a.act{display:inline-block;text-decoration:none}
+.sec{display:none}.sec.on{display:block}
+#err{color:#b42318;margin-top:8px}
+</style></head><body><div class="w">
+<h1>Admin · Cannabicultor</h1>
+<nav><button data-t="x" class="on">Agente X</button><button data-t="dir">Directorio</button><button data-t="gs">Growshops</button><button data-t="cmp">Créditos</button></nav>
+
+<section id="x" class="sec on">
+  <div class="card"><b>Nuevo post</b>
+    <p><textarea id="brief" placeholder="Tema del post, ej.: cuándo pasar a floración"></textarea></p>
+    <button class="act" id="gen">Generar borrador</button>
+    <p class="muted">La IA prepara; tú apruebas. Nada se publica al generar.</p></div>
+  <div id="list"></div><div id="err"></div>
+</section>
+<section id="dir" class="sec"><div class="card"><p>Dashboard del buscador de tiendas y RAG (usa su propio token).</p>
+  <a class="act" href="https://cannabicultor-directory-agent.nohumanclicks.workers.dev/dashboard" target="_blank" rel="noopener">Abrir dashboard del directorio</a></div></section>
+<section id="gs" class="sec"><div class="card"><a class="act" href="/admin-growshops.html">Abrir Tiendas con asesor</a></div></section>
+<section id="cmp" class="sec"><div class="card"><a class="act" href="/admin-campana.html">Abrir Campaña créditos</a></div></section>
+</div>
+<script src="/assets/auth.js"></script><script src="/assets/config.js"></script>
+<script>
+var W=window.CC_CONFIG.WORKER_URL,$=function(i){return document.getElementById(i)};
+var jwt=window.GAAuth&&GAAuth.readSession?GAAuth.readSession():null;
+if(!jwt){location.href='/login.html?next='+encodeURIComponent('/admin.html');}
+function esc(v){return String(v).replace(/[&<>]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;'}[c]});}
+function api(path,opt){opt=opt||{};opt.headers={'Content-Type':'application/json','Authorization':'Bearer '+jwt};
+  return fetch(W+path,opt).then(function(r){return r.json().catch(function(){return{}}).then(function(j){if(!r.ok)throw new Error(j.error||('Error '+r.status));return j;});});}
+function load(){api('/x-agent/api/drafts').then(function(d){
+  $('list').innerHTML=d.drafts.map(function(x){
+    var a=x.status==='draft'?'<button class="act" data-a="'+x.id+'">Aprobar</button>':x.status==='approved'?'<button class="act" data-p="'+x.id+'">Publicar en X</button>':'';
+    return '<div class="card"><div class="muted">'+esc(x.status)+' · '+new Date(x.created_at).toLocaleString()+'</div><p class="draft">'+esc(x.text)+'</p>'+a+'</div>';}).join('')||'<p class="muted">No hay borradores.</p>';
+  document.querySelectorAll('[data-a]').forEach(function(b){b.onclick=function(){api('/x-agent/api/approve',{method:'POST',body:JSON.stringify({id:b.dataset.a})}).then(load).catch(show);};});
+  document.querySelectorAll('[data-p]').forEach(function(b){b.onclick=function(){if(confirm('¿Publicar en @CannabicultorX?'))api('/x-agent/api/publish',{method:'POST',body:JSON.stringify({id:b.dataset.p})}).then(load).catch(show);};});
+  $('err').textContent='';}).catch(show);}
+function show(e){$('err').textContent=e.message;}
+$('gen').onclick=function(){api('/x-agent/api/drafts',{method:'POST',body:JSON.stringify({brief:$('brief').value})}).then(function(){$('brief').value='';load();}).catch(show);};
+document.querySelectorAll('nav button').forEach(function(b){b.onclick=function(){document.querySelectorAll('nav button,.sec').forEach(function(e){e.classList.remove('on')});b.classList.add('on');$(b.dataset.t).classList.add('on');};});
+load();
+</script></body></html>
