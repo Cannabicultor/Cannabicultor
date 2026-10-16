@@ -168,7 +168,9 @@ function render(d){CH={};
 }
 function xl(){api('/x-agent/api/drafts').then(function(r){var el=$('xl');if(!el)return;
   el.innerHTML=r.drafts.map(function(x){var a=x.status==='draft'?'<button class="act2" data-a="'+x.id+'">Aprobar</button>':x.status==='approved'?'<button class="act2" data-p="'+x.id+'">Publicar en X</button>':'';
+    if(x.status!=='published')a+=' <button class="act2" style="background:#b3261e" data-d="'+x.id+'">Descartar</button>';
     return '<div class="card" style="margin-top:10px"><span class="pill">'+esc(x.status)+'</span> <span class="meta">'+new Date(x.created_at).toLocaleString('es-ES')+'</span><p class="draft">'+esc(x.text)+'</p>'+a+'</div>'}).join('')||'<div class="meta">No hay borradores.</div>';
+  el.querySelectorAll('[data-d]').forEach(function(b){b.onclick=function(){if(confirm('¿Descartar este post?'))api('/x-agent/api/reject',{method:'POST',body:JSON.stringify({id:b.dataset.d})}).then(xl).catch(function(e){$('err').textContent=e.message})}});
   el.querySelectorAll('[data-a]').forEach(function(b){b.onclick=function(){api('/x-agent/api/approve',{method:'POST',body:JSON.stringify({id:b.dataset.a})}).then(xl).catch(function(e){$('err').textContent=e.message})}});
   el.querySelectorAll('[data-p]').forEach(function(b){b.onclick=function(){if(confirm('¿Publicar en @CannabicultorX?'))api('/x-agent/api/publish',{method:'POST',body:JSON.stringify({id:b.dataset.p})}).then(function(){xl();}).catch(function(e){$('err').textContent=e.message})}});
 }).catch(function(e){if($('err'))$('err').textContent=e.message});}
