@@ -4160,6 +4160,24 @@ export default {
       return new Response(JSON.stringify({ ok: true, para }), { headers: jh });
     }
 
+    if (path === '/admin/huecos' && (request.method === 'GET' || request.method === 'POST')) {
+      const hh = { ...cors, 'Content-Type': 'application/json' };
+      const hTok = (request.headers.get('Authorization') || '').replace(/^Bearer /, '');
+      const hClaims = hTok ? await verifyJwt(hTok, env.JWT_SECRET) : null;
+      if (hClaims?.email !== 'enriquedorta@gmail.com') return new Response(JSON.stringify({ error: 'No autorizado' }), { status: 401, headers: hh });
+      if (request.method === 'GET') {
+        const hr = await sbRequest(env, "kb_huecos?select=id,tema,tipo,descripcion,ejemplos,n_consultas,prioridad,accion,estado,nota&estado=not.in.(resuelto,descartado,cerrado)&order=prioridad.asc,n_consultas.desc&limit=100", { method: 'GET' });
+        return new Response(JSON.stringify({ huecos: hr.data || [] }), { headers: hh });
+      }
+      let hb = {}; try { hb = await request.json(); } catch {}
+      const hid = parseInt(hb.id, 10); if (!hid) return new Response(JSON.stringify({ error: 'id inválido' }), { status: 400, headers: hh });
+      const patch = { updated_at: new Date().toISOString() };
+      if (typeof hb.nota === 'string') patch.nota = hb.nota.slice(0, 6000);
+      if (['resuelto', 'descartado', 'abierto'].includes(hb.estado)) patch.estado = hb.estado;
+      await sbRequest(env, `kb_huecos?id=eq.${hid}`, { method: 'PATCH', headers: { Prefer: 'return=minimal' }, body: JSON.stringify(patch) });
+      return new Response(JSON.stringify({ ok: true }), { headers: hh });
+    }
+
     if (path === '/x-agent' || path.startsWith('/x-agent/api/')) {
       const xTok = (request.headers.get('Authorization') || '').replace(/^Bearer /, '');
       const xClaims = xTok ? await verifyJwt(xTok, env.JWT_SECRET) : null;
