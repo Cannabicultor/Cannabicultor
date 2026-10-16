@@ -27,6 +27,12 @@ $('generate').addEventListener('click', async () => { try { await request('/x-ag
 </script>`, { headers: { 'Content-Type':'text/html;charset=utf-8', 'Cache-Control':'no-store' } });
 }
 
+function limpiaPost(t) {
+  let parts = String(t || '').split(/\n{2,}/).map((x) => x.trim()).filter(Boolean);
+  parts = parts.filter((x) => !/despacho legal|información legal verificada|profesional local/i.test(x));
+  return parts.join('\n\n').trim();
+}
+
 export async function xAgent(request, env, supabaseRequest, generateWithRag, isAdmin = false) {
   const url = new URL(request.url);
   if (request.method === 'GET' && url.pathname === '/x-agent') return page();
@@ -37,13 +43,24 @@ export async function xAgent(request, env, supabaseRequest, generateWithRag, isA
     const brief = String(body.brief || '').slice(0, 1200);
     if (!brief) return Response.json({ error: 'Escribe un tema.' }, { status: 400 });
     const generated = await generateWithRag(brief);
-    const text = String(generated?.data?.reply || '').trim();
+    const text = limpiaPost(generated?.data?.reply);
     if (generated?.status !== 200 || !text) return Response.json({ error: 'No se pudo generar usando la base de conocimiento.' }, { status: 502 });
     const result = await supabaseRequest(env, 'x_agent_drafts', { method: 'POST', headers: { Prefer: 'return=representation' }, body: JSON.stringify({ text: text.slice(0, 280), status: 'draft' }) });
     if (result.error || !result.data?.[0]) return Response.json({ error: 'No se pudo guardar el borrador.' }, { status: 502 });
     return Response.json({ draft: result.data[0] });
   }
   const id = String(body.id || ''); if (!/^[0-9a-f-]{36}$/i.test(id)) return Response.json({error:'Borrador inválido.'},{status:400});
+  if (url.pathname.endsWith('/edit')) { const t = String(body.text || '').trim().slice(0, 280); if (!t) return Response.json({error:'Texto vacío.'},{status:400}); await supabaseRequest(env,`x_agent_drafts?id=eq.${id}&status=neq.published`,{method:'PATCH',headers:{Prefer:'return=minimal'},body:JSON.stringify({text:t,status:'draft'})}); return Response.json({ok:true}); }
+  if (url.pathname.endsWith('/regenerate')) {
+    const cur = await supabaseRequest(env,`x_agent_drafts?id=eq.${id}&select=id,text,status&limit=1`,{method:'GET'}); const d = cur.data?.[0];
+    if (!d || d.status === 'published') return Response.json({error:'No se puede regenerar.'},{status:400});
+    const instr = String(body.instruccion || 'mejóralo').slice(0, 400);
+    const g = await generateWithRag(`Reescribe este post de X siguiendo la instrucción del editor. Instrucción: ${instr}\nPost actual: ${d.text}`);
+    const nt = limpiaPost(g?.data?.reply).slice(0, 280);
+    if (g?.status !== 200 || !nt) return Response.json({error:'No se pudo regenerar.'},{status:502});
+    await supabaseRequest(env,`x_agent_drafts?id=eq.${id}`,{method:'PATCH',headers:{Prefer:'return=minimal'},body:JSON.stringify({text:nt,status:'draft'})});
+    return Response.json({ok:true,text:nt});
+  }
   if (url.pathname.endsWith('/reject')) { await supabaseRequest(env,`x_agent_drafts?id=eq.${id}&status=neq.published`,{method:'PATCH',headers:{Prefer:'return=minimal'},body:JSON.stringify({status:'rejected'})}); return Response.json({ok:true}); }
   if (url.pathname.endsWith('/approve')) { await supabaseRequest(env,`x_agent_drafts?id=eq.${id}`,{method:'PATCH',headers:{Prefer:'return=minimal'},body:JSON.stringify({status:'approved'})}); return Response.json({ok:true}); }
   if (url.pathname.endsWith('/publish')) { const result = await supabaseRequest(env,`x_agent_drafts?id=eq.${id}&select=id,text,status&limit=1`,{method:'GET'}); const draft = result.data?.[0]; if (!draft || draft.status !== 'approved') return Response.json({error:'Aprueba el borrador primero.'},{status:400}); const xToken = await getXAccessToken(env, supabaseRequest); if (!xToken) return Response.json({ error:'X no conectado o token caducado: reconecta en /x/connect.' },{status:502}); const xResponse = await fetch(X_POST_URL,{method:'POST',headers:{Authorization:'Bearer ' + xToken,'Content-Type':'application/json'},body:JSON.stringify({text:draft.text})}); if (!xResponse.ok) { const detail = String((await xResponse.text()) || '').replace(/[<>]/g,'').slice(0,220); console.log(JSON.stringify({event:'x_agent_publish_failed',status:xResponse.status,detail})); return Response.json({error:`X rechazó la publicación (${xResponse.status})${detail ? `: ${detail}` : ''}`},{status:502}); } const post = (await xResponse.json())?.data; await supabaseRequest(env,`x_agent_drafts?id=eq.${id}`,{method:'PATCH',headers:{Prefer:'return=minimal'},body:JSON.stringify({status:'published',x_post_id:post?.id || null,published_at:new Date().toISOString()})}); return Response.json({ok:true,post_id:post?.id}); }
