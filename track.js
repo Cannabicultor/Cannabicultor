@@ -1,4 +1,4 @@
-/* Cannabicultor — tracking unificado v1
+/* Cannabicultor — tracking unificado v2 (17/10/2026: envío por fetch keepalive + impresiones de CTA)
    Sustituye a cualquier snippet de page_views suelto.
    Se incluye en TODAS las páginas: <script src="/track.js?v=YYYYMMDD-slug" defer></script>
    Escribe en Supabase: page_views (vistas) y eventos (embudo).
@@ -57,17 +57,15 @@
     screen_width: window.innerWidth || 0
   };
 
+  // OJO: NO usar navigator.sendBeacon aquí. Con Blob 'application/json' el navegador
+  // lanza una petición con credenciales + preflight que Supabase rechaza (CORS), y
+  // sendBeacon devuelve true aunque el evento se pierda. Medido el 17/10/2026: ningún
+  // clic de CTA, form_submit ni nav_interna llegó nunca a la tabla eventos en Chrome.
+  // fetch con keepalive sí sobrevive a la navegación y envía las cabeceras correctas.
+  // El 3.er parámetro (beacon) se conserva por compatibilidad y se ignora.
   function post(table, row, beacon) {
     var url = SUPABASE_URL + '/rest/v1/' + table;
     var body = JSON.stringify(row);
-    if (beacon && navigator.sendBeacon) {
-      // sendBeacon no admite headers -> usa apikey por querystring (soportado por PostgREST)
-      try {
-        navigator.sendBeacon(url + '?apikey=' + encodeURIComponent(SUPABASE_ANON_KEY),
-          new Blob([body], { type: 'application/json' }));
-        return;
-      } catch (e) { /* cae al fetch */ }
-    }
     fetch(url, {
       method: 'POST',
       keepalive: true,
@@ -157,6 +155,52 @@
     if (!f || f.tagName !== 'FORM') return;
     track('form_submit', f.getAttribute('id') || f.getAttribute('name') || 'sin_id', null, true);
   }, true);
+
+  // ── 5b. Impresiones y foco de los CTA de las fichas SEO ──
+  // Sin tocar las páginas ya generadas: se detectan por selector.
+  //   cta_visto  -> el CTA entra en pantalla (una vez por página y nombre)
+  //   dock_foco  -> el visitante pulsa en el cuadro "Pregúntale a la IA" (una vez por página)
+  // El clic en el CTA lo recoge el listener de clics (data-track), y el envío del dock
+  // lo recoge form_submit (id=ccDock). Así se calcula impresión -> foco -> envío -> registro.
+  var CTA_VISTOS = [
+    { sel: '.cc-dock', nombre: 'dock_pregunta' },
+    { sel: '.cta-stick', nombre: 'cta_diario_sticky' },
+    { sel: '[data-track-view]', nombre: null }
+  ];
+  function observarCtas() {
+    if (!('IntersectionObserver' in window)) return;
+    var vistos = {};
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (en) {
+        if (!en.isIntersecting) return;
+        var el = en.target;
+        var nombre = el.getAttribute('data-track-view') || el.getAttribute('data-cta-nombre');
+        if (!nombre || vistos[nombre]) return;
+        vistos[nombre] = true;
+        var tipo = (el.querySelector && el.querySelector('form[data-tipo]'))
+          ? el.querySelector('form[data-tipo]').getAttribute('data-tipo') : null;
+        track('cta_visto', nombre, tipo ? { tipo: tipo } : null);
+        io.unobserve(el);
+      });
+    }, { threshold: 0.5 });
+    CTA_VISTOS.forEach(function (c) {
+      var nodos = document.querySelectorAll(c.sel);
+      for (var i = 0; i < nodos.length; i++) {
+        if (c.nombre && !nodos[i].getAttribute('data-cta-nombre')) nodos[i].setAttribute('data-cta-nombre', c.nombre);
+        io.observe(nodos[i]);
+      }
+    });
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', observarCtas);
+  else observarCtas();
+
+  var dockFoco = false;
+  document.addEventListener('focusin', function (ev) {
+    if (dockFoco || !ev.target || ev.target.id !== 'ccDockQ') return;
+    dockFoco = true;
+    var f = ev.target.form;
+    track('dock_foco', f ? f.getAttribute('data-tipo') : null);
+  });
 
   // ── 6. Tiempo en página al salir ──
   var t0 = Date.now();
