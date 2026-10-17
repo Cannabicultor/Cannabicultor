@@ -4121,6 +4121,18 @@ export default {
       if (dAp.ok && Array.isArray(dAp.data)) {
         dOut.venta = { ...(dOut.venta || {}), por_aprobar_lista: dAp.data.map((a) => ({ id: a.id, tipo: a.tipo, titulo: a.titulo, resumen: a.resumen, created_at: a.created_at, payload: { para: a.payload?.para, asunto: a.payload?.asunto, cuerpo: a.payload?.cuerpo } })) };
       }
+      if (env.YOUTUBE_API_KEY) {
+        try {
+          const ytR = await fetch('https://www.googleapis.com/youtube/v3/channels?part=statistics&forHandle=cannabicultor&key=' + encodeURIComponent(env.YOUTUBE_API_KEY));
+          const ytJ = await ytR.json();
+          const st = ytJ?.items?.[0]?.statistics;
+          if (!st) throw new Error(ytJ?.error?.message || 'canal no encontrado');
+          const hoyF = new Date().toISOString().slice(0, 10);
+          await sbRequest(env, 'yt_stats', { method: 'POST', headers: { Prefer: 'resolution=merge-duplicates,return=minimal' }, body: JSON.stringify({ fecha: hoyF, subs: +st.subscriberCount || 0, views: +st.viewCount || 0, videos: +st.videoCount || 0, updated_at: new Date().toISOString() }) });
+          const ytH = await sbRequest(env, 'yt_stats?select=fecha,subs,views,videos&order=fecha.asc&limit=120', { method: 'GET' });
+          dOut.youtube = { actual: { subs: +st.subscriberCount || 0, views: +st.viewCount || 0, videos: +st.videoCount || 0 }, dia: (ytH.data || []).map((r) => ({ dia: r.fecha, subs: r.subs, views: r.views })) };
+        } catch (e) { dOut.youtube = { error: String(e.message || e).slice(0, 120) }; }
+      }
       return new Response(JSON.stringify(dOut), { headers: { ...cors, 'Content-Type': 'application/json', 'Cache-Control': 'no-store' } });
     }
 
