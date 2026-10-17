@@ -128,7 +128,10 @@ function render(d){CH={};
   var emIt=function(x){var p=x.payload||{};return '<details class="it"><summary><b>'+esc(p.asunto||x.titulo)+'</b> <span class="meta">· '+esc(x.titulo)+'</span></summary><div class="em">'+emCont(x)+'</div></details>'};
   var hApr='<div class="card"><div class="t">Por aprobar ('+fmt(V.por_aprobar)+')'+'</div>'+(L.length?'<div style="margin:4px 0 8px"><button class="btn" id="sendAll">Aprobar y enviar todos ('+L.length+')</button> <span class="meta" id="saM"></span></div>':'')+
     (L.length?emIt(L[0])+(L.length>1?'<details><summary>Ver '+(L.length-1)+' más'+(V.por_aprobar>L.length?' (últimos '+L.length+')':'')+'</summary>'+L.slice(1).map(emIt).join('')+'</details>':''):'<div class="meta">Nada pendiente.</div>')+'</div>';
-  var hSin='<div class="card off"><div class="t">Nuevos sin leer</div><div style="padding:14px 6px;text-align:center;color:var(--muted);font-size:13px">Pendiente de conectar<br><small>Falta enlazar el buzón (Gmail o iCloud)</small></div></div>';
+  var MM=d.mail||[],mTot=MM.reduce(function(a,m){return a+(m.no_leidos||0)},0),mIt=[];MM.forEach(function(m){(m.items||[]).forEach(function(x){mIt.push(x)})});
+  mIt.sort(function(a,b){return (b.importante?1:0)-(a.importante?1:0)});
+  var mLi=function(x){return '<details class="it"><summary><b>'+(x.importante?'⭐ ':'')+esc(x.asunto||'(sin asunto)')+'</b> <span class="meta">· '+esc(x.de||'')+'</span></summary><div class="em"><div class="to">'+esc(x.fecha||'')+'</div></div></details>'};
+  var hSin=MM.length?'<div class="card"><div class="t">Nuevos sin leer ('+fmt(mTot)+')</div>'+(mIt.length?mLi(mIt[0])+(mIt.length>1?'<details><summary>Ver '+(mIt.length-1)+' más</summary>'+mIt.slice(1).map(mLi).join('')+'</details>':''):'<div class="meta">Nada pendiente.</div>')+'<div class="meta" style="margin-top:6px">Actualizado '+new Date(MM[0].updated_at).toLocaleString('es-ES')+'</div></div>':'<div class="card off"><div class="t">Nuevos sin leer</div><div style="padding:14px 6px;text-align:center;color:var(--muted);font-size:13px">Esperando la primera lectura del buzón…</div></div>';
   var hE='<h2>Emails</h2><div class="grid two">'+hApr+hSin+'</div>';
 
   /* negocio web */

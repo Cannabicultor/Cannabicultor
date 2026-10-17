@@ -4150,6 +4150,7 @@ export default {
       if (dAp.ok && Array.isArray(dAp.data)) {
         dOut.venta = { ...(dOut.venta || {}), por_aprobar_lista: dAp.data.map((a) => ({ id: a.id, tipo: a.tipo, titulo: a.titulo, resumen: a.resumen, created_at: a.created_at, payload: { para: a.payload?.para, asunto: a.payload?.asunto, cuerpo: a.payload?.cuerpo } })) };
       }
+      try { const mr = await sbRequest(env, 'mail_estado?select=cuenta,no_leidos,items,updated_at&order=cuenta.asc', { method: 'GET' }); dOut.mail = Array.isArray(mr.data) ? mr.data : []; } catch { dOut.mail = []; }
       if (env.GSC_SERVICE_ACCOUNT) {
         try { dOut.gsc = await gscStats(env); } catch (e) { dOut.gsc = { error: String(e.message || e).slice(0, 140) }; }
       }
