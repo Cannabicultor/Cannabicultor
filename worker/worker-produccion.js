@@ -2094,6 +2094,35 @@ async function handleChat(body, env, request = null) {
 }
 
 /** Generador editorial para X: reutiliza la recuperación RAG, pero sin las reglas de conversación del chat. */
+
+// ---- Search Console (cuenta de servicio, solo lectura) ----
+async function gscAccessToken(env) {
+  const sa = JSON.parse(env.GSC_SERVICE_ACCOUNT);
+  const b64u = (x) => btoa(typeof x === 'string' ? x : String.fromCharCode(...new Uint8Array(x))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  const now = Math.floor(Date.now() / 1000);
+  const unsigned = b64u(JSON.stringify({ alg: 'RS256', typ: 'JWT' })) + '.' + b64u(JSON.stringify({ iss: sa.client_email, scope: 'https://www.googleapis.com/auth/webmasters.readonly', aud: 'https://oauth2.googleapis.com/token', iat: now, exp: now + 3300 }));
+  const pem = sa.private_key.replace(/-----[^-]+-----/g, '').replace(/\s+/g, '');
+  const der = Uint8Array.from(atob(pem), (c) => c.charCodeAt(0));
+  const key = await crypto.subtle.importKey('pkcs8', der, { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' }, false, ['sign']);
+  const sig = await crypto.subtle.sign('RSASSA-PKCS1-v1_5', key, new TextEncoder().encode(unsigned));
+  const r = await fetch('https://oauth2.googleapis.com/token', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: 'grant_type=' + encodeURIComponent('urn:ietf:params:oauth:grant-type:jwt-bearer') + '&assertion=' + unsigned + '.' + b64u(sig) });
+  const j = await r.json();
+  if (!j.access_token) throw new Error(j.error_description || j.error || 'sin token');
+  return j.access_token;
+}
+
+async function gscStats(env) {
+  const tok = await gscAccessToken(env);
+  const site = env.GSC_SITE || 'sc-domain:cannabicultor.com';
+  const fin = new Date(Date.now() - 2 * 864e5).toISOString().slice(0, 10);
+  const ini = new Date(Date.now() - 32 * 864e5).toISOString().slice(0, 10);
+  const r = await fetch('https://www.googleapis.com/webmasters/v3/sites/' + encodeURIComponent(site) + '/searchAnalytics/query', { method: 'POST', headers: { Authorization: 'Bearer ' + tok, 'Content-Type': 'application/json' }, body: JSON.stringify({ startDate: ini, endDate: fin, dimensions: ['date'], rowLimit: 60 }) });
+  const j = await r.json();
+  if (!r.ok) throw new Error(j?.error?.message || ('http ' + r.status));
+  const dia = (j.rows || []).map((x) => ({ dia: x.keys[0], clicks: x.clicks, impr: x.impressions, pos: Math.round(x.position * 10) / 10 }));
+  return { dia, clicks: dia.reduce((a, b) => a + b.clicks, 0), impr: dia.reduce((a, b) => a + b.impr, 0) };
+}
+
 async function generateXDraftWithRag(topic, env) {
   try {
     const embedding = await generarEmbeddingConsulta(topic, env);
@@ -4120,6 +4149,9 @@ export default {
       const dAp = await sbRequest(env, 'ventas_aprobaciones?estado=eq.pendiente&select=id,tipo,titulo,resumen,payload,created_at&order=created_at.desc&limit=40', { method: 'GET' });
       if (dAp.ok && Array.isArray(dAp.data)) {
         dOut.venta = { ...(dOut.venta || {}), por_aprobar_lista: dAp.data.map((a) => ({ id: a.id, tipo: a.tipo, titulo: a.titulo, resumen: a.resumen, created_at: a.created_at, payload: { para: a.payload?.para, asunto: a.payload?.asunto, cuerpo: a.payload?.cuerpo } })) };
+      }
+      if (env.GSC_SERVICE_ACCOUNT) {
+        try { dOut.gsc = await gscStats(env); } catch (e) { dOut.gsc = { error: String(e.message || e).slice(0, 140) }; }
       }
       if (env.YOUTUBE_API_KEY) {
         try {
