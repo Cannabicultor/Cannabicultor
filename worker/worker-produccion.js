@@ -2123,6 +2123,45 @@ async function gscStats(env) {
   return { dia, clicks: dia.reduce((a, b) => a + b.clicks, 0), impr: dia.reduce((a, b) => a + b.impr, 0) };
 }
 
+
+// ---- Stripe (solo lectura) y saldo DeepSeek para el dashboard ----
+async function stripeResumen(env) {
+  const get = async (path) => {
+    const r = await fetch('https://api.stripe.com/v1' + path, { headers: { Authorization: 'Bearer ' + env.STRIPE_SECRET_KEY } });
+    const j = await r.json();
+    if (!r.ok) throw new Error(j?.error?.message || ('stripe http ' + r.status));
+    return j;
+  };
+  const ini = new Date(); ini.setUTCDate(1); ini.setUTCHours(0, 0, 0, 0);
+  const t0 = Math.floor(ini.getTime() / 1000);
+  const ch = await get('/charges?limit=100&created[gte]=' + t0);
+  const ingresos = (ch.data || []).filter((c) => c.paid && c.status === 'succeeded').reduce((a, c) => a + (c.amount_captured || c.amount || 0) - (c.amount_refunded || 0), 0) / 100;
+  const pagos = (ch.data || []).filter((c) => c.paid && c.status === 'succeeded').length;
+  let activas = 0, mrr = 0, bajas = 0;
+  try {
+    const sa = await get('/subscriptions?status=active&limit=100');
+    activas = (sa.data || []).length;
+    for (const sub of sa.data || []) for (const it of sub.items?.data || []) {
+      const pr = it.price || {}; const unit = (pr.unit_amount || 0) / 100 * (it.quantity || 1);
+      const iv = pr.recurring?.interval, ic = pr.recurring?.interval_count || 1;
+      mrr += iv === 'year' ? unit / (12 * ic) : iv === 'week' ? unit * 4.345 / ic : iv === 'day' ? unit * 30 / ic : unit / ic;
+    }
+    const sc = await get('/subscriptions?status=canceled&limit=100');
+    bajas = (sc.data || []).filter((x) => x.canceled_at && x.canceled_at >= t0).length;
+  } catch {}
+  return { ingresos_mes: Math.round(ingresos * 100) / 100, pagos_mes: pagos, suscripciones_activas: activas, bajas_mes: bajas, mrr: Math.round(mrr * 100) / 100 };
+}
+
+async function deepseekSaldo(env, sbRequest) {
+  const r = await fetch('https://api.deepseek.com/user/balance', { headers: { Authorization: 'Bearer ' + env.DEEPSEEK_API_KEY } });
+  const j = await r.json();
+  const bi = (j.balance_infos || []).find((b) => b.currency === 'USD') || (j.balance_infos || [])[0];
+  if (!bi) throw new Error('sin saldo');
+  const saldo = parseFloat(bi.total_balance);
+  await sbRequest(env, 'coste_saldos', { method: 'POST', headers: { Prefer: 'resolution=merge-duplicates,return=minimal' }, body: JSON.stringify({ fecha: new Date().toISOString().slice(0, 10), proveedor: 'deepseek', saldo }) });
+  return { moneda: bi.currency, saldo };
+}
+
 async function generateXDraftWithRag(topic, env) {
   try {
     const embedding = await generarEmbeddingConsulta(topic, env);
@@ -4151,6 +4190,12 @@ export default {
         dOut.venta = { ...(dOut.venta || {}), por_aprobar_lista: dAp.data.map((a) => ({ id: a.id, tipo: a.tipo, titulo: a.titulo, resumen: a.resumen, created_at: a.created_at, payload: { para: a.payload?.para, asunto: a.payload?.asunto, cuerpo: a.payload?.cuerpo } })) };
       }
       try { const mr = await sbRequest(env, 'mail_estado?select=cuenta,no_leidos,items,updated_at&order=cuenta.asc', { method: 'GET' }); dOut.mail = Array.isArray(mr.data) ? mr.data : []; } catch { dOut.mail = []; }
+      try {
+        const nr = await sbRequest(env, 'rpc/admin_negocio', { method: 'POST', body: '{}' });
+        dOut.extra = nr.data || {};
+      } catch { dOut.extra = {}; }
+      if (env.STRIPE_SECRET_KEY) { try { dOut.extra.stripe = await stripeResumen(env); } catch (e) { dOut.extra.stripe = { error: String(e.message || e).slice(0, 120) }; } }
+      if (env.DEEPSEEK_API_KEY) { try { dOut.extra.deepseek_saldo = await deepseekSaldo(env, sbRequest); const nr2 = await sbRequest(env, 'rpc/admin_negocio', { method: 'POST', body: '{}' }); if (nr2.data?.costes) dOut.extra.costes = nr2.data.costes; } catch {} }
       if (env.GSC_SERVICE_ACCOUNT) {
         try { dOut.gsc = await gscStats(env); } catch (e) { dOut.gsc = { error: String(e.message || e).slice(0, 140) }; }
       }
