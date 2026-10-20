@@ -10,9 +10,10 @@
  *   /ar/<tipo>/<provincia>/<ficha>/        ficha
  *
  * Regla de calidad (solo fichas): index únicamente si la descripción es única y >120
- * caracteres, el contacto está verificado y la geolocalización es exacta. El resto sale
- * con noindex,follow y NO entra en el sitemap. Un país sin fichas genera solo su portada
- * con noindex,follow (queda listo para cuando haya datos).
+ * caracteres, tiene algún dato de contacto y la geolocalización es exacta. Growshops y tiendas
+ * CBD no necesitan estar verificadas; los clubes y asociaciones SÍ (riesgo alto en el protocolo
+ * de verificación). El resto sale con noindex,follow y NO entra en el sitemap. Un país sin
+ * fichas genera solo su portada con noindex,follow (queda listo para cuando haya datos).
  *
  * Lo invoca prerender/build.mjs con --paises (todos) o --pais=ar.
  */
@@ -70,9 +71,9 @@ export const TIPOS = {
 
 // Paises cuyo contenido puede indexarse (portada, listados y fichas que cumplan la regla de calidad). El resto se genera
 // y se ve en la web, pero TODO sale noindex,follow y fuera del sitemap hasta que se abra expresamente (revision legal
-// del pais, fichas verificadas). Abiertos: ar, cl, co (Jose aprobo el directorio 2026-10-06); mx sigue cerrado hasta tener
-// fichas. Se puede forzar con INDEXAR_PAISES="ar,cl,co,mx".
-const INDEXAR = new Set((process.env.INDEXAR_PAISES || 'ar,cl,co').split(',').map((x) => x.trim().toLowerCase()).filter(Boolean));
+// del pais, fichas verificadas). Abiertos: ar, cl, co (Jose aprobo el directorio 2026-10-06) y mx (abierto por Ernie el
+// 2026-10-20; falta la revision legal de Jose para Mexico). Se puede forzar con INDEXAR_PAISES="ar,cl,co".
+const INDEXAR = new Set((process.env.INDEXAR_PAISES || 'ar,cl,co,mx').split(',').map((x) => x.trim().toLowerCase()).filter(Boolean));
 const MIN_PROV_INDEX = 3; // un listado por provincia solo se indexa con >=3 fichas
 const CAP = (s) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : s);
 
@@ -80,13 +81,17 @@ const CAP = (s) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : s);
 export const descripcionDe = (s) => String(s.descripcion_tldr || s.descripcion || '').trim();
 const normDesc = (t) => t.toLowerCase().replace(/\s+/g, ' ');
 
-/** Index solo si: descripción única >120, contacto verificado y geolocalización exacta. */
-export function fichaIndexable(s, conteoDesc) {
+/**
+ * Index solo si: descripción única >120, algún dato de contacto y geolocalización exacta.
+ * La verificación solo se exige a clubes y asociaciones (tk === 'asociaciones').
+ */
+export function fichaIndexable(s, conteoDesc, tk) {
   const d = descripcionDe(s);
   const tieneContacto = !!(s.telefono || s.web || s.instagram || s.direccion);
+  const verificadaSiHaceFalta = tk === 'asociaciones' ? s.verificado === true : true;
   return s.indexable !== false
     && d.length > 120 && (conteoDesc.get(normDesc(d)) || 0) === 1
-    && s.verificado === true && tieneContacto
+    && verificadaSiHaceFalta && tieneContacto
     && s.lat != null && s.lon != null && s.geo_aproximado === false;
 }
 
@@ -158,7 +163,7 @@ function organizar(ctx, pais, tk, rows) {
     if (usados.has(`${provSlug}/${base}`)) base = `${base}-${s.id}`;
     usados.add(`${provSlug}/${base}`);
     s._slug = base;
-    s._idx = pais.abierto && fichaIndexable(s, conteoDesc);
+    s._idx = pais.abierto && fichaIndexable(s, conteoDesc, tk);
     g.shops.push(s);
   }
   // orden estable: provincias con más fichas primero, luego alfabético

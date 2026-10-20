@@ -74,10 +74,26 @@ const GROWSHOPS_CL = [
   cl(2007, 'Chile Geo Aprox', 'Temuco', 'Región de La Araucanía', { geo_aproximado: true, lat: -38.73, lon: -72.59 }),
 ];
 const ASOC_CL = [cl(2101, 'Fundación Chile Demo', 'Concepción', 'Región del Biobío', { slug: 'cl-as-2101', telefono: null, web: null })];
-const TABLES_BASE = { cbd_shops: CBD_SHOPS, growshops: GROWSHOPS, asociaciones: [] };
+// Clubes de AR: sin verificar (aunque cumpla el resto, la verificacion se exige a clubes) y verificado.
+const asoc = (id, nombre, extra = {}) => gs(id, nombre, { slug: `ar-as-${id}`, ...extra });
+const ASOC_AR = [
+  asoc(3001, 'Club sin verificar', { descripcion: DESC_OK + ' (f)' }),
+  asoc(3002, 'Club verificado', { descripcion: DESC_OK + ' (g)', verificado: true }),
+];
+// Mexico (solo con MOCK_MX=1): un growshop completo sin verificar y otro con descripcion corta.
+const mx = (id, nombre, extra = {}) => gs(id, nombre, { slug: `mx-gs-${id}`, ciudad: 'Guadalajara', provincia: 'Jalisco', pais: 'MX', lat: 20.67, lon: -103.35, ...extra });
+const GROWSHOPS_MX = [
+  mx(4001, 'Mexico Completo', { descripcion: DESC_OK + ' (mx-a)' }),
+  mx(4002, 'Mexico Corto', { descripcion: 'Tienda.' }),
+  mx(4003, 'Mexico Tres A', { descripcion: DESC_OK + ' (mx-b)' }),
+  mx(4004, 'Mexico Tres B', { descripcion: DESC_OK + ' (mx-c)' }),
+];
+const TABLES_BASE = { cbd_shops: CBD_SHOPS, growshops: GROWSHOPS, asociaciones: ASOC_AR };
 const TABLES = process.env.MOCK_CL
   ? { cbd_shops: CBD_SHOPS, growshops: [...GROWSHOPS, ...GROWSHOPS_CL], asociaciones: ASOC_CL }
-  : TABLES_BASE;
+  : process.env.MOCK_MX
+    ? { ...TABLES_BASE, growshops: [...GROWSHOPS, ...GROWSHOPS_MX] }
+    : TABLES_BASE;
 
 function respond(url, headers) {
   const u = new URL(url);
