@@ -28,16 +28,27 @@ test('las consultas filtran por pais del directorio', () => {
   for (const r of reqs) assert.match(r, /pais=eq\.(AR|CL|CO|MX)/);
 });
 
-test('solo entra al sitemap la ficha que cumple descripcion unica >120 + verificada + geo exacta', () => {
+test('growshop: entra al sitemap con descripcion unica >120 + contacto + geo exacta, verificado o no', () => {
   const sm = read('sitemap-ar.xml');
   assert.match(sm, /\/ar\/growshops\/santa-fe\/cumple-todo\//);
-  for (const n of ['sin-verificar', 'geo-aproximada', 'descripcion-corta', 'duplicada-a', 'duplicada-b', 'flag-indexable-false']) {
+  assert.match(sm, /\/ar\/growshops\/santa-fe\/sin-verificar\//); // 2026-10-20: ya no se exige verificacion a growshops
+  for (const n of ['geo-aproximada', 'descripcion-corta', 'duplicada-a', 'duplicada-b', 'flag-indexable-false']) {
     assert.ok(!sm.includes(`/${n}/`), `${n} no debe estar en sitemap`);
   }
-  assert.equal(robots('ar', 'growshops', 'santa-fe', 'cumple-todo', 'index.html'), 'index,follow,max-image-preview:large');
-  for (const n of ['sin-verificar', 'geo-aproximada', 'descripcion-corta', 'duplicada-a', 'flag-indexable-false']) {
+  for (const n of ['cumple-todo', 'sin-verificar']) {
+    assert.equal(robots('ar', 'growshops', 'santa-fe', n, 'index.html'), 'index,follow,max-image-preview:large', n);
+  }
+  for (const n of ['geo-aproximada', 'descripcion-corta', 'duplicada-a', 'flag-indexable-false']) {
     assert.equal(robots('ar', 'growshops', 'santa-fe', n, 'index.html'), 'noindex,follow', n);
   }
+});
+
+test('clubes y asociaciones: la verificacion SI se exige para indexar la ficha', () => {
+  const sm = read('sitemap-ar.xml');
+  assert.match(sm, /\/club-verificado\//);
+  assert.ok(!sm.includes('/club-sin-verificar/'));
+  assert.equal(robots('ar', 'asociaciones', 'santa-fe', 'club-verificado', 'index.html'), 'index,follow,max-image-preview:large');
+  assert.equal(robots('ar', 'asociaciones', 'santa-fe', 'club-sin-verificar', 'index.html'), 'noindex,follow');
 });
 
 test('la ficha de ES no sale bajo /ar/', () => {
@@ -58,8 +69,8 @@ test('portada /ar/: canonical autorreferencial, hreflang y JSON-LD en el HTML cr
   assert.ok(!/corrimos|correr/i.test(h));
 });
 
-test('pais sin datos (mx, cerrado): portada noindex y fuera del sitemap e indice', () => {
-  // CL y CO se abrieron a la indexacion el 2026-10-06 (INDEXAR_PAISES por defecto = ar,cl,co); mx sigue cerrado.
+test('pais sin datos (mx abierto pero vacio): portada noindex y fuera del sitemap e indice', () => {
+  // CL y CO se abrieron el 2026-10-06 y MX el 2026-10-20 (INDEXAR_PAISES por defecto = ar,cl,co,mx); sin fichas, la portada va noindex.
   assert.equal(robots('mx', 'index.html'), 'noindex,follow');
   assert.ok(!existsSync(join(OUT, 'sitemap-mx.xml')));
   const idx = read('sitemap.xml');

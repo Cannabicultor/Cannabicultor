@@ -76,7 +76,7 @@ test('pais cerrado (INDEXAR_PAISES sin cl): Chile se genera pero todo noindex y 
   assert.ok(!existsSync(join(out2, 'sitemap-cl.xml')));
 });
 
-test('por defecto Chile y Colombia estan abiertos y Mexico cerrado', () => {
+test('por defecto Chile, Colombia y Mexico estan abiertos (mx sin datos en este mock: portada noindex)', () => {
   const out3 = mkdtempSync(join(tmpdir(), 'seo-cl-def-'));
   const env = { ...process.env, PRERENDER_OUT: out3, MOCK_CL: '1' };
   delete env.INDEXAR_PAISES;
