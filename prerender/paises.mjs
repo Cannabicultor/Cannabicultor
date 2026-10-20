@@ -71,8 +71,8 @@ export const TIPOS = {
 
 // Paises cuyo contenido puede indexarse (portada, listados y fichas que cumplan la regla de calidad). El resto se genera
 // y se ve en la web, pero TODO sale noindex,follow y fuera del sitemap hasta que se abra expresamente (revision legal
-// del pais, fichas verificadas). Abiertos: ar, cl, co (Jose aprobo el directorio 2026-10-06) y mx (abierto por Ernie el
-// 2026-10-20; falta la revision legal de Jose para Mexico). Se puede forzar con INDEXAR_PAISES="ar,cl,co".
+// del pais, fichas verificadas). Abiertos: ar, cl, co (Jose aprobo el directorio 2026-10-06) y mx (Jose lo aprobo y Ernie
+// lo abrio el 2026-10-20). Se puede forzar con INDEXAR_PAISES="ar,cl,co".
 const INDEXAR = new Set((process.env.INDEXAR_PAISES || 'ar,cl,co,mx').split(',').map((x) => x.trim().toLowerCase()).filter(Boolean));
 const MIN_PROV_INDEX = 3; // un listado por provincia solo se indexa con >=3 fichas
 const CAP = (s) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : s);
