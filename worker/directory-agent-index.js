@@ -6090,6 +6090,8 @@ var AREAS = [
 ];
 var AR_CRON = "30 2 * * *";
 var CL_CRON = "30 3 * * *";
+var CO_CRON = "30 4 * * *";
+var MX_CRON = "30 5 * * *";
 async function runEnrich(env2, tablesArg, limitArg) {
   const tables = (tablesArg || env2.ENTITY_TABLES || "growshops,asociaciones").split(",").map((s) => s.trim()).filter(Boolean);
   const limit = limitArg ?? enrichBatch(env2, "ES");
@@ -6103,12 +6105,13 @@ __name(runEnrich, "runEnrich");
 var index_default = {
   // Disparo programado (cron trigger): enriquece una tanda + descubre una zona (rotando).
   async scheduled(event, env2, ctx) {
-    const cronPais = event.cron === AR_CRON ? "AR" : event.cron === CL_CRON ? "CL" : null;
+    const cronPais = event.cron === AR_CRON ? "AR" : event.cron === CL_CRON ? "CL" : event.cron === CO_CRON ? "CO" : event.cron === MX_CRON ? "MX" : null;
     if (cronPais) {
       const tag = `[cron-${cronPais.toLowerCase()}]`;
-      const write = (cronPais === "AR" ? env2.AR_CRON_WRITE : env2.CL_CRON_WRITE) === "1";
+      const write = env2[`${cronPais}_CRON_WRITE`] === "1";
+      const modoCron = cronPais === "CO" || cronPais === "MX" ? "enriquecer" : "ambos";
       ctx.waitUntil(
-        runPais(env2, { pais: cronPais, modo: "ambos", dry: !write }).then((r) => console.log(tag, JSON.stringify({ enrich: r.enrich && { scanned: r.enrich.scanned, applied: r.enrich.applied, proposals: r.enrich.proposals, errors: r.enrich.errors.length }, discover: r.discover.map((d) => ({ area: d.area, sweep: d.sweep, created: d.candidatesCreated, dup: d.duplicates, enriched: d.enrichedExisting })), budget: r.budget }))).catch((err) => console.log(`${tag} error`, String(err)))
+        runPais(env2, { pais: cronPais, modo: modoCron, dry: !write }).then((r) => console.log(tag, JSON.stringify({ enrich: r.enrich && { scanned: r.enrich.scanned, applied: r.enrich.applied, proposals: r.enrich.proposals, errors: r.enrich.errors.length }, discover: r.discover.map((d) => ({ area: d.area, sweep: d.sweep, created: d.candidatesCreated, dup: d.duplicates, enriched: d.enrichedExisting })), budget: r.budget }))).catch((err) => console.log(`${tag} error`, String(err)))
       );
       return;
     }
