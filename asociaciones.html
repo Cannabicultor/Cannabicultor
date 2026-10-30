@@ -115,6 +115,9 @@ h1 em{color:var(--forest);font-style:italic}
 .section{margin-bottom:15px}
 .section .k{font-size:10.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:6px}
 .section p{font-size:13.5px;line-height:1.65}
+.gal{display:flex;gap:8px;overflow-x:auto;margin:14px -20px 4px;padding:0 20px;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch}
+.gal a{flex:0 0 78%;max-width:320px;scroll-snap-align:start;border-radius:12px;overflow:hidden;border:1px solid var(--border);background:var(--pale)}
+.gal img{display:block;width:100%;aspect-ratio:4/3;object-fit:cover}
 .link-btn{display:block;text-align:center;margin-top:8px;padding:13px;border-radius:12px;background:var(--forest);color:#fff;font-weight:700;font-size:14px;text-decoration:none}
 .link-btn.ghost{background:var(--pale);color:var(--forest);border:1px solid rgba(26,92,50,.2)}
 .form-grid{display:flex;flex-direction:column;gap:10px;margin:12px 0 16px}
@@ -446,12 +449,18 @@ async function openClub(id) {
     const headLogo = g.logo_url
       ? '<img class="logo" src="' + esc(g.logo_url) + '" alt="" style="width:56px;height:56px;object-fit:contain;border:1px solid var(--border);border-radius:12px;background:#fff;padding:4px;margin-bottom:10px">'
       : "";
+    const fotos = (Array.isArray(g.fotos) ? g.fotos : []).filter(u => /^https:\/\//i.test(u)).slice(0, 12);
+    const galeria = fotos.length
+      ? '<div class="gal" aria-label="Fotos de ' + esc(g.nombre) + '">' + fotos.map((u, i) =>
+          '<a href="' + esc(u) + '" target="_blank" rel="noopener"><img src="' + esc(u) + '" alt="' + esc(g.nombre) + ' — foto ' + (i + 1) + '" loading="lazy" onerror="this.parentNode.remove()"></a>').join("") + '</div>'
+      : "";
     openSheet(
       headLogo +
       '<div class="sheet-title">' + esc(g.nombre) +
         (g.verificado ? ' <span class="verified-check" title="Verificado por Cannabicultor" aria-label="Verificado por Cannabicultor">✓</span>' : "") + '</div>' +
       '<div class="sheet-breeder">' + esc([g.ciudad, g.ccaa].filter(Boolean).join(" · ") || PAIS_NOMBRE) +
         (g.verificado ? " · verificado" : " · asociación privada") + '</div>' +
+      galeria +
       '<div class="section" style="margin-top:16px"><div class="k">Acceso</div><p>' +
         esc(g.acceso || "Asociación privada. Normalmente hace falta ser socio o ir con invitación.") +
       '</p></div>' +
